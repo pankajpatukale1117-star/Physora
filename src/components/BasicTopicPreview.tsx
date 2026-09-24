@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Compass,
   TrendingUp,
@@ -20,6 +20,8 @@ interface BasicTopicPreviewProps {
 }
 
 export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTopic }) => {
+  const [filterDomain, setFilterDomain] = useState<'All' | 'Physics' | 'Mathematics'>('All');
+
   const mathTopics = [
     {
       id: 'algebra',
@@ -164,25 +166,62 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
           </p>
         </div>
 
+        {/* Domain Filter Switcher (physora.org inspired) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            marginBottom: 36,
+            flexWrap: 'wrap'
+          }}
+        >
+          {(['All', 'Physics', 'Mathematics'] as const).map((dom) => (
+            <button
+              key={dom}
+              onClick={() => setFilterDomain(dom)}
+              style={{
+                padding: '8px 22px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid',
+                borderColor: filterDomain === dom ? 'var(--electric-blue)' : 'var(--border-subtle)',
+                background: filterDomain === dom ? 'var(--electric-blue)' : 'var(--bg-glass-card)',
+                color: filterDomain === dom ? '#FFFFFF' : 'var(--text-secondary)',
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: filterDomain === dom ? '0 4px 14px rgba(0, 98, 255, 0.3)' : 'none',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              {dom === 'All' ? 'All 12 Modules (36 Simulations)' : dom === 'Physics' ? '⚡ Physics (6 Modules)' : '📐 Mathematics (6 Modules)'}
+            </button>
+          ))}
+        </div>
+
         {/* Two Main Cards: MATHEMATICS & PHYSICS */}
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
+            gridTemplateColumns: filterDomain === 'All' ? 'repeat(auto-fit, minmax(380px, 1fr))' : '1fr',
             gap: 32,
-            alignItems: 'start'
+            alignItems: 'start',
+            maxWidth: filterDomain === 'All' ? '100%' : 780,
+            margin: '0 auto'
           }}
         >
           {/* Card 1: MATHEMATICS */}
-          <div
-            className="glass-card"
-            style={{
-              padding: 32,
-              background: 'rgba(255, 255, 255, 0.94)',
-              border: '1.5px solid rgba(124, 58, 237, 0.22)',
-              boxShadow: 'var(--shadow-lg)'
-            }}
-          >
+          {(filterDomain === 'All' || filterDomain === 'Mathematics') && (
+            <div
+              className="glass-card"
+              style={{
+                padding: 32,
+                background: 'var(--bg-glass-card)',
+                border: '1.5px solid rgba(124, 58, 237, 0.22)',
+                boxShadow: 'var(--shadow-lg)'
+              }}
+            >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div
@@ -318,17 +357,19 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
               })}
             </div>
           </div>
+          )}
 
           {/* Card 2: PHYSICS */}
-          <div
-            className="glass-card"
-            style={{
-              padding: 32,
-              background: 'rgba(255, 255, 255, 0.94)',
-              border: '1.5px solid rgba(0, 98, 255, 0.22)',
-              boxShadow: 'var(--shadow-lg)'
-            }}
-          >
+          {(filterDomain === 'All' || filterDomain === 'Physics') && (
+            <div
+              className="glass-card"
+              style={{
+                padding: 32,
+                background: 'var(--bg-glass-card)',
+                border: '1.5px solid rgba(0, 98, 255, 0.22)',
+                boxShadow: 'var(--shadow-lg)'
+              }}
+            >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div
@@ -464,6 +505,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
               })}
             </div>
           </div>
+          )}
         </div>
 
       </div>

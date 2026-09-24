@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Atom, ArrowRight } from 'lucide-react';
+import { Atom, ArrowRight, Sun, Moon, BookOpen } from 'lucide-react';
 
 interface NavbarProps {
   onEnterLabClick: () => void;
   onExploreClick: () => void;
+  onOpenFormulas: () => void;
+  theme: 'dark' | 'light';
+  onToggleTheme: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   onEnterLabClick,
-  onExploreClick
+  onExploreClick,
+  onOpenFormulas,
+  theme,
+  onToggleTheme
 }) => {
   const [scrolled, setScrolled] = useState(false);
 
@@ -29,13 +35,11 @@ export const Navbar: React.FC<NavbarProps> = ({
         right: 0,
         zIndex: 100,
         transition: 'all 0.25s ease',
-        background: scrolled ? 'rgba(255, 255, 255, 0.94)' : 'rgba(255, 255, 255, 0.75)',
+        background: scrolled ? 'var(--bg-glass-heavy)' : 'var(--bg-glass)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: scrolled
-          ? '1px solid rgba(0, 98, 255, 0.12)'
-          : '1px solid rgba(148, 163, 184, 0.14)',
-        boxShadow: scrolled ? '0 8px 24px rgba(15, 23, 42, 0.04)' : 'none'
+        borderBottom: '1px solid var(--border-subtle)',
+        boxShadow: scrolled ? 'var(--shadow-md)' : 'none'
       }}
     >
       <div
@@ -139,6 +143,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             Physics
           </a>
+          <button
+            onClick={onOpenFormulas}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              background: 'transparent',
+              border: 'none',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'color 0.2s ease',
+              padding: 0
+            }}
+          >
+            <BookOpen size={15} />
+            <span>Formulas</span>
+          </button>
           <a
             href="#how-it-works"
             style={{
@@ -155,16 +178,26 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Action */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Theme Switcher Toggle (physora.org inspired) */}
+          <button
+            onClick={onToggleTheme}
+            className="theme-toggle-btn"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle color theme"
+          >
+            {theme === 'dark' ? <Sun size={17} color="#FBBF24" /> : <Moon size={17} color="#6366F1" />}
+          </button>
+
           <span
             className="hide-mobile font-mono"
             style={{
               fontSize: '0.74rem',
               fontWeight: 600,
               color: 'var(--text-secondary)',
-              background: 'rgba(0, 98, 255, 0.06)',
+              background: 'var(--electric-blue-soft)',
               padding: '6px 14px',
               borderRadius: 'var(--radius-pill)',
-              border: '1px solid rgba(0, 98, 255, 0.12)'
+              border: '1px solid var(--border-subtle)'
             }}
           >
             Crafted by <strong style={{ color: 'var(--electric-blue)' }}>Pankaj</strong>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight, Sparkles, BookOpen, Compass } from 'lucide-react';
+import { HeroLiveSandbox } from './HeroLiveSandbox';
 
 interface HeroSectionProps {
   onEnterLabClick: () => void;
@@ -74,7 +75,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           Learn basic Maths and Physics through simple interactive simulations.
         </p>
 
-        {/* Primary CTA Button: Enter the Lab */}
+        {/* Primary CTA Buttons */}
         <div
           style={{
             display: 'flex',
@@ -82,7 +83,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             justifyContent: 'center',
             gap: 16,
             flexWrap: 'wrap',
-            marginBottom: 44
+            marginBottom: 32
           }}
         >
           <button
@@ -100,10 +101,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             className="btn-secondary-lab"
             id="heroExploreBtn"
           >
-            <BookOpen size={16} color="#0062FF" />
+            <BookOpen size={16} color="var(--electric-blue)" />
             <span>Preview Topics</span>
           </button>
         </div>
+
+        {/* LIVE HERO SANDBOX WIDGET (physora.org inspired interactive module) */}
+        <HeroLiveSandbox onOpenFullLab={onEnterLabClick} />
 
         {/* Simple Educational Value Pillars */}
         <div

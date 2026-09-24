@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Play, Pause, RotateCcw, Lightbulb, BookOpen, CheckCircle2, ChevronRight } from 'lucide-react';
+import { X, Play, Pause, RotateCcw, Lightbulb, BookOpen, CheckCircle2, ChevronRight, HelpCircle, Award } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
+import { QUIZ_DATA } from '../data/quizData';
 import { CanvasSimulator } from './simulations/CanvasSimulators';
 
 interface TopicLabModalProps {
@@ -18,6 +19,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [isPlaying, setIsPlaying] = useState(true);
   const [params, setParams] = useState<Record<string, number>>({});
   const [telemetry, setTelemetry] = useState<Record<string, string>>({});
+  const [sideTab, setSideTab] = useState<'intuition' | 'formulas' | 'quiz'>('intuition');
+  const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
 
   const topic = topicId ? TOPICS_DATA[topicId] : null;
   const currentSim = topic ? topic.simulations[activeSimIndex] || topic.simulations[0] : null;
@@ -49,6 +52,9 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   }, [onClose]);
 
   if (!topic || !currentSim) return null;
+
+  const topicQuiz = QUIZ_DATA[topic.id] || [];
+  const correctCount = topicQuiz.filter(q => userAnswers[q.id] === q.correctIndex).length;
 
   const handleControlChange = (id: string, val: number) => {
     setParams(prev => ({ ...prev, [id]: val }));
@@ -403,93 +409,271 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             </div>
           </div>
 
-          {/* RIGHT: Clear Topic Explanation Guide */}
+          {/* RIGHT: Clear Topic Explanation & Practice Workbench */}
           <div
             style={{
-              padding: '26px 28px',
+              padding: '24px 26px',
               display: 'flex',
               flexDirection: 'column',
-              gap: 22,
-              overflowY: 'auto'
+              gap: 18,
+              overflowY: 'auto',
+              background: 'var(--bg-secondary)'
             }}
           >
-            {/* 1. Core Intuition */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <Lightbulb size={18} color="#F59E0B" />
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
-                  THE CORE INTUITION
-                </h4>
-              </div>
-              <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                {topic.conceptIntro}
-              </p>
-            </div>
-
-            {/* 2. Real-World Analogy */}
+            {/* Step Workflow Navigation Strip */}
             <div
               style={{
-                background: 'rgba(248, 250, 252, 0.9)',
-                borderRadius: 'var(--radius-md)',
-                padding: '14px 16px',
-                borderLeft: `3px solid ${accentColor}`
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px',
+                background: 'var(--bg-glass-card)',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid var(--border-subtle)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                <BookOpen size={15} color={accentColor} />
-                <span className="font-mono" style={{ fontSize: '0.7rem', fontWeight: 700, color: accentColor }}>
-                  EVERYDAY EXAMPLE
-                </span>
-              </div>
-              <p style={{ fontSize: '0.84rem', color: 'var(--text-primary)', lineHeight: 1.5, margin: 0 }}>
-                {topic.realWorldExample}
-              </p>
-            </div>
-
-            {/* 3. Essential Formulas */}
-            <div>
-              <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 10 }}>
-                KEY FORMULAS &amp; DEFINITIONS
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {topic.keyFormulas.map((f, i) => (
-                  <div
-                    key={i}
+              <button
+                onClick={() => setSideTab('intuition')}
+                className={`step-workflow-tab ${sideTab === 'intuition' ? 'active' : ''}`}
+                style={{ flex: 1, justifyContent: 'center' }}
+              >
+                <Lightbulb size={14} />
+                <span>Intuition</span>
+              </button>
+              <button
+                onClick={() => setSideTab('formulas')}
+                className={`step-workflow-tab ${sideTab === 'formulas' ? 'active' : ''}`}
+                style={{ flex: 1, justifyContent: 'center' }}
+              >
+                <BookOpen size={14} />
+                <span>Equations</span>
+              </button>
+              <button
+                onClick={() => setSideTab('quiz')}
+                className={`step-workflow-tab ${sideTab === 'quiz' ? 'active' : ''}`}
+                style={{ flex: 1, justifyContent: 'center' }}
+              >
+                <HelpCircle size={14} />
+                <span>Quiz</span>
+                {topicQuiz.length > 0 && (
+                  <span
                     style={{
-                      background: '#F8FAFC',
-                      borderRadius: 'var(--radius-md)',
-                      padding: '10px 14px',
-                      border: '1px solid var(--border-subtle)'
+                      fontSize: '0.68rem',
+                      background: sideTab === 'quiz' ? 'rgba(255,255,255,0.25)' : 'var(--electric-blue-soft)',
+                      color: sideTab === 'quiz' ? '#FFFFFF' : 'var(--electric-blue)',
+                      padding: '1px 6px',
+                      borderRadius: 'var(--radius-pill)',
+                      fontWeight: 800
                     }}
                   >
-                    <div
-                      className="font-math"
-                      style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}
-                    >
-                      {f.formula}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}>
-                      {f.explanation}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    {topicQuiz.length}
+                  </span>
+                )}
+              </button>
             </div>
 
-            {/* 4. Student Takeaways */}
-            <div>
-              <h4 style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
-                QUICK SUMMARY FOR CLASS 11
-              </h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {topic.keyTakeaways.map((point, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.82rem' }}>
-                    <CheckCircle2 size={15} color="#10B981" style={{ flexShrink: 0, marginTop: 2 }} />
-                    <span style={{ color: 'var(--text-secondary)', lineHeight: 1.45 }}>{point}</span>
+            {/* TAB 1: INTUITION */}
+            {sideTab === 'intuition' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                {/* 1. Core Intuition */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Lightbulb size={17} color="#F59E0B" />
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                      THE CORE INTUITION
+                    </h4>
                   </div>
-                ))}
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                    {topic.conceptIntro}
+                  </p>
+                </div>
+
+                {/* 2. Real-World Analogy */}
+                <div
+                  style={{
+                    background: 'var(--bg-glass-card)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '14px 16px',
+                    borderLeft: `3px solid ${accentColor}`,
+                    border: '1px solid var(--border-subtle)',
+                    borderLeftWidth: '3px'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                    <BookOpen size={14} color={accentColor} />
+                    <span className="font-mono" style={{ fontSize: '0.7rem', fontWeight: 700, color: accentColor }}>
+                      EVERYDAY EXAMPLE
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-primary)', lineHeight: 1.5, margin: 0 }}>
+                    {topic.realWorldExample}
+                  </p>
+                </div>
+
+                {/* 3. Student Takeaways */}
+                <div>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
+                    QUICK SUMMARY FOR CLASS 11
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {topic.keyTakeaways.map((point, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.82rem' }}>
+                        <CheckCircle2 size={15} color="#10B981" style={{ flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ color: 'var(--text-secondary)', lineHeight: 1.45 }}>{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* TAB 2: EQUATIONS */}
+            {sideTab === 'formulas' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                    MATHEMATICAL DERIVATIONS &amp; FORMULAS
+                  </h4>
+                  <span className="font-mono" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                    SI Standard
+                  </span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {topic.keyFormulas.map((f, i) => (
+                    <div
+                      key={i}
+                      className="formula-card"
+                      style={{ padding: '12px 16px' }}
+                    >
+                      <div
+                        className="font-math"
+                        style={{
+                          fontSize: '1.05rem',
+                          fontWeight: 700,
+                          color: 'var(--text-primary)',
+                          marginBottom: 4,
+                          textAlign: 'center',
+                          padding: '6px',
+                          background: 'var(--bg-tertiary)',
+                          borderRadius: 'var(--radius-sm)'
+                        }}
+                      >
+                        {f.formula}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                        {f.explanation}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: QUIZ (physora.org inspired interactive question bench) */}
+            {sideTab === 'quiz' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Award size={16} color="#F59E0B" />
+                    <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                      CONCEPT CHECK
+                    </h4>
+                  </div>
+                  {topicQuiz.length > 0 && (
+                    <span
+                      className="font-mono"
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: 'var(--electric-blue)',
+                        background: 'var(--electric-blue-soft)',
+                        padding: '3px 10px',
+                        borderRadius: 'var(--radius-pill)'
+                      }}
+                    >
+                      Score: {correctCount}/{topicQuiz.length}
+                    </span>
+                  )}
+                </div>
+
+                {topicQuiz.length === 0 ? (
+                  <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)' }}>
+                    Practice questions coming soon for this topic!
+                  </p>
+                ) : (
+                  topicQuiz.map((q, qIndex) => {
+                    const selectedOpt = userAnswers[q.id];
+                    const isAnswered = selectedOpt !== undefined;
+                    return (
+                      <div
+                        key={q.id}
+                        style={{
+                          padding: '14px 16px',
+                          background: 'var(--bg-glass-card)',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid var(--border-subtle)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 10
+                        }}
+                      >
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          <span className="font-mono" style={{ color: accentColor, marginRight: 6 }}>
+                            Q{qIndex + 1}.
+                          </span>
+                          {q.question}
+                        </div>
+
+                        {/* Options */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          {q.options.map((opt, optIdx) => {
+                            let btnClass = 'quiz-option-btn';
+                            if (isAnswered) {
+                              if (optIdx === q.correctIndex) btnClass += ' correct';
+                              else if (optIdx === selectedOpt) btnClass += ' wrong';
+                            }
+                            return (
+                              <button
+                                key={optIdx}
+                                disabled={isAnswered}
+                                onClick={() => setUserAnswers(prev => ({ ...prev, [q.id]: optIdx }))}
+                                className={btnClass}
+                              >
+                                <span className="font-mono" style={{ width: 22, fontWeight: 700, fontSize: '0.8rem' }}>
+                                  {String.fromCharCode(65 + optIdx)}.
+                                </span>
+                                <span>{opt}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Explanation Box upon answering */}
+                        {isAnswered && (
+                          <div
+                            style={{
+                              marginTop: 4,
+                              padding: '10px 12px',
+                              borderRadius: 'var(--radius-sm)',
+                              background: selectedOpt === q.correctIndex ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                              borderLeft: `3px solid ${selectedOpt === q.correctIndex ? '#10B981' : '#EF4444'}`,
+                              fontSize: '0.8rem',
+                              lineHeight: 1.45,
+                              color: 'var(--text-secondary)'
+                            }}
+                          >
+                            <strong style={{ color: selectedOpt === q.correctIndex ? '#10B981' : '#EF4444' }}>
+                              {selectedOpt === q.correctIndex ? '✓ Correct! ' : '✗ Incorrect. '}
+                            </strong>
+                            {q.explanation}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
 
             {/* Next Simulation prompt */}
             <div
@@ -503,7 +687,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               }}
             >
               <span style={{ fontSize: '0.78rem', color: 'var(--text-tertiary)' }}>
-                {topic.simulations.length} Different Simulations for {topic.title}
+                {topic.simulations.length} Simulations available
               </span>
               <button
                 onClick={() => setActiveSimIndex((activeSimIndex + 1) % topic.simulations.length)}
@@ -514,7 +698,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   padding: '6px 12px',
                   borderRadius: 'var(--radius-pill)',
                   border: '1px solid var(--border-subtle)',
-                  background: '#FFFFFF',
+                  background: 'var(--bg-glass-card)',
                   color: accentColor,
                   fontSize: '0.76rem',
                   fontWeight: 700,
