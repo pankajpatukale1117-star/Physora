@@ -89,11 +89,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               style={{
                 fontSize: '0.62rem',
                 fontWeight: 700,
-                letterSpacing: '0.1em',
+                letterSpacing: '0.08em',
                 color: 'var(--electric-blue)'
               }}
             >
-              CLASS 11 &amp; FOUNDATIONS
+              CLASS 11 &amp; FOUNDATIONS • BY PANKAJ
             </span>
           </div>
         </a>
@@ -154,27 +154,44 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Right Action */}
-        <button
-          onClick={onEnterLabClick}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '9px 20px',
-            background: 'linear-gradient(135deg, #0062FF 0%, #0050D8 100%)',
-            color: '#FFFFFF',
-            fontSize: '0.88rem',
-            fontWeight: 700,
-            borderRadius: 'var(--radius-pill)',
-            border: 'none',
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(0, 98, 255, 0.3)',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <span>Enter the Lab</span>
-          <ArrowRight size={14} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span
+            className="hide-mobile font-mono"
+            style={{
+              fontSize: '0.74rem',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
+              background: 'rgba(0, 98, 255, 0.06)',
+              padding: '6px 14px',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid rgba(0, 98, 255, 0.12)'
+            }}
+          >
+            Crafted by <strong style={{ color: 'var(--electric-blue)' }}>Pankaj</strong>
+          </span>
+
+          <button
+            onClick={onEnterLabClick}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '9px 20px',
+              background: 'linear-gradient(135deg, #0062FF 0%, #0050D8 100%)',
+              color: '#FFFFFF',
+              fontSize: '0.88rem',
+              fontWeight: 700,
+              borderRadius: 'var(--radius-pill)',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(0, 98, 255, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <span>Enter the Lab</span>
+            <ArrowRight size={14} />
+          </button>
+        </div>
       </div>
     </header>
   );

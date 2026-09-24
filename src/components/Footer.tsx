@@ -83,24 +83,39 @@ export const Footer: React.FC = () => {
           {/* Lab Info */}
           <div>
             <h5 style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14 }}>
-              About the Lab
+              About the Creator
             </h5>
-            <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 12 }}>
-              Built with love to make science accessible, delightful, and visually clear for every student.
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 12 }}>
+              Created by <strong style={{ color: 'var(--text-primary)' }}>Pankaj</strong> to empower students with intuitive visual models for fundamental mathematical principles and real-world physical laws.
             </p>
-            <span
-              className="font-mono"
-              style={{
-                fontSize: '0.72rem',
-                color: 'var(--electric-blue)',
-                background: 'rgba(0, 98, 255, 0.08)',
-                padding: '4px 10px',
-                borderRadius: 'var(--radius-pill)',
-                fontWeight: 600
-              }}
-            >
-              Simulations in Development
-            </span>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span
+                className="font-mono"
+                style={{
+                  fontSize: '0.72rem',
+                  color: 'var(--electric-blue)',
+                  background: 'rgba(0, 98, 255, 0.08)',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-pill)',
+                  fontWeight: 600
+                }}
+              >
+                36 Active Simulations
+              </span>
+              <span
+                className="font-mono"
+                style={{
+                  fontSize: '0.72rem',
+                  color: '#7C3AED',
+                  background: 'rgba(124, 58, 237, 0.08)',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-pill)',
+                  fontWeight: 600
+                }}
+              >
+                By Pankaj
+              </span>
+            </div>
           </div>
         </div>
 
@@ -118,11 +133,11 @@ export const Footer: React.FC = () => {
             color: 'var(--text-muted)'
           }}
         >
-          <p>© 2026 Physora. Simple, visual learning for Class 11 and below.</p>
+          <p>© 2026 Physora by Pankaj. Precision visual learning for Class 11 and below.</p>
           <div style={{ display: 'flex', gap: 20 }}>
-            <span>Privacy</span>
-            <span>Terms of Learning</span>
-            <span>Contact</span>
+            <span style={{ color: 'var(--electric-blue)', fontWeight: 600 }}>Physora Laboratory</span>
+            <span>Created by Pankaj</span>
+            <span>Open Access Education</span>
           </div>
         </div>
 
