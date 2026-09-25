@@ -22,25 +22,28 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [sideTab, setSideTab] = useState<'intuition' | 'formulas' | 'quiz'>('intuition');
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
 
+  const [prevTopicId, setPrevTopicId] = useState(topicId);
+  const [prevSimId, setPrevSimId] = useState<string | null>(null);
+
   const topic = topicId ? TOPICS_DATA[topicId] : null;
   const currentSim = topic ? topic.simulations[activeSimIndex] || topic.simulations[0] : null;
 
-  // Initialize parameters when simulation changes
-  useEffect(() => {
-    if (currentSim) {
-      const initialParams: Record<string, number> = {};
-      currentSim.controls.forEach(ctrl => {
-        initialParams[ctrl.id] = ctrl.defaultValue;
-      });
-      setParams(initialParams);
-      setIsPlaying(true);
-    }
-  }, [currentSim]);
-
   // Reset active simulation index when topic changes
-  useEffect(() => {
+  if (topicId !== prevTopicId) {
+    setPrevTopicId(topicId);
     setActiveSimIndex(0);
-  }, [topicId]);
+  }
+
+  // Initialize parameters when simulation changes
+  if (currentSim && currentSim.id !== prevSimId) {
+    setPrevSimId(currentSim.id);
+    const initialParams: Record<string, number> = {};
+    currentSim.controls.forEach(ctrl => {
+      initialParams[ctrl.id] = ctrl.defaultValue;
+    });
+    setParams(initialParams);
+    setIsPlaying(true);
+  }
 
   // Close on Escape key
   useEffect(() => {

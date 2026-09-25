@@ -7,7 +7,7 @@ interface MathUniverseProps {
   onStageChange?: (stage: number, stageName: string) => void;
 }
 
-export const STAGE_NAMES = [
+const STAGE_NAMES = [
   '2D Curves → 3D Unfolding',
   'Continuous Wave Formations',
   '3D Vector & Flux Fields',
