@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://physora.vercel.app/sitemap.xml
+Sitemap: https://physora-plum.vercel.app/sitemap.xml
