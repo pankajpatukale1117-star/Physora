@@ -7,7 +7,9 @@ export const Footer: React.FC = () => {
       style={{
         position: 'relative',
         zIndex: 5,
-        background: '#FFFFFF',
+        background: 'var(--bg-glass-heavy)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
         borderTop: '1px solid var(--border-subtle)',
         padding: '60px 24px 32px',
         pointerEvents: 'auto'
@@ -31,9 +33,9 @@ export const Footer: React.FC = () => {
                   width: 32,
                   height: 32,
                   borderRadius: 'var(--radius-sm)',
-                  background: '#FFFFFF',
+                  background: 'var(--bg-glass-card)',
                   boxShadow: '0 2px 10px rgba(0, 98, 255, 0.15)',
-                  border: '1px solid rgba(0, 98, 255, 0.15)',
+                  border: '1px solid var(--border-subtle)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
@@ -41,7 +43,7 @@ export const Footer: React.FC = () => {
               >
                 <Atom size={20} color="#0062FF" />
               </div>
-              <span style={{ fontSize: '1.2rem', fontWeight: 800 }}>
+              <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                 Phys<span className="gradient-text">ora</span>
               </span>
             </div>

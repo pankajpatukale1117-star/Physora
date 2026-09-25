@@ -13,6 +13,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   return (
     <section
+      className="hero-section"
       style={{
         position: 'relative',
         zIndex: 5,
@@ -48,6 +49,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Hero Headline */}
         <h1
+          className="hero-headline"
           style={{
             fontSize: 'clamp(2.8rem, 6vw, 4.8rem)',
             fontWeight: 900,
@@ -63,6 +65,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Subtitle */}
         <p
+          className="hero-subtitle"
           style={{
             fontSize: 'clamp(1.15rem, 2.2vw, 1.35rem)',
             fontWeight: 500,
@@ -77,6 +80,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Primary CTA Buttons */}
         <div
+          className="hero-cta-group"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -111,17 +115,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
         {/* Simple Educational Value Pillars */}
         <div
+          className="hero-value-pillars"
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 28,
             padding: '10px 26px',
-            background: 'rgba(255, 255, 255, 0.75)',
+            background: 'var(--bg-glass-card)',
             backdropFilter: 'blur(12px)',
             WebkitBackdropFilter: 'blur(12px)',
             borderRadius: 'var(--radius-pill)',
-            border: '1px solid rgba(148, 163, 184, 0.16)',
+            border: '1px solid var(--border-subtle)',
             fontSize: '0.82rem',
             color: 'var(--text-secondary)',
             flexWrap: 'wrap',
@@ -132,12 +137,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             <Compass size={14} color="#0062FF" />
             <span>Visual Concept Models</span>
           </div>
-          <span style={{ color: 'var(--border-subtle)' }}>•</span>
+          <span className="pillar-dot" style={{ color: 'var(--border-subtle)' }}>•</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ color: '#10B981', fontWeight: 700 }}>✓</span>
             <span>No Complex University Math</span>
           </div>
-          <span style={{ color: 'var(--border-subtle)' }}>•</span>
+          <span className="pillar-dot" style={{ color: 'var(--border-subtle)' }}>•</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ color: '#7C3AED', fontWeight: 700 }}>★</span>
             <span>Made for School &amp; Class 11</span>

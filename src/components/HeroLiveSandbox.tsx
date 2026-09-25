@@ -36,9 +36,21 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
 
     let animId: number;
     let t = 0;
-    const scale = 5.2; // pixels per meter
-    const originX = 50;
-    const originY = canvas.height - 45;
+    
+    // Auto-sync canvas resolution to displayed container width
+    const updateCanvasDims = () => {
+      const parentW = canvas.parentElement?.clientWidth || 672;
+      canvas.width = parentW;
+      canvas.height = window.innerWidth < 768 ? 175 : 230;
+    };
+    updateCanvasDims();
+
+    window.addEventListener('resize', updateCanvasDims);
+
+    const isMobileViewport = window.innerWidth < 768;
+    const scale = isMobileViewport ? 3.4 : 5.2; // pixels per meter
+    const originX = isMobileViewport ? 24 : 50;
+    const originY = canvas.height - 35;
 
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -166,12 +178,15 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
     };
 
     render();
-    return () => cancelAnimationFrame(animId);
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', updateCanvasDims);
+    };
   }, [angleDeg, speed, planet, isPlaying, theta, g, flightTime, maxHeight]);
 
   return (
     <div
-      className="glass-card"
+      className="glass-card hero-sandbox-card"
       style={{
         width: '100%',
         maxWidth: 720,
@@ -183,16 +198,16 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       }}
     >
       {/* Header Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
+      <div className="hero-sandbox-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 10px #10B981' }} />
-          <span style={{ fontSize: '0.86rem', fontWeight: 800, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
+          <span className="hero-sandbox-title" style={{ fontSize: '0.86rem', fontWeight: 800, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
             LIVE HERO SANDBOX • 2D VECTOR TRAJECTORY
           </span>
         </div>
 
         {/* Planet Presets */}
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div className="hero-sandbox-presets" style={{ display: 'flex', gap: 6 }}>
           <button
             onClick={() => setPlanet('earth')}
             className={`env-preset-pill ${planet === 'earth' ? 'active' : ''}`}
@@ -215,7 +230,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       </div>
 
       {/* Canvas */}
-      <div style={{ width: '100%', height: 230, background: 'rgba(0, 0, 0, 0.03)', borderRadius: 'var(--radius-md)', overflow: 'hidden', position: 'relative' }}>
+      <div className="hero-sandbox-canvas-box" style={{ width: '100%', height: 230, background: 'rgba(0, 0, 0, 0.03)', borderRadius: 'var(--radius-md)', overflow: 'hidden', position: 'relative' }}>
         <canvas
           ref={canvasRef}
           width={672}
@@ -225,7 +240,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       </div>
 
       {/* Controls & Metrics Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginTop: 16, alignItems: 'center' }}>
+      <div className="hero-sandbox-controls" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginTop: 16, alignItems: 'center' }}>
         {/* Angle Slider */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
@@ -328,7 +343,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       </div>
 
       {/* Action Footer */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: 10 }}>
+      <div className="hero-sandbox-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: 10 }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={() => setIsPlaying(!isPlaying)}

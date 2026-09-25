@@ -145,6 +145,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
   return (
     <section
       id="curriculum-preview"
+      className="curriculum-section"
       style={{
         position: 'relative',
         zIndex: 5,
@@ -186,6 +187,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
 
         {/* Domain Filter Switcher (physora.org inspired) */}
         <div
+          className="topic-filter-bar"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -213,13 +215,19 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                 transition: 'all 0.2s ease'
               }}
             >
-              {dom === 'All' ? 'All 14 Modules (42 Simulations)' : dom === 'Physics' ? '⚡ Physics (8 Modules)' : '📐 Mathematics (6 Modules)'}
+              <span className="hide-mobile">
+                {dom === 'All' ? 'All 14 Modules (42 Simulations)' : dom === 'Physics' ? '⚡ Physics (8 Modules)' : '📐 Mathematics (6 Modules)'}
+              </span>
+              <span className="show-mobile-only" style={{ display: 'inline' }}>
+                {dom === 'All' ? 'All (42)' : dom === 'Physics' ? '⚡ Physics (24)' : '📐 Math (18)'}
+              </span>
             </button>
           ))}
         </div>
 
         {/* Two Main Cards: MATHEMATICS & PHYSICS */}
         <div
+          className="topic-preview-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: filterDomain === 'All' ? 'repeat(auto-fit, minmax(380px, 1fr))' : '1fr',
@@ -232,7 +240,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
           {/* Card 1: MATHEMATICS */}
           {(filterDomain === 'All' || filterDomain === 'Mathematics') && (
             <div
-              className="glass-card"
+              className="glass-card topic-domain-card"
               style={{
                 padding: 32,
                 background: 'var(--bg-glass-card)',
@@ -302,26 +310,15 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                   <div
                     key={topic.id}
                     onClick={() => onSelectTopic(topic.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 14,
-                      padding: '12px 16px',
-                      background: 'rgba(248, 250, 252, 0.85)',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid rgba(124, 58, 237, 0.12)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                    className="topic-item-hover"
+                    className="topic-item-card"
                   >
                     <div
                       style={{
-                        width: 34,
-                        height: 34,
+                        width: 36,
+                        height: 36,
                         borderRadius: 'var(--radius-sm)',
-                        background: '#FFFFFF',
-                        border: '1px solid rgba(124, 58, 237, 0.18)',
+                        background: 'var(--bg-glass-card)',
+                        border: '1px solid rgba(124, 58, 237, 0.22)',
                         color: 'var(--electric-violet)',
                         display: 'flex',
                         alignItems: 'center',
@@ -332,25 +329,28 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                       <Icon size={18} />
                     </div>
 
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
+                        <h4 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {topic.title}
                         </h4>
                         <span
                           className="font-mono"
                           style={{
                             fontSize: '0.68rem',
+                            fontWeight: 700,
                             color: 'var(--electric-violet)',
-                            background: 'rgba(124, 58, 237, 0.08)',
-                            padding: '2px 7px',
-                            borderRadius: 'var(--radius-pill)'
+                            background: 'rgba(124, 58, 237, 0.12)',
+                            padding: '2px 8px',
+                            borderRadius: 'var(--radius-pill)',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
                           }}
                         >
                           {topic.simCount}
                         </span>
                       </div>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: 0 }}>
+                      <p style={{ fontSize: '0.8rem', lineHeight: 1.4, margin: 0 }}>
                         {topic.summary}
                       </p>
                     </div>
@@ -380,7 +380,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
           {/* Card 2: PHYSICS */}
           {(filterDomain === 'All' || filterDomain === 'Physics') && (
             <div
-              className="glass-card"
+              className="glass-card topic-domain-card"
               style={{
                 padding: 32,
                 background: 'var(--bg-glass-card)',
@@ -417,7 +417,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                       letterSpacing: '0.08em'
                     }}
                   >
-                    PHYSICS &bull; 6 MODULES
+                    PHYSICS &bull; 8 MODULES
                   </span>
                   <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
                     PHYSICS
@@ -435,7 +435,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                   borderRadius: 'var(--radius-pill)'
                 }}
               >
-                18 Simulations
+                24 Simulations
               </span>
             </div>
 
@@ -450,26 +450,15 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                   <div
                     key={topic.id}
                     onClick={() => onSelectTopic(topic.id)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 14,
-                      padding: '12px 16px',
-                      background: 'rgba(248, 250, 252, 0.85)',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid rgba(0, 98, 255, 0.12)',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                    className="topic-item-hover"
+                    className="topic-item-card"
                   >
                     <div
                       style={{
-                        width: 34,
-                        height: 34,
+                        width: 36,
+                        height: 36,
                         borderRadius: 'var(--radius-sm)',
-                        background: '#FFFFFF',
-                        border: '1px solid rgba(0, 98, 255, 0.18)',
+                        background: 'var(--bg-glass-card)',
+                        border: '1px solid rgba(0, 98, 255, 0.22)',
                         color: 'var(--electric-blue)',
                         display: 'flex',
                         alignItems: 'center',
@@ -480,25 +469,28 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                       <Icon size={18} />
                     </div>
 
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                        <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
+                        <h4 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {topic.title}
                         </h4>
                         <span
                           className="font-mono"
                           style={{
                             fontSize: '0.68rem',
+                            fontWeight: 700,
                             color: 'var(--electric-blue)',
-                            background: 'rgba(0, 98, 255, 0.08)',
-                            padding: '2px 7px',
-                            borderRadius: 'var(--radius-pill)'
+                            background: 'rgba(0, 98, 255, 0.12)',
+                            padding: '2px 8px',
+                            borderRadius: 'var(--radius-pill)',
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0
                           }}
                         >
                           {topic.simCount}
                         </span>
                       </div>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.4, margin: 0 }}>
+                      <p style={{ fontSize: '0.8rem', lineHeight: 1.4, margin: 0 }}>
                         {topic.summary}
                       </p>
                     </div>

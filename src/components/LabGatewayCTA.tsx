@@ -8,6 +8,7 @@ interface LabGatewayCTAProps {
 export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick }) => {
   return (
     <section
+      className="cta-section"
       style={{
         position: 'relative',
         zIndex: 5,
@@ -18,6 +19,7 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
       <div className="section-container">
         
         <div
+          className="cta-card"
           style={{
             position: 'relative',
             background: 'linear-gradient(135deg, #0B1528 0%, #111E38 60%, #1E1B4B 100%)',
@@ -59,6 +61,7 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
             </div>
 
             <h2
+              className="cta-headline"
               style={{
                 fontSize: 'clamp(2.2rem, 4vw, 3.2rem)',
                 fontWeight: 800,
@@ -71,6 +74,7 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
             </h2>
 
             <p
+              className="cta-subtitle"
               style={{
                 fontSize: '1.05rem',
                 color: '#94A3B8',
@@ -91,6 +95,7 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
             >
               <button
                 onClick={onEnterLabClick}
+                className="cta-action-btn"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',

@@ -29,6 +29,7 @@ export const HowVisualLearningWorks: React.FC = () => {
   return (
     <section
       id="how-it-works"
+      className="how-works-section"
       style={{
         position: 'relative',
         zIndex: 5,
@@ -59,6 +60,7 @@ export const HowVisualLearningWorks: React.FC = () => {
         </div>
 
         <div
+          className="how-works-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
@@ -70,10 +72,10 @@ export const HowVisualLearningWorks: React.FC = () => {
             return (
               <div
                 key={idx}
-                className="glass-card"
+                className="glass-card how-works-card"
                 style={{
                   padding: 30,
-                  background: 'rgba(255, 255, 255, 0.88)'
+                  background: 'var(--bg-glass-card)'
                 }}
               >
                 <div

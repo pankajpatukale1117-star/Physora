@@ -226,6 +226,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
   return (
     <div
+      className="topic-modal-overlay"
       style={{
         position: 'fixed',
         inset: 0,
@@ -244,12 +245,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
       }}
     >
       <div
-        className="glass-card"
+        className="glass-card topic-modal-window"
         style={{
           width: '100%',
           maxWidth: 1140,
           maxHeight: '92vh',
-          background: '#FFFFFF',
+          background: 'var(--bg-glass-heavy)',
           borderRadius: 'var(--radius-xl)',
           border: `1.5px solid ${accentColor}`,
           boxShadow: '0 25px 60px -10px rgba(0, 98, 255, 0.3)',
@@ -260,12 +261,13 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
       >
         {/* Modal Top Bar */}
         <div
+          className="topic-modal-topbar"
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '16px 24px',
-            background: 'rgba(248, 250, 252, 0.95)',
+            background: 'var(--bg-glass-card)',
             borderBottom: '1px solid var(--border-subtle)',
             gap: 16,
             flexWrap: 'wrap'
@@ -289,7 +291,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               {topic.title}
             </h2>
-            <span style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
+            <span className="hide-mobile" style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
               &bull; Class 11 &amp; Below
             </span>
           </div>
@@ -305,8 +307,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 border: '1px solid var(--border-subtle)',
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.76rem',
-                color: 'var(--text-secondary)',
-                background: '#FFFFFF',
+                color: 'var(--text-primary)',
+                background: 'var(--bg-tertiary)',
                 cursor: 'pointer',
                 outline: 'none'
               }}
@@ -326,6 +328,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 <option value="work_energy_power">Work, Energy &amp; Power</option>
                 <option value="gravitation">Gravitation</option>
                 <option value="waves">Waves</option>
+                <option value="optics">Optics &amp; Light</option>
+                <option value="thermodynamics">Thermodynamics</option>
               </optgroup>
             </select>
 
@@ -336,8 +340,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 height: 34,
                 borderRadius: '50%',
                 border: '1px solid var(--border-subtle)',
-                background: '#FFFFFF',
-                color: 'var(--text-secondary)',
+                background: 'var(--bg-tertiary)',
+                color: 'var(--text-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -363,22 +367,24 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
         >
           {/* LEFT: Simulation Workbench */}
           <div
+            className="modal-workbench"
             style={{
               padding: '24px',
               borderRight: '1px solid var(--border-subtle)',
               display: 'flex',
               flexDirection: 'column',
-              background: '#FAFCFF'
+              background: 'var(--bg-secondary)'
             }}
           >
             {/* Simulation Tabs (2 to 3 distinct simulations per topic) */}
             <div style={{ marginBottom: 16 }}>
               <div
+                className="modal-sim-tab-strip"
                 style={{
                   display: 'flex',
                   gap: 8,
                   padding: 4,
-                  background: 'rgba(241, 245, 249, 0.8)',
+                  background: 'var(--bg-tertiary)',
                   borderRadius: 'var(--radius-pill)',
                   border: '1px solid var(--border-subtle)',
                   overflowX: 'auto'
@@ -394,8 +400,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                         padding: '6px 14px',
                         borderRadius: 'var(--radius-pill)',
                         border: 'none',
-                        background: isActive ? '#FFFFFF' : 'transparent',
-                        color: isActive ? accentColor : 'var(--text-secondary)',
+                        background: isActive ? accentColor : 'transparent',
+                        color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
                         fontSize: '0.78rem',
                         fontWeight: 700,
                         cursor: 'pointer',
@@ -422,11 +428,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
             {/* Interactive Simulation Canvas Box */}
             <div
+              className="modal-canvas-box"
               style={{
                 width: '100%',
                 height: 330,
                 position: 'relative',
-                background: '#FFFFFF',
+                background: 'var(--bg-tertiary)',
                 borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-subtle)',
                 boxShadow: 'var(--shadow-sm)',
@@ -458,7 +465,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   style={{
                     padding: '6px 12px',
                     borderRadius: 'var(--radius-md)',
-                    background: '#FFFFFF',
+                    background: 'var(--bg-glass-card)',
                     border: '1px solid var(--border-subtle)',
                     fontFamily: 'var(--font-mono)',
                     fontSize: '0.72rem',
@@ -475,16 +482,17 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             <div
               style={{
                 padding: '16px',
-                background: '#FFFFFF',
+                background: 'var(--bg-glass-card)',
                 borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-subtle)',
                 marginTop: 'auto'
               }}
             >
               <div
+                className="modal-controls-grid"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: currentSim.controls.length > 2 ? '1fr 1fr' : '1fr',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                   gap: 12,
                   marginBottom: 14
                 }}
@@ -532,8 +540,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                       padding: '6px 12px',
                       borderRadius: 'var(--radius-md)',
                       border: '1px solid var(--border-subtle)',
-                      background: '#FFFFFF',
-                      color: 'var(--text-secondary)',
+                      background: 'var(--bg-tertiary)',
+                      color: 'var(--text-primary)',
                       fontSize: '0.78rem',
                       fontWeight: 600,
                       cursor: 'pointer'
@@ -553,6 +561,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
           {/* RIGHT: Clear Topic Explanation & Practice Workbench */}
           <div
+            className="modal-guide"
             style={{
               padding: '24px 26px',
               display: 'flex',

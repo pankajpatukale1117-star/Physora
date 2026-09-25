@@ -239,6 +239,7 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
 
   return (
     <div
+      className="formula-modal-overlay"
       style={{
         position: 'fixed',
         inset: 0,
@@ -254,7 +255,7 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
       onClick={onClose}
     >
       <div
-        className="glass-card"
+        className="glass-card formula-modal-window"
         style={{
           width: '100%',
           maxWidth: 960,
@@ -270,6 +271,7 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
       >
         {/* Modal Header */}
         <div
+          className="formula-modal-header"
           style={{
             padding: '20px 28px',
             borderBottom: '1px solid var(--border-subtle)',
