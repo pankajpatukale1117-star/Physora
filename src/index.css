@@ -444,3 +444,22 @@ em {
     scroll-behavior: auto !important;
   }
 }
+
+/* Interactive Control Numeric Input Badge */
+.control-number-badge-input {
+  -moz-appearance: textfield;
+}
+
+.control-number-badge-input::-webkit-outer-spin-button,
+.control-number-badge-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.control-number-badge-input:hover {
+  border-color: var(--border-electric) !important;
+}
+
+.control-number-badge-input:focus {
+  background: var(--bg-primary) !important;
+}

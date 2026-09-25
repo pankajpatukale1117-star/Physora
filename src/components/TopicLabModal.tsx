@@ -10,6 +10,156 @@ interface TopicLabModalProps {
   onSelectTopic: (topicId: string) => void;
 }
 
+interface NumericControlItemProps {
+  control: {
+    id: string;
+    label: string;
+    min: number;
+    max: number;
+    step: number;
+    defaultValue: number;
+    unit?: string;
+  };
+  value: number;
+  onChange: (val: number) => void;
+  accentColor: string;
+}
+
+const NumericControlItem: React.FC<NumericControlItemProps> = ({
+  control,
+  value,
+  onChange,
+  accentColor
+}) => {
+  const [prevValue, setPrevValue] = useState(value);
+  const [textValue, setTextValue] = useState(String(value));
+  const [isFocused, setIsFocused] = useState(false);
+
+  if (value !== prevValue) {
+    setPrevValue(value);
+    if (!isFocused) {
+      setTextValue(String(value));
+    }
+  }
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setTextValue(raw);
+    const parsed = parseFloat(raw);
+    if (!isNaN(parsed)) {
+      onChange(parsed);
+    }
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    const parsed = parseFloat(textValue);
+    if (isNaN(parsed)) {
+      setTextValue(String(control.defaultValue));
+      onChange(control.defaultValue);
+    } else {
+      const clamped = Math.min(control.max, Math.max(control.min, parsed));
+      setTextValue(String(clamped));
+      onChange(clamped);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      (e.target as HTMLInputElement).blur();
+    }
+  };
+
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    setTextValue(String(val));
+    onChange(val);
+  };
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        padding: '10px 12px',
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--bg-glass-card)',
+        border: '1px solid var(--border-subtle)',
+        boxShadow: 'var(--shadow-sm)',
+        transition: 'border-color 0.2s ease'
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+          {control.label}
+        </span>
+
+        {/* Interactive Numeric Input Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <input
+            type="number"
+            min={control.min}
+            max={control.max}
+            step={control.step}
+            value={textValue}
+            onChange={handleTextChange}
+            onFocus={() => setIsFocused(true)}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            title={`Click to type number (${control.min} to ${control.max})`}
+            className="control-number-badge-input font-mono"
+            style={{
+              width: '74px',
+              padding: '3px 6px',
+              textAlign: 'right',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              fontFamily: 'var(--font-mono)',
+              color: accentColor,
+              background: 'var(--bg-tertiary)',
+              border: isFocused ? `1.5px solid ${accentColor}` : '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-sm)',
+              outline: 'none',
+              boxShadow: isFocused ? `0 0 0 3px ${accentColor}25` : 'none',
+              transition: 'all 0.15s ease'
+            }}
+          />
+          {control.unit && (
+            <span
+              style={{
+                fontSize: '0.72rem',
+                color: 'var(--text-tertiary)',
+                fontWeight: 600,
+                minWidth: '22px'
+              }}
+            >
+              {control.unit}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Slider */}
+      <input
+        type="range"
+        min={control.min}
+        max={control.max}
+        step={control.step}
+        value={value}
+        onChange={handleSliderChange}
+        className="card-range-slider"
+        style={{ width: '100%', cursor: 'pointer', accentColor }}
+      />
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.64rem', color: 'var(--text-tertiary)' }}>
+        <span>Min: {control.min}</span>
+        <span>Max: {control.max}</span>
+      </div>
+    </div>
+  );
+};
+
 export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   topicId,
   onClose,
@@ -340,24 +490,13 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 }}
               >
                 {currentSim.controls.map(ctrl => (
-                  <div key={ctrl.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                      <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{ctrl.label}</span>
-                      <strong className="font-mono" style={{ color: accentColor }}>
-                        {params[ctrl.id] ?? ctrl.defaultValue} {ctrl.unit || ''}
-                      </strong>
-                    </div>
-                    <input
-                      type="range"
-                      min={ctrl.min}
-                      max={ctrl.max}
-                      step={ctrl.step}
-                      value={params[ctrl.id] ?? ctrl.defaultValue}
-                      onChange={(e) => handleControlChange(ctrl.id, Number(e.target.value))}
-                      className="card-range-slider"
-                      style={{ cursor: 'pointer' }}
-                    />
-                  </div>
+                  <NumericControlItem
+                    key={ctrl.id}
+                    control={ctrl}
+                    value={params[ctrl.id] ?? ctrl.defaultValue}
+                    onChange={(val) => handleControlChange(ctrl.id, val)}
+                    accentColor={accentColor}
+                  />
                 ))}
               </div>
 
@@ -497,8 +636,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     background: 'var(--bg-glass-card)',
                     borderRadius: 'var(--radius-md)',
                     padding: '14px 16px',
-                    borderLeft: `3px solid ${accentColor}`,
                     border: '1px solid var(--border-subtle)',
+                    borderLeftColor: accentColor,
                     borderLeftWidth: '3px'
                   }}
                 >

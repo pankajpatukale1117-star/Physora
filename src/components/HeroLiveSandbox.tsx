@@ -228,9 +228,35 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginTop: 16, alignItems: 'center' }}>
         {/* Angle Slider */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
             <span>Launch Angle (θ)</span>
-            <strong className="font-mono" style={{ color: 'var(--electric-blue)' }}>{angleDeg}°</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <input
+                type="number"
+                min={15}
+                max={75}
+                value={angleDeg}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  if (!isNaN(val)) setAngleDeg(Math.min(75, Math.max(15, val)));
+                }}
+                title="Type launch angle (15° to 75°)"
+                className="control-number-badge-input font-mono"
+                style={{
+                  width: '54px',
+                  padding: '2px 4px',
+                  textAlign: 'right',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: 'var(--electric-blue)',
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  outline: 'none'
+                }}
+              />
+              <span style={{ fontSize: '0.8rem', color: 'var(--electric-blue)', fontWeight: 700 }}>°</span>
+            </div>
           </div>
           <input
             type="range"
@@ -238,15 +264,41 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
             max={75}
             value={angleDeg}
             onChange={(e) => setAngleDeg(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--electric-blue)' }}
+            style={{ width: '100%', accentColor: 'var(--electric-blue)', cursor: 'pointer' }}
           />
         </div>
 
         {/* Speed Slider */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
             <span>Launch Speed (v₀)</span>
-            <strong className="font-mono" style={{ color: 'var(--electric-violet)' }}>{speed} m/s</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <input
+                type="number"
+                min={12}
+                max={36}
+                value={speed}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  if (!isNaN(val)) setSpeed(Math.min(36, Math.max(12, val)));
+                }}
+                title="Type launch speed (12 to 36 m/s)"
+                className="control-number-badge-input font-mono"
+                style={{
+                  width: '54px',
+                  padding: '2px 4px',
+                  textAlign: 'right',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: 'var(--electric-violet)',
+                  background: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-sm)',
+                  outline: 'none'
+                }}
+              />
+              <span style={{ fontSize: '0.72rem', color: 'var(--electric-violet)', fontWeight: 600 }}>m/s</span>
+            </div>
           </div>
           <input
             type="range"
@@ -254,7 +306,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
             max={36}
             value={speed}
             onChange={(e) => setSpeed(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--electric-violet)' }}
+            style={{ width: '100%', accentColor: 'var(--electric-violet)', cursor: 'pointer' }}
           />
         </div>
 
