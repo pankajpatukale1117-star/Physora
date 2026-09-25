@@ -12,6 +12,8 @@ import {
   Zap,
   Globe2,
   Waves,
+  Eye,
+  Flame,
   Play
 } from 'lucide-react';
 
@@ -121,6 +123,22 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
       icon: Waves,
       tag: 'v = f · λ',
       simCount: '3 Simulations'
+    },
+    {
+      id: 'optics',
+      title: 'Optics & Light',
+      summary: 'Snell’s Law, thin lens ray tracing, total internal reflection, and prism dispersion.',
+      icon: Eye,
+      tag: 'n₁ sin θ₁ = n₂ sin θ₂',
+      simCount: '3 Simulations'
+    },
+    {
+      id: 'thermodynamics',
+      title: 'Thermodynamics',
+      summary: 'Kinetic molecular theory, ideal gas chamber (PV = nRT), Carnot cycles, and heat conduction.',
+      icon: Flame,
+      tag: 'PV = nRT · η = 1 - Tc/Th',
+      simCount: '3 Simulations'
     }
   ];
 
@@ -195,7 +213,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                 transition: 'all 0.2s ease'
               }}
             >
-              {dom === 'All' ? 'All 12 Modules (36 Simulations)' : dom === 'Physics' ? '⚡ Physics (6 Modules)' : '📐 Mathematics (6 Modules)'}
+              {dom === 'All' ? 'All 14 Modules (42 Simulations)' : dom === 'Physics' ? '⚡ Physics (8 Modules)' : '📐 Mathematics (6 Modules)'}
             </button>
           ))}
         </div>

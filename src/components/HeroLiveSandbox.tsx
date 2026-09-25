@@ -335,7 +335,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
           }}
         >
           <Zap size={14} />
-          <span>Open Full 36-Sim Lab</span>
+          <span>Open Full 42-Sim Lab</span>
           <ArrowUpRight size={14} />
         </button>
       </div>

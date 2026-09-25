@@ -77,6 +77,8 @@ export const Footer: React.FC = () => {
               <li><span style={{ color: 'var(--text-secondary)' }}>Work, Energy &amp; Power</span></li>
               <li><span style={{ color: 'var(--text-secondary)' }}>Gravitation &amp; Orbits</span></li>
               <li><span style={{ color: 'var(--text-secondary)' }}>Waves &amp; Sound</span></li>
+              <li><span style={{ color: 'var(--text-secondary)' }}>Optics &amp; Light</span></li>
+              <li><span style={{ color: 'var(--text-secondary)' }}>Thermodynamics &amp; Heat</span></li>
             </ul>
           </div>
 
@@ -100,7 +102,7 @@ export const Footer: React.FC = () => {
                   fontWeight: 600
                 }}
               >
-                36 Active Simulations
+                42 Active Simulations
               </span>
               <span
                 className="font-mono"

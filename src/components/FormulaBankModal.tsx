@@ -156,6 +156,65 @@ const FORMULAS_DATA: FormulaItem[] = [
       { sym: 'r', name: 'Circle Radius', unit: 'Length' }
     ],
     targetTopicId: 'coordinate_geometry'
+  },
+  {
+    id: 'f-snells-law',
+    name: "Snell's Law of Refraction",
+    category: 'Physics',
+    domain: 'Optics',
+    latex: 'n_1 \\sin\\theta_1 = n_2 \\sin\\theta_2',
+    description: 'Relates angle of incidence to angle of refraction across optical media with different refractive indices.',
+    variables: [
+      { sym: 'n₁, n₂', name: 'Refractive Indices', unit: 'Dimensionless' },
+      { sym: 'θ₁', name: 'Angle of Incidence', unit: 'Degrees (°)' },
+      { sym: 'θ₂', name: 'Angle of Refraction', unit: 'Degrees (°)' }
+    ],
+    targetTopicId: 'optics'
+  },
+  {
+    id: 'f-thin-lens',
+    name: 'Gaussian Thin Lens Equation',
+    category: 'Physics',
+    domain: 'Optics',
+    latex: '\\frac{1}{f} = \\frac{1}{v} - \\frac{1}{u}',
+    description: 'Relates focal length f, image distance v, and object distance u for spherical lenses.',
+    variables: [
+      { sym: 'f', name: 'Focal Length', unit: 'm / mm' },
+      { sym: 'v', name: 'Image Distance', unit: 'm / mm' },
+      { sym: 'u', name: 'Object Distance', unit: 'm / mm' }
+    ],
+    targetTopicId: 'optics'
+  },
+  {
+    id: 'f-ideal-gas',
+    name: 'Ideal Gas Equation of State',
+    category: 'Physics',
+    domain: 'Thermodynamics',
+    latex: 'P V = n R T',
+    description: 'Macroscopic equation of state relating pressure, volume, substance quantity, and absolute temperature.',
+    variables: [
+      { sym: 'P', name: 'Gas Pressure', unit: 'Pa / kPa' },
+      { sym: 'V', name: 'Volume', unit: 'm³ / Liters' },
+      { sym: 'n', name: 'Amount of Substance', unit: 'mol' },
+      { sym: 'R', name: 'Universal Gas Constant', unit: '8.314 J/(mol·K)' },
+      { sym: 'T', name: 'Absolute Temperature', unit: 'K (Kelvin)' }
+    ],
+    targetTopicId: 'thermodynamics'
+  },
+  {
+    id: 'f-carnot-efficiency',
+    name: 'Carnot Heat Engine Maximum Efficiency',
+    category: 'Physics',
+    domain: 'Thermodynamics',
+    latex: '\\eta_{Carnot} = 1 - \\frac{T_C}{T_H} = \\frac{W_{net}}{Q_H}',
+    description: 'Upper physical bound on thermal efficiency for any engine operating between hot and cold heat reservoirs.',
+    variables: [
+      { sym: 'η', name: 'Thermal Efficiency', unit: 'Fraction (0 to 1)' },
+      { sym: 'T_H', name: 'Hot Reservoir Temperature', unit: 'K' },
+      { sym: 'T_C', name: 'Cold Reservoir Temperature', unit: 'K' },
+      { sym: 'W_net', name: 'Net Work Output', unit: 'J' }
+    ],
+    targetTopicId: 'thermodynamics'
   }
 ];
 

@@ -171,6 +171,28 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
           renderWaveSuperposition(ctx, w, h, params, t, onTelemetryUpdate);
           break;
 
+        // --- OPTICS ---
+        case 'optics_snells_law':
+          renderSnellsLaw(ctx, w, h, params, onTelemetryUpdate);
+          break;
+        case 'optics_thin_lens':
+          renderThinLens(ctx, w, h, params, onTelemetryUpdate);
+          break;
+        case 'optics_prism_dispersion':
+          renderPrismDispersion(ctx, w, h, params, onTelemetryUpdate);
+          break;
+
+        // --- THERMODYNAMICS ---
+        case 'thermo_ideal_gas_chamber':
+          renderIdealGasChamber(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+        case 'thermo_carnot_cycle':
+          renderCarnotCycle(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+        case 'thermo_heat_conduction':
+          renderHeatConduction(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+
         default:
           renderDefaultFallback(ctx, w, h);
       }
@@ -3534,6 +3556,895 @@ function renderWaveSuperposition(
   onTelem({
     interference_type: isConstructive ? 'Constructive Interference (Peaks Combine)' : 'Destructive Interference (Waves Cancel)',
     combined_amp: `Max Peak: ${maxCombinedAmp} px`
+  });
+}
+
+/* ==========================================================================
+   OPTICS & LIGHT RENDERERS
+   ========================================================================== */
+
+function renderSnellsLaw(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  p: Record<string, number>,
+  onTelem: (t: Record<string, string>) => void
+) {
+  const theta1Deg = p.theta1 ?? 35;
+  const n1 = p.n1 ?? 1.5;
+  const n2 = p.n2 ?? 1.0;
+
+  const cy = h / 2;
+  const cx = w / 2;
+
+  // Medium 1 (Top)
+  ctx.fillStyle = n1 > 1.2 ? 'rgba(0, 98, 255, 0.08)' : 'rgba(248, 250, 252, 0.5)';
+  ctx.fillRect(0, 0, w, cy);
+
+  // Medium 2 (Bottom)
+  ctx.fillStyle = n2 > 1.2 ? 'rgba(0, 98, 255, 0.08)' : 'rgba(248, 250, 252, 0.5)';
+  ctx.fillRect(0, cy, w, h - cy);
+
+  // Interface boundary line
+  ctx.strokeStyle = '#3B82F6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(0, cy);
+  ctx.lineTo(w, cy);
+  ctx.stroke();
+
+  // Normal line (vertical dashed)
+  ctx.strokeStyle = '#94A3B8';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath();
+  ctx.moveTo(cx, 20);
+  ctx.lineTo(cx, h - 20);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels for media
+  ctx.font = 'bold 12px JetBrains Mono';
+  ctx.fillStyle = '#1E293B';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Medium 1 (n₁ = ${n1.toFixed(2)})`, 24, 32);
+  ctx.fillText(`Medium 2 (n₂ = ${n2.toFixed(2)})`, 24, cy + 32);
+
+  const theta1Rad = (theta1Deg * Math.PI) / 180;
+  const rayLen = Math.min(w, h) * 0.42;
+
+  // Incident ray start
+  const inStartX = cx - rayLen * Math.sin(theta1Rad);
+  const inStartY = cy - rayLen * Math.cos(theta1Rad);
+
+  // Draw Incident Ray (Emerald Green Laser)
+  ctx.strokeStyle = '#10B981';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(inStartX, inStartY);
+  ctx.lineTo(cx, cy);
+  ctx.stroke();
+
+  drawArrow(ctx, inStartX, inStartY, cx, cy, '#10B981', '', 8);
+
+  // Angle arc for theta1
+  ctx.strokeStyle = '#10B981';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 40, -Math.PI / 2 - theta1Rad, -Math.PI / 2);
+  ctx.stroke();
+  ctx.font = '11px JetBrains Mono';
+  ctx.fillStyle = '#059669';
+  ctx.fillText(`θ₁ = ${theta1Deg.toFixed(0)}°`, cx - 55, cy - 45);
+
+  // Check critical angle if n1 > n2
+  let isTIR = false;
+  let critAngleDeg = 0;
+  if (n1 > n2) {
+    critAngleDeg = (Math.asin(n2 / n1) * 180) / Math.PI;
+    if (theta1Deg > critAngleDeg) {
+      isTIR = true;
+    }
+  }
+
+  // Reflected Ray
+  const refEndX = cx + rayLen * Math.sin(theta1Rad);
+  const refEndY = cy - rayLen * Math.cos(theta1Rad);
+
+  ctx.strokeStyle = isTIR ? '#10B981' : 'rgba(16, 185, 129, 0.35)';
+  ctx.lineWidth = isTIR ? 3 : 1.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(refEndX, refEndY);
+  ctx.stroke();
+
+  if (isTIR) {
+    drawArrow(ctx, cx, cy, refEndX, refEndY, '#10B981', '', 8);
+
+    // Label TIR
+    ctx.fillStyle = '#DC2626';
+    ctx.font = 'bold 13px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚡ 100% TOTAL INTERNAL REFLECTION (TIR)', cx, cy + 60);
+    ctx.font = '11px JetBrains Mono';
+    ctx.fillStyle = '#64748B';
+    ctx.fillText(`θ₁ (${theta1Deg}°) > Critical Angle θ_c (${critAngleDeg.toFixed(1)}°)`, cx, cy + 80);
+
+    onTelem({
+      refracted_angle: 'None (Total Internal Reflection)',
+      critical_angle: `${critAngleDeg.toFixed(1)}°`,
+      optical_state: '100% Total Internal Reflection (TIR)',
+      speed_ratio: `v₁/v₂ = ${(n2 / n1).toFixed(2)}`
+    });
+  } else {
+    // Refracted Ray (Snell's Law)
+    const sinTheta2 = (n1 / n2) * Math.sin(theta1Rad);
+    const theta2Rad = Math.asin(Math.min(1, Math.max(-1, sinTheta2)));
+    const theta2Deg = (theta2Rad * 180) / Math.PI;
+
+    const outEndX = cx + rayLen * Math.sin(theta2Rad);
+    const outEndY = cy + rayLen * Math.cos(theta2Rad);
+
+    ctx.strokeStyle = '#0062FF';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(outEndX, outEndY);
+    ctx.stroke();
+
+    drawArrow(ctx, cx, cy, outEndX, outEndY, '#0062FF', '', 8);
+
+    // Angle arc for theta2
+    ctx.strokeStyle = '#0062FF';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 45, Math.PI / 2 - theta2Rad, Math.PI / 2);
+    ctx.stroke();
+    ctx.font = '11px JetBrains Mono';
+    ctx.fillStyle = '#0062FF';
+    ctx.fillText(`θ₂ = ${theta2Deg.toFixed(1)}°`, cx + 20, cy + 45);
+
+    const bendsToward = theta2Deg < theta1Deg;
+    onTelem({
+      refracted_angle: `${theta2Deg.toFixed(1)}°`,
+      critical_angle: n1 > n2 ? `${critAngleDeg.toFixed(1)}°` : 'None (n₁ ≤ n₂)',
+      optical_state: bendsToward ? 'Bends TOWARD normal (Slows down)' : 'Bends AWAY from normal (Speeds up)',
+      speed_ratio: `v₁/v₂ = ${(n2 / n1).toFixed(2)}`
+    });
+  }
+}
+
+function renderThinLens(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  p: Record<string, number>,
+  onTelem: (t: Record<string, string>) => void
+) {
+  const f = p.focal_len ?? 60; // mm, can be positive (convex) or negative (concave)
+  const u = Math.abs(p.obj_dist ?? 100); // object distance to left
+  const ho = p.obj_height ?? 35; // object height
+
+  const cx = w / 2;
+  const cy = h / 2;
+
+  // Scale: 1 mm = 1.6 px
+  const scale = 1.6;
+  const fPx = f * scale;
+  const uPx = u * scale;
+  const hoPx = ho * scale;
+
+  // Optical Principal Axis
+  ctx.strokeStyle = '#94A3B8';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(30, cy);
+  ctx.lineTo(w - 30, cy);
+  ctx.stroke();
+
+  // Lens line at cx
+  const isConvex = f > 0;
+  ctx.strokeStyle = isConvex ? '#0062FF' : '#7C3AED';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 120);
+  ctx.lineTo(cx, cy + 120);
+  ctx.stroke();
+
+  // Draw lens shape indicator
+  ctx.fillStyle = isConvex ? 'rgba(0, 98, 255, 0.12)' : 'rgba(124, 58, 237, 0.12)';
+  ctx.beginPath();
+  if (isConvex) {
+    ctx.ellipse(cx, cy, 14, 120, 0, 0, 2 * Math.PI);
+  } else {
+    ctx.rect(cx - 8, cy - 120, 16, 240);
+  }
+  ctx.fill();
+
+  // Foci marks
+  const fAbsPx = Math.abs(fPx);
+  const foci = [
+    { x: cx - fAbsPx, label: 'F₁' },
+    { x: cx - 2 * fAbsPx, label: '2F₁' },
+    { x: cx + fAbsPx, label: 'F₂' },
+    { x: cx + 2 * fAbsPx, label: '2F₂' }
+  ];
+
+  ctx.font = '10px JetBrains Mono';
+  ctx.fillStyle = '#64748B';
+  ctx.textAlign = 'center';
+  foci.forEach(fc => {
+    if (fc.x >= 30 && fc.x <= w - 30) {
+      ctx.beginPath();
+      ctx.arc(fc.x, cy, 3, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.fillText(fc.label, fc.x, cy + 16);
+    }
+  });
+
+  // Object arrow at (cx - uPx, cy)
+  const objX = cx - uPx;
+  const objTipY = cy - hoPx;
+
+  drawArrow(ctx, objX, cy, objX, objTipY, '#10B981', 'Object', 8);
+
+  // Thin lens equation: 1/f = 1/v - 1/(-u) => 1/v = 1/f - 1/u => v = (u * f) / (u - f)
+  let v = 0;
+  let isAtInfinity = false;
+  if (Math.abs(u - f) < 0.01) {
+    isAtInfinity = true;
+  } else {
+    v = (u * f) / (u - f);
+  }
+
+  const m = isAtInfinity ? Infinity : -v / u; // magnification m = -v/u for inverted
+  const hi = isAtInfinity ? 0 : m * ho;
+  const vPx = v * scale;
+  const hiPx = hi * scale;
+  const imgX = cx + vPx;
+  const imgTipY = cy + hiPx;
+
+  // Ray 1: Parallel to axis, then through right focus (if convex) or diverged (if concave)
+  ctx.strokeStyle = '#F59E0B';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(objX, objTipY);
+  ctx.lineTo(cx, objTipY);
+
+  if (isConvex) {
+    const slope1 = (cy - objTipY) / fAbsPx;
+    const ray1EndX = w - 20;
+    const ray1EndY = cy + slope1 * (ray1EndX - (cx + fAbsPx));
+    ctx.lineTo(ray1EndX, ray1EndY);
+  } else {
+    const slope1 = (objTipY - cy) / fAbsPx;
+    ctx.lineTo(w - 20, objTipY + slope1 * (w - 20 - cx));
+    // Virtual trace back
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(cx, objTipY);
+    ctx.lineTo(cx - fAbsPx, cy);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.stroke();
+
+  // Ray 2: Directly through Optical Center (cx, cy)
+  ctx.strokeStyle = '#EC4899';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(objX, objTipY);
+  const slope2 = (cy - objTipY) / (cx - objX);
+  ctx.lineTo(w - 20, cy + slope2 * (w - 20 - cx));
+  if (v < 0) {
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.setLineDash([3, 3]);
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(Math.max(20, imgX - 30), cy - slope2 * (cx - Math.max(20, imgX - 30)));
+    ctx.stroke();
+    ctx.setLineDash([]);
+  } else {
+    ctx.stroke();
+  }
+
+  // Draw Image if not at infinity and within canvas
+  if (!isAtInfinity && imgX >= 20 && imgX <= w - 20) {
+    const isReal = v > 0;
+    drawArrow(ctx, imgX, cy, imgX, imgTipY, isReal ? '#0062FF' : '#7C3AED', isReal ? 'Real Image' : 'Virtual Image', 8);
+  }
+
+  // Legend at bottom
+  ctx.fillStyle = '#0F172A';
+  ctx.font = '10px JetBrains Mono';
+  ctx.textAlign = 'left';
+  ctx.fillText('Amber Ray: Parallel → Focus | Pink Ray: Through Optical Center', 30, h - 16);
+
+  onTelem({
+    image_dist: isAtInfinity ? 'Infinity (Parallel Rays)' : `${v.toFixed(1)} mm (${v > 0 ? 'Right/Real' : 'Left/Virtual'})`,
+    magnification: isAtInfinity ? 'Undefined' : `${Math.abs(m).toFixed(2)}x (${Math.abs(hi).toFixed(1)} mm)`,
+    image_nature: isAtInfinity ? 'Focus at Infinity' : v > 0 ? 'Real & Inverted' : 'Virtual & Upright',
+    lens_mode: isConvex ? `Convex (+${f} mm)` : `Concave (${f} mm)`
+  });
+}
+
+function renderPrismDispersion(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  p: Record<string, number>,
+  onTelem: (t: Record<string, string>) => void
+) {
+  const iDeg = p.incident_angle ?? 48;
+  const apexDeg = p.prism_apex ?? 60;
+  const dispDelta = p.glass_dispersion ?? 0.04;
+
+  const cx = w / 2 - 20;
+  const cy = h / 2 + 10;
+  const side = 180;
+
+  // Prism vertices
+  const apexY = cy - (side * Math.sqrt(3)) / 3;
+  const baseLeftX = cx - side / 2;
+  const baseRightX = cx + side / 2;
+  const baseY = cy + (side * Math.sqrt(3)) / 6;
+
+  // Draw Glass Prism
+  const prismGrad = ctx.createLinearGradient(baseLeftX, apexY, baseRightX, baseY);
+  prismGrad.addColorStop(0, 'rgba(0, 98, 255, 0.12)');
+  prismGrad.addColorStop(1, 'rgba(0, 229, 255, 0.05)');
+  ctx.fillStyle = prismGrad;
+  ctx.strokeStyle = '#0062FF';
+  ctx.lineWidth = 2.5;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, apexY);
+  ctx.lineTo(baseLeftX, baseY);
+  ctx.lineTo(baseRightX, baseY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Prism Apex Angle label
+  ctx.font = 'bold 11px JetBrains Mono';
+  ctx.fillStyle = '#0062FF';
+  ctx.textAlign = 'center';
+  ctx.fillText(`A = ${apexDeg}°`, cx, apexY - 10);
+
+  // Incident ray hitting left face
+  const hitY = cy - 10;
+  const leftFaceSlope = (baseY - apexY) / (baseLeftX - cx);
+  const hitX = cx + (hitY - apexY) / leftFaceSlope;
+
+  const iRad = (iDeg * Math.PI) / 180;
+  const faceAngle = Math.atan2(baseY - apexY, baseLeftX - cx);
+  const normalAngle = faceAngle + Math.PI / 2;
+
+  // Collimated White Light Beam
+  const rayInLen = 140;
+  const inStartX = hitX - rayInLen * Math.cos(normalAngle - iRad);
+  const inStartY = hitY - rayInLen * Math.sin(normalAngle - iRad);
+
+  ctx.strokeStyle = '#F8FAFC';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(inStartX, inStartY);
+  ctx.lineTo(hitX, hitY);
+  ctx.stroke();
+
+  ctx.strokeStyle = '#94A3B8';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(inStartX, inStartY);
+  ctx.lineTo(hitX, hitY);
+  ctx.stroke();
+
+  drawArrow(ctx, inStartX, inStartY, hitX, hitY, '#3B82F6', 'White Light', 8);
+
+  // Spectral refraction inside and out
+  const wavelengths = [
+    { color: '#EF4444', n: 1.505, name: 'Red' },
+    { color: '#F59E0B', n: 1.512, name: 'Orange' },
+    { color: '#EAB308', n: 1.518, name: 'Yellow' },
+    { color: '#10B981', n: 1.524, name: 'Green' },
+    { color: '#00E5FF', n: 1.530 + dispDelta * 0.5, name: 'Cyan' },
+    { color: '#7C3AED', n: 1.538 + dispDelta, name: 'Violet' }
+  ];
+
+  const screenX = w - 40;
+  let devRed = 0;
+  let devViolet = 0;
+
+  wavelengths.forEach((wl, idx) => {
+    // Snell at Face 1: sin(r1) = sin(i) / n
+    const sinR1 = Math.sin(iRad) / wl.n;
+    const r1 = Math.asin(Math.min(1, sinR1));
+
+    // Internal ray angle relative to prism base
+    const internalAngle = normalAngle - r1;
+    const rayInternalLen = 85 + idx * 2.5;
+    const exitX = hitX + rayInternalLen * Math.cos(internalAngle + 0.3);
+    const exitY = hitY + rayInternalLen * Math.sin(internalAngle + 0.3);
+
+    // Draw internal ray
+    ctx.strokeStyle = wl.color;
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(hitX, hitY);
+    ctx.lineTo(exitX, exitY);
+    ctx.stroke();
+
+    // Snell at Face 2: prism apex relation r1 + r2 = A => r2 = A - r1
+    const A_rad = (apexDeg * Math.PI) / 180;
+    const r2 = Math.max(0, A_rad - r1);
+    const sinE = Math.min(1, wl.n * Math.sin(r2));
+    const e = Math.asin(sinE);
+
+    // Total deviation: delta = i + e - A
+    const delta = (iRad + e - A_rad) * (180 / Math.PI);
+    if (idx === 0) devRed = delta;
+    if (idx === wavelengths.length - 1) devViolet = delta;
+
+    // Exit ray to screen
+    const exitAngle = 0.25 + (delta * Math.PI) / 180;
+    const outEndY = exitY + (screenX - exitX) * Math.sin(exitAngle);
+
+    ctx.strokeStyle = wl.color;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(exitX, exitY);
+    ctx.lineTo(screenX, outEndY);
+    ctx.stroke();
+  });
+
+  // Projection Screen on right
+  ctx.fillStyle = '#1E293B';
+  ctx.fillRect(screenX, 40, 8, h - 80);
+  ctx.font = 'bold 10px JetBrains Mono';
+  ctx.fillStyle = '#64748B';
+  ctx.textAlign = 'center';
+  ctx.fillText('Screen', screenX + 4, 30);
+
+  const spread = Math.abs(devViolet - devRed);
+  const minDevEstimated = 2 * iDeg - apexDeg;
+
+  onTelem({
+    dev_red: `${devRed.toFixed(1)}°`,
+    dev_violet: `${devViolet.toFixed(1)}°`,
+    angular_spread: `${spread.toFixed(2)}°`,
+    deviation_state: `Symmetric Min Deviation ~ ${minDevEstimated.toFixed(1)}°`
+  });
+}
+
+/* ==========================================================================
+   THERMODYNAMICS & HEAT RENDERERS
+   ========================================================================== */
+
+function renderIdealGasChamber(
+  ctx: CanvasRenderingContext2D,
+  _w: number,
+  _h: number,
+  p: Record<string, number>,
+  t: number,
+  onTelem: (t: Record<string, string>) => void
+) {
+  const T = p.temperature ?? 300; // Kelvin (150 - 750)
+  const V = p.volume ?? 25; // Liters (10 - 45)
+  const n = p.particles_count ?? 2; // Moles (1 - 5)
+
+  // Ideal Gas Law: P = nRT / V
+  // R = 8.314 J/mol·K. P in kPa:
+  const R = 8.314;
+  const P_kPa = (n * R * T) / V;
+  const P_atm = P_kPa / 101.325;
+  const v_rms = Math.sqrt((3 * R * T) / 0.004); // Helium M = 4 g/mol
+  const U_kJ = (1.5 * n * R * T) / 1000;
+
+  const leftX = 70;
+  const topY = 90;
+  const chamberH = 180;
+  const maxChamberW = 380;
+  const currentChamberW = Math.min(maxChamberW, 80 + V * 6.5);
+  const pistonX = leftX + currentChamberW;
+
+  // Cylinder walls (thick dark container)
+  ctx.fillStyle = '#0F172A';
+  // Top wall
+  ctx.fillRect(leftX - 10, topY - 12, maxChamberW + 40, 12);
+  // Bottom wall
+  ctx.fillRect(leftX - 10, topY + chamberH, maxChamberW + 40, 12);
+  // Left closed wall
+  ctx.fillRect(leftX - 12, topY - 12, 12, chamberH + 24);
+
+  // Gas Chamber Interior Fill (tint based on Temperature)
+  const heatRatio = Math.min(1, Math.max(0, (T - 150) / 600));
+  const chamberGrad = ctx.createLinearGradient(leftX, topY, pistonX, topY + chamberH);
+  if (heatRatio > 0.5) {
+    chamberGrad.addColorStop(0, `rgba(239, 68, 68, ${0.05 + heatRatio * 0.15})`);
+    chamberGrad.addColorStop(1, `rgba(245, 158, 11, ${0.05 + heatRatio * 0.15})`);
+  } else {
+    chamberGrad.addColorStop(0, `rgba(0, 98, 255, ${0.12 - heatRatio * 0.1})`);
+    chamberGrad.addColorStop(1, `rgba(0, 229, 255, ${0.12 - heatRatio * 0.1})`);
+  }
+  ctx.fillStyle = chamberGrad;
+  ctx.fillRect(leftX, topY, currentChamberW, chamberH);
+
+  // Sliding Piston Head
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(pistonX, topY, 18, chamberH);
+  // Piston Rod
+  ctx.fillStyle = '#64748B';
+  ctx.fillRect(pistonX + 18, topY + chamberH / 2 - 8, maxChamberW - currentChamberW + 40, 16);
+
+  // Bouncing Gas Particles
+  const particleCount = Math.min(60, 15 * n);
+  const speed = Math.sqrt(T / 300) * 1.8;
+
+  ctx.fillStyle = heatRatio > 0.4 ? '#EF4444' : '#0062FF';
+  for (let i = 0; i < particleCount; i++) {
+    const seed = i * 137.5;
+    const px = leftX + 8 + ((seed + t * speed * 40 * ((i % 3) + 1)) % (currentChamberW - 16));
+    const py = topY + 8 + ((seed * 1.618 + Math.sin(t * speed + i) * 60 + 80) % (chamberH - 16));
+
+    ctx.beginPath();
+    ctx.arc(px, py, 3.5, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Particle velocity trail
+    ctx.strokeStyle = heatRatio > 0.4 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(0, 98, 255, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - Math.cos(seed) * 8 * speed, py - Math.sin(seed) * 8 * speed);
+    ctx.stroke();
+  }
+
+  // Pressure Gauge Dial on top
+  const gaugeX = leftX + 80;
+  const gaugeY = topY - 50;
+  const gaugeR = 30;
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#1E293B';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.arc(gaugeX, gaugeY, gaugeR, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.stroke();
+
+  // Gauge needle
+  const pAngle = -Math.PI * 0.8 + (Math.min(P_kPa, 600) / 600) * Math.PI * 1.6;
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(gaugeX, gaugeY);
+  ctx.lineTo(gaugeX + Math.cos(pAngle) * (gaugeR - 6), gaugeY + Math.sin(pAngle) * (gaugeR - 6));
+  ctx.stroke();
+
+  ctx.font = 'bold 9px JetBrains Mono';
+  ctx.fillStyle = '#0F172A';
+  ctx.textAlign = 'center';
+  ctx.fillText('PRESSURE', gaugeX, gaugeY - gaugeR - 6);
+  ctx.fillText(`${P_kPa.toFixed(0)} kPa`, gaugeX, gaugeY + 12);
+
+  // Heating Burner / Cold Block below cylinder
+  const burnerX = leftX + currentChamberW / 2;
+  const burnerY = topY + chamberH + 14;
+
+  if (T >= 280) {
+    // Fire flames
+    ctx.fillStyle = '#F59E0B';
+    const flameH = (T / 750) * 28;
+    for (let f = -30; f <= 30; f += 15) {
+      ctx.beginPath();
+      ctx.moveTo(burnerX + f - 6, burnerY);
+      ctx.quadraticCurveTo(
+        burnerX + f,
+        burnerY + flameH + Math.sin(t * 8 + f) * 4,
+        burnerX + f + 6,
+        burnerY
+      );
+      ctx.fill();
+    }
+    ctx.font = 'bold 10px JetBrains Mono';
+    ctx.fillStyle = '#D97706';
+    ctx.fillText(`Heat Input Q (T = ${T} K)`, burnerX, burnerY + 36);
+  } else {
+    // Ice cubes
+    ctx.fillStyle = '#00E5FF';
+    ctx.fillRect(burnerX - 25, burnerY + 4, 16, 16);
+    ctx.fillRect(burnerX + 5, burnerY + 4, 16, 16);
+    ctx.font = 'bold 10px JetBrains Mono';
+    ctx.fillStyle = '#0284C7';
+    ctx.fillText(`Cooled (T = ${T} K)`, burnerX, burnerY + 34);
+  }
+
+  // Telemetry readout
+  onTelem({
+    pressure: `${P_kPa.toFixed(1)} kPa (${P_atm.toFixed(2)} atm)`,
+    v_rms: `${v_rms.toFixed(0)} m/s (Helium)`,
+    internal_energy: `${U_kJ.toFixed(2)} kJ`,
+    collision_freq: `${((P_kPa * currentChamberW) / 120).toFixed(0)} collisions/ms`
+  });
+}
+
+function renderCarnotCycle(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  p: Record<string, number>,
+  t: number,
+  onTelem: (t: Record<string, string>) => void
+) {
+  const TH = p.thot ?? 750; // K (450 - 1200)
+  const TC = p.tcold ?? 300; // K (200 - 400)
+  const r = p.compression_ratio ?? 3.5; // (2 - 6)
+
+  const eta = 1 - TC / TH;
+  const QH = 1000; // J base
+  const W_net = QH * eta;
+  const QC = QH - W_net;
+
+  const originX = 90;
+  const originY = h - 60;
+  const plotW = w - 160;
+  const plotH = h - 130;
+
+  // Axes (P vs V)
+  ctx.strokeStyle = '#94A3B8';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(originX + plotW, originY);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(originX, originY);
+  ctx.lineTo(originX, originY - plotH);
+  ctx.stroke();
+
+  ctx.font = 'bold 11px JetBrains Mono';
+  ctx.fillStyle = '#64748B';
+  ctx.textAlign = 'left';
+  ctx.fillText('Volume (V) →', originX + plotW - 60, originY + 24);
+  ctx.fillText('Pressure (P) ↑', originX - 65, originY - plotH + 10);
+
+  // Carnot 4 Corner States (Normalized coordinates)
+  // State 1: Highest P, lowest V (Start of isothermal expansion at TH)
+  const p1 = { x: originX + 50, y: originY - plotH + 20 };
+  // State 2: End of isothermal expansion at TH (V increased to V2)
+  const p2 = { x: originX + 160, y: originY - plotH + 70 };
+  // State 3: End of adiabatic expansion down to TC (V increased to V3)
+  const p3 = { x: originX + 320, y: originY - 30 };
+  // State 4: End of isothermal compression at TC (V decreased to V4)
+  const p4 = { x: originX + 140, y: originY - 70 };
+
+  // Fill enclosed work area with amber glow
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.18)';
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.quadraticCurveTo((p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 10, p2.x, p2.y);
+  ctx.quadraticCurveTo((p2.x + p3.x) / 2, (p2.y + p3.y) / 2 - 10, p3.x, p3.y);
+  ctx.quadraticCurveTo((p3.x + p4.x) / 2, (p3.y + p4.y) / 2 + 10, p4.x, p4.y);
+  ctx.quadraticCurveTo((p4.x + p1.x) / 2, (p4.y + p1.y) / 2 + 10, p1.x, p1.y);
+  ctx.closePath();
+  ctx.fill();
+
+  // Curve 1 -> 2: Isothermal Expansion at TH (Ruby Red)
+  ctx.strokeStyle = '#EF4444';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(p1.x, p1.y);
+  ctx.quadraticCurveTo((p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 10, p2.x, p2.y);
+  ctx.stroke();
+
+  // Curve 2 -> 3: Adiabatic Expansion TH -> TC (Orange)
+  ctx.strokeStyle = '#F59E0B';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(p2.x, p2.y);
+  ctx.quadraticCurveTo((p2.x + p3.x) / 2, (p2.y + p3.y) / 2 - 10, p3.x, p3.y);
+  ctx.stroke();
+
+  // Curve 3 -> 4: Isothermal Compression at TC (Cyan/Blue)
+  ctx.strokeStyle = '#0062FF';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(p3.x, p3.y);
+  ctx.quadraticCurveTo((p3.x + p4.x) / 2, (p3.y + p4.y) / 2 + 10, p4.x, p4.y);
+  ctx.stroke();
+
+  // Curve 4 -> 1: Adiabatic Compression TC -> TH (Purple)
+  ctx.strokeStyle = '#7C3AED';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(p4.x, p4.y);
+  ctx.quadraticCurveTo((p4.x + p1.x) / 2, (p4.y + p1.y) / 2 + 10, p1.x, p1.y);
+  ctx.stroke();
+
+  // State labels
+  ctx.font = 'bold 11px JetBrains Mono';
+  ctx.fillStyle = '#EF4444';
+  ctx.fillText('1 (TH)', p1.x - 10, p1.y - 8);
+  ctx.fillText('2 (TH)', p2.x + 8, p2.y - 6);
+  ctx.fillStyle = '#0062FF';
+  ctx.fillText('3 (TC)', p3.x + 8, p3.y + 12);
+  ctx.fillText('4 (TC)', p4.x - 18, p4.y + 16);
+
+  // Net Work Label in loop center
+  ctx.fillStyle = '#D97706';
+  ctx.font = 'bold 12px JetBrains Mono';
+  ctx.textAlign = 'center';
+  ctx.fillText(`Net Work ∮ P·dV = ${W_net.toFixed(0)} J`, (p1.x + p3.x) / 2, (p1.y + p3.y) / 2);
+
+  // Animated tracer bead moving through the 4 stages
+  const cycleT = (t * 0.4) % 4;
+  let beadX = p1.x;
+  let beadY = p1.y;
+  let stageName = '';
+
+  if (cycleT < 1) {
+    const s = cycleT;
+    beadX = p1.x + s * (p2.x - p1.x);
+    beadY = p1.y + s * (p2.y - p1.y);
+    stageName = '1→2: Isothermal Expansion (Heat In Q_H)';
+  } else if (cycleT < 2) {
+    const s = cycleT - 1;
+    beadX = p2.x + s * (p3.x - p2.x);
+    beadY = p2.y + s * (p3.y - p2.y);
+    stageName = '2→3: Adiabatic Expansion (Gas Cools)';
+  } else if (cycleT < 3) {
+    const s = cycleT - 2;
+    beadX = p3.x + s * (p4.x - p3.x);
+    beadY = p3.y + s * (p4.y - p3.y);
+    stageName = '3→4: Isothermal Compression (Heat Out Q_C)';
+  } else {
+    const s = cycleT - 3;
+    beadX = p4.x + s * (p1.x - p4.x);
+    beadY = p4.y + s * (p1.y - p4.y);
+    stageName = '4→1: Adiabatic Compression (Gas Heats)';
+  }
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#D97706';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(beadX, beadY, 6, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.stroke();
+
+  // Active stage banner
+  ctx.fillStyle = '#1E293B';
+  ctx.font = 'bold 11px JetBrains Mono';
+  ctx.fillText(stageName, originX + plotW / 2, 28);
+
+  onTelem({
+    carnot_efficiency: `${(eta * 100).toFixed(1)}% (1 - TC/TH, r = ${r.toFixed(1)})`,
+    work_per_cycle: `${W_net.toFixed(0)} J`,
+    heat_input: `${QH.toFixed(0)} J (from ${TH} K)`,
+    heat_rejected: `${QC.toFixed(0)} J (to ${TC} K)`
+  });
+}
+
+function renderHeatConduction(
+  ctx: CanvasRenderingContext2D,
+  _w: number,
+  _h: number,
+  p: Record<string, number>,
+  t: number,
+  onTelem: (t: Record<string, string>) => void
+) {
+  const TH = p.t_hot_source ?? 160; // °C
+  const TC = p.t_cold_sink ?? 20; // °C
+  const k = p.conductivity_k ?? 205; // W/m·K
+  const L_cm = p.bar_length ?? 15; // cm
+
+  const L_m = L_cm / 100;
+  const deltaT = TH - TC;
+  const grad = deltaT / L_m; // °C / m
+  const area_m2 = 0.0025; // 5cm x 5cm cross-section
+  const heatFlux_W = k * area_m2 * grad; // Fourier's Law: dQ/dt = k*A*grad
+
+  const barStartX = 110;
+  const barW = Math.min(460, 100 + L_cm * 12);
+  const barEndX = barStartX + barW;
+  const barY = 175;
+  const barH = 75;
+
+  // 1. Hot Reservoir on Left
+  const hotGrad = ctx.createLinearGradient(barStartX - 60, barY, barStartX, barY);
+  hotGrad.addColorStop(0, '#DC2626');
+  hotGrad.addColorStop(1, '#EF4444');
+  ctx.fillStyle = hotGrad;
+  ctx.fillRect(barStartX - 60, barY - 15, 60, barH + 30);
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 11px JetBrains Mono';
+  ctx.textAlign = 'center';
+  ctx.fillText('HOT SINK', barStartX - 30, barY + 28);
+  ctx.fillText(`${TH}°C`, barStartX - 30, barY + 46);
+
+  // 2. Cold Sink on Right
+  const coldGrad = ctx.createLinearGradient(barEndX, barY, barEndX + 60, barY);
+  coldGrad.addColorStop(0, '#00E5FF');
+  coldGrad.addColorStop(1, '#0284C7');
+  ctx.fillStyle = coldGrad;
+  ctx.fillRect(barEndX, barY - 15, 60, barH + 30);
+
+  ctx.fillStyle = '#0F172A';
+  ctx.fillText('COLD SINK', barEndX + 30, barY + 28);
+  ctx.fillText(`${TC}°C`, barEndX + 30, barY + 46);
+
+  // 3. Conduction Bar with Thermal Gradient
+  const barGrad = ctx.createLinearGradient(barStartX, 0, barEndX, 0);
+  barGrad.addColorStop(0, '#EF4444');
+  barGrad.addColorStop(0.35, '#F59E0B');
+  barGrad.addColorStop(0.7, '#64748B');
+  barGrad.addColorStop(1, '#00E5FF');
+
+  ctx.fillStyle = barGrad;
+  ctx.fillRect(barStartX, barY, barW, barH);
+  ctx.strokeStyle = '#1E293B';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(barStartX, barY, barW, barH);
+
+  // 4. Moving heat flux carriers (phonons/electrons)
+  const carrierSpeed = Math.min(5, 0.5 + (heatFlux_W / 100) * 1.5);
+  ctx.fillStyle = '#FDE047';
+  const numCarriers = 24;
+  for (let i = 0; i < numCarriers; i++) {
+    const cx = barStartX + ((i * 22 + t * 45 * carrierSpeed) % barW);
+    const cy = barY + 12 + ((i * 17) % (barH - 24));
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Heat trail
+    ctx.strokeStyle = 'rgba(253, 224, 71, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx - 10 * carrierSpeed, cy);
+    ctx.stroke();
+  }
+
+  // 5. Temperature Profile Graph Above Bar
+  const graphH = 65;
+  const graphY = barY - 75;
+
+  ctx.strokeStyle = '#94A3B8';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(barStartX, graphY + graphH);
+  ctx.lineTo(barEndX, graphY + graphH);
+  ctx.stroke();
+
+  // Linear T(x) drop line
+  ctx.strokeStyle = '#DC2626';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(barStartX, graphY + 10);
+  ctx.lineTo(barEndX, graphY + graphH - 5);
+  ctx.stroke();
+
+  ctx.fillStyle = '#64748B';
+  ctx.font = '10px JetBrains Mono';
+  ctx.textAlign = 'left';
+  ctx.fillText('Temperature Profile: T(x) = T_H - (ΔT/L)·x', barStartX, graphY - 6);
+
+  let materialName = 'Custom';
+  if (k >= 350) materialName = 'Copper (k ≈ 385 W/m·K)';
+  else if (k >= 180) materialName = 'Aluminum (k ≈ 205 W/m·K)';
+  else if (k >= 40) materialName = 'Iron/Steel (k ≈ 50 W/m·K)';
+  else materialName = 'Thermal Insulator / Glass';
+
+  onTelem({
+    heat_flux: `${heatFlux_W.toFixed(1)} W (Joules/s)`,
+    temp_gradient: `${grad.toFixed(1)} °C/m`,
+    material_spec: materialName,
+    midpoint_temp: `${((TH + TC) / 2).toFixed(1)} °C`
   });
 }
 

@@ -175,6 +175,15 @@ export const QUIZ_DATA: Record<string, QuizQuestion[]> = {
       explanation: 'The standard circle equation is (x - h)² + (y - k)² = r². Here h = 3, k = -4, and r = √25 = 5.'
     }
   ],
+  units_dimensions: [
+    {
+      id: 'q-ud-1',
+      question: 'What are the fundamental dimensional formulas for Force in terms of Mass (M), Length (L), and Time (T)?',
+      options: ['[M L T⁻¹]', '[M L T⁻²]', '[M L² T⁻²]', '[M⁻¹ L T⁻²]'],
+      correctIndex: 1,
+      explanation: 'Force F = mass × acceleration. Acceleration has dimensions [L T⁻²], so Force has dimensions [M] · [L T⁻²] = [M L T⁻²].'
+    }
+  ],
   units_and_dimensions: [
     {
       id: 'q-ud-1',
@@ -182,6 +191,15 @@ export const QUIZ_DATA: Record<string, QuizQuestion[]> = {
       options: ['[M L T⁻¹]', '[M L T⁻²]', '[M L² T⁻²]', '[M⁻¹ L T⁻²]'],
       correctIndex: 1,
       explanation: 'Force F = mass × acceleration. Acceleration has dimensions [L T⁻²], so Force has dimensions [M] · [L T⁻²] = [M L T⁻²].'
+    }
+  ],
+  functions: [
+    {
+      id: 'q-fg-1',
+      question: 'If f(x) = x², how does the graph of g(x) = (x - 4)² compare to f(x)?',
+      options: ['Shifted 4 units to the left', 'Shifted 4 units to the right', 'Shifted 4 units upwards', 'Stretched vertically by 4'],
+      correctIndex: 1,
+      explanation: 'Replacing x with (x - h) shifts the graph horizontally to the right by h units. For (x - 4)², the vertex moves from (0,0) to (4,0).'
     }
   ],
   functions_and_graphs: [
@@ -193,6 +211,15 @@ export const QUIZ_DATA: Record<string, QuizQuestion[]> = {
       explanation: 'Replacing x with (x - h) shifts the graph horizontally to the right by h units. For (x - 4)², the vertex moves from (0,0) to (4,0).'
     }
   ],
+  sequences: [
+    {
+      id: 'q-seq-1',
+      question: 'What is the 10th term of an Arithmetic Progression with first term a = 3 and common difference d = 4?',
+      options: ['39', '43', '36', '40'],
+      correctIndex: 0,
+      explanation: 'The n-th term of an AP is given by a_n = a + (n - 1)d. For n = 10: a₁₀ = 3 + (10 - 1) × 4 = 3 + 36 = 39.'
+    }
+  ],
   sequences_and_series: [
     {
       id: 'q-seq-1',
@@ -200,6 +227,67 @@ export const QUIZ_DATA: Record<string, QuizQuestion[]> = {
       options: ['39', '43', '36', '40'],
       correctIndex: 0,
       explanation: 'The n-th term of an AP is given by a_n = a + (n - 1)d. For n = 10: a₁₀ = 3 + (10 - 1) × 4 = 3 + 36 = 39.'
+    }
+  ],
+  optics: [
+    {
+      id: 'q-opt-1',
+      question: 'A ray of light traveling in glass (n = 1.5) approaches an air boundary (n = 1.0). If the angle of incidence exceeds the critical angle θ_c ≈ 41.8°, what happens to the light?',
+      options: [
+        'Light refracts into air at 90°',
+        'Light undergoes 100% Total Internal Reflection back into the glass',
+        'Light is completely absorbed by the boundary',
+        'Light splits into equal reflected and transmitted halves'
+      ],
+      correctIndex: 1,
+      explanation: 'When light travels from an optically denser medium to a rarer medium and exceeds the critical angle, all light reflects internally with zero transmission. This phenomenon makes fiber-optic internet possible.'
+    },
+    {
+      id: 'q-opt-2',
+      question: 'An illuminated object is positioned at a distance of 2f in front of a thin convex lens of focal length f. Where does its image form and what is its magnification?',
+      options: [
+        'At f, upright, magnification m = +0.5',
+        'At 2f on the opposite side, real and inverted, magnification m = -1.0',
+        'At infinity, virtual',
+        'Between f and 2f, inverted and reduced'
+      ],
+      correctIndex: 1,
+      explanation: 'From the lens equation 1/f = 1/v - 1/(-2f), we find v = 2f. The magnification is m = -v/u = -2f/(2f) = -1.0, yielding a real, inverted image of exactly equal size on the opposite side.'
+    },
+    {
+      id: 'q-opt-3',
+      question: 'Why does white light disperse into a vibrant spectrum of colors when passing through a triangular glass prism?',
+      options: [
+        'The prism creates new colors through thermal radiation',
+        'Different wavelengths travel at different speeds in glass, so each has a different refractive index',
+        'The glass absorbs all colors except primary colors',
+        'Diffraction occurs only at the edges'
+      ],
+      correctIndex: 1,
+      explanation: 'Due to chromatic dispersion, glass has a slightly higher refractive index for shorter wavelengths (violet/blue) than longer wavelengths (red). Blue light therefore refracts more sharply than red light, fanning the beam out into a rainbow spectrum.'
+    }
+  ],
+  thermodynamics: [
+    {
+      id: 'q-th-1',
+      question: 'If the absolute temperature of an ideal gas in a rigid container of constant volume is doubled, what happens to the gas pressure?',
+      options: ['Pressure is halved', 'Pressure doubles', 'Pressure quadruples', 'Pressure stays constant'],
+      correctIndex: 1,
+      explanation: "By Gay-Lussac's Law (P/T = constant at constant V and n), pressure is directly proportional to absolute temperature in Kelvin. Doubling T doubles P."
+    },
+    {
+      id: 'q-th-2',
+      question: 'A Carnot heat engine operates between a hot thermal reservoir at 600 K and a cold reservoir at 300 K. What is its maximum theoretical thermal efficiency?',
+      options: ['100%', '75%', '50%', '25%'],
+      correctIndex: 2,
+      explanation: 'Carnot efficiency is η = 1 - T_C / T_H = 1 - 300/600 = 1 - 0.5 = 0.50 (50%). The Second Law of Thermodynamics dictates that no heat engine can exceed this theoretical ceiling.'
+    },
+    {
+      id: 'q-th-3',
+      question: 'During an adiabatic expansion of an ideal gas (Q = 0), the gas does 500 J of work against a piston. What is the change in the internal energy ΔU of the gas?',
+      options: ['+500 J (Gas heats up)', '-500 J (Gas cools down)', '0 J (Internal energy is conserved)', '+1000 J'],
+      correctIndex: 1,
+      explanation: 'By the First Law of Thermodynamics, ΔU = Q - W. Since the expansion is adiabatic (Q = 0), ΔU = 0 - (+500 J) = -500 J. The work done on the surroundings comes directly at the expense of internal kinetic energy, causing the gas to cool.'
     }
   ]
 };

@@ -852,5 +852,166 @@ export const TOPICS_DATA: Record<string, TopicData> = {
         ]
       }
     ]
+  },
+
+  // ==========================================
+  // PHYSICS: OPTICS & LIGHT
+  // ==========================================
+  optics: {
+    id: 'optics',
+    subject: 'physics',
+    title: 'Optics & Light',
+    category: 'PHYSICS',
+    shortDesc: 'Refraction, Snell’s Law, thin lens ray tracing, and prism dispersion.',
+    conceptIntro:
+      'Optics studies how light propagates, reflects, refracts, and forms images. By modeling light as geometric rays, we can precisely determine how curved glass lenses focus sharp images, how prisms split sunlight into colors, and how total internal reflection powers modern fiber-optic internet.',
+    realWorldExample:
+      'Eyeglasses and microscope lenses focusing light on the retina or sensors, fiber-optic cables guiding laser pulses across ocean floors, and water droplets dispersing sunlight into vibrant rainbows.',
+    keyFormulas: [
+      { formula: 'n₁ sin θ₁ = n₂ sin θ₂', explanation: "Snell's Law: ratio of refractive indices determines how light bends across an optical interface." },
+      { formula: '1/f = 1/v - 1/u', explanation: 'Thin Lens Equation: connects focal length (f), image distance (v), and object distance (u).' },
+      { formula: 'm = v / u = hᵢ / hₒ', explanation: 'Linear Magnification: ratio of image height to object height.' },
+      { formula: 'sin θ_c = n₂ / n₁', explanation: 'Critical Angle: threshold incident angle for 100% Total Internal Reflection (when n₁ > n₂).' }
+    ],
+    keyTakeaways: [
+      'Light bends toward the normal when entering an optically denser medium (higher n) and slows down.',
+      'Total Internal Reflection occurs when light in a denser medium strikes a boundary beyond the critical angle.',
+      'Convex lenses converge light to form real inverted or virtual upright images; concave lenses always diverge light.',
+      'Dispersion happens because glass has a slightly higher refractive index for blue/violet light than red light.'
+    ],
+    simulations: [
+      {
+        id: 'optics_snells_law',
+        name: "Snell's Law & Total Internal Reflection",
+        tagline: 'Vary incident angle & refractive indices to see beam refraction or 100% TIR.',
+        description: 'Observe light entering from Medium 1 into Medium 2. Adjust incident angle and watch the refracted beam bend according to Snell\'s law, or observe Total Internal Reflection when crossing from glass to air beyond the critical angle.',
+        controls: [
+          { id: 'theta1', label: 'Incident Angle θ₁', min: 0, max: 80, step: 2, defaultValue: 35, unit: '°' },
+          { id: 'n1', label: 'Medium 1 Index (n₁)', min: 1.0, max: 2.2, step: 0.1, defaultValue: 1.5 },
+          { id: 'n2', label: 'Medium 2 Index (n₂)', min: 1.0, max: 2.2, step: 0.1, defaultValue: 1.0 }
+        ],
+        telemetryLabels: [
+          { key: 'refracted_angle', label: 'Refracted Angle θ₂' },
+          { key: 'critical_angle', label: 'Critical Angle θ_c' },
+          { key: 'optical_state', label: 'Beam Behavior' },
+          { key: 'speed_ratio', label: 'Speed Ratio (v₁/v₂)' }
+        ]
+      },
+      {
+        id: 'optics_thin_lens',
+        name: 'Thin Lens Ray Tracer & Image Formation',
+        tagline: 'Move object and change focal length to trace principal rays in real-time.',
+        description: 'Interactive geometric optics bench tracing the 3 principal rays: parallel ray to focus, focal ray through lens center, and optical center ray. Watch real inverted vs virtual upright images form dynamically.',
+        controls: [
+          { id: 'focal_len', label: 'Focal Length (f)', min: -80, max: 100, step: 10, defaultValue: 60, unit: 'mm' },
+          { id: 'obj_dist', label: 'Object Distance (u)', min: 30, max: 160, step: 5, defaultValue: 100, unit: 'mm' },
+          { id: 'obj_height', label: 'Object Height (h)', min: 15, max: 60, step: 5, defaultValue: 35, unit: 'mm' }
+        ],
+        telemetryLabels: [
+          { key: 'image_dist', label: 'Image Distance (v)' },
+          { key: 'magnification', label: 'Magnification (m)' },
+          { key: 'image_nature', label: 'Image Nature' },
+          { key: 'lens_mode', label: 'Lens Type' }
+        ]
+      },
+      {
+        id: 'optics_prism_dispersion',
+        name: 'Prism Light Dispersion & Minimum Deviation',
+        tagline: 'Split collimated white light into rainbow spectral wavelengths.',
+        description: 'Direct a beam of white light into an equilateral glass prism. Because refractive index depends slightly on wavelength (Cauchy dispersion), violet light bends more than red, fanning the beam into an exquisite rainbow spectrum.',
+        controls: [
+          { id: 'incident_angle', label: 'Angle of Incidence (i)', min: 25, max: 75, step: 1, defaultValue: 48, unit: '°' },
+          { id: 'prism_apex', label: 'Prism Apex Angle (A)', min: 40, max: 70, step: 5, defaultValue: 60, unit: '°' },
+          { id: 'glass_dispersion', label: 'Dispersion Factor (Δn)', min: 0.02, max: 0.08, step: 0.01, defaultValue: 0.04 }
+        ],
+        telemetryLabels: [
+          { key: 'dev_red', label: 'Red Deviation (δ_red)' },
+          { key: 'dev_violet', label: 'Violet Deviation (δ_violet)' },
+          { key: 'angular_spread', label: 'Spectral Spread (Δδ)' },
+          { key: 'deviation_state', label: 'Minimum Deviation Status' }
+        ]
+      }
+    ]
+  },
+
+  // ==========================================
+  // PHYSICS: THERMODYNAMICS & HEAT
+  // ==========================================
+  thermodynamics: {
+    id: 'thermodynamics',
+    subject: 'physics',
+    title: 'Thermodynamics',
+    category: 'PHYSICS',
+    shortDesc: 'Ideal gas law (PV = nRT), kinetic molecular theory, Carnot heat cycle, and thermal conduction.',
+    conceptIntro:
+      'Thermodynamics explores the transformation of thermal energy into mechanical work and the microscopic kinetics of atoms. Rather than calculating trillions of individual molecular paths, thermodynamics describes macroscopic states through pressure, volume, temperature, and heat flow governed by fundamental conservation laws.',
+    realWorldExample:
+      'Car combustion engines pushing pistons to drive wheels, household refrigerators pumping heat outward to chill groceries, and heat sinks drawing heat away from computer CPUs.',
+    keyFormulas: [
+      { formula: 'P · V = n · R · T', explanation: 'Ideal Gas Law: relates pressure, volume, moles, and absolute temperature.' },
+      { formula: 'v_rms = √(3RT / M)', explanation: 'Root-Mean-Square Velocity: microscopic average molecular speed as a function of temperature.' },
+      { formula: 'ΔU = Q - W', explanation: 'First Law of Thermodynamics: conservation of energy between heat added, work done, and internal energy.' },
+      { formula: 'η = 1 - T_C / T_H', explanation: 'Carnot Maximum Efficiency: upper physical limit of thermal efficiency between two heat reservoirs.' }
+    ],
+    keyTakeaways: [
+      'Temperature directly measures the average kinetic energy of molecular motion: higher T means faster particles.',
+      'Gas pressure originates from billions of tiny molecular impacts against container walls every millisecond.',
+      'Expanding gases do mechanical work on their surroundings; if no heat enters (adiabatic), the gas cools.',
+      'No engine can be 100% efficient: the Second Law demands that some heat must always be rejected to a colder sink.'
+    ],
+    simulations: [
+      {
+        id: 'thermo_ideal_gas_chamber',
+        name: 'Kinetic Gas Chamber & Ideal Gas Law',
+        tagline: 'See gas particles collide with piston walls as you change T and V.',
+        description: 'Enclosed cylinder packed with energetic gas particles bouncing off walls elastically. Crank up temperature to make particles dart faster and watch the pressure gauge climb; compress volume to see collision frequency spike.',
+        controls: [
+          { id: 'temperature', label: 'Temperature (T)', min: 150, max: 750, step: 25, defaultValue: 300, unit: 'K' },
+          { id: 'volume', label: 'Chamber Volume (V)', min: 10, max: 45, step: 5, defaultValue: 25, unit: 'L' },
+          { id: 'particles_count', label: 'Gas Moles (n)', min: 1, max: 5, step: 1, defaultValue: 2, unit: 'mol' }
+        ],
+        telemetryLabels: [
+          { key: 'pressure', label: 'Pressure (P)' },
+          { key: 'v_rms', label: 'RMS Speed (v_rms)' },
+          { key: 'internal_energy', label: 'Internal Energy (U)' },
+          { key: 'collision_freq', label: 'Wall Collision Rate' }
+        ]
+      },
+      {
+        id: 'thermo_carnot_cycle',
+        name: 'Carnot Cycle & Heat Engine PV Diagram',
+        tagline: 'Trace the 4 reversible stages on an indicator P-V curve.',
+        description: 'Watch an ideal engine cycle through 4 classical strokes: Isothermal Expansion (T_H), Adiabatic Expansion (T_H→T_C), Isothermal Compression (T_C), and Adiabatic Compression (T_C→T_H). The enclosed loop area represents net mechanical work output.',
+        controls: [
+          { id: 'thot', label: 'Hot Reservoir (T_H)', min: 450, max: 1200, step: 25, defaultValue: 750, unit: 'K' },
+          { id: 'tcold', label: 'Cold Reservoir (T_C)', min: 200, max: 400, step: 20, defaultValue: 300, unit: 'K' },
+          { id: 'compression_ratio', label: 'Compression Ratio (r)', min: 2, max: 6, step: 0.5, defaultValue: 3.5 }
+        ],
+        telemetryLabels: [
+          { key: 'carnot_efficiency', label: 'Carnot Efficiency (η)' },
+          { key: 'work_per_cycle', label: 'Work per Cycle (W_net)' },
+          { key: 'heat_input', label: 'Heat Ingested (Q_H)' },
+          { key: 'heat_rejected', label: 'Heat Rejected (Q_C)' }
+        ]
+      },
+      {
+        id: 'thermo_heat_conduction',
+        name: 'Thermal Gradient & Fourier Heat Conduction',
+        tagline: 'Visualize heat flux flowing through conductive bars with glowing thermal gradients.',
+        description: 'A solid conducting bar held between a hot heat source and a cold sink. Inspect Fourier\'s law dQ/dt = kA·ΔT/L with an interactive glowing thermal color map and animated heat flux carrier particles.',
+        controls: [
+          { id: 't_hot_source', label: 'Hot Temperature (T_H)', min: 50, max: 250, step: 10, defaultValue: 160, unit: '°C' },
+          { id: 't_cold_sink', label: 'Cold Temperature (T_C)', min: 0, max: 40, step: 5, defaultValue: 20, unit: '°C' },
+          { id: 'conductivity_k', label: 'Conductivity (k)', min: 15, max: 400, step: 15, defaultValue: 205, unit: 'W/m·K' },
+          { id: 'bar_length', label: 'Bar Length (L)', min: 5, max: 30, step: 2.5, defaultValue: 15, unit: 'cm' }
+        ],
+        telemetryLabels: [
+          { key: 'heat_flux', label: 'Heat Conduction Rate (dQ/dt)' },
+          { key: 'temp_gradient', label: 'Temperature Gradient (ΔT/L)' },
+          { key: 'material_spec', label: 'Simulated Material' },
+          { key: 'midpoint_temp', label: 'Midpoint Temp (T_mid)' }
+        ]
+      }
+    ]
   }
 };
