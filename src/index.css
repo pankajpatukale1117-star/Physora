@@ -1247,3 +1247,76 @@ input[type="range"]::-moz-range-thumb {
     font-size: 0.9rem !important;
   }
 }
+
+/* ==========================================================================
+   PHYSORA DIGITAL LABORATORY & EXPERIMENT STUDIO STYLES
+   ========================================================================== */
+.experiment-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.experiment-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(0, 240, 255, 0.4) !important;
+  box-shadow: 0 12px 30px rgba(0, 240, 255, 0.15) !important;
+}
+
+.thumb-friendly-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.12);
+  height: 8px;
+  border-radius: var(--radius-pill);
+  outline: none;
+  touch-action: pan-x;
+}
+
+.thumb-friendly-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #00F0FF;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.7);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.thumb-friendly-slider::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+  box-shadow: 0 0 22px rgba(0, 240, 255, 0.95);
+}
+
+.thumb-friendly-slider::-moz-range-thumb {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #00F0FF;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.7);
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .experiment-studio-container {
+    padding-top: 70px !important;
+    padding-bottom: 50px !important;
+  }
+
+  .experiment-canvas-container {
+    height: clamp(340px, 58vh, 500px) !important;
+  }
+
+  .experiment-controls-dock {
+    padding: 16px 14px !important;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .experiment-canvas-container {
+    height: 72vh !important;
+  }
+}
+

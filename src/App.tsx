@@ -8,8 +8,23 @@ import { LabGatewayCTA } from './components/LabGatewayCTA';
 import { Footer } from './components/Footer';
 import { TopicLabModal } from './components/TopicLabModal';
 import { FormulaBankModal } from './components/FormulaBankModal';
+import { ExperimentsView } from './components/experiments/ExperimentsView';
 
 export function App() {
+  const [activeNavTab, setActiveNavTab] = useState<'simulations' | 'experiments'>(() => {
+    if (typeof window !== 'undefined' && window.location.hash.startsWith('#experiments')) {
+      return 'experiments';
+    }
+    return 'simulations';
+  });
+
+  const [initialExperimentId, setInitialExperimentId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined' && window.location.hash.startsWith('#experiments/')) {
+      return window.location.hash.replace('#experiments/', '');
+    }
+    return null;
+  });
+
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
   const [isFormulaBankOpen, setIsFormulaBankOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -31,19 +46,54 @@ export function App() {
     }
   }, [theme]);
 
+  // Synchronize browser history / URL hash
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash.startsWith('#experiments')) {
+        setActiveNavTab('experiments');
+        const parts = window.location.hash.split('/');
+        if (parts.length > 1 && parts[1]) {
+          setInitialExperimentId(parts[1]);
+        }
+      } else {
+        setActiveNavTab('simulations');
+      }
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleSelectNavTab = (tab: 'simulations' | 'experiments') => {
+    setActiveNavTab(tab);
+    if (tab === 'experiments') {
+      window.location.hash = '#experiments';
+    } else {
+      if (window.location.hash.startsWith('#experiments')) {
+        window.history.pushState(null, '', window.location.pathname);
+      }
+    }
+  };
+
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   const scrollToPreview = () => {
-    const el = document.getElementById('curriculum-preview');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (activeNavTab !== 'simulations') {
+      setActiveNavTab('simulations');
+      setTimeout(() => {
+        const el = document.getElementById('curriculum-preview');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    } else {
+      const el = document.getElementById('curriculum-preview');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
   const handleEnterLab = () => {
-    scrollToPreview();
+    // When clicking enter lab, switch to experiments lab or scroll to curriculum
+    handleSelectNavTab('experiments');
   };
 
   return (
@@ -51,40 +101,52 @@ export function App() {
       {/* 1. Anime.js-inspired Interactive Background with Math & Physics animations */}
       <InteractiveBackground />
 
-      {/* 2. Top Navigation Bar with Theme Switcher & Formula Bank */}
+      {/* 2. Top Navigation Bar with Theme Switcher, Experiments Tab & Formula Bank */}
       <Navbar
         onEnterLabClick={handleEnterLab}
         onExploreClick={scrollToPreview}
         onOpenFormulas={() => setIsFormulaBankOpen(true)}
         theme={theme}
         onToggleTheme={toggleTheme}
+        activeTab={activeNavTab}
+        onSelectTab={handleSelectNavTab}
       />
 
-      {/* 3. Hero Section with Live Interactive Physics Sandbox */}
-      <main>
-        <HeroSection
-          onEnterLabClick={handleEnterLab}
-          onExploreClick={scrollToPreview}
-        />
+      {/* 3. Main Views: 'simulations' (Homepage / Conceptual Curriculum) or 'experiments' (Digital Laboratory) */}
+      {activeNavTab === 'simulations' ? (
+        <main>
+          {/* Hero Section with Live Interactive Physics Sandbox */}
+          <HeroSection
+            onEnterLabClick={handleEnterLab}
+            onExploreClick={scrollToPreview}
+          />
 
-        {/* 4. Basic Topic Previews (Click any topic to launch 2-3 simulations!) */}
-        <BasicTopicPreview
-          onSelectTopic={(topicId) => setSelectedTopicId(topicId)}
-        />
+          {/* Basic Topic Previews (Click any topic to launch 2-3 simulations!) */}
+          <BasicTopicPreview
+            onSelectTopic={(topicId) => setSelectedTopicId(topicId)}
+          />
 
-        {/* 5. How Visual Learning Works for Class 11 & Below */}
-        <HowVisualLearningWorks />
+          {/* How Visual Learning Works for Class 11 & Below */}
+          <HowVisualLearningWorks />
 
-        {/* 6. Call to Action */}
-        <LabGatewayCTA
-          onEnterLabClick={handleEnterLab}
-        />
-      </main>
+          {/* Call to Action */}
+          <LabGatewayCTA
+            onEnterLabClick={handleEnterLab}
+          />
+        </main>
+      ) : (
+        <main>
+          <ExperimentsView
+            initialExperimentId={initialExperimentId}
+            onBackToSimulations={() => handleSelectNavTab('simulations')}
+          />
+        </main>
+      )}
 
-      {/* 7. Footer */}
+      {/* 4. Footer */}
       <Footer />
 
-      {/* 8. Interactive Simulation & Explanation Laboratory Modal (4-step workflow + Quiz) */}
+      {/* 5. Interactive Simulation & Explanation Laboratory Modal (4-step workflow + Quiz) */}
       {selectedTopicId && (
         <TopicLabModal
           topicId={selectedTopicId}
@@ -93,7 +155,7 @@ export function App() {
         />
       )}
 
-      {/* 9. Formula Bank & Variable Index Explorer Modal */}
+      {/* 6. Formula Bank & Variable Index Explorer Modal */}
       {isFormulaBankOpen && (
         <FormulaBankModal
           onClose={() => setIsFormulaBankOpen(false)}
