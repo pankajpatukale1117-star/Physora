@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Play, Pause, RotateCcw, Lightbulb, BookOpen, CheckCircle2, ChevronRight, HelpCircle, Award, Zap } from 'lucide-react';
+import { X, Play, Pause, RotateCcw, Lightbulb, BookOpen, CheckCircle2, ChevronRight, HelpCircle, Award } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
 import { CanvasSimulator } from './simulations/CanvasSimulators';
@@ -171,7 +171,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [telemetry, setTelemetry] = useState<Record<string, string>>({});
   const [sideTab, setSideTab] = useState<'intuition' | 'formulas' | 'quiz'>('intuition');
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
-  const [activeMobileView, setActiveMobileView] = useState<'sim' | 'guide'>('sim');
 
   const [prevTopicId, setPrevTopicId] = useState(topicId);
   const [prevSimId, setPrevSimId] = useState<string | null>(null);
@@ -358,24 +357,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
           </div>
         </div>
 
-        {/* Segmented Mobile View Toggle (Sim Workbench vs Concepts & Quiz) */}
-        <div className="modal-mobile-view-toggle">
-          <button
-            className={activeMobileView === 'sim' ? 'active' : ''}
-            onClick={() => setActiveMobileView('sim')}
-          >
-            <Zap size={14} />
-            <span>Interactive Lab ({topic.simulations.length})</span>
-          </button>
-          <button
-            className={activeMobileView === 'guide' ? 'active' : ''}
-            onClick={() => setActiveMobileView('guide')}
-          >
-            <BookOpen size={14} />
-            <span>Concepts &amp; Quiz</span>
-          </button>
-        </div>
-
         {/* Modal Main Body (2 Columns: Simulation Workbench on Left, Concept Guide on Right) */}
         <div
           style={{
@@ -385,7 +366,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             overflowY: 'auto'
           }}
           className="modal-content-grid"
-          data-mobile-view={activeMobileView}
         >
           {/* LEFT: Simulation Workbench */}
           <div
@@ -478,6 +458,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
             {/* Live Telemetry Chips */}
             <div
+              className="modal-telemetry-box"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -507,6 +488,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
             {/* Interactive Sliders & Play/Reset Dock */}
             <div
+              className="modal-controls-dock"
               style={{
                 padding: '16px',
                 background: 'var(--bg-glass-card)',

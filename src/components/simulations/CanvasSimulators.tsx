@@ -36,6 +36,64 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef(0);
 
+  const dimsRef = useRef<{
+    cssWidth: number;
+    cssHeight: number;
+    dpr: number;
+    virtualW: number;
+    virtualH: number;
+  }>({
+    cssWidth: 780,
+    cssHeight: 380,
+    dpr: 1,
+    virtualW: 780,
+    virtualH: 380
+  });
+
+  // Dynamic ResizeObserver & High-DPI devicePixelRatio handler
+  useEffect(() => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+
+    const handleResize = () => {
+      const rect = container.getBoundingClientRect();
+      const cssW = Math.max(1, rect.width);
+      const cssH = Math.max(1, rect.height);
+      const dpr = Math.min(window.devicePixelRatio || 1, 3);
+
+      const virtualW = 780;
+      const virtualH = Math.max(380, Math.round(virtualW * (cssH / cssW)));
+
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+
+      dimsRef.current = {
+        cssWidth: cssW,
+        cssHeight: cssH,
+        dpr,
+        virtualW,
+        virtualH
+      };
+    };
+
+    handleResize();
+
+    const ro = new ResizeObserver(() => {
+      handleResize();
+    });
+    ro.observe(container);
+
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
+
   // Active touch and gesture state
   const [activeControlIdx, setActiveControlIdx] = useState(0);
   const [touchState, setTouchState] = useState<{
@@ -185,10 +243,9 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
     }
 
     const rect = container.getBoundingClientRect();
-    const scaleX = 780 / rect.width;
-    const scaleY = 380 / rect.height;
-    const cx = Math.max(0, Math.min(780, (e.clientX - rect.left) * scaleX));
-    const cy = Math.max(0, Math.min(380, (e.clientY - rect.top) * scaleY));
+    const { virtualW, virtualH } = dimsRef.current;
+    const cx = Math.max(0, Math.min(virtualW, (e.clientX - rect.left) * (virtualW / rect.width)));
+    const cy = Math.max(0, Math.min(virtualH, (e.clientY - rect.top) * (virtualH / rect.height)));
 
     dragStartRef.current = {
       x: cx,
@@ -205,10 +262,9 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
     const container = containerRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
-    const scaleX = 780 / rect.width;
-    const scaleY = 380 / rect.height;
-    const cx = Math.max(0, Math.min(780, (e.clientX - rect.left) * scaleX));
-    const cy = Math.max(0, Math.min(380, (e.clientY - rect.top) * scaleY));
+    const { virtualW, virtualH } = dimsRef.current;
+    const cx = Math.max(0, Math.min(virtualW, (e.clientX - rect.left) * (virtualW / rect.width)));
+    const cy = Math.max(0, Math.min(virtualH, (e.clientY - rect.top) * (virtualH / rect.height)));
 
     touchReticleRef.current.x = cx;
     touchReticleRef.current.y = cy;
@@ -260,10 +316,16 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
         timeRef.current += 0.02;
       }
       const t = timeRef.current;
-      const w = canvas.width;
-      const h = canvas.height;
+      const { dpr, virtualW, virtualH, cssWidth } = dimsRef.current;
+      const scale = (cssWidth / virtualW) * dpr;
 
-      ctx.clearRect(0, 0, w, h);
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(scale, scale);
+
+      const w = virtualW;
+      const h = virtualH;
 
       // Draw subtle background grid
       drawCoordinateGrid(ctx, w, h);
@@ -451,6 +513,8 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
         ctx.restore();
       }
 
+      ctx.restore();
+
       animId = requestAnimationFrame(render);
     };
 
@@ -478,8 +542,6 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
     >
       <canvas
         ref={canvasRef}
-        width={780}
-        height={380}
         style={{
           width: '100%',
           height: '100%',
