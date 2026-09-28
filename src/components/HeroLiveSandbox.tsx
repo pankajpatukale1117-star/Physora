@@ -13,6 +13,34 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
   const [speed, setSpeed] = useState<number>(24);
   const [planet, setPlanet] = useState<'earth' | 'moon' | 'mars'>('earth');
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [touchHud, setTouchHud] = useState<string | null>(null);
+
+  const handleSandboxPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const cx = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const cy = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+    const isMobileViewport = window.innerWidth < 768;
+    const originX = isMobileViewport ? 24 : 50;
+    const originY = canvas.height - 35;
+
+    const dx = cx - originX;
+    const dy = originY - cy;
+
+    if (dx > 5) {
+      let deg = Math.round(Math.atan2(dy, dx) * (180 / Math.PI));
+      deg = Math.max(15, Math.min(75, deg));
+      setAngleDeg(deg);
+
+      const dist = Math.hypot(dx, dy);
+      const computedSpeed = Math.max(12, Math.min(36, Math.round(12 + dist * 0.08)));
+      setSpeed(computedSpeed);
+
+      setTouchHud(`Angle: ${deg}° | Speed: ${computedSpeed} m/s`);
+    }
+  };
 
   // Gravity per environment in m/s^2
   const gravityMap = {
@@ -230,13 +258,49 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       </div>
 
       {/* Canvas */}
-      <div className="hero-sandbox-canvas-box" style={{ width: '100%', height: 230, background: 'rgba(0, 0, 0, 0.03)', borderRadius: 'var(--radius-md)', overflow: 'hidden', position: 'relative' }}>
+      <div
+        className="hero-sandbox-canvas-box"
+        onPointerDown={(e) => {
+          try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+          handleSandboxPointer(e);
+        }}
+        onPointerMove={(e) => {
+          if (e.buttons > 0) handleSandboxPointer(e);
+        }}
+        onPointerUp={() => {
+          setTimeout(() => setTouchHud(null), 1800);
+        }}
+        style={{
+          width: '100%',
+          height: 230,
+          background: 'rgba(0, 0, 0, 0.03)',
+          borderRadius: 'var(--radius-md)',
+          overflow: 'hidden',
+          position: 'relative',
+          touchAction: 'none',
+          userSelect: 'none',
+          cursor: 'crosshair'
+        }}
+      >
         <canvas
           ref={canvasRef}
           width={672}
           height={230}
           style={{ width: '100%', height: '100%', display: 'block' }}
         />
+        {/* Floating Touch Status Badge */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 8,
+            left: 10,
+            pointerEvents: 'none'
+          }}
+        >
+          <div className={`canvas-touch-badge ${touchHud ? 'dragging' : ''}`}>
+            <span>{touchHud || '👆 Touch & Drag to Aim Cannon'}</span>
+          </div>
+        </div>
       </div>
 
       {/* Controls & Metrics Row */}

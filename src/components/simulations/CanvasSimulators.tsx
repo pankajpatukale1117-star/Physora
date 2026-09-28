@@ -1,20 +1,251 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Play, Pause, RotateCcw, Plus, Minus, Hand } from 'lucide-react';
+
+export interface SimControlDef {
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  defaultValue: number;
+  unit?: string;
+}
 
 interface CanvasSimulatorProps {
   simId: string;
   params: Record<string, number>;
   isPlaying: boolean;
   onTelemetryUpdate: (telemetry: Record<string, string>) => void;
+  controls?: SimControlDef[];
+  onParamChange?: (id: string, value: number) => void;
+  onTogglePlay?: () => void;
+  onReset?: () => void;
 }
 
 export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   simId,
   params,
   isPlaying,
-  onTelemetryUpdate
+  onTelemetryUpdate,
+  controls,
+  onParamChange,
+  onTogglePlay,
+  onReset
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef(0);
+
+  // Active touch and gesture state
+  const [activeControlIdx, setActiveControlIdx] = useState(0);
+  const [touchState, setTouchState] = useState<{
+    isDragging: boolean;
+    hudText: string | null;
+  }>({
+    isDragging: false,
+    hudText: null
+  });
+
+  const touchReticleRef = useRef<{ active: boolean; x: number; y: number } | null>(null);
+  const lastTapTimeRef = useRef<number>(0);
+  const dragStartRef = useRef<{
+    x: number;
+    y: number;
+    params: Record<string, number>;
+  }>({ x: 0, y: 0, params: {} });
+
+  const showHudMessage = (msg: string) => {
+    setTouchState(prev => ({ ...prev, hudText: msg }));
+  };
+
+  const processPointerMove = (cx: number, cy: number, isInitial = false) => {
+    if (!controls || controls.length === 0 || !onParamChange) return;
+
+    const startX = dragStartRef.current.x;
+    const startY = dragStartRef.current.y;
+    const startP = dragStartRef.current.params;
+
+    let hudMsg = '';
+
+    // Direct Natural Touch Manipulation for Specific Physics / Math Modules
+    if (simId === 'trig_unit_circle') {
+      const centerX = 390;
+      const centerY = 190;
+      let deg = Math.round(Math.atan2(-(cy - centerY), cx - centerX) * (180 / Math.PI));
+      if (deg < 0) deg += 360;
+      onParamChange('theta', deg);
+      hudMsg = `Angle θ = ${deg}°`;
+    } else if (simId === 'work_angle_pull') {
+      const boxX = 280;
+      const boxY = 250;
+      let deg = Math.round(Math.atan2(-(cy - boxY), cx - boxX) * (180 / Math.PI));
+      deg = Math.max(0, Math.min(85, deg));
+      onParamChange('theta', deg);
+      hudMsg = `Pull Angle θ = ${deg}°`;
+    } else if (simId === 'optics_snells_law') {
+      const normX = 390;
+      const normY = 190;
+      let deg = Math.round(Math.atan2(normX - cx, normY - cy) * (180 / Math.PI));
+      deg = Math.max(5, Math.min(85, Math.abs(deg)));
+      onParamChange('theta1', deg);
+      hudMsg = `Incident Angle θ₁ = ${deg}°`;
+    } else if (simId === 'motion_free_fall') {
+      const groundY = 320;
+      const topY = 60;
+      const ratio = Math.max(0, Math.min(1, (groundY - cy) / (groundY - topY)));
+      const hCtrl = controls.find(c => c.id === 'h');
+      if (hCtrl) {
+        const val = Math.round(hCtrl.min + ratio * (hCtrl.max - hCtrl.min));
+        onParamChange('h', val);
+        hudMsg = `Release Height h = ${val} m`;
+      }
+    } else if (simId === 'energy_spring_mass') {
+      const neutralX = 390;
+      const deltaX = (cx - neutralX) / 120;
+      const xCtrl = controls.find(c => c.id === 'x0' || c.id === 'x');
+      if (xCtrl) {
+        const val = Math.max(xCtrl.min, Math.min(xCtrl.max, parseFloat(deltaX.toFixed(2))));
+        onParamChange(xCtrl.id, val);
+        hudMsg = `Displacement x = ${val} m`;
+      }
+    } else if (simId === 'optics_thin_lens') {
+      const lensX = 390;
+      const dist = Math.max(10, Math.min(120, Math.round((lensX - cx) * 0.35)));
+      const doCtrl = controls.find(c => c.id === 'do');
+      if (doCtrl) {
+        onParamChange('do', dist);
+        hudMsg = `Object Distance do = ${dist} cm`;
+      }
+    } else if (simId === 'calc_secant_tangent') {
+      const normX = (cx - 120) / 450;
+      const xCtrl = controls.find(c => c.id === 'x');
+      if (xCtrl) {
+        const val = Math.max(xCtrl.min, Math.min(xCtrl.max, parseFloat((xCtrl.min + normX * (xCtrl.max - xCtrl.min)).toFixed(2))));
+        onParamChange('x', val);
+        hudMsg = `Curve Point x = ${val}`;
+      }
+    } else {
+      // Universal Tactile Engine for ALL Other Simulations
+      const primaryCtrl = controls[activeControlIdx] || controls[0];
+      const spanX = primaryCtrl.max - primaryCtrl.min;
+      const sensitivityX = 400; // pixels to sweep full parameter scale
+      const dx = cx - startX;
+      const startVal = startP[primaryCtrl.id] ?? primaryCtrl.defaultValue;
+      let nextVal = startVal + (dx / sensitivityX) * spanX;
+      nextVal = Math.max(primaryCtrl.min, Math.min(primaryCtrl.max, nextVal));
+
+      const step = primaryCtrl.step || 1;
+      const precision = step.toString().includes('.') ? step.toString().split('.')[1].length : 0;
+      nextVal = parseFloat((Math.round(nextVal / step) * step).toFixed(precision));
+
+      onParamChange(primaryCtrl.id, nextVal);
+      hudMsg = `${primaryCtrl.label}: ${nextVal} ${primaryCtrl.unit || ''}`;
+
+      // 2D Gesture: Vertical drag modulates 2nd control (if present)
+      if (controls.length > 1 && !isInitial) {
+        const secIdx = activeControlIdx === 0 ? 1 : 0;
+        const secCtrl = controls[secIdx];
+        const spanY = secCtrl.max - secCtrl.min;
+        const sensitivityY = 320;
+        const dy = startY - cy; // Dragging upwards increases value
+        const secStartVal = startP[secCtrl.id] ?? secCtrl.defaultValue;
+        let secNextVal = secStartVal + (dy / sensitivityY) * spanY;
+        secNextVal = Math.max(secCtrl.min, Math.min(secCtrl.max, secNextVal));
+        const secStep = secCtrl.step || 1;
+        const secPrec = secStep.toString().includes('.') ? secStep.toString().split('.')[1].length : 0;
+        secNextVal = parseFloat((Math.round(secNextVal / secStep) * secStep).toFixed(secPrec));
+        onParamChange(secCtrl.id, secNextVal);
+      }
+    }
+
+    setTouchState({
+      isDragging: true,
+      hudText: hudMsg
+    });
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const now = Date.now();
+    // Quick double-tap anywhere on canvas toggles play/pause
+    if (now - lastTapTimeRef.current < 320) {
+      if (onTogglePlay) onTogglePlay();
+      showHudMessage(isPlaying ? 'Simulation Paused' : 'Simulation Playing');
+      lastTapTimeRef.current = 0;
+      return;
+    }
+    lastTapTimeRef.current = now;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    try {
+      container.setPointerCapture(e.pointerId);
+    } catch {
+      // Fallback if browser prevents pointer capture
+    }
+
+    const rect = container.getBoundingClientRect();
+    const scaleX = 780 / rect.width;
+    const scaleY = 380 / rect.height;
+    const cx = Math.max(0, Math.min(780, (e.clientX - rect.left) * scaleX));
+    const cy = Math.max(0, Math.min(380, (e.clientY - rect.top) * scaleY));
+
+    dragStartRef.current = {
+      x: cx,
+      y: cy,
+      params: { ...params }
+    };
+
+    touchReticleRef.current = { active: true, x: cx, y: cy };
+    processPointerMove(cx, cy, true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!touchReticleRef.current?.active) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const scaleX = 780 / rect.width;
+    const scaleY = 380 / rect.height;
+    const cx = Math.max(0, Math.min(780, (e.clientX - rect.left) * scaleX));
+    const cy = Math.max(0, Math.min(380, (e.clientY - rect.top) * scaleY));
+
+    touchReticleRef.current.x = cx;
+    touchReticleRef.current.y = cy;
+
+    processPointerMove(cx, cy, false);
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    touchReticleRef.current = null;
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // Ignore
+    }
+    setTouchState(prev => ({
+      ...prev,
+      isDragging: false
+    }));
+    setTimeout(() => {
+      setTouchState(prev => (prev.isDragging ? prev : { ...prev, hudText: null }));
+    }, 2000);
+  };
+
+  const handleNudge = (deltaSteps: number) => {
+    if (!controls || controls.length === 0 || !onParamChange) return;
+    const ctrl = controls[activeControlIdx] || controls[0];
+    const curVal = params[ctrl.id] ?? ctrl.defaultValue;
+    const step = ctrl.step || 1;
+    let nextVal = curVal + deltaSteps * step;
+    nextVal = Math.max(ctrl.min, Math.min(ctrl.max, nextVal));
+    const precision = step.toString().includes('.') ? step.toString().split('.')[1].length : 0;
+    nextVal = parseFloat(nextVal.toFixed(precision));
+    onParamChange(ctrl.id, nextVal);
+    showHudMessage(`${ctrl.label} = ${nextVal} ${ctrl.unit || ''}`);
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -197,6 +428,29 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
           renderDefaultFallback(ctx, w, h);
       }
 
+      // Live 60fps touch indicator and ripple on canvas
+      if (touchReticleRef.current?.active) {
+        const tx = touchReticleRef.current.x;
+        const ty = touchReticleRef.current.y;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(tx, ty, 22 + Math.sin(t * 8) * 3, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.9)';
+        ctx.lineWidth = 2.2;
+        ctx.shadowColor = '#00F0FF';
+        ctx.shadowBlur = 14;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(tx, ty, 8, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+      }
+
       animId = requestAnimationFrame(render);
     };
 
@@ -205,19 +459,141 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   }, [simId, params, isPlaying, onTelemetryUpdate]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={780}
-      height={380}
+    <div
+      ref={containerRef}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
       style={{
+        position: 'relative',
         width: '100%',
         height: '100%',
-        display: 'block',
-        borderRadius: 'var(--radius-lg)',
-        background: 'radial-gradient(ellipse at 50% 35%, #0B132B 0%, #050814 100%)',
-        boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(0, 240, 255, 0.22)'
+        touchAction: 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        overflow: 'hidden',
+        borderRadius: 'var(--radius-lg)'
       }}
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        width={780}
+        height={380}
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'block',
+          borderRadius: 'var(--radius-lg)',
+          background: 'radial-gradient(ellipse at 50% 35%, #0B132B 0%, #050814 100%)',
+          boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(0, 240, 255, 0.22)'
+        }}
+      />
+
+      {/* TOP FLOATING HUD ROW: Touch Status Badge & Quick Actions */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 10,
+          left: 12,
+          right: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pointerEvents: 'none',
+          zIndex: 10
+        }}
+      >
+        <div className={`canvas-touch-badge ${touchState.isDragging ? 'dragging' : ''}`}>
+          <Hand size={12} className="touch-icon" />
+          <span>{touchState.hudText || 'Touch & Drag Screen to Operate'}</span>
+        </div>
+
+        <div className="canvas-touch-actions">
+          {onTogglePlay && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onTogglePlay(); }}
+              className="canvas-action-btn"
+              title={isPlaying ? 'Pause Simulation' : 'Play Simulation'}
+            >
+              {isPlaying ? <Pause size={13} /> : <Play size={13} />}
+            </button>
+          )}
+          {onReset && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onReset(); }}
+              className="canvas-action-btn"
+              title="Reset Simulation"
+            >
+              <RotateCcw size={13} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* BOTTOM FLOATING CONTROLS: Parameter Chips & Stepper Nudge */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 10,
+          left: 12,
+          right: 12,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pointerEvents: 'none',
+          zIndex: 10,
+          gap: 8
+        }}
+      >
+        {controls && controls.length > 0 ? (
+          <div className="canvas-param-selector">
+            {controls.map((c, idx) => {
+              const val = params[c.id] ?? c.defaultValue;
+              const isSelected = idx === activeControlIdx;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveControlIdx(idx);
+                    showHudMessage(`Active Touch: ${c.label} (${val}${c.unit ? ` ${c.unit}` : ''})`);
+                  }}
+                  className={`param-chip-btn ${isSelected ? 'active' : ''}`}
+                >
+                  <span>{c.label}:</span>
+                  <strong>{val}{c.unit ? ` ${c.unit}` : ''}</strong>
+                </button>
+              );
+            })}
+          </div>
+        ) : <div />}
+
+        {controls && controls.length > 0 && onParamChange && (
+          <div className="canvas-nudge-group">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleNudge(-1); }}
+              className="canvas-nudge-btn"
+              title="Step decrease"
+            >
+              <Minus size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleNudge(1); }}
+              className="canvas-nudge-btn"
+              title="Step increase"
+            >
+              <Plus size={13} />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

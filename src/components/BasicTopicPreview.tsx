@@ -230,8 +230,8 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
           className="topic-preview-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: filterDomain === 'All' ? 'repeat(auto-fit, minmax(380px, 1fr))' : '1fr',
-            gap: 32,
+            gridTemplateColumns: filterDomain === 'All' ? 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))' : '1fr',
+            gap: 28,
             alignItems: 'start',
             maxWidth: filterDomain === 'All' ? '100%' : 780,
             margin: '0 auto'
@@ -242,7 +242,6 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
             <div
               className="glass-card topic-domain-card"
               style={{
-                padding: 32,
                 background: 'var(--bg-glass-card)',
                 border: '1.5px solid rgba(124, 58, 237, 0.22)',
                 boxShadow: 'var(--shadow-lg)'
@@ -382,7 +381,6 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
             <div
               className="glass-card topic-domain-card"
               style={{
-                padding: 32,
                 background: 'var(--bg-glass-card)',
                 border: '1.5px solid rgba(0, 98, 255, 0.22)',
                 boxShadow: 'var(--shadow-lg)'
