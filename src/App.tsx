@@ -25,7 +25,14 @@ export function App() {
     return null;
   });
 
-  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash.startsWith('#sim/')) return hash.replace('#sim/', '');
+      if (hash.startsWith('#topic/')) return hash.replace('#topic/', '');
+    }
+    return null;
+  });
   const [isFormulaBankOpen, setIsFormulaBankOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try {
@@ -49,12 +56,17 @@ export function App() {
   // Synchronize browser history / URL hash
   useEffect(() => {
     const handleHashChange = () => {
-      if (window.location.hash.startsWith('#experiments')) {
+      const hash = window.location.hash;
+      if (hash.startsWith('#experiments')) {
         setActiveNavTab('experiments');
-        const parts = window.location.hash.split('/');
+        const parts = hash.split('/');
         if (parts.length > 1 && parts[1]) {
           setInitialExperimentId(parts[1]);
         }
+      } else if (hash.startsWith('#sim/') || hash.startsWith('#topic/')) {
+        setActiveNavTab('simulations');
+        const id = hash.replace(/^#(sim|topic)\//, '');
+        if (id) setSelectedTopicId(id);
       } else {
         setActiveNavTab('simulations');
       }
@@ -123,7 +135,10 @@ export function App() {
 
           {/* Basic Topic Previews (Click any topic to launch 2-3 simulations!) */}
           <BasicTopicPreview
-            onSelectTopic={(topicId) => setSelectedTopicId(topicId)}
+            onSelectTopic={(topicId) => {
+              setSelectedTopicId(topicId);
+              window.location.hash = `#sim/${topicId}`;
+            }}
           />
 
           {/* How Visual Learning Works for Class 11 & Below */}
@@ -150,8 +165,16 @@ export function App() {
       {selectedTopicId && (
         <TopicLabModal
           topicId={selectedTopicId}
-          onClose={() => setSelectedTopicId(null)}
-          onSelectTopic={(topicId) => setSelectedTopicId(topicId)}
+          onClose={() => {
+            setSelectedTopicId(null);
+            if (window.location.hash.startsWith('#sim/') || window.location.hash.startsWith('#topic/')) {
+              window.history.pushState(null, '', window.location.pathname);
+            }
+          }}
+          onSelectTopic={(topicId) => {
+            setSelectedTopicId(topicId);
+            window.location.hash = `#sim/${topicId}`;
+          }}
         />
       )}
 

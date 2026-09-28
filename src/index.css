@@ -526,10 +526,32 @@ em {
   box-shadow: 0 2px 8px rgba(0, 98, 255, 0.3);
 }
 
-@media (max-width: 900px) {
-  .modal-content-grid {
-    grid-template-columns: 1fr !important;
-  }
+/* All Simulation Info Positioned Below the Simulation (Vertical Flow on All Devices) */
+.modal-content-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.modal-workbench {
+  display: flex !important;
+  flex-direction: column !important;
+  border-right: none !important;
+  border-bottom: 1px solid var(--border-subtle) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex: none !important;
+}
+
+.modal-guide {
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  flex: none !important;
 }
 
 /* Reduced Motion Support */

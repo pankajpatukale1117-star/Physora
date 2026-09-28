@@ -357,25 +357,29 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Main Body (2 Columns: Simulation Workbench on Left, Concept Guide on Right) */}
+        {/* Modal Main Body (Vertical Stack: Simulation on Top, All Info & Concept Guide Below) */}
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: '1.45fr 1fr',
+            display: 'flex',
+            flexDirection: 'column',
             flex: 1,
-            overflowY: 'auto'
+            overflowY: 'auto',
+            overflowX: 'hidden'
           }}
           className="modal-content-grid"
         >
-          {/* LEFT: Simulation Workbench */}
+          {/* TOP: Primary Simulation Workbench */}
           <div
             className="modal-workbench"
             style={{
-              padding: '24px',
-              borderRight: '1px solid var(--border-subtle)',
+              padding: '24px 28px 20px',
+              borderRight: 'none',
+              borderBottom: '1px solid var(--border-subtle)',
               display: 'flex',
               flexDirection: 'column',
-              background: 'var(--bg-secondary)'
+              background: 'var(--bg-secondary)',
+              width: '100%',
+              boxSizing: 'border-box'
             }}
           >
             {/* Simulation Tabs (2 to 3 distinct simulations per topic) */}
@@ -433,13 +437,14 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               className="modal-canvas-box"
               style={{
                 width: '100%',
-                aspectRatio: '780 / 380',
-                height: 'auto',
+                aspectRatio: '16 / 8.5',
+                maxHeight: '520px',
+                minHeight: '360px',
                 position: 'relative',
                 background: 'var(--bg-tertiary)',
                 borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-subtle)',
-                boxShadow: 'var(--shadow-sm)',
+                boxShadow: 'inset 0 0 35px rgba(0, 0, 0, 0.7), 0 4px 20px rgba(0, 0, 0, 0.3)',
                 overflow: 'hidden',
                 marginBottom: 16
               }}
@@ -471,12 +476,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 <div
                   key={tLabel.key}
                   style={{
-                    padding: '6px 12px',
+                    padding: '8px 14px',
                     borderRadius: 'var(--radius-md)',
                     background: 'var(--bg-glass-card)',
                     border: '1px solid var(--border-subtle)',
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '0.72rem',
+                    fontSize: '0.78rem',
                     boxShadow: 'var(--shadow-sm)'
                   }}
                 >
@@ -490,7 +495,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             <div
               className="modal-controls-dock"
               style={{
-                padding: '16px',
+                padding: '18px 20px',
                 background: 'var(--bg-glass-card)',
                 borderRadius: 'var(--radius-lg)',
                 border: '1px solid var(--border-subtle)',
@@ -501,8 +506,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 className="modal-controls-grid"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                  gap: 12,
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                  gap: 14,
                   marginBottom: 14
                 }}
               >
@@ -518,7 +523,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               </div>
 
               {/* Simulation Controls Bar */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--border-subtle)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     onClick={() => setIsPlaying(!isPlaying)}
@@ -526,12 +531,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
-                      padding: '6px 14px',
+                      padding: '7px 16px',
                       borderRadius: 'var(--radius-md)',
                       border: 'none',
                       background: accentColor,
                       color: '#FFFFFF',
-                      fontSize: '0.78rem',
+                      fontSize: '0.8rem',
                       fontWeight: 700,
                       cursor: 'pointer'
                     }}
@@ -546,12 +551,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 6,
-                      padding: '6px 12px',
+                      padding: '7px 14px',
                       borderRadius: 'var(--radius-md)',
                       border: '1px solid var(--border-subtle)',
                       background: 'var(--bg-tertiary)',
                       color: 'var(--text-primary)',
-                      fontSize: '0.78rem',
+                      fontSize: '0.8rem',
                       fontWeight: 600,
                       cursor: 'pointer'
                     }}
@@ -561,75 +566,115 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   </button>
                 </div>
 
-                <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                  Drag sliders to update live simulation
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
+                  Drag sliders or tap canvas to interact
                 </span>
               </div>
             </div>
           </div>
 
-          {/* RIGHT: Clear Topic Explanation & Practice Workbench */}
+          {/* BELOW: Complete Topic & Simulation Guide (Theory, Real-world Intuition, Formulas, Quiz) */}
           <div
             className="modal-guide"
             style={{
-              padding: '24px 26px',
+              padding: '24px 28px 48px',
               display: 'flex',
               flexDirection: 'column',
-              gap: 18,
-              overflowY: 'auto',
-              background: 'var(--bg-secondary)'
+              gap: 20,
+              background: 'var(--bg-secondary)',
+              width: '100%',
+              boxSizing: 'border-box'
             }}
           >
-            {/* Step Workflow Navigation Strip */}
+            {/* Guide Header & Navigation */}
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: 6,
-                padding: '4px',
-                background: 'var(--bg-glass-card)',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid var(--border-subtle)'
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 12,
+                paddingBottom: 16,
+                borderBottom: '1px solid var(--border-subtle)'
               }}
             >
-              <button
-                onClick={() => setSideTab('intuition')}
-                className={`step-workflow-tab ${sideTab === 'intuition' ? 'active' : ''}`}
-                style={{ flex: 1, justifyContent: 'center' }}
-              >
-                <Lightbulb size={14} />
-                <span>Intuition</span>
-              </button>
-              <button
-                onClick={() => setSideTab('formulas')}
-                className={`step-workflow-tab ${sideTab === 'formulas' ? 'active' : ''}`}
-                style={{ flex: 1, justifyContent: 'center' }}
-              >
-                <BookOpen size={14} />
-                <span>Equations</span>
-              </button>
-              <button
-                onClick={() => setSideTab('quiz')}
-                className={`step-workflow-tab ${sideTab === 'quiz' ? 'active' : ''}`}
-                style={{ flex: 1, justifyContent: 'center' }}
-              >
-                <HelpCircle size={14} />
-                <span>Quiz</span>
-                {topicQuiz.length > 0 && (
-                  <span
-                    style={{
-                      fontSize: '0.68rem',
-                      background: sideTab === 'quiz' ? 'rgba(255,255,255,0.25)' : 'var(--electric-blue-soft)',
-                      color: sideTab === 'quiz' ? '#FFFFFF' : 'var(--electric-blue)',
-                      padding: '1px 6px',
-                      borderRadius: 'var(--radius-pill)',
-                      fontWeight: 800
-                    }}
-                  >
-                    {topicQuiz.length}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: 'var(--radius-md)',
+                    background: `${accentColor}18`,
+                    border: `1px solid ${accentColor}40`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: accentColor
+                  }}
+                >
+                  <BookOpen size={18} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+                    Simulation Theory &amp; Concept Guide
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                    Physical intuition, governing equations, and instant concept checks
                   </span>
-                )}
-              </button>
+                </div>
+              </div>
+
+              {/* Step Workflow Navigation Strip */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px',
+                  background: 'var(--bg-glass-card)',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
+                <button
+                  onClick={() => setSideTab('intuition')}
+                  className={`step-workflow-tab ${sideTab === 'intuition' ? 'active' : ''}`}
+                  style={{ padding: '6px 16px' }}
+                >
+                  <Lightbulb size={14} />
+                  <span>Intuition</span>
+                </button>
+                <button
+                  onClick={() => setSideTab('formulas')}
+                  className={`step-workflow-tab ${sideTab === 'formulas' ? 'active' : ''}`}
+                  style={{ padding: '6px 16px' }}
+                >
+                  <BookOpen size={14} />
+                  <span>Equations</span>
+                </button>
+                <button
+                  onClick={() => setSideTab('quiz')}
+                  className={`step-workflow-tab ${sideTab === 'quiz' ? 'active' : ''}`}
+                  style={{ padding: '6px 16px' }}
+                >
+                  <HelpCircle size={14} />
+                  <span>Practice Quiz</span>
+                  {topicQuiz.length > 0 && (
+                    <span
+                      style={{
+                        fontSize: '0.68rem',
+                        background: sideTab === 'quiz' ? 'rgba(255,255,255,0.25)' : 'var(--electric-blue-soft)',
+                        color: sideTab === 'quiz' ? '#FFFFFF' : 'var(--electric-blue)',
+                        padding: '1px 6px',
+                        borderRadius: 'var(--radius-pill)',
+                        fontWeight: 800
+                      }}
+                    >
+                      {topicQuiz.length}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* TAB 1: INTUITION */}
@@ -672,13 +717,31 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
                 {/* 3. Student Takeaways */}
                 <div>
-                  <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>
+                  <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 10 }}>
                     QUICK SUMMARY FOR CLASS 11
                   </h4>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                      gap: 10
+                    }}
+                  >
                     {topic.keyTakeaways.map((point, i) => (
-                      <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: '0.82rem' }}>
-                        <CheckCircle2 size={15} color="#10B981" style={{ flexShrink: 0, marginTop: 2 }} />
+                      <div
+                        key={i}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: 10,
+                          fontSize: '0.84rem',
+                          padding: '12px 14px',
+                          background: 'var(--bg-glass-card)',
+                          borderRadius: 'var(--radius-md)',
+                          border: '1px solid var(--border-subtle)'
+                        }}
+                      >
+                        <CheckCircle2 size={16} color="#10B981" style={{ flexShrink: 0, marginTop: 2 }} />
                         <span style={{ color: 'var(--text-secondary)', lineHeight: 1.45 }}>{point}</span>
                       </div>
                     ))}
@@ -698,29 +761,35 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     SI Standard
                   </span>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gap: 12
+                  }}
+                >
                   {topic.keyFormulas.map((f, i) => (
                     <div
                       key={i}
                       className="formula-card"
-                      style={{ padding: '12px 16px' }}
+                      style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column' }}
                     >
                       <div
                         className="font-math"
                         style={{
-                          fontSize: '1.05rem',
+                          fontSize: '1.08rem',
                           fontWeight: 700,
                           color: 'var(--text-primary)',
-                          marginBottom: 4,
+                          marginBottom: 8,
                           textAlign: 'center',
-                          padding: '6px',
+                          padding: '8px 12px',
                           background: 'var(--bg-tertiary)',
                           borderRadius: 'var(--radius-sm)'
                         }}
                       >
                         {f.formula}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                         {f.explanation}
                       </div>
                     </div>
