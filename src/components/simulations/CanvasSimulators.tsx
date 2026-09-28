@@ -553,6 +553,7 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
             {controls.map((c, idx) => {
               const val = params[c.id] ?? c.defaultValue;
               const isSelected = idx === activeControlIdx;
+              const shortLabel = c.label.includes('(') ? (c.label.match(/\((.*?)\)/)?.[1] || c.label) : c.label;
               return (
                 <button
                   key={c.id}
@@ -564,7 +565,8 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
                   }}
                   className={`param-chip-btn ${isSelected ? 'active' : ''}`}
                 >
-                  <span>{c.label}:</span>
+                  <span className="hide-mobile">{c.label}:</span>
+                  <span className="show-mobile-only">{shortLabel}:</span>
                   <strong>{val}{c.unit ? ` ${c.unit}` : ''}</strong>
                 </button>
               );

@@ -736,6 +736,9 @@ em {
   .show-mobile-only {
     display: flex !important;
   }
+  span.show-mobile-only {
+    display: inline !important;
+  }
 
   /* Hamburger Toggle Button */
   .nav-hamburger-btn {
