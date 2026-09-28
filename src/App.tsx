@@ -43,8 +43,7 @@ export function App() {
   };
 
   const handleEnterLab = () => {
-    // Open default topic simulation (Motion or Algebra)
-    setSelectedTopicId('motion');
+    scrollToPreview();
   };
 
   return (

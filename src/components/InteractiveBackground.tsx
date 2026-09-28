@@ -72,23 +72,23 @@ export const InteractiveBackground: React.FC = () => {
     // -------------------------------------------------------------
     // 2. Small Floating Particles (Anime.js style geometric dots)
     // -------------------------------------------------------------
-    const particleCount = isMobile ? 15 : 45;
+    const particleCount = isMobile ? 18 : 50;
     const particles = Array.from({ length: particleCount }).map(() => ({
       x: Math.random() * width,
       y: Math.random() * height,
       vx: (Math.random() - 0.5) * (isMobile ? 0.35 : 0.6),
       vy: (Math.random() - 0.5) * (isMobile ? 0.35 : 0.6),
       radius: isMobile ? (Math.random() * 2 + 1) : (Math.random() * 3 + 1.5),
-      color: ['#0062FF', '#00E5FF', '#7C3AED', '#EC4899', '#38BDF8'][Math.floor(Math.random() * 5)],
-      baseAlpha: isMobile ? (Math.random() * 0.25 + 0.12) : (Math.random() * 0.4 + 0.25)
+      color: ['#00F0FF', '#38BDF8', '#A855F7', '#F43F5E', '#10B981'][Math.floor(Math.random() * 5)],
+      baseAlpha: isMobile ? (Math.random() * 0.3 + 0.15) : (Math.random() * 0.45 + 0.3)
     }));
 
     // -------------------------------------------------------------
     // 3. Orbiting Dots
     // -------------------------------------------------------------
     const orbits = [
-      { cx: width * (isMobile ? 0.12 : 0.16), cy: height * 0.32, rx: isMobile ? 36 : 65, ry: isMobile ? 24 : 40, angle: 0, speed: isMobile ? 0.012 : 0.02, color: '#0062FF' },
-      { cx: width * (isMobile ? 0.88 : 0.85), cy: height * 0.22, rx: isMobile ? 42 : 75, ry: isMobile ? 28 : 50, angle: Math.PI, speed: isMobile ? -0.01 : -0.018, color: '#7C3AED' }
+      { cx: width * (isMobile ? 0.12 : 0.16), cy: height * 0.32, rx: isMobile ? 36 : 65, ry: isMobile ? 24 : 40, angle: 0, speed: isMobile ? 0.012 : 0.02, color: '#00F0FF' },
+      { cx: width * (isMobile ? 0.88 : 0.85), cy: height * 0.22, rx: isMobile ? 42 : 75, ry: isMobile ? 28 : 50, angle: Math.PI, speed: isMobile ? -0.01 : -0.018, color: '#A855F7' }
     ];
 
     let t = 0;
@@ -112,7 +112,7 @@ export const InteractiveBackground: React.FC = () => {
 
       // --- Background Millimeter Grid ---
       ctx.save();
-      ctx.strokeStyle = 'rgba(0, 98, 255, 0.035)';
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.03)';
       ctx.lineWidth = 1;
       const gridSize = 45;
       for (let x = 0; x < width; x += gridSize) {
@@ -134,7 +134,7 @@ export const InteractiveBackground: React.FC = () => {
         const axisX = 70 + parallaxX * 0.5;
         const axisY = height * 0.52 + parallaxY * 0.5;
         ctx.save();
-        ctx.strokeStyle = 'rgba(15, 23, 42, 0.25)';
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
         ctx.lineWidth = 1.5;
         // Y axis
         ctx.beginPath();
@@ -160,20 +160,20 @@ export const InteractiveBackground: React.FC = () => {
         ctx.stroke();
 
         // Labels
-        ctx.fillStyle = '#0062FF';
+        ctx.fillStyle = '#00F0FF';
         ctx.font = 'bold 11px JetBrains Mono';
         ctx.fillText('Y', axisX - 14, axisY - 68);
         ctx.fillText('X', axisX + 92, axisY + 4);
-        ctx.fillText('(0,0)', axisX - 22, axisY + 16);
+        ctx.fillText('(0,0)', axisX - 24, axisY + 16);
 
         // Simple Linear Graph y = mx
-        ctx.strokeStyle = '#00E5FF';
+        ctx.strokeStyle = '#38BDF8';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(axisX - 15, axisY + 30);
         ctx.lineTo(axisX + 65, axisY - 50);
         ctx.stroke();
-        ctx.fillStyle = '#00E5FF';
+        ctx.fillStyle = '#38BDF8';
         ctx.font = '600 10px JetBrains Mono';
         ctx.fillText('y = mx + c', axisX + 20, axisY - 54);
         ctx.restore();
@@ -183,8 +183,8 @@ export const InteractiveBackground: React.FC = () => {
       ctx.save();
       const waveY = height * 0.38 + Math.sin(t * 0.5) * 8 + parallaxY * 0.8;
       ctx.beginPath();
-      ctx.strokeStyle = isMobile ? 'rgba(0, 98, 255, 0.08)' : 'rgba(0, 98, 255, 0.18)';
-      ctx.lineWidth = isMobile ? 1.5 : 2.5;
+      ctx.strokeStyle = isMobile ? 'rgba(0, 240, 255, 0.12)' : 'rgba(0, 240, 255, 0.22)';
+      ctx.lineWidth = isMobile ? 1.5 : 2.2;
       ctx.setLineDash([5, 4]);
 
       for (let x = 0; x <= width; x += 10) {
@@ -195,13 +195,13 @@ export const InteractiveBackground: React.FC = () => {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Wave crest crest markers (Anime.js micro dots)
+      // Wave crest markers (Anime.js glowing micro dots)
       if (!isMobile) {
         for (let x = 80; x < width - 80; x += 220) {
           const y = waveY + Math.sin(x * 0.015 + t) * 22;
           ctx.beginPath();
-          ctx.arc(x, y, 4, 0, Math.PI * 2);
-          ctx.fillStyle = '#0062FF';
+          ctx.arc(x, y, 4.5, 0, Math.PI * 2);
+          ctx.fillStyle = '#00F0FF';
           ctx.fill();
           ctx.strokeStyle = '#FFFFFF';
           ctx.lineWidth = 1.5;
@@ -222,7 +222,7 @@ export const InteractiveBackground: React.FC = () => {
 
         ctx.save();
         // Ceiling line
-        ctx.strokeStyle = 'rgba(15, 23, 42, 0.3)';
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(pendPivotX - 25, pendPivotY);
@@ -230,7 +230,7 @@ export const InteractiveBackground: React.FC = () => {
         ctx.stroke();
 
         // Cord
-        ctx.strokeStyle = 'rgba(124, 58, 237, 0.5)';
+        ctx.strokeStyle = 'rgba(168, 85, 247, 0.7)';
         ctx.lineWidth = 1.8;
         ctx.beginPath();
         ctx.moveTo(pendPivotX, pendPivotY);
@@ -240,10 +240,10 @@ export const InteractiveBackground: React.FC = () => {
         // Angle Arc θ
         ctx.beginPath();
         ctx.arc(pendPivotX, pendPivotY, 26, Math.PI / 2 - Math.abs(pendTheta), Math.PI / 2 + Math.abs(pendTheta));
-        ctx.strokeStyle = '#00E5FF';
+        ctx.strokeStyle = '#00F0FF';
         ctx.lineWidth = 1.2;
         ctx.stroke();
-        ctx.fillStyle = '#7C3AED';
+        ctx.fillStyle = '#A855F7';
         ctx.font = 'italic 11px STIX Two Text';
         ctx.fillText('θ', pendPivotX + 6, pendPivotY + 36);
 
@@ -407,7 +407,7 @@ export const InteractiveBackground: React.FC = () => {
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = 'rgba(0, 98, 255, 0.12)';
+            ctx.strokeStyle = 'rgba(0, 240, 255, 0.16)';
             ctx.lineWidth = 1;
             ctx.stroke();
           }

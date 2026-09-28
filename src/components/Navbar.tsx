@@ -87,16 +87,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               width: 36,
               height: 36,
               borderRadius: 'var(--radius-md)',
-              background: '#FFFFFF',
-              boxShadow: '0 3px 12px rgba(0, 98, 255, 0.15)',
-              border: '1px solid rgba(0, 98, 255, 0.18)',
+              background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.15) 0%, rgba(124, 58, 237, 0.2) 100%)',
+              boxShadow: '0 0 16px rgba(0, 240, 255, 0.25)',
+              border: '1px solid rgba(0, 240, 255, 0.35)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0
             }}
           >
-            <Atom size={22} color="#0062FF" />
+            <Atom size={22} color="var(--electric-blue)" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span

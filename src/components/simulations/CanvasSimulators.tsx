@@ -214,38 +214,93 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
         height: '100%',
         display: 'block',
         borderRadius: 'var(--radius-lg)',
-        background: '#FFFFFF'
+        background: 'radial-gradient(ellipse at 50% 35%, #0B132B 0%, #050814 100%)',
+        boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(0, 240, 255, 0.22)'
       }}
     />
   );
 };
 
 /* ==========================================================================
-   HELPER UTILITIES: Grids, Arrows & Axes
+   HELPER UTILITIES: Grids, Arrows & Axes (Futuristic Lab Viewport)
    ========================================================================== */
 
 function drawCoordinateGrid(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.save();
-  ctx.strokeStyle = 'rgba(0, 98, 255, 0.04)';
+  // 1. Subtle Blueprint / Oscilloscope Dark Lab Minor Grid
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.04)';
   ctx.lineWidth = 1;
-  for (let x = 0; x < w; x += 35) {
+  const step = 35;
+  for (let x = 0; x < w; x += step) {
     ctx.beginPath();
     ctx.moveTo(x, 0);
     ctx.lineTo(x, h);
     ctx.stroke();
   }
-  for (let y = 0; y < h; y += 35) {
+  for (let y = 0; y < h; y += step) {
     ctx.beginPath();
     ctx.moveTo(0, y);
     ctx.lineTo(w, y);
     ctx.stroke();
   }
+
+  // 2. Major Grid Lines every 140px with higher contrast
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
+  ctx.lineWidth = 1.2;
+  for (let x = 0; x < w; x += 140) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let y = 0; y < h; y += 140) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  // 3. Precision HUD Corner Reticles [  ]
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+  ctx.lineWidth = 1.5;
+  const rSize = 14;
+  // Top-Left
+  ctx.beginPath();
+  ctx.moveTo(12, 12 + rSize);
+  ctx.lineTo(12, 12);
+  ctx.lineTo(12 + rSize, 12);
+  ctx.stroke();
+  // Top-Right
+  ctx.beginPath();
+  ctx.moveTo(w - 12 - rSize, 12);
+  ctx.lineTo(w - 12, 12);
+  ctx.lineTo(w - 12, 12 + rSize);
+  ctx.stroke();
+  // Bottom-Left
+  ctx.beginPath();
+  ctx.moveTo(12, h - 12 - rSize);
+  ctx.lineTo(12, h - 12);
+  ctx.lineTo(12 + rSize, h - 12);
+  ctx.stroke();
+  // Bottom-Right
+  ctx.beginPath();
+  ctx.moveTo(w - 12 - rSize, h - 12);
+  ctx.lineTo(w - 12, h - 12);
+  ctx.lineTo(w - 12, h - 12 - rSize);
+  ctx.stroke();
+
+  // 4. Engine Telemetry Stamp (Bottom Right)
+  ctx.font = '700 8.5px "JetBrains Mono", monospace';
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.3)';
+  ctx.textAlign = 'right';
+  ctx.fillText('PHYSORA LAB // 60 FPS PRECISION SENSOR VIEW', w - 18, h - 8);
+
   ctx.restore();
 }
 
 function drawAxes(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number) {
   ctx.save();
-  ctx.strokeStyle = '#94A3B8';
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
   ctx.lineWidth = 1.5;
 
   // X axis
@@ -260,11 +315,21 @@ function drawAxes(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: numb
   ctx.lineTo(cx, h - 20);
   ctx.stroke();
 
-  ctx.fillStyle = '#64748B';
-  ctx.font = 'bold 11px JetBrains Mono';
+  // Glowing Origin Point (0,0)
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = '#00F0FF';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = 'bold 10px "JetBrains Mono", monospace';
   ctx.fillText('X', w - 16, cy + 4);
   ctx.fillText('Y', cx + 6, 26);
-  ctx.fillText('(0,0)', cx - 28, cy + 16);
+  ctx.fillText('(0,0)', cx - 30, cy + 16);
   ctx.restore();
 }
 
@@ -287,7 +352,9 @@ function drawArrow(
   ctx.save();
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 2.2;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 8;
 
   ctx.beginPath();
   ctx.moveTo(fx, fy);
@@ -302,7 +369,9 @@ function drawArrow(
   ctx.fill();
 
   if (label) {
-    ctx.font = '600 11px JetBrains Mono';
+    ctx.shadowBlur = 0;
+    ctx.font = 'bold 10.5px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#F8FAFC';
     ctx.fillText(label, tx + 6, ty - 3);
   }
   ctx.restore();
@@ -551,52 +620,118 @@ function renderUnitCircle(
 
   drawAxes(ctx, cx, cy, w, h);
 
-  // Unit circle
+  // 1. Glowing Unit Circle Reticle with Degree Ticks
+  ctx.save();
   ctx.beginPath();
   ctx.arc(cx, cy, R, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(0, 98, 255, 0.25)';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)';
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 8;
+  ctx.lineWidth = 1.8;
   ctx.stroke();
 
-  // Radius arm
+  // Degree tick marks (30°, 45°, 60°, 90°, etc.)
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+  ctx.lineWidth = 1;
+  for (let a = 0; a < 360; a += 15) {
+    const aRad = (a * Math.PI) / 180;
+    const isMajor = a % 90 === 0;
+    const isSemi = a % 45 === 0;
+    const tickLen = isMajor ? 10 : isSemi ? 6 : 3;
+    const x1 = cx + Math.cos(aRad) * (R - tickLen);
+    const y1 = cy - Math.sin(aRad) * (R - tickLen);
+    const x2 = cx + Math.cos(aRad) * R;
+    const y2 = cy - Math.sin(aRad) * R;
+
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // 2. Shaded Reference Triangle
   const px = cx + Math.cos(rad) * R;
   const py = cy - Math.sin(rad) * R;
 
-  ctx.beginPath();
-  ctx.moveTo(cx, cy);
-  ctx.lineTo(px, py);
-  ctx.strokeStyle = '#0F172A';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Cosine bar (Horizontal blue)
+  ctx.save();
   ctx.beginPath();
   ctx.moveTo(cx, cy);
   ctx.lineTo(px, cy);
-  ctx.strokeStyle = '#0062FF';
-  ctx.lineWidth = 3.5;
-  ctx.stroke();
+  ctx.lineTo(px, py);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
+  ctx.fill();
+  ctx.restore();
 
-  // Sine bar (Vertical violet)
+  // 3. Cosine Bar (Horizontal Emerald Beam with Bloom)
+  ctx.save();
+  ctx.strokeStyle = '#10B981';
+  ctx.shadowColor = '#10B981';
+  ctx.shadowBlur = 8;
+  ctx.lineWidth = 3.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(px, cy);
+  ctx.stroke();
+  ctx.restore();
+
+  // 4. Sine Bar (Vertical Rose Beam with Bloom)
+  ctx.save();
+  ctx.strokeStyle = '#F43F5E';
+  ctx.shadowColor = '#F43F5E';
+  ctx.shadowBlur = 8;
+  ctx.lineWidth = 3.5;
   ctx.beginPath();
   ctx.moveTo(px, cy);
   ctx.lineTo(px, py);
-  ctx.strokeStyle = '#7C3AED';
-  ctx.lineWidth = 3.5;
   ctx.stroke();
+  ctx.restore();
 
-  // Point on circle
+  // 5. Radius Arm Phasor (Electric Cyan)
+  ctx.save();
+  ctx.strokeStyle = '#00F0FF';
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 10;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(px, py);
+  ctx.stroke();
+  ctx.restore();
+
+  // 6. Glowing Orbital Point on Circle
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = '#00F0FF';
   ctx.beginPath();
   ctx.arc(px, py, 6, 0, Math.PI * 2);
-  ctx.fillStyle = '#00E5FF';
   ctx.fill();
-  ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 2;
-  ctx.stroke();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
+  // Coordinate Tag
   const sinVal = Math.sin(rad);
   const cosVal = Math.cos(rad);
   const tanVal = Math.abs(cosVal) > 0.001 ? (sinVal / cosVal).toFixed(3) : 'Undefined';
+
+  ctx.fillStyle = '#F8FAFC';
+  ctx.font = 'bold 10px "JetBrains Mono", monospace';
+  ctx.fillText(`(${cosVal.toFixed(2)}, ${sinVal.toFixed(2)})`, px + (cosVal >= 0 ? 8 : -75), py + (sinVal >= 0 ? -10 : 18));
+
+  // Angle Arc
+  ctx.strokeStyle = '#FBBF24';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 32, -rad, 0);
+  ctx.stroke();
+  ctx.fillStyle = '#FBBF24';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.fillText(`θ=${deg}°`, cx + 38, cy - 8);
 
   onTelem({
     radians: `${rad.toFixed(2)} rad (${(rad / Math.PI).toFixed(2)}π)`,
@@ -3459,20 +3594,24 @@ function renderKeplerOrbit(
   const periSpeed = Math.sqrt(GM * (2 / (a * (1 - e)) - 1 / a));
   const aphSpeed = Math.sqrt(GM * (2 / (a * (1 + e)) - 1 / a));
 
-  // 1. Draw Elliptical Orbit Track
+  // 1. Draw Elliptical Orbit Track with Cyan Glow
+  ctx.save();
   ctx.beginPath();
   ctx.ellipse(cx - c, cy, a, b, 0, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(0, 98, 255, 0.3)';
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 8;
   ctx.lineWidth = 1.8;
-  ctx.setLineDash([4, 4]);
+  ctx.setLineDash([5, 4]);
   ctx.stroke();
   ctx.setLineDash([]);
+  ctx.restore();
 
   // Major axis dashed line
   ctx.beginPath();
   ctx.moveTo(cx - c - a - 15, cy);
   ctx.lineTo(cx - c + a + 15, cy);
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
   ctx.lineWidth = 1;
   ctx.stroke();
 
@@ -3492,30 +3631,33 @@ function renderKeplerOrbit(
     ctx.lineTo(sx, sy);
   }
   ctx.closePath();
-  ctx.fillStyle = 'rgba(245, 158, 11, 0.22)';
+  ctx.fillStyle = 'rgba(245, 158, 11, 0.25)';
   ctx.fill();
 
   // 3. Radius Vector Line from Sun to Satellite
   ctx.beginPath();
   ctx.moveTo(sunX, sunY);
   ctx.lineTo(satX, satY);
-  ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = '#F59E0B';
+  ctx.lineWidth = 1.6;
   ctx.stroke();
 
-  // 4. Glowing Sun at Focus 1
+  // 4. Glowing Sun at Focus 1 with Luminous Solar Corona
   const sunR = Math.max(14, planetM * 0.14);
-  const sunGrad = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, sunR * 2.2);
+  const sunGrad = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, sunR * 2.5);
   sunGrad.addColorStop(0, '#FFFFFF');
-  sunGrad.addColorStop(0.2, '#FEF08A');
-  sunGrad.addColorStop(0.6, '#F59E0B');
+  sunGrad.addColorStop(0.25, '#FEF08A');
+  sunGrad.addColorStop(0.65, '#F59E0B');
   sunGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
 
   ctx.beginPath();
-  ctx.arc(sunX, sunY, sunR * 2.2, 0, Math.PI * 2);
+  ctx.arc(sunX, sunY, sunR * 2.5, 0, Math.PI * 2);
   ctx.fillStyle = sunGrad;
   ctx.fill();
 
+  ctx.save();
+  ctx.shadowColor = '#F59E0B';
+  ctx.shadowBlur = 18;
   ctx.beginPath();
   ctx.arc(sunX, sunY, sunR, 0, Math.PI * 2);
   ctx.fillStyle = '#F59E0B';
@@ -3523,48 +3665,50 @@ function renderKeplerOrbit(
   ctx.strokeStyle = '#FEF08A';
   ctx.lineWidth = 2;
   ctx.stroke();
+  ctx.restore();
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 10px JetBrains Mono';
-  ctx.fillText('Sun (Focus 1)', sunX - 35, sunY + sunR + 15);
+  ctx.fillStyle = '#FBBF24';
+  ctx.font = 'bold 10px "JetBrains Mono", monospace';
+  ctx.fillText('☀️ Sun (Focus 1)', sunX - 38, sunY + sunR + 18);
 
-  // 5. Satellite with Solar Panels
+  // 5. Satellite with Photovoltaic Solar Panels
   ctx.save();
   ctx.translate(satX, satY);
-  // Velocity tangent angle: dx = -a*sin(E)*dE, dy = b*cos(E)*dE
   const vx = -a * Math.sin(E);
   const vy = b * Math.cos(E);
   const vAngle = Math.atan2(vy, vx);
   ctx.rotate(vAngle);
 
-  // Satellite body
+  // Satellite body with cyan glow
   ctx.fillStyle = '#0F172A';
-  ctx.fillRect(-6, -6, 12, 12);
-  ctx.fillStyle = '#00E5FF';
-  ctx.fillRect(-4, -4, 8, 8);
+  ctx.fillRect(-7, -7, 14, 14);
+  ctx.fillStyle = '#00F0FF';
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 8;
+  ctx.fillRect(-5, -5, 10, 10);
 
   // Solar panel wings
-  ctx.fillStyle = '#0062FF';
-  ctx.fillRect(-18, -4, 11, 8);
-  ctx.fillRect(7, -4, 11, 8);
-  ctx.strokeStyle = '#FFFFFF';
+  ctx.fillStyle = '#6366F1';
+  ctx.fillRect(-20, -5, 13, 10);
+  ctx.fillRect(8, -5, 13, 10);
+  ctx.strokeStyle = '#A78BFA';
   ctx.lineWidth = 1;
-  ctx.strokeRect(-18, -4, 11, 8);
-  ctx.strokeRect(7, -4, 11, 8);
+  ctx.strokeRect(-20, -5, 13, 10);
+  ctx.strokeRect(8, -5, 13, 10);
   ctx.restore();
 
   // Tangent velocity vector arrow
   const vArrowLen = Math.min(50, curSpeed * 1.5);
-  drawArrow(ctx, satX, satY, satX + Math.cos(vAngle) * vArrowLen, satY + Math.sin(vAngle) * vArrowLen, '#00E5FF', `v=${curSpeed.toFixed(1)} km/s`);
+  drawArrow(ctx, satX, satY, satX + Math.cos(vAngle) * vArrowLen, satY + Math.sin(vAngle) * vArrowLen, '#00F0FF', `v=${curSpeed.toFixed(1)} km/s`);
 
   // Perihelion and Aphelion indicators
   const periX = cx - c + a;
   const aphX = cx - c - a;
-  ctx.fillStyle = '#10B981';
-  ctx.font = '9px JetBrains Mono';
-  ctx.fillText(`Perihelion (r_min, v_max=${periSpeed.toFixed(1)})`, periX - 80, cy + 18);
-  ctx.fillStyle = '#EC4899';
-  ctx.fillText(`Aphelion (r_max, v_min=${aphSpeed.toFixed(1)})`, aphX - 20, cy + 18);
+  ctx.fillStyle = '#34D399';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.fillText(`Perihelion (v_max=${periSpeed.toFixed(1)})`, periX - 85, cy + 20);
+  ctx.fillStyle = '#F472B6';
+  ctx.fillText(`Aphelion (v_min=${aphSpeed.toFixed(1)})`, aphX - 25, cy + 20);
 
   onTelem({
     orbit_shape: `Ellipse (e = ${e.toFixed(2)}, a = ${a.toFixed(0)} units)`,
@@ -4061,65 +4205,91 @@ function renderSnellsLaw(
   const cy = h / 2;
   const cx = w / 2;
 
-  // Medium 1 (Top)
-  ctx.fillStyle = n1 > 1.2 ? 'rgba(0, 98, 255, 0.08)' : 'rgba(248, 250, 252, 0.5)';
+  // Medium 1 (Top) - Sleek Optical Layer
+  const m1Grad = ctx.createLinearGradient(0, 0, 0, cy);
+  m1Grad.addColorStop(0, 'rgba(8, 14, 28, 0.4)');
+  m1Grad.addColorStop(1, n1 > 1.2 ? 'rgba(0, 229, 255, 0.12)' : 'rgba(15, 23, 42, 0.2)');
+  ctx.fillStyle = m1Grad;
   ctx.fillRect(0, 0, w, cy);
 
-  // Medium 2 (Bottom)
-  ctx.fillStyle = n2 > 1.2 ? 'rgba(0, 98, 255, 0.08)' : 'rgba(248, 250, 252, 0.5)';
+  // Medium 2 (Bottom) - Denser Crystal Layer
+  const m2Grad = ctx.createLinearGradient(0, cy, 0, h);
+  m2Grad.addColorStop(0, n2 > 1.2 ? 'rgba(124, 58, 237, 0.18)' : 'rgba(15, 23, 42, 0.2)');
+  m2Grad.addColorStop(1, 'rgba(8, 14, 28, 0.6)');
+  ctx.fillStyle = m2Grad;
   ctx.fillRect(0, cy, w, h - cy);
 
-  // Interface boundary line
-  ctx.strokeStyle = '#3B82F6';
-  ctx.lineWidth = 2;
+  // Interface boundary line with neon glow
+  ctx.save();
+  ctx.strokeStyle = '#00E5FF';
+  ctx.shadowColor = '#00E5FF';
+  ctx.shadowBlur = 10;
+  ctx.lineWidth = 2.2;
   ctx.beginPath();
   ctx.moveTo(0, cy);
   ctx.lineTo(w, cy);
   ctx.stroke();
+  ctx.restore();
 
-  // Normal line (vertical dashed)
-  ctx.strokeStyle = '#94A3B8';
+  // Normal line (vertical dashed in glowing slate)
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
   ctx.lineWidth = 1.5;
-  ctx.setLineDash([4, 4]);
+  ctx.setLineDash([5, 4]);
   ctx.beginPath();
-  ctx.moveTo(cx, 20);
-  ctx.lineTo(cx, h - 20);
+  ctx.moveTo(cx, 16);
+  ctx.lineTo(cx, h - 16);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // Labels for media
-  ctx.font = 'bold 12px JetBrains Mono';
-  ctx.fillStyle = '#1E293B';
+  // Labels for media in HUD cards
+  ctx.font = 'bold 11px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#00F0FF';
   ctx.textAlign = 'left';
-  ctx.fillText(`Medium 1 (n₁ = ${n1.toFixed(2)})`, 24, 32);
-  ctx.fillText(`Medium 2 (n₂ = ${n2.toFixed(2)})`, 24, cy + 32);
+  ctx.fillText(`MEDIUM 1 (n₁ = ${n1.toFixed(2)})`, 24, 30);
+  ctx.fillStyle = '#A78BFA';
+  ctx.fillText(`MEDIUM 2 (n₂ = ${n2.toFixed(2)})`, 24, cy + 30);
 
   const theta1Rad = (theta1Deg * Math.PI) / 180;
-  const rayLen = Math.min(w, h) * 0.42;
+  const rayLen = Math.min(w, h) * 0.44;
 
   // Incident ray start
   const inStartX = cx - rayLen * Math.sin(theta1Rad);
   const inStartY = cy - rayLen * Math.cos(theta1Rad);
 
-  // Draw Incident Ray (Emerald Green Laser)
+  // Emitter Housing at start of incident ray
+  ctx.save();
+  ctx.fillStyle = '#1E293B';
   ctx.strokeStyle = '#10B981';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 1.8;
+  ctx.beginPath();
+  ctx.arc(inStartX, inStartY, 7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  // Draw Incident Ray (Emerald Green Laser with Bloom)
+  ctx.save();
+  ctx.strokeStyle = '#10B981';
+  ctx.shadowColor = '#10B981';
+  ctx.shadowBlur = 14;
+  ctx.lineWidth = 3.2;
   ctx.beginPath();
   ctx.moveTo(inStartX, inStartY);
   ctx.lineTo(cx, cy);
   ctx.stroke();
+  ctx.restore();
 
   drawArrow(ctx, inStartX, inStartY, cx, cy, '#10B981', '', 8);
 
   // Angle arc for theta1
   ctx.strokeStyle = '#10B981';
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
-  ctx.arc(cx, cy, 40, -Math.PI / 2 - theta1Rad, -Math.PI / 2);
+  ctx.arc(cx, cy, 46, -Math.PI / 2 - theta1Rad, -Math.PI / 2);
   ctx.stroke();
-  ctx.font = '11px JetBrains Mono';
-  ctx.fillStyle = '#059669';
-  ctx.fillText(`θ₁ = ${theta1Deg.toFixed(0)}°`, cx - 55, cy - 45);
+  ctx.font = 'bold 11px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#34D399';
+  ctx.fillText(`θ₁ = ${theta1Deg.toFixed(0)}°`, cx - 65, cy - 48);
 
   // Check critical angle if n1 > n2
   let isTIR = false;
@@ -4135,24 +4305,36 @@ function renderSnellsLaw(
   const refEndX = cx + rayLen * Math.sin(theta1Rad);
   const refEndY = cy - rayLen * Math.cos(theta1Rad);
 
-  ctx.strokeStyle = isTIR ? '#10B981' : 'rgba(16, 185, 129, 0.35)';
-  ctx.lineWidth = isTIR ? 3 : 1.5;
+  ctx.save();
+  ctx.strokeStyle = isTIR ? '#10B981' : 'rgba(16, 185, 129, 0.45)';
+  ctx.shadowColor = isTIR ? '#10B981' : 'transparent';
+  ctx.shadowBlur = isTIR ? 16 : 0;
+  ctx.lineWidth = isTIR ? 3.5 : 1.5;
   ctx.beginPath();
   ctx.moveTo(cx, cy);
   ctx.lineTo(refEndX, refEndY);
   ctx.stroke();
+  ctx.restore();
 
   if (isTIR) {
     drawArrow(ctx, cx, cy, refEndX, refEndY, '#10B981', '', 8);
 
-    // Label TIR
-    ctx.fillStyle = '#DC2626';
-    ctx.font = 'bold 13px JetBrains Mono';
+    // Glowing Banner for TIR
+    ctx.save();
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.15)';
+    ctx.strokeStyle = '#EF4444';
+    ctx.lineWidth = 1.5;
+    ctx.fillRect(cx - 150, cy + 40, 300, 48);
+    ctx.strokeRect(cx - 150, cy + 40, 300, 48);
+
+    ctx.fillStyle = '#F87171';
+    ctx.font = 'bold 12px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('⚡ 100% TOTAL INTERNAL REFLECTION (TIR)', cx, cy + 60);
-    ctx.font = '11px JetBrains Mono';
-    ctx.fillStyle = '#64748B';
-    ctx.fillText(`θ₁ (${theta1Deg}°) > Critical Angle θ_c (${critAngleDeg.toFixed(1)}°)`, cx, cy + 80);
+    ctx.fillText('⚡ TOTAL INTERNAL REFLECTION (TIR)', cx, cy + 60);
+    ctx.font = '10px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#CBD5E1';
+    ctx.fillText(`θ₁ (${theta1Deg}°) > θ_crit (${critAngleDeg.toFixed(1)}°) • No light enters medium 2`, cx, cy + 76);
+    ctx.restore();
 
     onTelem({
       refracted_angle: 'None (Total Internal Reflection)',
@@ -4169,24 +4351,28 @@ function renderSnellsLaw(
     const outEndX = cx + rayLen * Math.sin(theta2Rad);
     const outEndY = cy + rayLen * Math.cos(theta2Rad);
 
-    ctx.strokeStyle = '#0062FF';
-    ctx.lineWidth = 3;
+    ctx.save();
+    ctx.strokeStyle = '#00F0FF';
+    ctx.shadowColor = '#00F0FF';
+    ctx.shadowBlur = 14;
+    ctx.lineWidth = 3.2;
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.lineTo(outEndX, outEndY);
     ctx.stroke();
+    ctx.restore();
 
-    drawArrow(ctx, cx, cy, outEndX, outEndY, '#0062FF', '', 8);
+    drawArrow(ctx, cx, cy, outEndX, outEndY, '#00F0FF', '', 8);
 
     // Angle arc for theta2
-    ctx.strokeStyle = '#0062FF';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#00F0FF';
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
-    ctx.arc(cx, cy, 45, Math.PI / 2 - theta2Rad, Math.PI / 2);
+    ctx.arc(cx, cy, 50, Math.PI / 2 - theta2Rad, Math.PI / 2);
     ctx.stroke();
-    ctx.font = '11px JetBrains Mono';
-    ctx.fillStyle = '#0062FF';
-    ctx.fillText(`θ₂ = ${theta2Deg.toFixed(1)}°`, cx + 20, cy + 45);
+    ctx.font = 'bold 11px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#38BDF8';
+    ctx.fillText(`θ₂ = ${theta2Deg.toFixed(1)}°`, cx + 22, cy + 46);
 
     const bendsToward = theta2Deg < theta1Deg;
     onTelem({
@@ -4219,24 +4405,26 @@ function renderThinLens(
   const hoPx = ho * scale;
 
   // Optical Principal Axis
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.moveTo(30, cy);
   ctx.lineTo(w - 30, cy);
   ctx.stroke();
 
-  // Lens line at cx
+  // Draw Polished Glass Lens with Caustics
   const isConvex = f > 0;
-  ctx.strokeStyle = isConvex ? '#0062FF' : '#7C3AED';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - 120);
-  ctx.lineTo(cx, cy + 120);
-  ctx.stroke();
+  ctx.save();
+  const lensGrad = ctx.createLinearGradient(cx - 16, cy, cx + 16, cy);
+  lensGrad.addColorStop(0, 'rgba(0, 229, 255, 0.35)');
+  lensGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.15)');
+  lensGrad.addColorStop(1, 'rgba(124, 58, 237, 0.35)');
+  ctx.fillStyle = lensGrad;
+  ctx.strokeStyle = isConvex ? '#00E5FF' : '#A78BFA';
+  ctx.shadowColor = isConvex ? '#00E5FF' : '#A78BFA';
+  ctx.shadowBlur = 12;
+  ctx.lineWidth = 2.5;
 
-  // Draw lens shape indicator
-  ctx.fillStyle = isConvex ? 'rgba(0, 98, 255, 0.12)' : 'rgba(124, 58, 237, 0.12)';
   ctx.beginPath();
   if (isConvex) {
     ctx.ellipse(cx, cy, 14, 120, 0, 0, 2 * Math.PI);
@@ -4244,8 +4432,10 @@ function renderThinLens(
     ctx.rect(cx - 8, cy - 120, 16, 240);
   }
   ctx.fill();
+  ctx.stroke();
+  ctx.restore();
 
-  // Foci marks
+  // Foci marks with glowing cyan points
   const fAbsPx = Math.abs(fPx);
   const foci = [
     { x: cx - fAbsPx, label: 'F₁' },
@@ -4254,14 +4444,15 @@ function renderThinLens(
     { x: cx + 2 * fAbsPx, label: '2F₂' }
   ];
 
-  ctx.font = '10px JetBrains Mono';
-  ctx.fillStyle = '#64748B';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
   foci.forEach(fc => {
     if (fc.x >= 30 && fc.x <= w - 30) {
       ctx.beginPath();
       ctx.arc(fc.x, cy, 3, 0, 2 * Math.PI);
+      ctx.fillStyle = '#00F0FF';
       ctx.fill();
+      ctx.fillStyle = '#94A3B8';
       ctx.fillText(fc.label, fc.x, cy + 16);
     }
   });
@@ -4289,8 +4480,11 @@ function renderThinLens(
   const imgTipY = cy + hiPx;
 
   // Ray 1: Parallel to axis, then through right focus (if convex) or diverged (if concave)
+  ctx.save();
   ctx.strokeStyle = '#F59E0B';
-  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#F59E0B';
+  ctx.shadowBlur = 8;
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
   ctx.moveTo(objX, objTipY);
   ctx.lineTo(cx, objTipY);
@@ -4303,7 +4497,6 @@ function renderThinLens(
   } else {
     const slope1 = (objTipY - cy) / fAbsPx;
     ctx.lineTo(w - 20, objTipY + slope1 * (w - 20 - cx));
-    // Virtual trace back
     ctx.stroke();
     ctx.beginPath();
     ctx.setLineDash([3, 3]);
@@ -4313,10 +4506,14 @@ function renderThinLens(
     ctx.setLineDash([]);
   }
   ctx.stroke();
+  ctx.restore();
 
   // Ray 2: Directly through Optical Center (cx, cy)
+  ctx.save();
   ctx.strokeStyle = '#EC4899';
-  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#EC4899';
+  ctx.shadowBlur = 8;
+  ctx.lineWidth = 1.8;
   ctx.beginPath();
   ctx.moveTo(objX, objTipY);
   const slope2 = (cy - objTipY) / (cx - objX);
@@ -4332,18 +4529,19 @@ function renderThinLens(
   } else {
     ctx.stroke();
   }
+  ctx.restore();
 
   // Draw Image if not at infinity and within canvas
   if (!isAtInfinity && imgX >= 20 && imgX <= w - 20) {
     const isReal = v > 0;
-    drawArrow(ctx, imgX, cy, imgX, imgTipY, isReal ? '#0062FF' : '#7C3AED', isReal ? 'Real Image' : 'Virtual Image', 8);
+    drawArrow(ctx, imgX, cy, imgX, imgTipY, isReal ? '#00E5FF' : '#A78BFA', isReal ? 'Real Image' : 'Virtual Image', 8);
   }
 
   // Legend at bottom
-  ctx.fillStyle = '#0F172A';
-  ctx.font = '10px JetBrains Mono';
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
   ctx.textAlign = 'left';
-  ctx.fillText('Amber Ray: Parallel → Focus | Pink Ray: Through Optical Center', 30, h - 16);
+  ctx.fillText('Amber Ray: Parallel → Focus | Pink Ray: Through Optical Center (O)', 30, h - 16);
 
   onTelem({
     image_dist: isAtInfinity ? 'Infinity (Parallel Rays)' : `${v.toFixed(1)} mm (${v > 0 ? 'Right/Real' : 'Left/Virtual'})`,
@@ -4374,13 +4572,17 @@ function renderPrismDispersion(
   const baseRightX = cx + side / 2;
   const baseY = cy + (side * Math.sqrt(3)) / 6;
 
-  // Draw Glass Prism
+  // Draw Glass Prism with Crystal Caustic Gradient
+  ctx.save();
   const prismGrad = ctx.createLinearGradient(baseLeftX, apexY, baseRightX, baseY);
-  prismGrad.addColorStop(0, 'rgba(0, 98, 255, 0.12)');
-  prismGrad.addColorStop(1, 'rgba(0, 229, 255, 0.05)');
+  prismGrad.addColorStop(0, 'rgba(0, 229, 255, 0.25)');
+  prismGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0.12)');
+  prismGrad.addColorStop(1, 'rgba(124, 58, 237, 0.25)');
   ctx.fillStyle = prismGrad;
-  ctx.strokeStyle = '#0062FF';
-  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = '#00F0FF';
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 12;
+  ctx.lineWidth = 2.2;
 
   ctx.beginPath();
   ctx.moveTo(cx, apexY);
@@ -4389,12 +4591,13 @@ function renderPrismDispersion(
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
+  ctx.restore();
 
   // Prism Apex Angle label
-  ctx.font = 'bold 11px JetBrains Mono';
-  ctx.fillStyle = '#0062FF';
+  ctx.font = 'bold 11px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#00F0FF';
   ctx.textAlign = 'center';
-  ctx.fillText(`A = ${apexDeg}°`, cx, apexY - 10);
+  ctx.fillText(`A = ${apexDeg}°`, cx, apexY - 12);
 
   // Incident ray hitting left face
   const hitY = cy - 10;
@@ -4405,26 +4608,23 @@ function renderPrismDispersion(
   const faceAngle = Math.atan2(baseY - apexY, baseLeftX - cx);
   const normalAngle = faceAngle + Math.PI / 2;
 
-  // Collimated White Light Beam
+  // Collimated White Light Beam with Intense Core & Glow
   const rayInLen = 140;
   const inStartX = hitX - rayInLen * Math.cos(normalAngle - iRad);
   const inStartY = hitY - rayInLen * Math.sin(normalAngle - iRad);
 
-  ctx.strokeStyle = '#F8FAFC';
-  ctx.lineWidth = 4;
+  ctx.save();
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.shadowColor = '#FFFFFF';
+  ctx.shadowBlur = 12;
+  ctx.lineWidth = 3.5;
   ctx.beginPath();
   ctx.moveTo(inStartX, inStartY);
   ctx.lineTo(hitX, hitY);
   ctx.stroke();
+  ctx.restore();
 
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(inStartX, inStartY);
-  ctx.lineTo(hitX, hitY);
-  ctx.stroke();
-
-  drawArrow(ctx, inStartX, inStartY, hitX, hitY, '#3B82F6', 'White Light', 8);
+  drawArrow(ctx, inStartX, inStartY, hitX, hitY, '#38BDF8', 'White Light', 8);
 
   // Spectral refraction inside and out
   const wavelengths = [
@@ -4433,7 +4633,7 @@ function renderPrismDispersion(
     { color: '#EAB308', n: 1.518, name: 'Yellow' },
     { color: '#10B981', n: 1.524, name: 'Green' },
     { color: '#00E5FF', n: 1.530 + dispDelta * 0.5, name: 'Cyan' },
-    { color: '#7C3AED', n: 1.538 + dispDelta, name: 'Violet' }
+    { color: '#8B5CF6', n: 1.538 + dispDelta, name: 'Violet' }
   ];
 
   const screenX = w - 40;
@@ -4474,21 +4674,37 @@ function renderPrismDispersion(
     const exitAngle = 0.25 + (delta * Math.PI) / 180;
     const outEndY = exitY + (screenX - exitX) * Math.sin(exitAngle);
 
+    ctx.save();
     ctx.strokeStyle = wl.color;
+    ctx.shadowColor = wl.color;
+    ctx.shadowBlur = 8;
     ctx.lineWidth = 2.2;
     ctx.beginPath();
     ctx.moveTo(exitX, exitY);
     ctx.lineTo(screenX, outEndY);
     ctx.stroke();
+
+    // Phosphor glow spot on detector screen
+    ctx.fillStyle = wl.color;
+    ctx.beginPath();
+    ctx.arc(screenX, outEndY, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   });
 
-  // Projection Screen on right
-  ctx.fillStyle = '#1E293B';
-  ctx.fillRect(screenX, 40, 8, h - 80);
-  ctx.font = 'bold 10px JetBrains Mono';
-  ctx.fillStyle = '#64748B';
+  // Projection Screen on right with glass HUD styling
+  ctx.save();
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+  ctx.strokeStyle = '#64748B';
+  ctx.lineWidth = 2;
+  ctx.fillRect(screenX, 35, 8, h - 70);
+  ctx.strokeRect(screenX, 35, 8, h - 70);
+
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#CBD5E1';
   ctx.textAlign = 'center';
-  ctx.fillText('Screen', screenX + 4, 30);
+  ctx.fillText('SCREEN', screenX + 4, 25);
+  ctx.restore();
 
   const spread = Math.abs(devViolet - devRed);
   const minDevEstimated = 2 * iDeg - apexDeg;
@@ -4532,84 +4748,130 @@ function renderIdealGasChamber(
   const currentChamberW = Math.min(maxChamberW, 80 + V * 6.5);
   const pistonX = leftX + currentChamberW;
 
-  // Cylinder walls (thick dark container)
-  ctx.fillStyle = '#0F172A';
+  // Cylinder walls (Titanium alloy container with cyan rim lighting)
+  ctx.save();
+  ctx.fillStyle = '#1E293B';
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)';
+  ctx.lineWidth = 1.5;
+
   // Top wall
   ctx.fillRect(leftX - 10, topY - 12, maxChamberW + 40, 12);
+  ctx.strokeRect(leftX - 10, topY - 12, maxChamberW + 40, 12);
   // Bottom wall
   ctx.fillRect(leftX - 10, topY + chamberH, maxChamberW + 40, 12);
+  ctx.strokeRect(leftX - 10, topY + chamberH, maxChamberW + 40, 12);
   // Left closed wall
   ctx.fillRect(leftX - 12, topY - 12, 12, chamberH + 24);
+  ctx.strokeRect(leftX - 12, topY - 12, 12, chamberH + 24);
+  ctx.restore();
 
-  // Gas Chamber Interior Fill (tint based on Temperature)
+  // Gas Chamber Interior Fill (Energetic thermal atmosphere)
   const heatRatio = Math.min(1, Math.max(0, (T - 150) / 600));
   const chamberGrad = ctx.createLinearGradient(leftX, topY, pistonX, topY + chamberH);
   if (heatRatio > 0.5) {
-    chamberGrad.addColorStop(0, `rgba(239, 68, 68, ${0.05 + heatRatio * 0.15})`);
-    chamberGrad.addColorStop(1, `rgba(245, 158, 11, ${0.05 + heatRatio * 0.15})`);
+    chamberGrad.addColorStop(0, `rgba(239, 68, 68, ${0.08 + heatRatio * 0.16})`);
+    chamberGrad.addColorStop(1, `rgba(245, 158, 11, ${0.08 + heatRatio * 0.16})`);
   } else {
-    chamberGrad.addColorStop(0, `rgba(0, 98, 255, ${0.12 - heatRatio * 0.1})`);
-    chamberGrad.addColorStop(1, `rgba(0, 229, 255, ${0.12 - heatRatio * 0.1})`);
+    chamberGrad.addColorStop(0, `rgba(0, 98, 255, ${0.14 - heatRatio * 0.08})`);
+    chamberGrad.addColorStop(1, `rgba(0, 229, 255, ${0.14 - heatRatio * 0.08})`);
   }
   ctx.fillStyle = chamberGrad;
   ctx.fillRect(leftX, topY, currentChamberW, chamberH);
 
-  // Sliding Piston Head
-  ctx.fillStyle = '#475569';
+  // Sliding Piston Head with Machined Metal Gradient
+  const pGrad = ctx.createLinearGradient(pistonX, topY, pistonX + 18, topY);
+  pGrad.addColorStop(0, '#475569');
+  pGrad.addColorStop(0.5, '#94A3B8');
+  pGrad.addColorStop(1, '#334155');
+  ctx.fillStyle = pGrad;
   ctx.fillRect(pistonX, topY, 18, chamberH);
+  ctx.strokeStyle = '#00E5FF';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(pistonX, topY, 18, chamberH);
+
   // Piston Rod
-  ctx.fillStyle = '#64748B';
+  const rodGrad = ctx.createLinearGradient(pistonX + 18, topY + chamberH / 2 - 8, pistonX + 18, topY + chamberH / 2 + 8);
+  rodGrad.addColorStop(0, '#64748B');
+  rodGrad.addColorStop(0.5, '#CBD5E1');
+  rodGrad.addColorStop(1, '#475569');
+  ctx.fillStyle = rodGrad;
   ctx.fillRect(pistonX + 18, topY + chamberH / 2 - 8, maxChamberW - currentChamberW + 40, 16);
 
-  // Bouncing Gas Particles
+  // Bouncing Gas Particles with Energetic Glow
   const particleCount = Math.min(60, 15 * n);
   const speed = Math.sqrt(T / 300) * 1.8;
 
-  ctx.fillStyle = heatRatio > 0.4 ? '#EF4444' : '#0062FF';
+  ctx.save();
   for (let i = 0; i < particleCount; i++) {
     const seed = i * 137.5;
     const px = leftX + 8 + ((seed + t * speed * 40 * ((i % 3) + 1)) % (currentChamberW - 16));
     const py = topY + 8 + ((seed * 1.618 + Math.sin(t * speed + i) * 60 + 80) % (chamberH - 16));
 
+    const pColor = heatRatio > 0.4 ? '#F43F5E' : '#00E5FF';
+    ctx.shadowColor = pColor;
+    ctx.shadowBlur = 6;
+    ctx.fillStyle = pColor;
     ctx.beginPath();
     ctx.arc(px, py, 3.5, 0, 2 * Math.PI);
     ctx.fill();
 
-    // Particle velocity trail
-    ctx.strokeStyle = heatRatio > 0.4 ? 'rgba(239, 68, 68, 0.4)' : 'rgba(0, 98, 255, 0.4)';
-    ctx.lineWidth = 1;
+    // Particle velocity vector trail
+    ctx.strokeStyle = heatRatio > 0.4 ? 'rgba(244, 63, 94, 0.45)' : 'rgba(0, 229, 255, 0.45)';
+    ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(px, py);
     ctx.lineTo(px - Math.cos(seed) * 8 * speed, py - Math.sin(seed) * 8 * speed);
     ctx.stroke();
   }
+  ctx.restore();
 
-  // Pressure Gauge Dial on top
+  // Pressure Gauge Dial on top with Dark Glass Finish
   const gaugeX = leftX + 80;
   const gaugeY = topY - 50;
   const gaugeR = 30;
 
-  ctx.fillStyle = '#FFFFFF';
-  ctx.strokeStyle = '#1E293B';
-  ctx.lineWidth = 2.5;
+  ctx.save();
+  ctx.fillStyle = '#0F172A';
+  ctx.strokeStyle = '#00E5FF';
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(gaugeX, gaugeY, gaugeR, 0, 2 * Math.PI);
   ctx.fill();
   ctx.stroke();
 
-  // Gauge needle
+  // Scale ticks
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+  ctx.lineWidth = 1;
+  for (let a = -Math.PI * 0.8; a <= Math.PI * 0.8; a += Math.PI * 0.32) {
+    ctx.beginPath();
+    ctx.moveTo(gaugeX + Math.cos(a) * (gaugeR - 6), gaugeY + Math.sin(a) * (gaugeR - 6));
+    ctx.lineTo(gaugeX + Math.cos(a) * (gaugeR - 2), gaugeY + Math.sin(a) * (gaugeR - 2));
+    ctx.stroke();
+  }
+
+  // Gauge needle with glowing tip
   const pAngle = -Math.PI * 0.8 + (Math.min(P_kPa, 600) / 600) * Math.PI * 1.6;
-  ctx.strokeStyle = '#DC2626';
-  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#F43F5E';
+  ctx.shadowColor = '#F43F5E';
+  ctx.shadowBlur = 6;
+  ctx.lineWidth = 2.2;
   ctx.beginPath();
   ctx.moveTo(gaugeX, gaugeY);
   ctx.lineTo(gaugeX + Math.cos(pAngle) * (gaugeR - 6), gaugeY + Math.sin(pAngle) * (gaugeR - 6));
   ctx.stroke();
 
-  ctx.font = 'bold 9px JetBrains Mono';
-  ctx.fillStyle = '#0F172A';
+  // Center hub
+  ctx.fillStyle = '#CBD5E1';
+  ctx.beginPath();
+  ctx.arc(gaugeX, gaugeY, 3, 0, 2 * Math.PI);
+  ctx.fill();
+  ctx.restore();
+
+  ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#94A3B8';
   ctx.textAlign = 'center';
   ctx.fillText('PRESSURE', gaugeX, gaugeY - gaugeR - 6);
+  ctx.fillStyle = '#00F0FF';
   ctx.fillText(`${P_kPa.toFixed(0)} kPa`, gaugeX, gaugeY + 12);
 
   // Heating Burner / Cold Block below cylinder
@@ -4617,8 +4879,11 @@ function renderIdealGasChamber(
   const burnerY = topY + chamberH + 14;
 
   if (T >= 280) {
-    // Fire flames
+    // Dynamic plasma fire flames
+    ctx.save();
     ctx.fillStyle = '#F59E0B';
+    ctx.shadowColor = '#F59E0B';
+    ctx.shadowBlur = 10;
     const flameH = (T / 750) * 28;
     for (let f = -30; f <= 30; f += 15) {
       ctx.beginPath();
@@ -4631,17 +4896,22 @@ function renderIdealGasChamber(
       );
       ctx.fill();
     }
-    ctx.font = 'bold 10px JetBrains Mono';
-    ctx.fillStyle = '#D97706';
-    ctx.fillText(`Heat Input Q (T = ${T} K)`, burnerX, burnerY + 36);
+    ctx.restore();
+    ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#FBBF24';
+    ctx.fillText(`🔥 HEAT RESERVOIR (T = ${T} K)`, burnerX, burnerY + 36);
   } else {
-    // Ice cubes
-    ctx.fillStyle = '#00E5FF';
-    ctx.fillRect(burnerX - 25, burnerY + 4, 16, 16);
-    ctx.fillRect(burnerX + 5, burnerY + 4, 16, 16);
-    ctx.font = 'bold 10px JetBrains Mono';
-    ctx.fillStyle = '#0284C7';
-    ctx.fillText(`Cooled (T = ${T} K)`, burnerX, burnerY + 34);
+    // Ice coolant blocks
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.35)';
+    ctx.strokeStyle = '#00E5FF';
+    ctx.lineWidth = 1.2;
+    ctx.fillRect(burnerX - 25, burnerY + 4, 18, 18);
+    ctx.strokeRect(burnerX - 25, burnerY + 4, 18, 18);
+    ctx.fillRect(burnerX + 7, burnerY + 4, 18, 18);
+    ctx.strokeRect(burnerX + 7, burnerY + 4, 18, 18);
+    ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+    ctx.fillStyle = '#38BDF8';
+    ctx.fillText(`❄️ CRYOGENIC COOLING (T = ${T} K)`, burnerX, burnerY + 36);
   }
 
   // Telemetry readout
