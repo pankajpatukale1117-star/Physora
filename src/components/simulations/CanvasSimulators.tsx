@@ -2239,189 +2239,275 @@ function renderKinematicCar(
   const v = u + a * loopT;
   const s = u * loopT + 0.5 * a * loopT * loopT;
 
-  const roadY = 110;
+  const roadY = 96;
 
-  // 1. Asphalt Road Track with Perspective & Markings
-  const roadGrad = ctx.createLinearGradient(0, roadY - 30, 0, roadY + 25);
-  roadGrad.addColorStop(0, '#1E293B');
-  roadGrad.addColorStop(0.5, '#334155');
-  roadGrad.addColorStop(1, '#0F172A');
+  // 1. High-Tech Obsidian Proving Ground Track
+  const roadGrad = ctx.createLinearGradient(0, roadY - 28, 0, roadY + 28);
+  roadGrad.addColorStop(0, '#060B18');
+  roadGrad.addColorStop(0.5, '#0E172E');
+  roadGrad.addColorStop(1, '#050914');
   ctx.fillStyle = roadGrad;
-  ctx.fillRect(20, roadY - 24, w - 40, 48);
+  ctx.fillRect(16, roadY - 26, w - 32, 52);
 
-  // Road curb edges
-  ctx.fillStyle = '#94A3B8';
-  ctx.fillRect(20, roadY - 24, w - 40, 3);
-  ctx.fillRect(20, roadY + 22, w - 40, 3);
+  // Glowing Neon Track Curb Edges
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+  ctx.fillRect(16, roadY - 26, w - 32, 2.5);
+  ctx.fillRect(16, roadY + 23.5, w - 32, 2.5);
 
-  // Dashed white center road line
-  ctx.strokeStyle = '#F8FAFC';
-  ctx.lineWidth = 2.5;
-  ctx.setLineDash([16, 12]);
+  // Laser Dashed Track Center Guide Line
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.6)';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 6;
+  ctx.setLineDash([18, 14]);
   ctx.beginPath();
-  ctx.moveTo(20, roadY);
-  ctx.lineTo(w - 20, roadY);
+  ctx.moveTo(16, roadY);
+  ctx.lineTo(w - 16, roadY);
   ctx.stroke();
-  ctx.setLineDash([]);
+  ctx.restore();
 
-  // Distance meter markings along the road curb
-  ctx.fillStyle = '#64748B';
-  ctx.font = '9px JetBrains Mono';
+  // Metric Distance Telemetry Gate Posts along Track
+  ctx.font = 'bold 9px "JetBrains Mono", monospace';
   for (let m = 0; m <= 60; m += 10) {
     const mx = 60 + m * 10;
-    if (mx < w - 40) {
-      ctx.fillRect(mx, roadY + 22, 1.5, 6);
-      ctx.fillText(`${m}m`, mx - 6, roadY + 38);
+    if (mx < w - 35) {
+      // Glow marker
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.25)';
+      ctx.fillRect(mx - 0.5, roadY - 24, 1.5, 48);
+      ctx.fillStyle = '#00F0FF';
+      ctx.fillRect(mx - 1.5, roadY + 23, 3, 5);
+      ctx.fillStyle = '#94A3B8';
+      ctx.fillText(`${m}m`, mx - 8, roadY + 38);
     }
   }
 
-  // 2. Realistic Aerodynamic Sports / Lab Car
-  const carX = Math.min(w - 90, 60 + s * 10);
-  const carY = roadY - 8;
-  const carW = 68;
+  // 2. High-Tech Aerodynamic Electric Hyper-EV Lab Vehicle
+  const carX = Math.min(w - 85, 60 + s * 10);
+  const carY = roadY - 7;
+  const carW = 76;
   const carH = 22;
 
-  // Car chassis drop shadow
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+  // Neon Underglow Halo on Asphalt
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';
   ctx.beginPath();
-  ctx.ellipse(carX, roadY + 12, 34, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(carX, roadY + 10, 36, 6, 0, 0, Math.PI * 2);
   ctx.fill();
+  ctx.restore();
 
-  // Car Metallic Body Gradient (Electric Cyan / Royal Blue)
+  // Wind-Tunnel Aerodynamic Streamlines trailing the vehicle
+  if (v > 1) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 3; i++) {
+      const offY = -12 + i * 9;
+      const trailLen = Math.min(65, v * 4.5);
+      ctx.beginPath();
+      ctx.moveTo(carX - carW / 2 - 4, carY + offY);
+      ctx.lineTo(carX - carW / 2 - 4 - trailLen, carY + offY);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Aerodynamic Carbon-Composite Body Gradient
   const carGrad = ctx.createLinearGradient(carX - carW / 2, carY - carH, carX + carW / 2, carY);
-  carGrad.addColorStop(0, '#00E5FF');
-  carGrad.addColorStop(0.4, '#0062FF');
-  carGrad.addColorStop(1, '#0038A8');
+  carGrad.addColorStop(0, '#00F0FF');
+  carGrad.addColorStop(0.35, '#0284C7');
+  carGrad.addColorStop(0.85, '#0F172A');
+  carGrad.addColorStop(1, '#020617');
 
   ctx.beginPath();
-  ctx.moveTo(carX - carW / 2, carY); // Rear bumper
-  ctx.lineTo(carX - carW / 2 + 6, carY - 10); // Rear trunk
-  ctx.lineTo(carX - carW / 2 + 18, carY - 10); // Rear glass start
-  ctx.lineTo(carX - carW / 2 + 28, carY - carH); // Roof rear
-  ctx.lineTo(carX + carW / 2 - 20, carY - carH); // Roof front
-  ctx.lineTo(carX + carW / 2 - 8, carY - 8); // Windshield down to hood
-  ctx.lineTo(carX + carW / 2, carY - 4); // Front nose
-  ctx.lineTo(carX + carW / 2, carY); // Front bumper
+  ctx.moveTo(carX - carW / 2, carY - 2); // Rear diffuser
+  ctx.lineTo(carX - carW / 2 + 5, carY - 10); // Rear spoiler wing
+  ctx.lineTo(carX - carW / 2 + 20, carY - 11); // Rear deck
+  ctx.lineTo(carX - carW / 2 + 32, carY - carH); // Roof rake
+  ctx.lineTo(carX + carW / 2 - 20, carY - carH); // Roof line
+  ctx.lineTo(carX + carW / 2 - 6, carY - 8); // Windshield slope
+  ctx.lineTo(carX + carW / 2 + 2, carY - 3); // Front nose aero splitter
+  ctx.lineTo(carX + carW / 2 - 2, carY); // Front bumper
   ctx.closePath();
   ctx.fillStyle = carGrad;
   ctx.fill();
-  ctx.strokeStyle = '#93C5FD';
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.7)';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // Polarized Tint Glass Canopy
+  ctx.beginPath();
+  ctx.moveTo(carX - carW / 2 + 22, carY - 11);
+  ctx.lineTo(carX - carW / 2 + 32, carY - carH + 2.5);
+  ctx.lineTo(carX + carW / 2 - 22, carY - carH + 2.5);
+  ctx.lineTo(carX + carW / 2 - 8, carY - 9);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(2, 6, 23, 0.95)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Dark Tinted Cockpit Windshield & Side Windows
-  ctx.beginPath();
-  ctx.moveTo(carX - carW / 2 + 20, carY - 10);
-  ctx.lineTo(carX - carW / 2 + 28, carY - carH + 2);
-  ctx.lineTo(carX + carW / 2 - 22, carY - carH + 2);
-  ctx.lineTo(carX + carW / 2 - 10, carY - 8);
-  ctx.closePath();
-  ctx.fillStyle = '#0F172A';
-  ctx.fill();
-
-  // Glass reflection
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+  // Glass Specular Sheen
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(carX - 2, carY - carH + 4);
   ctx.lineTo(carX + 16, carY - 10);
   ctx.stroke();
+  ctx.restore();
 
-  // Dual Headlights casting forward illumination beam
-  const hlX = carX + carW / 2;
+  // Laser Projector Headlight Beam
+  const hlX = carX + carW / 2 + 2;
   const hlY = carY - 3;
-  const beamGrad = ctx.createLinearGradient(hlX, hlY, hlX + 70, hlY);
-  beamGrad.addColorStop(0, 'rgba(254, 240, 138, 0.45)');
-  beamGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+  ctx.save();
+  const beamGrad = ctx.createLinearGradient(hlX, hlY, hlX + 85, hlY);
+  beamGrad.addColorStop(0, 'rgba(0, 240, 255, 0.55)');
+  beamGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
   ctx.fillStyle = beamGrad;
   ctx.beginPath();
   ctx.moveTo(hlX, hlY - 2);
-  ctx.lineTo(hlX + 70, hlY - 10);
-  ctx.lineTo(hlX + 70, hlY + 12);
+  ctx.lineTo(hlX + 85, hlY - 12);
+  ctx.lineTo(hlX + 85, hlY + 14);
   ctx.lineTo(hlX, hlY + 2);
   ctx.closePath();
   ctx.fill();
+  ctx.restore();
 
-  ctx.fillStyle = '#FEF08A';
-  ctx.fillRect(hlX - 2, hlY - 2, 3, 4);
-
-  // Wheels with rotating alloy spokes
-  const wheelR = 7;
+  // Alloy Wheels with Rotating Spokes
+  const wheelR = 7.5;
   const wheelDist = s * 10;
   const wheelAngle = wheelDist / wheelR;
 
-  [-18, 18].forEach(ox => {
+  [-20, 20].forEach(ox => {
     const wx = carX + ox;
-    const wy = carY + 2;
+    const wy = carY + 3;
 
-    // Tire (Rubber)
+    // Tire Rubber
     ctx.beginPath();
     ctx.arc(wx, wy, wheelR, 0, Math.PI * 2);
-    ctx.fillStyle = '#0F172A';
+    ctx.fillStyle = '#020617';
     ctx.fill();
-    ctx.strokeStyle = '#475569';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Alloy Rim
-    ctx.beginPath();
-    ctx.arc(wx, wy, wheelR - 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = '#94A3B8';
-    ctx.fill();
-
-    // Spokes
-    ctx.beginPath();
-    ctx.moveTo(wx - Math.cos(wheelAngle) * (wheelR - 2.5), wy - Math.sin(wheelAngle) * (wheelR - 2.5));
-    ctx.lineTo(wx + Math.cos(wheelAngle) * (wheelR - 2.5), wy + Math.sin(wheelAngle) * (wheelR - 2.5));
-    ctx.strokeStyle = '#0F172A';
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
     ctx.lineWidth = 1.2;
     ctx.stroke();
+
+    // Cyan Neon Wheel Core
+    ctx.beginPath();
+    ctx.arc(wx, wy, wheelR - 3, 0, Math.PI * 2);
+    ctx.fillStyle = '#0B132B';
+    ctx.fill();
+
+    // Rotating Spokes
+    ctx.save();
+    ctx.strokeStyle = '#00F0FF';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(wx - Math.cos(wheelAngle) * (wheelR - 3), wy - Math.sin(wheelAngle) * (wheelR - 3));
+    ctx.lineTo(wx + Math.cos(wheelAngle) * (wheelR - 3), wy + Math.sin(wheelAngle) * (wheelR - 3));
+    ctx.moveTo(wx - Math.sin(wheelAngle) * (wheelR - 3), wy + Math.cos(wheelAngle) * (wheelR - 3));
+    ctx.lineTo(wx + Math.sin(wheelAngle) * (wheelR - 3), wy - Math.cos(wheelAngle) * (wheelR - 3));
+    ctx.stroke();
+    ctx.restore();
   });
 
-  // Dynamic Velocity Vector Arrow on Car
+  // Dynamic Velocity Vector HUD Ribbon
   if (v > 0) {
-    const vArrowLen = Math.min(75, v * 5);
-    drawArrow(ctx, carX + carW / 2 + 4, carY - 12, carX + carW / 2 + 4 + vArrowLen, carY - 12, '#00E5FF', `v=${v.toFixed(1)} m/s`);
+    const vArrowLen = Math.min(80, v * 5.2);
+    drawArrow(ctx, carX + carW / 2 + 5, carY - 14, carX + carW / 2 + 5 + vArrowLen, carY - 14, '#00F0FF', `v=${v.toFixed(1)} m/s`);
   }
 
-  // 3. Synchronized Dual Kinematic Graphs (s-t and v-t) in lower canvas
-  const graphW = 320;
-  const graphH = 135;
-  const g1X = 50;
-  const g2X = w / 2 + 30;
-  const gY = 200;
+  // 3. Synchronized Dual Cyber Oscilloscope Graphs (s-t and v-t)
+  const graphW = 325;
+  const graphH = 145;
+  const g1X = 40;
+  const g2X = w / 2 + 25;
+  const gY = 190;
 
-  // Graph 1: Position-Time s(t) = ut + 0.5 a t^2 (Parabolic curve)
-  ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
-  ctx.fillRect(g1X, gY, graphW, graphH);
-  ctx.strokeStyle = '#CBD5E1';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(g1X, gY, graphW, graphH);
+  // Helper for drawing holographic HUD container
+  const drawHudCard = (x: number, y: number, gw: number, gh: number, title: string, badgeCol: string) => {
+    ctx.save();
+    // Glass card background
+    ctx.fillStyle = 'rgba(7, 12, 27, 0.88)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, gw, gh, 8);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
-  // Graph 1 Axes
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 1.5;
+    // Corner brackets [ ]
+    ctx.strokeStyle = badgeCol;
+    ctx.lineWidth = 1.5;
+    const bLen = 8;
+    // Top-Left
+    ctx.beginPath();
+    ctx.moveTo(x + 2, y + 2 + bLen);
+    ctx.lineTo(x + 2, y + 2);
+    ctx.lineTo(x + 2 + bLen, y + 2);
+    ctx.stroke();
+    // Top-Right
+    ctx.beginPath();
+    ctx.moveTo(x + gw - 2 - bLen, y + 2);
+    ctx.lineTo(x + gw - 2, y + 2);
+    ctx.lineTo(x + gw - 2, y + 2 + bLen);
+    ctx.stroke();
+
+    // Minor oscilloscope grid lines
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.05)';
+    ctx.lineWidth = 1;
+    for (let gx = x + 30; gx < x + gw - 15; gx += 28) {
+      ctx.beginPath();
+      ctx.moveTo(gx, y + 15);
+      ctx.lineTo(gx, y + gh - 22);
+      ctx.stroke();
+    }
+    for (let gy = y + 20; gy < y + gh - 20; gy += 25) {
+      ctx.beginPath();
+      ctx.moveTo(x + 30, gy);
+      ctx.lineTo(x + gw - 15, gy);
+      ctx.stroke();
+    }
+
+    // Title
+    ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+    ctx.fillStyle = badgeCol;
+    ctx.fillText(title, x + 35, y + 17);
+    ctx.restore();
+  };
+
+  // --- GRAPH 1: Position-Time s(t) = ut + 0.5 a t^2 ---
+  drawHudCard(g1X, gY, graphW, graphH, 's(t) = ut + ½at² [POSITION PARABOLA]', '#00F0FF');
+
+  // Axes
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.moveTo(g1X + 30, gY + 15);
+  ctx.moveTo(g1X + 30, gY + 18);
   ctx.lineTo(g1X + 30, gY + graphH - 22);
   ctx.lineTo(g1X + graphW - 15, gY + graphH - 22);
   ctx.stroke();
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 10px JetBrains Mono';
-  ctx.fillText('s(t) = ut + ½at²', g1X + 35, gY + 18);
-  ctx.fillText('s (m)', g1X + 6, gY + 25);
-  ctx.fillText('t (s)', g1X + graphW - 25, gY + graphH - 8);
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = 'bold 9px "JetBrains Mono", monospace';
+  ctx.fillText('s(m)', g1X + 4, gY + 28);
+  ctx.fillText('t(s)', g1X + graphW - 25, gY + graphH - 8);
 
-  // Plot s(t) curve
-  ctx.beginPath();
-  ctx.strokeStyle = '#0062FF';
-  ctx.lineWidth = 2.2;
   const maxSScale = Math.max(20, u * maxT + 0.5 * Math.abs(a) * maxT * maxT);
   const scaleT1 = (graphW - 55) / maxT;
   const scaleS1 = (graphH - 45) / maxSScale;
 
-  for (let stepT = 0; stepT <= maxT; stepT += 0.1) {
+  // Luminous s(t) curve
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#00F0FF';
+  ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  for (let stepT = 0; stepT <= maxT; stepT += 0.08) {
     const curPos = Math.max(0, u * stepT + 0.5 * a * stepT * stepT);
     const px = g1X + 30 + stepT * scaleT1;
     const py = gY + graphH - 22 - curPos * scaleS1;
@@ -2429,47 +2515,49 @@ function renderKinematicCar(
     else ctx.lineTo(px, py);
   }
   ctx.stroke();
+  ctx.restore();
 
-  // Current s(t) cursor dot
+  // Current s(t) position indicator beacon
   const curPtX = g1X + 30 + loopT * scaleT1;
   const curPtY = gY + graphH - 22 - s * scaleS1;
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = '#00F0FF';
   ctx.beginPath();
   ctx.arc(curPtX, curPtY, 4.5, 0, Math.PI * 2);
-  ctx.fillStyle = '#0062FF';
   ctx.fill();
   ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 1.8;
   ctx.stroke();
+  ctx.restore();
 
-  // Graph 2: Velocity-Time v(t) = u + at (Straight Line, Area = Displacement)
-  ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
-  ctx.fillRect(g2X, gY, graphW, graphH);
-  ctx.strokeStyle = '#CBD5E1';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(g2X, gY, graphW, graphH);
+  // --- GRAPH 2: Velocity-Time v(t) = u + at ---
+  drawHudCard(g2X, gY, graphW, graphH, 'v(t) = u + at [VELOCITY & AREA = DISPLACEMENT]', '#A855F7');
 
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 1.5;
+  // Axes
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.moveTo(g2X + 30, gY + 15);
+  ctx.moveTo(g2X + 30, gY + 18);
   ctx.lineTo(g2X + 30, gY + graphH - 22);
   ctx.lineTo(g2X + graphW - 15, gY + graphH - 22);
   ctx.stroke();
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 10px JetBrains Mono';
-  ctx.fillText('v(t) = u + at (Slope = a)', g2X + 35, gY + 18);
-  ctx.fillText('v (m/s)', g2X + 2, gY + 25);
-  ctx.fillText('t (s)', g2X + graphW - 25, gY + graphH - 8);
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = 'bold 9px "JetBrains Mono", monospace';
+  ctx.fillText('v(m/s)', g2X + 2, gY + 28);
+  ctx.fillText('t(s)', g2X + graphW - 25, gY + graphH - 8);
 
   const maxVScale = Math.max(15, u + Math.abs(a) * maxT);
   const scaleT2 = (graphW - 55) / maxT;
   const scaleV2 = (graphH - 45) / maxVScale;
 
-  // Shaded area under v-t graph up to loopT (representing distance s = ∫ v dt)
+  // Luminous Integral Area under v(t) representing displacement s = ∫ v dt
+  ctx.save();
   ctx.beginPath();
   ctx.moveTo(g2X + 30, gY + graphH - 22);
-  for (let st = 0; st <= loopT; st += 0.1) {
+  for (let st = 0; st <= loopT; st += 0.08) {
     const curVel = u + a * st;
     const px = g2X + 30 + st * scaleT2;
     const py = gY + graphH - 22 - curVel * scaleV2;
@@ -2479,14 +2567,21 @@ function renderKinematicCar(
   const curVtY = gY + graphH - 22 - v * scaleV2;
   ctx.lineTo(curVtX, gY + graphH - 22);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(0, 229, 255, 0.2)';
+  const areaGrad = ctx.createLinearGradient(0, gY, 0, gY + graphH);
+  areaGrad.addColorStop(0, 'rgba(168, 85, 247, 0.45)');
+  areaGrad.addColorStop(1, 'rgba(0, 240, 255, 0.08)');
+  ctx.fillStyle = areaGrad;
   ctx.fill();
+  ctx.restore();
 
-  // v(t) line
-  ctx.beginPath();
-  ctx.strokeStyle = '#7C3AED';
+  // v(t) laser line
+  ctx.save();
+  ctx.shadowColor = '#A855F7';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#A855F7';
   ctx.lineWidth = 2.2;
-  for (let stepT = 0; stepT <= maxT; stepT += 0.1) {
+  ctx.beginPath();
+  for (let stepT = 0; stepT <= maxT; stepT += 0.08) {
     const curVel = u + a * stepT;
     const px = g2X + 30 + stepT * scaleT2;
     const py = gY + graphH - 22 - curVel * scaleV2;
@@ -2494,19 +2589,24 @@ function renderKinematicCar(
     else ctx.lineTo(px, py);
   }
   ctx.stroke();
+  ctx.restore();
 
-  // Current v(t) cursor dot
+  // Current v(t) cursor beacon
+  ctx.save();
+  ctx.shadowColor = '#A855F7';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = '#A855F7';
   ctx.beginPath();
   ctx.arc(curVtX, curVtY, 4.5, 0, Math.PI * 2);
-  ctx.fillStyle = '#7C3AED';
   ctx.fill();
   ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 1.5;
+  ctx.lineWidth = 1.8;
   ctx.stroke();
+  ctx.restore();
 
-  // Label shaded area
-  ctx.fillStyle = '#0062FF';
-  ctx.font = 'bold 9px JetBrains Mono';
+  // Area Label
+  ctx.fillStyle = '#00F0FF';
+  ctx.font = 'bold 9px "JetBrains Mono", monospace';
   ctx.fillText('Area = ∫ v dt = s', g2X + 45, gY + graphH - 35);
 
   onTelem({
@@ -2529,7 +2629,7 @@ function renderFreeFall(
   const totalFallTime = Math.sqrt((2 * H) / g);
   const vImpact = Math.sqrt(2 * g * H);
 
-  const cycleTime = totalFallTime + 1.0;
+  const cycleTime = totalFallTime + 1.2;
   const fallT = t % cycleTime;
   const curT = Math.min(fallT, totalFallTime);
   const curDistanceFallen = 0.5 * g * curT * curT;
@@ -2537,85 +2637,122 @@ function renderFreeFall(
   const curSpeed = g * curT;
 
   const groundY = h - 45;
-  const towerTopY = 55;
+  const towerTopY = 50;
   const towerH = groundY - towerTopY;
-  const towerX = w / 2 - 80;
+  const towerX = w / 2 - 95;
   const ballX = towerX + 55;
 
-  // 1. Metric Physics Drop Tower (Steel Truss Architecture)
-  ctx.strokeStyle = '#CBD5E1';
+  // 1. High-Tech Vacuum Drop Chamber (Titanium & Glass Column)
+  // Transparent vacuum column glass background
+  const tubeGrad = ctx.createLinearGradient(towerX, 0, towerX + 110, 0);
+  tubeGrad.addColorStop(0, 'rgba(0, 240, 255, 0.08)');
+  tubeGrad.addColorStop(0.5, 'rgba(0, 240, 255, 0.02)');
+  tubeGrad.addColorStop(1, 'rgba(0, 240, 255, 0.08)');
+  ctx.fillStyle = tubeGrad;
+  ctx.fillRect(towerX, towerTopY, 110, towerH);
+
+  // Column structural alloy uprights
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(towerX, groundY);
   ctx.lineTo(towerX, towerTopY);
-  ctx.lineTo(towerX + 25, towerTopY);
-  ctx.lineTo(towerX + 25, groundY);
+  ctx.lineTo(towerX + 26, towerTopY);
+  ctx.lineTo(towerX + 26, groundY);
   ctx.stroke();
 
-  // Tower cross-bracing trusses
-  ctx.strokeStyle = '#E2E8F0';
+  // Cross-bracing laser lattice
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
   ctx.lineWidth = 1;
-  for (let ty = groundY; ty > towerTopY; ty -= 25) {
+  for (let ty = groundY; ty > towerTopY; ty -= 24) {
     ctx.beginPath();
     ctx.moveTo(towerX, ty);
-    ctx.lineTo(towerX + 25, ty - 25);
-    ctx.moveTo(towerX + 25, ty);
-    ctx.lineTo(towerX, ty - 25);
+    ctx.lineTo(towerX + 26, ty - 24);
+    ctx.moveTo(towerX + 26, ty);
+    ctx.lineTo(towerX, ty - 24);
     ctx.stroke();
   }
 
-  // Tower Metric Scale (0m to H meters)
-  ctx.fillStyle = '#64748B';
-  ctx.font = '10px JetBrains Mono';
+  // Laser Height Scale (0m to H meters)
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
   const numMarks = 5;
   for (let i = 0; i <= numMarks; i++) {
     const frac = i / numMarks;
     const markH = (H * frac).toFixed(0);
     const my = groundY - frac * towerH;
-    ctx.fillStyle = '#94A3B8';
-    ctx.fillRect(towerX - 10, my, 10, 1.5);
-    ctx.fillStyle = '#0F172A';
-    ctx.fillText(`${markH}m`, towerX - 38, my + 4);
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.5)';
+    ctx.fillRect(towerX - 8, my, 8, 1.5);
+    ctx.fillStyle = '#00F0FF';
+    ctx.fillText(`${markH}m`, towerX - 38, my + 3.5);
   }
 
-  // Ground Impact Platform with shock-absorbing springs
-  ctx.fillStyle = '#334155';
-  ctx.fillRect(towerX - 50, groundY, 220, 12);
+  // Ground Impact Electromagnetic Cushion Pad
+  ctx.fillStyle = '#091124';
+  ctx.fillRect(towerX - 45, groundY, 210, 14);
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(towerX - 45, groundY, 210, 14);
+
+  // Active emerald sensor pad
+  ctx.save();
+  ctx.shadowColor = '#10B981';
+  ctx.shadowBlur = 10;
   ctx.fillStyle = '#10B981';
-  ctx.fillRect(ballX - 25, groundY - 4, 50, 4);
+  ctx.fillRect(ballX - 25, groundY - 3, 50, 4);
+  ctx.restore();
 
-  // Electromagnet at release gantry
-  ctx.fillStyle = '#1E293B';
-  ctx.fillRect(towerX, towerTopY - 10, 65, 10);
-  ctx.fillStyle = '#EC4899';
-  ctx.fillRect(ballX - 8, towerTopY, 16, 6);
+  // Electromagnet Release Gantry at Tower Top
+  ctx.fillStyle = '#0B132B';
+  ctx.fillRect(towerX, towerTopY - 12, 70, 12);
+  ctx.strokeStyle = '#00F0FF';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(towerX, towerTopY - 12, 70, 12);
+  ctx.fillStyle = '#F43F5E';
+  ctx.fillRect(ballX - 8, towerTopY, 16, 5);
 
-  // 2. Galileo Strobe Ghost Images (showing distance ratio 1 : 3 : 5 : 7 ...)
+  // 2. Galileo Strobe Ghost Markers (showing quadratic distance ratio 1 : 3 : 5 : 7 ...)
   const strobeInterval = 0.25;
-  ctx.fillStyle = 'rgba(0, 98, 255, 0.15)';
   for (let st = strobeInterval; st <= curT; st += strobeInterval) {
     const sFall = 0.5 * g * st * st;
     const sy = towerTopY + (sFall / H) * towerH;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2, 2]);
     ctx.beginPath();
     ctx.arc(ballX, sy, 7, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.stroke();
 
-    // Time stamp label
-    ctx.fillStyle = 'rgba(100, 116, 139, 0.5)';
-    ctx.font = '8px JetBrains Mono';
+    ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+    ctx.font = '8px "JetBrains Mono", monospace';
     ctx.fillText(`${st.toFixed(2)}s`, ballX + 16, sy + 3);
-    ctx.fillStyle = 'rgba(0, 98, 255, 0.15)';
+    ctx.restore();
   }
 
-  // 3. Falling Sphere with Realistic Metallic Shading
+  // 3. Falling Quantum Sphere with Specular Shading & Particle Wake
   const ballY = towerTopY + (curDistanceFallen / H) * towerH;
 
-  // Ball glow
+  // Trailing Energy Spark Particles
+  if (curSpeed > 2) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.45)';
+    for (let i = 1; i <= 3; i++) {
+      ctx.beginPath();
+      ctx.arc(ballX + (Math.sin(t * 15 + i) * 3), ballY - i * 9, 3 - i * 0.7, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Metallic Chrome / Neon Cyan Core Sphere
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 14;
   const ballGrad = ctx.createRadialGradient(ballX - 3, ballY - 3, 2, ballX, ballY, 12);
   ballGrad.addColorStop(0, '#FFFFFF');
-  ballGrad.addColorStop(0.3, '#00E5FF');
-  ballGrad.addColorStop(0.8, '#0062FF');
-  ballGrad.addColorStop(1, '#002B80');
+  ballGrad.addColorStop(0.3, '#00F0FF');
+  ballGrad.addColorStop(0.7, '#0284C7');
+  ballGrad.addColorStop(1, '#051329');
 
   ctx.beginPath();
   ctx.arc(ballX, ballY, 11, 0, Math.PI * 2);
@@ -2624,42 +2761,88 @@ function renderFreeFall(
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 1.5;
   ctx.stroke();
+  ctx.restore();
 
   // Gravity vector arrow (pointing down)
-  drawArrow(ctx, ballX + 22, ballY, ballX + 22, ballY + 36, '#EC4899', 'g=9.8 m/s²');
+  drawArrow(ctx, ballX + 24, ballY, ballX + 24, ballY + 38, '#F43F5E', 'g=9.8 m/s²');
 
   // Velocity vector arrow (length proportional to current speed)
   if (curSpeed > 0) {
-    const vLen = Math.min(60, curSpeed * 1.5);
-    drawArrow(ctx, ballX - 22, ballY, ballX - 22, ballY + vLen, '#00E5FF', `v=${curSpeed.toFixed(1)} m/s`);
+    const vLen = Math.min(65, curSpeed * 1.5);
+    drawArrow(ctx, ballX - 24, ballY, ballX - 24, ballY + vLen, '#00F0FF', `v=${curSpeed.toFixed(1)} m/s`);
   }
 
-  // 4. Real-Time Telemetry Gauges on Right
-  const gaugeX = w / 2 + 110;
-  ctx.fillStyle = '#FFFFFF';
-  ctx.roundRect(gaugeX, 60, 220, 220, 12);
+  // 4. Cyber Holographic Telemetry HUD Card on Right
+  const gaugeX = w / 2 + 85;
+  const gaugeY = 55;
+  const gaugeW = 245;
+  const gaugeH = 245;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(7, 12, 27, 0.9)';
+  ctx.beginPath();
+  ctx.roundRect(gaugeX, gaugeY, gaugeW, gaugeH, 10);
   ctx.fill();
-  ctx.strokeStyle = '#CBD5E1';
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 12px JetBrains Mono';
-  ctx.fillText('FREE FALL TELEMETRY', gaugeX + 16, 84);
+  // HUD corner brackets
+  ctx.strokeStyle = '#00F0FF';
+  ctx.lineWidth = 1.6;
+  const bSize = 10;
+  // Top-Left
+  ctx.beginPath();
+  ctx.moveTo(gaugeX + 3, gaugeY + 3 + bSize);
+  ctx.lineTo(gaugeX + 3, gaugeY + 3);
+  ctx.lineTo(gaugeX + 3 + bSize, gaugeY + 3);
+  ctx.stroke();
+  // Top-Right
+  ctx.beginPath();
+  ctx.moveTo(gaugeX + gaugeW - 3 - bSize, gaugeY + 3);
+  ctx.lineTo(gaugeX + gaugeW - 3, gaugeY + 3);
+  ctx.lineTo(gaugeX + gaugeW - 3, gaugeY + 3 + bSize);
+  ctx.stroke();
+  // Bottom-Left
+  ctx.beginPath();
+  ctx.moveTo(gaugeX + 3, gaugeY + gaugeH - 3 - bSize);
+  ctx.lineTo(gaugeX + 3, gaugeY + gaugeH - 3);
+  ctx.lineTo(gaugeX + 3 + bSize, gaugeY + gaugeH - 3);
+  ctx.stroke();
+  // Bottom-Right
+  ctx.beginPath();
+  ctx.moveTo(gaugeX + gaugeW - 3 - bSize, gaugeY + gaugeH - 3);
+  ctx.lineTo(gaugeX + gaugeW - 3, gaugeY + gaugeH - 3);
+  ctx.lineTo(gaugeX + gaugeW - 3, gaugeY + gaugeH - 3 - bSize);
+  ctx.stroke();
+
+  // Telemetry Header
+  ctx.fillStyle = '#00F0FF';
+  ctx.font = 'bold 11px "JetBrains Mono", monospace';
+  ctx.fillText('FREE FALL TELEMETRY HUD', gaugeX + 16, gaugeY + 26);
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
+  ctx.font = '8.5px "JetBrains Mono", monospace';
+  ctx.fillText('GRAVITATIONAL ACCELERATION SENSOR', gaugeX + 16, gaugeY + 40);
 
   const drawTelemRow = (lbl: string, val: string, col: string, yPos: number) => {
-    ctx.fillStyle = '#64748B';
-    ctx.font = '10px JetBrains Mono';
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '9.5px "JetBrains Mono", monospace';
     ctx.fillText(lbl, gaugeX + 16, yPos);
+    ctx.save();
     ctx.fillStyle = col;
-    ctx.font = 'bold 12px JetBrains Mono';
-    ctx.fillText(val, gaugeX + 16, yPos + 16);
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 6;
+    ctx.font = 'bold 13px "JetBrains Mono", monospace';
+    ctx.fillText(val, gaugeX + 16, yPos + 18);
+    ctx.restore();
   };
 
-  drawTelemRow('Height Above Ground (h)', `${curHeightAboveGround.toFixed(1)} m`, '#0062FF', 112);
-  drawTelemRow('Current Fall Speed (v = gt)', `${curSpeed.toFixed(1)} m/s (${(curSpeed * 3.6).toFixed(0)} km/h)`, '#00E5FF', 154);
-  drawTelemRow('Elapsed Time', `${curT.toFixed(2)} s / ${totalFallTime.toFixed(2)} s`, '#7C3AED', 196);
-  drawTelemRow('Impact Speed (v² = 2gh)', `${vImpact.toFixed(1)} m/s (${(vImpact * 3.6).toFixed(0)} km/h)`, '#10B981', 238);
+  drawTelemRow('Height Above Ground (h)', `${curHeightAboveGround.toFixed(1)} m`, '#00F0FF', gaugeY + 68);
+  drawTelemRow('Current Fall Speed (v = gt)', `${curSpeed.toFixed(1)} m/s (${(curSpeed * 3.6).toFixed(0)} km/h)`, '#38BDF8', gaugeY + 112);
+  drawTelemRow('Elapsed Time (t)', `${curT.toFixed(2)} s / ${totalFallTime.toFixed(2)} s`, '#A855F7', gaugeY + 156);
+  drawTelemRow('Impact Speed (v² = 2gh)', `${vImpact.toFixed(1)} m/s (${(vImpact * 3.6).toFixed(0)} km/h)`, '#10B981', gaugeY + 200);
+
+  ctx.restore();
 
   onTelem({
     fall_time: `${totalFallTime.toFixed(2)} s`,
@@ -2667,7 +2850,7 @@ function renderFreeFall(
   });
 }
 
-// Detailed helper for realistic railway track
+// Detailed helper for realistic aerodynamic MagLev railway track
 function drawRealisticRailwayTrack(
   ctx: CanvasRenderingContext2D,
   y: number,
@@ -2675,83 +2858,80 @@ function drawRealisticRailwayTrack(
   trackOffset: number,
   trackLabel: string
 ) {
-  // 1. Ballast gravel bed (textured trapezoid with subtle grain)
+  // 1. Dark obsidian ballast track bed
   const ballastTop = y - 16;
   const ballastBottom = y + 26;
   const grad = ctx.createLinearGradient(0, ballastTop, 0, ballastBottom);
-  grad.addColorStop(0, '#E2E8F0');
-  grad.addColorStop(0.3, '#CBD5E1');
-  grad.addColorStop(0.7, '#94A3B8');
-  grad.addColorStop(1, '#64748B');
+  grad.addColorStop(0, '#060B18');
+  grad.addColorStop(0.3, '#0E172E');
+  grad.addColorStop(0.7, '#080D1A');
+  grad.addColorStop(1, '#030712');
   ctx.fillStyle = grad;
   ctx.beginPath();
   ctx.roundRect(15, ballastTop, w - 30, ballastBottom - ballastTop, 6);
   ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
 
-  // Subtle ballast gravel speckles
-  ctx.fillStyle = 'rgba(71, 85, 105, 0.25)';
-  for (let gx = 25; gx < w - 25; gx += 18) {
-    ctx.fillRect(gx + ((gx * 7) % 11), y - 10 + ((gx * 3) % 16), 3, 2);
+  // Subtle ballast speckles
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.1)';
+  for (let gx = 25; gx < w - 25; gx += 20) {
+    ctx.fillRect(gx + ((gx * 7) % 11), y - 10 + ((gx * 3) % 16), 2, 2);
   }
 
-  // 2. Concrete Sleepers / Ties spaced every 22px
+  // 2. High-Tech Ties / Stator Coils spaced every 22px
   const sleeperSpacing = 22;
-  const sleeperWidth = 10;
+  const sleeperWidth = 9;
   const sleeperHeight = 32;
   const sleeperY = y - 11;
   const startOffset = ((trackOffset % sleeperSpacing) + sleeperSpacing) % sleeperSpacing;
 
   for (let sx = 20 - sleeperSpacing + startOffset; sx < w - 20; sx += sleeperSpacing) {
     if (sx < 20 || sx > w - 32) continue;
-    // Sleeper drop shadow
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.25)';
-    ctx.fillRect(sx + 1, sleeperY + 2, sleeperWidth, sleeperHeight);
-
-    // Concrete tie body
+    // Tie body
     const tieGrad = ctx.createLinearGradient(sx, sleeperY, sx + sleeperWidth, sleeperY);
-    tieGrad.addColorStop(0, '#CBD5E1');
-    tieGrad.addColorStop(0.5, '#F1F5F9');
-    tieGrad.addColorStop(1, '#94A3B8');
+    tieGrad.addColorStop(0, '#0F172A');
+    tieGrad.addColorStop(0.5, '#1E293B');
+    tieGrad.addColorStop(1, '#0B132B');
     ctx.fillStyle = tieGrad;
     ctx.fillRect(sx, sleeperY, sleeperWidth, sleeperHeight);
 
-    // Fastening Pandrol clips (where rails meet ties)
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(sx + 2, y - 5, 6, 3);
-    ctx.fillRect(sx + 2, y + 12, 6, 3);
+    // Fastening clips with neon accent
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+    ctx.fillRect(sx + 1.5, y - 5, 6, 2.5);
+    ctx.fillRect(sx + 1.5, y + 12, 6, 2.5);
   }
 
-  // 3. Parallel Steel Rails (Dual running rails)
+  // 3. Parallel Laser Steel Running Rails
   const drawRail = (ry: number) => {
-    // Rail shadow
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.4)';
-    ctx.fillRect(20, ry + 3, w - 40, 2);
-
-    // Rail steel body
+    // Glowing laser rail body
+    ctx.save();
+    ctx.shadowColor = '#00F0FF';
+    ctx.shadowBlur = 6;
     const railGrad = ctx.createLinearGradient(0, ry - 3, 0, ry + 3);
-    railGrad.addColorStop(0, '#475569');
-    railGrad.addColorStop(0.3, '#94A3B8');
-    railGrad.addColorStop(0.5, '#FFFFFF'); // Specular steel highlight
-    railGrad.addColorStop(0.8, '#64748B');
-    railGrad.addColorStop(1, '#1E293B');
+    railGrad.addColorStop(0, '#0284C7');
+    railGrad.addColorStop(0.5, '#00F0FF'); // Specular highlight
+    railGrad.addColorStop(1, '#0369A1');
     ctx.fillStyle = railGrad;
-    ctx.fillRect(20, ry - 3, w - 40, 5);
+    ctx.fillRect(20, ry - 2, w - 40, 4);
+    ctx.restore();
   };
 
   drawRail(y - 3);  // Upper rail
   drawRail(y + 13); // Lower rail
 
-  // Overhead contact wire (catenary line)
-  ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+  // Overhead catenary guide line
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(20, y - 36);
   ctx.lineTo(w - 20, y - 36);
   ctx.stroke();
 
-  // Track label badge on left
-  ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 10px JetBrains Mono';
+  // Track label HUD badge on left
+  ctx.fillStyle = '#00F0FF';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
   ctx.fillText(trackLabel, 28, y - 22);
 }
 
@@ -3144,35 +3324,54 @@ function renderRelativeMotion(
   });
 
   // 5. Central Relativity HUD Banner (Top of Canvas)
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
-  ctx.roundRect(w / 2 - 230, 8, 460, 40, 8);
+  ctx.save();
+  ctx.fillStyle = 'rgba(7, 12, 27, 0.92)';
+  ctx.beginPath();
+  ctx.roundRect(w / 2 - 235, 8, 470, 42, 8);
   ctx.fill();
-  ctx.strokeStyle = frame === 0 ? '#0062FF' : '#EC4899';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = frame === 0 ? 'rgba(0, 240, 255, 0.4)' : 'rgba(244, 63, 94, 0.4)';
+  ctx.lineWidth = 1.2;
   ctx.stroke();
 
-  ctx.fillStyle = frame === 0 ? '#0062FF' : '#EC4899';
-  ctx.font = 'bold 11px JetBrains Mono';
+  // Corner HUD brackets
+  ctx.strokeStyle = frame === 0 ? '#00F0FF' : '#F43F5E';
+  ctx.lineWidth = 1.5;
+  const rbLen = 6;
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - 233, 10 + rbLen);
+  ctx.lineTo(w / 2 - 233, 10);
+  ctx.lineTo(w / 2 - 233 + rbLen, 10);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(w / 2 + 233 - rbLen, 10);
+  ctx.lineTo(w / 2 + 233, 10);
+  ctx.lineTo(w / 2 + 233, 10 + rbLen);
+  ctx.stroke();
+
+  ctx.fillStyle = frame === 0 ? '#00F0FF' : '#F43F5E';
+  ctx.font = 'bold 10.5px "JetBrains Mono", monospace';
   ctx.textAlign = 'center';
 
   if (frame === 0) {
-    ctx.fillText('OBSERVER: Ground Frame (Both trains moving forward)', w / 2, 24);
-    ctx.fillStyle = '#64748B';
-    ctx.font = '10px JetBrains Mono';
-    ctx.fillText(`vA = ${vA} km/h (${vA_ms.toFixed(1)} m/s)  |  vB = ${vB} km/h (${vB_ms.toFixed(1)} m/s)  |  v(B/A) = ${vRel_kmh >= 0 ? '+' : ''}${vRel_kmh} km/h (${vRel_ms >= 0 ? '+' : ''}${vRel_ms.toFixed(1)} m/s)`, w / 2, 38);
+    ctx.fillText('OBSERVER: Ground Frame // Both trains moving relative to stationary Earth', w / 2, 24);
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '9px "JetBrains Mono", monospace';
+    ctx.fillText(`vA = ${vA} km/h (${vA_ms.toFixed(1)} m/s)  |  vB = ${vB} km/h (${vB_ms.toFixed(1)} m/s)  |  v(B/A) = ${vRel_kmh >= 0 ? '+' : ''}${vRel_kmh} km/h`, w / 2, 38);
   } else {
-    ctx.fillText('OBSERVER: Inside Train A (Moving Reference Frame)', w / 2, 24);
-    ctx.fillStyle = '#64748B';
-    ctx.font = '10px JetBrains Mono';
+    ctx.fillText('OBSERVER: Inside Train A // Inertial Moving Reference Frame', w / 2, 24);
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '9px "JetBrains Mono", monospace';
     if (vRel_kmh === 0) {
-      ctx.fillText('vA = 0 km/h (In your frame) | Train B is COMPLETELY FROZEN alongside you!', w / 2, 38);
+      ctx.fillText('vA = 0 km/h (In your frame) | Train B appears COMPLETELY FROZEN outside!', w / 2, 38);
     } else if (vRel_kmh > 0) {
-      ctx.fillText(`Train A is stationary | Train B is overtaking you at +${vRel_kmh} km/h (+${vRel_ms.toFixed(1)} m/s)`, w / 2, 38);
+      ctx.fillText(`Train A stationary | Train B slowly overtaking at +${vRel_kmh} km/h (+${vRel_ms.toFixed(1)} m/s)`, w / 2, 38);
     } else {
-      ctx.fillText(`Train A is stationary | Train B appears to drift BACKWARDS at ${vRel_kmh} km/h`, w / 2, 38);
+      ctx.fillText(`Train A stationary | Train B appears to drift BACKWARDS at ${Math.abs(vRel_kmh)} km/h`, w / 2, 38);
     }
   }
   ctx.textAlign = 'left';
+  ctx.restore();
 
   // Motion perception interpretation
   let perceptionText = '';
@@ -3206,36 +3405,100 @@ function renderInertiaFriction(
 ) {
   const mu = p.friction_coeff ?? 0.1;
   const force = p.push_force ?? 15;
-  const cy = h / 2;
+  const cy = h / 2 + 10;
 
-  // Track
+  // 1. High-Tech Precision Linear Test Bench
+  const benchY = cy + 24;
+  const benchGrad = ctx.createLinearGradient(0, benchY, 0, benchY + 30);
+  benchGrad.addColorStop(0, '#0F172A');
+  benchGrad.addColorStop(0.5, '#1E293B');
+  benchGrad.addColorStop(1, '#0B132B');
+  ctx.fillStyle = benchGrad;
   ctx.beginPath();
-  ctx.moveTo(40, cy + 20);
-  ctx.lineTo(w - 40, cy + 20);
-  ctx.strokeStyle = mu === 0 ? '#00E5FF' : '#94A3B8';
-  ctx.lineWidth = 3;
+  ctx.roundRect(30, benchY, w - 60, 24, 4);
+  ctx.fill();
+  ctx.strokeStyle = mu === 0 ? 'rgba(0, 240, 255, 0.6)' : 'rgba(148, 163, 184, 0.4)';
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // Deceleration a = -mu * g
-  const v0 = force * 0.4;
-  const a = -mu * 9.8;
-  const stopTime = mu > 0 ? v0 / (mu * 9.8) : 999;
-  const curT = mu === 0 ? t % 8 : Math.min(t % (stopTime + 1), stopTime);
-  const s = mu === 0 ? v0 * curT : v0 * curT + 0.5 * a * curT * curT;
-  const px = Math.min(w - 70, 70 + s * 14);
-
-  // Puck
-  ctx.beginPath();
-  ctx.arc(px, cy, 14, 0, Math.PI * 2);
-  ctx.fillStyle = '#0062FF';
-  ctx.fill();
-
-  if (mu > 0 && curT < stopTime) {
-    drawArrow(ctx, px, cy, px - 35, cy, '#EC4899', 'f_friction');
+  // Metric Laser Calibration Ticks
+  ctx.font = 'bold 8.5px "JetBrains Mono", monospace';
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+  for (let mx = 50; mx < w - 50; mx += 35) {
+    ctx.fillRect(mx, benchY, 1.5, 4);
+    ctx.fillText(`${((mx - 50) / 10).toFixed(0)}`, mx - 3, benchY + 14);
   }
 
+  // Deceleration a = -mu * g
+  const v0 = force * 0.42;
+  const a = -mu * 9.8;
+  const stopTime = mu > 0 ? v0 / (mu * 9.8) : 999;
+  const curT = mu === 0 ? t % 8 : Math.min(t % (stopTime + 1.2), stopTime);
+  const s = mu === 0 ? v0 * curT : v0 * curT + 0.5 * a * curT * curT;
+  const curV = Math.max(0, v0 + a * curT);
+  const px = Math.min(w - 75, 75 + s * 14);
+
+  // Dynamic Friction Heat Sparks when mu > 0 and moving
+  if (mu > 0 && curV > 0.5) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(251, 191, 36, 0.85)';
+    for (let i = 0; i < 4; i++) {
+      const sx = px - 16 - Math.random() * 20;
+      const sy = benchY - 1 - Math.random() * 5;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // 2. High-Tech Precision Hover Puck / Mass Core
+  ctx.save();
+  // Under-puck glow
+  ctx.shadowColor = mu === 0 ? '#00F0FF' : '#F59E0B';
+  ctx.shadowBlur = mu === 0 ? 16 : 8;
+  const puckGrad = ctx.createRadialGradient(px - 4, cy - 4, 3, px, cy, 18);
+  puckGrad.addColorStop(0, '#FFFFFF');
+  puckGrad.addColorStop(0.3, mu === 0 ? '#00F0FF' : '#38BDF8');
+  puckGrad.addColorStop(0.8, '#0369A1');
+  puckGrad.addColorStop(1, '#082F49');
+  ctx.fillStyle = puckGrad;
+  ctx.beginPath();
+  ctx.arc(px, cy, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Quantum core ring
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.8)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.arc(px, cy, 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // 3. Force & Velocity Vector HUD Arrows
+  if (curV > 0) {
+    drawArrow(ctx, px + 18, cy, px + 18 + Math.min(65, curV * 5), cy, '#00F0FF', `v=${curV.toFixed(1)} m/s`);
+  }
+
+  if (mu > 0 && curT < stopTime) {
+    const fFric = mu * 9.8;
+    drawArrow(ctx, px - 18, cy, px - 18 - Math.min(55, fFric * 6), cy, '#F43F5E', `f_k=${fFric.toFixed(1)} N`);
+  }
+
+  // Normal and Gravity vectors
+  drawArrow(ctx, px, cy - 18, px, cy - 46, '#10B981', 'N');
+  drawArrow(ctx, px, cy + 18, px, cy + 46, '#FBBF24', 'mg');
+
+  // Surface status badge
+  ctx.fillStyle = mu === 0 ? '#00F0FF' : '#94A3B8';
+  ctx.font = 'bold 10px "JetBrains Mono", monospace';
+  ctx.fillText(mu === 0 ? '✦ ZERO FRICTION (SUPERCONDUCTING AIR TRACK)' : `FRICTION SURFACE (μ = ${mu.toFixed(2)})`, 40, cy - 50);
+
   onTelem({
-    stop_distance: mu === 0 ? 'Infinite (Inertia in Space)' : `${(s).toFixed(1)} m`,
+    stop_distance: mu === 0 ? 'Infinite (Inertia in Space)' : `${s.toFixed(1)} m`,
     f_fric: mu === 0 ? '0 N' : `${(mu * 9.8).toFixed(1)} N`,
     state: curT >= stopTime ? 'Stopped' : 'In Motion'
   });
@@ -3253,29 +3516,115 @@ function renderFEqualsMA(
   const m = p.cart_mass ?? 2;
   const a = F / m;
 
-  const cy = h / 2;
+  const cy = h / 2 + 15;
   const loopT = (t * 0.6) % 4;
   const pos = 0.5 * a * loopT * loopT;
-  const cartX = Math.min(w - 80, 80 + pos * 12);
+  const cartX = Math.min(w - 95, 75 + pos * 12);
+  const curV = a * loopT;
 
-  // Table
+  // 1. Heavy Precision Laboratory Dynamics Bench
+  const benchY = cy + 22;
+  ctx.fillStyle = '#0B132B';
   ctx.beginPath();
-  ctx.moveTo(50, cy + 25);
-  ctx.lineTo(w - 50, cy + 25);
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 2;
+  ctx.roundRect(35, benchY, w - 70, 20, 4);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+  ctx.lineWidth = 1.2;
   ctx.stroke();
 
-  // Cart
-  ctx.fillStyle = '#0062FF';
-  ctx.roundRect(cartX - 30, cy - 10, 60, 30, 4);
-  ctx.fill();
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 11px JetBrains Mono';
-  ctx.fillText(`${m} kg`, cartX - 14, cy + 8);
+  // Calibration scale
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.4)';
+  for (let sx = 45; sx < w - 45; sx += 25) {
+    ctx.fillRect(sx, benchY, 1, 3);
+  }
 
-  // Pull arrow
-  drawArrow(ctx, cartX + 30, cy + 5, cartX + 30 + F * 4, cy + 5, '#10B981', `F=${F}N`);
+  // 2. High-Tech Carbon Composite Dynamics Cart
+  const cartW = 74;
+  const cartH = 30;
+  const cartTop = cy - 10;
+
+  // Cart Chassis
+  const cartGrad = ctx.createLinearGradient(cartX - cartW / 2, cartTop, cartX + cartW / 2, cartTop + cartH);
+  cartGrad.addColorStop(0, '#0284C7');
+  cartGrad.addColorStop(0.5, '#0F172A');
+  cartGrad.addColorStop(1, '#020617');
+  ctx.fillStyle = cartGrad;
+  ctx.beginPath();
+  ctx.roundRect(cartX - cartW / 2, cartTop, cartW, cartH, 6);
+  ctx.fill();
+  ctx.strokeStyle = '#38BDF8';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // Machined Brass Slotted Mass Weights Stacked on Deck
+  const massLayers = Math.min(5, Math.max(1, Math.round(m)));
+  for (let mi = 0; mi < massLayers; mi++) {
+    const mwY = cartTop - 4 - mi * 5;
+    const mwGrad = ctx.createLinearGradient(0, mwY, 0, mwY + 4);
+    mwGrad.addColorStop(0, '#FDE047');
+    mwGrad.addColorStop(0.5, '#CA8A04');
+    mwGrad.addColorStop(1, '#854D0E');
+    ctx.fillStyle = mwGrad;
+    ctx.fillRect(cartX - 22, mwY, 44, 4);
+    ctx.strokeStyle = '#FEF08A';
+    ctx.lineWidth = 0.8;
+    ctx.strokeRect(cartX - 22, mwY, 44, 4);
+  }
+
+  // Cart Mass Label
+  ctx.fillStyle = '#F8FAFC';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`m = ${m} kg`, cartX, cartTop + 18);
+  ctx.textAlign = 'left';
+
+  // Precision Low-Friction Bearing Wheels
+  [-22, 22].forEach(ox => {
+    const wx = cartX + ox;
+    const wy = cartTop + cartH + 2;
+    ctx.beginPath();
+    ctx.arc(wx, wy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#020617';
+    ctx.fill();
+    ctx.strokeStyle = '#00F0FF';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(wx, wy, 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+  });
+
+  // 3. Digital Load Cell Pull Cable & Force Vector Arrow
+  const cableX = cartX + cartW / 2;
+  const cableY = cartTop + 14;
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([4, 2]);
+  ctx.beginPath();
+  ctx.moveTo(cableX, cableY);
+  ctx.lineTo(cableX + 16, cableY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Active Applied Force Vector F
+  drawArrow(ctx, cableX + 16, cableY, cableX + 16 + Math.min(85, F * 4.5), cableY, '#10B981', `F = ${F} N`);
+
+  // Acceleration Vector a = F/m
+  drawArrow(ctx, cartX - cartW / 2, cartTop - 28, cartX - cartW / 2 + Math.min(75, a * 12), cartTop - 28, '#00F0FF', `a = ${a.toFixed(2)} m/s²`);
+
+  // Velocity Indicator
+  if (curV > 0) {
+    ctx.fillStyle = '#38BDF8';
+    ctx.font = 'bold 9px "JetBrains Mono", monospace';
+    ctx.fillText(`v = ${curV.toFixed(1)} m/s`, cartX - 25, cartTop + 40);
+  }
+
+  // Telemetry HUD formula badge
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.9)';
+  ctx.font = 'bold 11px "JetBrains Mono", monospace';
+  ctx.fillText(`NEWTON'S 2ND LAW // a = F / m = ${F} / ${m} = ${a.toFixed(2)} m/s²`, 40, cy - 70);
 
   onTelem({
     calc_accel: `${a.toFixed(2)} m/s²`,
@@ -3294,39 +3643,98 @@ function renderActionReaction(
   const m1 = p.mass_skater1 ?? 40;
   const m2 = p.mass_skater2 ?? 80;
 
-  const cy = h / 2;
-  const loopT = (t * 0.8) % 4;
+  const cy = h / 2 + 10;
+  const loopT = (t * 0.8) % 4.2;
   const pushImpulse = 80;
   const v1 = -pushImpulse / m1;
   const v2 = pushImpulse / m2;
 
-  const x1 = w / 2 - 20 + v1 * loopT * 18;
-  const x2 = w / 2 + 20 + v2 * loopT * 18;
+  const x1 = w / 2 - 30 + v1 * loopT * 18;
+  const x2 = w / 2 + 30 + v2 * loopT * 18;
 
-  // Track
-  ctx.strokeStyle = '#CBD5E1';
-  ctx.lineWidth = 2;
+  // 1. Air Track Bed
+  const trackY = cy + 24;
+  ctx.fillStyle = '#080D1A';
   ctx.beginPath();
-  ctx.moveTo(40, cy + 25);
-  ctx.lineTo(w - 40, cy + 25);
+  ctx.roundRect(30, trackY, w - 60, 16, 4);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+  ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Skater 1 (Blue)
-  ctx.beginPath();
-  ctx.arc(x1, cy, 16, 0, Math.PI * 2);
-  ctx.fillStyle = '#0062FF';
-  ctx.fill();
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 10px JetBrains Mono';
-  ctx.fillText(`${m1}kg`, x1 - 12, cy + 4);
+  // 2. Action-Reaction Shockwave Ripples at Push Origin
+  if (loopT < 0.8) {
+    const ripR = loopT * 40;
+    ctx.save();
+    ctx.strokeStyle = `rgba(0, 240, 255, ${0.8 - loopT})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(w / 2, cy, ripR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
 
-  // Skater 2 (Purple)
+  // 3. Glider Cart 1 (Cyan / Lighter Mass)
+  const r1 = Math.max(16, 12 + m1 * 0.12);
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 10;
+  const g1Grad = ctx.createRadialGradient(x1 - 4, cy - 4, 3, x1, cy, r1);
+  g1Grad.addColorStop(0, '#FFFFFF');
+  g1Grad.addColorStop(0.3, '#00F0FF');
+  g1Grad.addColorStop(0.8, '#0284C7');
+  g1Grad.addColorStop(1, '#082F49');
+  ctx.fillStyle = g1Grad;
   ctx.beginPath();
-  ctx.arc(x2, cy, 20, 0, Math.PI * 2);
-  ctx.fillStyle = '#7C3AED';
+  ctx.arc(x1, cy, r1, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillText(`${m2}kg`, x2 - 12, cy + 4);
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.fillStyle = '#F8FAFC';
+  ctx.font = 'bold 9px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${m1} kg`, x1, cy + 3.5);
+
+  // 4. Glider Cart 2 (Ultraviolet / Heavier Mass)
+  const r2 = Math.max(18, 12 + m2 * 0.12);
+  ctx.save();
+  ctx.shadowColor = '#A855F7';
+  ctx.shadowBlur = 10;
+  const g2Grad = ctx.createRadialGradient(x2 - 4, cy - 4, 3, x2, cy, r2);
+  g2Grad.addColorStop(0, '#FFFFFF');
+  g2Grad.addColorStop(0.3, '#A855F7');
+  g2Grad.addColorStop(0.8, '#7C3AED');
+  g2Grad.addColorStop(1, '#2E1065');
+  ctx.fillStyle = g2Grad;
+  ctx.beginPath();
+  ctx.arc(x2, cy, r2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.fillStyle = '#F8FAFC';
+  ctx.fillText(`${m2} kg`, x2, cy + 3.5);
+  ctx.textAlign = 'left';
+
+  // 5. Equal & Opposite Force Vectors during impulse
+  if (loopT < 1.0) {
+    drawArrow(ctx, w / 2, cy - 25, w / 2 - 55, cy - 25, '#00F0FF', `F₁₂ = -${pushImpulse}N`);
+    drawArrow(ctx, w / 2, cy - 25, w / 2 + 55, cy - 25, '#A855F7', `F₂₁ = +${pushImpulse}N`);
+  }
+
+  // Recoil velocity vector arrows
+  drawArrow(ctx, x1 - r1, cy, x1 - r1 + v1 * 12, cy, '#00F0FF', `v₁ = ${v1.toFixed(1)} m/s`);
+  drawArrow(ctx, x2 + r2, cy, x2 + r2 + v2 * 12, cy, '#A855F7', `v₂ = +${v2.toFixed(1)} m/s`);
+
+  // Header HUD
+  ctx.fillStyle = '#10B981';
+  ctx.font = 'bold 11px "JetBrains Mono", monospace';
+  ctx.fillText("NEWTON'S 3RD LAW // F₁₂ = -F₂₁  (MOMENTUM IS CONSERVED: m₁v₁ + m₂v₂ = 0)", 35, cy - 70);
 
   onTelem({
     v1_recoil: `${v1.toFixed(2)} m/s`,
@@ -3352,52 +3760,124 @@ function renderEnergyRollercoaster(
   const g = 9.8;
   const maxPE = m * g * H;
 
-  // U-shaped track
+  // High-Tech Curved Neon Track
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#00F0FF';
+  ctx.lineWidth = 3.5;
   ctx.beginPath();
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(100, 100);
-  ctx.quadraticCurveTo(w / 2 - 60, h - 50, w - 220, 100);
+  ctx.moveTo(70, 90);
+  ctx.quadraticCurveTo(w / 2 - 70, h - 45, w - 240, 90);
   ctx.stroke();
+  ctx.restore();
+
+  // Track support scaffolding truss
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+  ctx.lineWidth = 1;
+  for (let tx = 110; tx < w - 260; tx += 45) {
+    const normalizedX = (tx - 70) / (w - 240 - 70);
+    const ty = 90 + 4 * (h - 135) * normalizedX * (1 - normalizedX);
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(tx, h - 35);
+    ctx.stroke();
+  }
 
   // Oscillator position
-  const oscAngle = Math.sin(t * 2);
+  const oscAngle = Math.sin(t * 2.2);
   const curHeight = H * (oscAngle * oscAngle);
   const curPE = m * g * curHeight;
   const curKE = Math.max(0, maxPE - curPE);
+  const curSpeed = Math.sqrt((2 * curKE) / m);
 
-  const cartX = w / 2 - 60 + oscAngle * 140;
-  const cartY = h - 60 - curHeight * 18;
+  const cartX = w / 2 - 70 + oscAngle * 145;
+  const cartY = h - 48 - (curHeight / H) * (h - 138);
 
+  // Aerodynamic Coaster Capsule
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 12;
+  const capsuleGrad = ctx.createRadialGradient(cartX - 3, cartY - 3, 2, cartX, cartY, 12);
+  capsuleGrad.addColorStop(0, '#FFFFFF');
+  capsuleGrad.addColorStop(0.3, '#00F0FF');
+  capsuleGrad.addColorStop(0.8, '#0284C7');
+  capsuleGrad.addColorStop(1, '#051329');
+  ctx.fillStyle = capsuleGrad;
   ctx.beginPath();
-  ctx.arc(cartX, cartY, 10, 0, Math.PI * 2);
-  ctx.fillStyle = '#0062FF';
+  ctx.arc(cartX, cartY, 11, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
 
-  // Live Energy Bar Gauges on Right
-  const barX = w - 160;
-  const barMaxH = 140;
+  // Dynamic Velocity Vector on Capsule
+  if (curSpeed > 0.5) {
+    const vDir = -Math.cos(t * 2.2);
+    const arrowLen = Math.min(45, curSpeed * 4) * vDir;
+    drawArrow(ctx, cartX, cartY - 14, cartX + arrowLen, cartY - 14, '#38BDF8', `v=${curSpeed.toFixed(1)} m/s`);
+  }
 
-  // KE bar (Blue)
+  // Holographic Live Energy Bar Instrument on Right
+  const barBoxX = w - 195;
+  const barBoxY = 50;
+  const barBoxW = 180;
+  const barBoxH = 250;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(7, 12, 27, 0.9)';
+  ctx.beginPath();
+  ctx.roundRect(barBoxX, barBoxY, barBoxW, barBoxH, 10);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // HUD Header
+  ctx.fillStyle = '#00F0FF';
+  ctx.font = 'bold 10px "JetBrains Mono", monospace';
+  ctx.fillText('ENERGY SPECTRUM (J)', barBoxX + 16, barBoxY + 24);
+
+  const barMaxH = 145;
+  const barBaseY = barBoxY + barBoxH - 45;
+  const bW = 32;
+
+  // 1. Kinetic Energy (Electric Cyan)
   const keH = (curKE / maxPE) * barMaxH;
-  ctx.fillStyle = '#00E5FF';
-  ctx.fillRect(barX, h - 60 - keH, 24, keH);
+  ctx.fillStyle = '#00F0FF';
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 8;
+  ctx.fillRect(barBoxX + 20, barBaseY - keH, bW, keH);
 
-  // PE bar (Purple)
+  // 2. Potential Energy (Ultraviolet)
   const peH = (curPE / maxPE) * barMaxH;
-  ctx.fillStyle = '#7C3AED';
-  ctx.fillRect(barX + 35, h - 60 - peH, 24, peH);
+  ctx.fillStyle = '#A855F7';
+  ctx.shadowColor = '#A855F7';
+  ctx.shadowBlur = 8;
+  ctx.fillRect(barBoxX + 68, barBaseY - peH, bW, peH);
 
-  // Total bar (Green)
+  // 3. Total Mechanical Energy (Hyper Emerald)
   ctx.fillStyle = '#10B981';
-  ctx.fillRect(barX + 70, h - 60 - barMaxH, 24, barMaxH);
+  ctx.shadowColor = '#10B981';
+  ctx.shadowBlur = 8;
+  ctx.fillRect(barBoxX + 116, barBaseY - barMaxH, bW, barMaxH);
+  ctx.shadowBlur = 0;
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = '10px JetBrains Mono';
-  ctx.fillText('KE', barX + 6, h - 40);
-  ctx.fillText('PE', barX + 41, h - 40);
-  ctx.fillText('Tot', barX + 72, h - 40);
+  // Labels & Values below bars
+  ctx.font = 'bold 9px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#00F0FF';
+  ctx.fillText('KE', barBoxX + 28, barBaseY + 16);
+  ctx.fillText(`${Math.round(curKE)}J`, barBoxX + 20, barBaseY + 30);
+
+  ctx.fillStyle = '#A855F7';
+  ctx.fillText('PE', barBoxX + 76, barBaseY + 16);
+  ctx.fillText(`${Math.round(curPE)}J`, barBoxX + 68, barBaseY + 30);
+
+  ctx.fillStyle = '#10B981';
+  ctx.fillText('TOTAL', barBoxX + 118, barBaseY + 16);
+  ctx.fillText(`${Math.round(maxPE)}J`, barBoxX + 116, barBaseY + 30);
+  ctx.restore();
 
   onTelem({
     ke_val: `${Math.round(curKE)} J`,
@@ -3419,31 +3899,72 @@ function renderWorkAtAngle(
   const rad = (deg * Math.PI) / 180;
 
   const effF = F * Math.cos(rad);
+  const liftF = F * Math.sin(rad);
   const work = effF * d;
 
-  const cy = h / 2 + 30;
-  const boxX = w / 2 - 80;
+  const cy = h / 2 + 25;
+  const boxX = w / 2 - 90;
 
-  // Floor
+  // High-Tech Floor
+  ctx.fillStyle = '#080D1A';
   ctx.beginPath();
-  ctx.moveTo(50, cy + 25);
-  ctx.lineTo(w - 50, cy + 25);
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 2.5;
+  ctx.roundRect(40, cy + 25, w - 80, 16, 4);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+  ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Crate
-  ctx.fillStyle = '#0062FF';
-  ctx.roundRect(boxX, cy - 25, 50, 50, 4);
+  // Precision Cargo Crate
+  const crateGrad = ctx.createLinearGradient(boxX, cy - 25, boxX + 50, cy + 25);
+  crateGrad.addColorStop(0, '#0284C7');
+  crateGrad.addColorStop(0.5, '#0F172A');
+  crateGrad.addColorStop(1, '#020617');
+  ctx.fillStyle = crateGrad;
+  ctx.beginPath();
+  ctx.roundRect(boxX, cy - 25, 52, 50, 6);
   ctx.fill();
+  ctx.strokeStyle = '#38BDF8';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
-  // Rope and angle
-  const ropeLen = 90;
-  const rx = boxX + 50 + Math.cos(rad) * ropeLen;
+  // Hazard warning diagonal strip on crate
+  ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(boxX + 10, cy + 20);
+  ctx.lineTo(boxX + 42, cy - 12);
+  ctx.stroke();
+
+  // Rope and Angle
+  const ropeLen = 100;
+  const rx = boxX + 52 + Math.cos(rad) * ropeLen;
   const ry = cy - Math.sin(rad) * ropeLen;
 
-  drawArrow(ctx, boxX + 50, cy, rx, ry, '#EC4899', `F=${F}N`);
-  drawArrow(ctx, boxX + 50, cy, boxX + 50 + effF * 1.5, cy, '#10B981', 'F cosθ');
+  // Pulling Force Vector
+  drawArrow(ctx, boxX + 52, cy, rx, ry, '#F43F5E', `F = ${F} N (at ${deg}°)`);
+
+  // Effective Horizontal Vector F cos θ
+  drawArrow(ctx, boxX + 52, cy, boxX + 52 + effF * 1.5, cy, '#10B981', `F cosθ = ${effF.toFixed(1)} N`);
+
+  // Vertical Lift Vector F sin θ
+  drawArrow(ctx, boxX + 52, cy, boxX + 52, cy - liftF * 1.5, '#FBBF24', `F sinθ = ${liftF.toFixed(1)} N`);
+
+  // Angle Arc
+  ctx.save();
+  ctx.strokeStyle = '#FBBF24';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(boxX + 52, cy, 32, -rad, 0);
+  ctx.stroke();
+  ctx.fillStyle = '#FBBF24';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.fillText(`θ = ${deg}°`, boxX + 90, cy - 10);
+  ctx.restore();
+
+  // Work Formula HUD Banner
+  ctx.fillStyle = '#00F0FF';
+  ctx.font = 'bold 11px "JetBrains Mono", monospace';
+  ctx.fillText(`WORK DONE = (F cosθ) × d = ${effF.toFixed(1)} N × ${d} m = ${work.toFixed(0)} Joules`, 45, cy - 75);
 
   onTelem({
     eff_force: `${effF.toFixed(1)} N`,
@@ -3465,35 +3986,84 @@ function renderSpringEnergy(
   const omega = Math.sqrt(k / mass);
 
   const oscX = A * Math.cos(t * omega * 0.7);
-  const cy = h / 2;
-  const wallX = 60;
-  const blockX = w / 2 + oscX * 120;
+  const cy = h / 2 + 10;
+  const wallX = 70;
+  const blockX = w / 2 - 20 + oscX * 125;
 
-  // Wall
-  ctx.fillStyle = '#64748B';
-  ctx.fillRect(wallX - 10, cy - 40, 10, 80);
+  // Wall Anchor
+  ctx.fillStyle = '#0B132B';
+  ctx.fillRect(wallX - 14, cy - 45, 14, 90);
+  ctx.strokeStyle = '#00F0FF';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(wallX - 14, cy - 45, 14, 90);
 
-  // Coiled Spring
+  // 3D Helical Steel Spring
+  ctx.save();
+  ctx.strokeStyle = '#00F0FF';
+  ctx.lineWidth = 2.8;
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 6;
   ctx.beginPath();
-  ctx.strokeStyle = '#0062FF';
-  ctx.lineWidth = 2.5;
   ctx.moveTo(wallX, cy);
 
-  const coils = 12;
+  const coils = 14;
   const springLen = blockX - 25 - wallX;
   for (let i = 0; i <= coils; i++) {
     const sx = wallX + (i / coils) * springLen;
-    const sy = i === 0 || i === coils ? cy : cy + (i % 2 === 0 ? 14 : -14);
+    const sy = i === 0 || i === coils ? cy : cy + (i % 2 === 0 ? 15 : -15);
     ctx.lineTo(sx, sy);
   }
   ctx.stroke();
+  ctx.restore();
 
-  // Block
-  ctx.fillStyle = '#7C3AED';
-  ctx.fillRect(blockX - 25, cy - 25, 50, 50);
+  // Test Mass Block
+  const blockGrad = ctx.createLinearGradient(blockX - 25, cy - 25, blockX + 25, cy + 25);
+  blockGrad.addColorStop(0, '#A855F7');
+  blockGrad.addColorStop(0.5, '#0F172A');
+  blockGrad.addColorStop(1, '#020617');
+  ctx.fillStyle = blockGrad;
+  ctx.beginPath();
+  ctx.roundRect(blockX - 25, cy - 25, 50, 50, 6);
+  ctx.fill();
+  ctx.strokeStyle = '#C084FC';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('1.0 kg', blockX, cy + 3.5);
+  ctx.textAlign = 'left';
 
   const maxPE = 0.5 * k * A * A;
   const maxV = A * omega;
+  const curPE = 0.5 * k * oscX * oscX;
+  const curKE = Math.max(0, maxPE - curPE);
+
+  // Harmonic Energy HUD on right
+  const hudX = w - 190;
+  const hudY = 55;
+  ctx.fillStyle = 'rgba(7, 12, 27, 0.9)';
+  ctx.beginPath();
+  ctx.roundRect(hudX, hudY, 175, 140, 8);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#00F0FF';
+  ctx.font = 'bold 10px "JetBrains Mono", monospace';
+  ctx.fillText('HARMONIC OSCILLATOR', hudX + 12, hudY + 22);
+
+  ctx.font = '9px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#A855F7';
+  ctx.fillText(`Spring PE: ${curPE.toFixed(1)} J`, hudX + 12, hudY + 50);
+  ctx.fillStyle = '#00F0FF';
+  ctx.fillText(`Kinetic KE: ${curKE.toFixed(1)} J`, hudX + 12, hudY + 75);
+  ctx.fillStyle = '#10B981';
+  ctx.fillText(`Total E: ${maxPE.toFixed(1)} J`, hudX + 12, hudY + 100);
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillText(`Max Speed: ${maxV.toFixed(1)} m/s`, hudX + 12, hudY + 122);
 
   onTelem({
     spring_pe: `${maxPE.toFixed(1)} Joules`,
@@ -3802,47 +4372,74 @@ function renderGravityAltitude(
 
   // 2. Exact g(r) Graph on the Right Side
   const graphX = w / 2 + 70;
-  const graphY = 65;
-  const graphW = 270;
-  const graphH = 220;
+  const graphY = 60;
+  const graphW = 275;
+  const graphH = 230;
 
-  ctx.fillStyle = 'rgba(248, 250, 252, 0.95)';
-  ctx.fillRect(graphX, graphY, graphW, graphH);
-  ctx.strokeStyle = '#CBD5E1';
+  ctx.save();
+  ctx.fillStyle = 'rgba(7, 12, 27, 0.9)';
+  ctx.beginPath();
+  ctx.roundRect(graphX, graphY, graphW, graphH, 10);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(graphX, graphY, graphW, graphH);
+  ctx.stroke();
+
+  // Corner brackets
+  ctx.strokeStyle = '#00F0FF';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(graphX + 2, graphY + 10);
+  ctx.lineTo(graphX + 2, graphY + 2);
+  ctx.lineTo(graphX + 10, graphY + 2);
+  ctx.stroke();
+
+  // Oscilloscope Minor Grid
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.05)';
+  ctx.lineWidth = 1;
+  for (let gx = graphX + 35; gx < graphX + graphW - 15; gx += 30) {
+    ctx.beginPath();
+    ctx.moveTo(gx, graphY + 20);
+    ctx.lineTo(gx, graphY + graphH - 30);
+    ctx.stroke();
+  }
 
   // Graph Axes
-  ctx.strokeStyle = '#94A3B8';
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
   ctx.moveTo(graphX + 35, graphY + 20);
   ctx.lineTo(graphX + 35, graphY + graphH - 30);
   ctx.lineTo(graphX + graphW - 15, graphY + graphH - 30);
   ctx.stroke();
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 11px JetBrains Mono';
-  ctx.fillText('Gravity Field g(r)', graphX + 45, graphY + 22);
-  ctx.fillText('g', graphX + 15, graphY + 30);
+  ctx.fillStyle = '#00F0FF';
+  ctx.font = 'bold 10px "JetBrains Mono", monospace';
+  ctx.fillText('GRAVITY FIELD g(r) HUD', graphX + 45, graphY + 20);
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillText('g', graphX + 18, graphY + 28);
   ctx.fillText('r', graphX + graphW - 20, graphY + graphH - 12);
 
   // Surface boundary dashed line
   const surfaceGraphX = graphX + 35 + 65;
   ctx.setLineDash([3, 3]);
-  ctx.strokeStyle = '#94A3B8';
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
   ctx.beginPath();
-  ctx.moveTo(surfaceGraphX, graphY + 30);
+  ctx.moveTo(surfaceGraphX, graphY + 28);
   ctx.lineTo(surfaceGraphX, graphY + graphH - 30);
   ctx.stroke();
   ctx.setLineDash([]);
+  ctx.fillStyle = '#38BDF8';
   ctx.fillText('R (Surface)', surfaceGraphX - 25, graphY + graphH - 12);
 
   // Plot g(r) curve
   // Inside Earth: Linear ramp from 0 to g0
-  ctx.beginPath();
-  ctx.strokeStyle = '#0062FF';
+  ctx.save();
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 8;
+  ctx.strokeStyle = '#00F0FF';
   ctx.lineWidth = 2.5;
+  ctx.beginPath();
   ctx.moveTo(graphX + 35, graphY + graphH - 30); // Center: g=0
   const peakY = graphY + graphH - 30 - 130;
   ctx.lineTo(surfaceGraphX, peakY); // Surface: g=g0 (9.8)
@@ -3855,6 +4452,8 @@ function renderGravityAltitude(
     ctx.lineTo(px, py);
   }
   ctx.stroke();
+  ctx.restore();
+  ctx.restore();
 
   // Current probe dot on graph
   const curFracR = Math.max(0, currentR / R_earth);
@@ -4041,15 +4640,18 @@ function renderSoundWaves(
   // 3. Synchronized Acoustic Pressure Wave Graph Delta P(x) below
   const graphY = 220;
   const graphH = 100;
-  ctx.fillStyle = 'rgba(248, 250, 252, 0.9)';
-  ctx.fillRect(startAirX - 10, graphY, w - startAirX - 10, graphH);
-  ctx.strokeStyle = '#CBD5E1';
+  ctx.save();
+  ctx.fillStyle = 'rgba(7, 12, 27, 0.9)';
+  ctx.beginPath();
+  ctx.roundRect(startAirX - 10, graphY, w - startAirX - 10, graphH, 8);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(startAirX - 10, graphY, w - startAirX - 10, graphH);
+  ctx.stroke();
 
   // Pressure centerline
   const pCenterY = graphY + graphH / 2;
-  ctx.strokeStyle = '#94A3B8';
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
   ctx.lineWidth = 1;
   ctx.setLineDash([3, 3]);
   ctx.beginPath();
@@ -4058,11 +4660,14 @@ function renderSoundWaves(
   ctx.stroke();
   ctx.setLineDash([]);
 
-  ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 10px JetBrains Mono';
-  ctx.fillText('Pressure Wave ΔP(x) = ΔP₀ sin(kx - ωt)', startAirX + 10, graphY + 16);
-  ctx.fillText('+ΔP (Compression)', startAirX + 10, graphY + 30);
-  ctx.fillText('-ΔP (Rarefaction)', startAirX + 10, graphY + graphH - 10);
+  ctx.fillStyle = '#00F0FF';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.fillText('ACOUSTIC PRESSURE WAVE // ΔP(x) = ΔP₀ sin(kx - ωt)', startAirX + 12, graphY + 18);
+  ctx.fillStyle = '#38BDF8';
+  ctx.fillText('+ΔP [COMPRESSION PEAK]', startAirX + 12, graphY + 32);
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillText('-ΔP [RAREFACTION TROUGH]', startAirX + 12, graphY + graphH - 10);
+  ctx.restore();
 
   // Plot pressure wave curve
   ctx.beginPath();
@@ -4162,21 +4767,32 @@ function renderWaveSuperposition(
   ctx.stroke();
 
   // Legend at bottom
-  ctx.fillStyle = '#00E5FF';
-  ctx.fillRect(startX + 20, h - 50, 14, 4);
-  ctx.fillStyle = '#0F172A';
-  ctx.font = '10px JetBrains Mono';
-  ctx.fillText(`Pulse 1 (Moving Right: A₁ = ${A1}px)`, startX + 40, h - 46);
+  ctx.save();
+  ctx.fillStyle = '#00F0FF';
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 6;
+  ctx.fillRect(startX + 20, h - 48, 14, 4);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#F8FAFC';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.fillText(`Pulse 1 (→): A₁ = ${A1}px`, startX + 40, h - 44);
 
-  ctx.fillStyle = '#7C3AED';
-  ctx.fillRect(startX + 260, h - 50, 14, 4);
-  ctx.fillStyle = '#0F172A';
-  ctx.fillText(`Pulse 2 (Moving Left: A₂ = ${A2}px)`, startX + 280, h - 46);
+  ctx.fillStyle = '#A855F7';
+  ctx.shadowColor = '#A855F7';
+  ctx.shadowBlur = 6;
+  ctx.fillRect(startX + 240, h - 48, 14, 4);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#F8FAFC';
+  ctx.fillText(`Pulse 2 (←): A₂ = ${A2}px`, startX + 260, h - 44);
 
   ctx.fillStyle = '#0062FF';
-  ctx.fillRect(startX + 500, h - 50, 14, 4);
-  ctx.fillStyle = '#0F172A';
-  ctx.fillText('Composite: y = y₁ + y₂', startX + 520, h - 46);
+  ctx.shadowColor = '#0062FF';
+  ctx.shadowBlur = 6;
+  ctx.fillRect(startX + 460, h - 48, 14, 4);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#38BDF8';
+  ctx.fillText('Superposed: y = y₁ + y₂', startX + 480, h - 44);
+  ctx.restore();
 
   const isConstructive = (A1 > 0 && A2 > 0) || (A1 < 0 && A2 < 0);
   const maxCombinedAmp = Math.abs(A1 + A2);

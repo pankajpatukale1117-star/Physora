@@ -14,18 +14,18 @@ export function App() {
   const [isFormulaBankOpen, setIsFormulaBankOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try {
-      const stored = localStorage.getItem('physora-theme');
+      const stored = localStorage.getItem('physora-theme-v2');
       if (stored === 'light' || stored === 'dark') return stored;
     } catch {
       // Fallback
     }
-    return 'dark'; // Dark obsidian theme default, inspired by physora.org
+    return 'dark'; // Cyber-Obsidian Quantum Laboratory theme default
   });
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     try {
-      localStorage.setItem('physora-theme', theme);
+      localStorage.setItem('physora-theme-v2', theme);
     } catch {
       // Ignore
     }

@@ -231,14 +231,15 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
         position: 'fixed',
         inset: 0,
         zIndex: 200,
-        background: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
+        background: 'rgba(3, 7, 18, 0.78)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px 16px',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        animation: 'modalFadeIn 0.25s ease-out'
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -253,10 +254,11 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
           background: 'var(--bg-glass-heavy)',
           borderRadius: 'var(--radius-xl)',
           border: `1.5px solid ${accentColor}`,
-          boxShadow: '0 25px 60px -10px rgba(0, 98, 255, 0.3)',
+          boxShadow: `0 25px 70px -10px rgba(0, 0, 0, 0.9), 0 0 35px ${accentColor}30`,
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          animation: 'modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
         {/* Modal Top Bar */}
