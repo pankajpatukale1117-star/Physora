@@ -1556,46 +1556,530 @@ function renderVernierCaliper(
   p: Record<string, number>,
   onTelem: (t: Record<string, string>) => void
 ) {
-  const distMm = p.jaw_dist ?? 23.4;
-  const cy = h / 2;
+  // Clamp distance to 0 - 60 mm
+  const rawDist = p.jaw_dist ?? 23.4;
+  const distMm = Math.max(0, Math.min(60, Number(rawDist.toFixed(1))));
 
-  // Main Ruler Scale (0 to 60 mm)
-  ctx.fillStyle = '#F8FAFC';
-  ctx.fillRect(40, cy - 35, w - 80, 50);
+  // Mathematical Vernier Caliper Calculations:
+  // 1 Main Scale Division (MSD) = 1.0 mm
+  // 10 Vernier Scale Divisions (VSD) = 9 MSD = 9.0 mm
+  // 1 VSD = 0.9 mm
+  // Least Count (LC) = 1 MSD - 1 VSD = 0.1 mm (0.01 cm)
+  const msr = Math.floor(distMm); // Main scale reading (mm)
+  const fraction = distMm - msr; // e.g. 0.4
+  const vsr = Math.round(fraction * 10) % 10; // Vernier coinciding division (0 to 9)
+  const totalMeasured = (msr + vsr * 0.1).toFixed(1);
+
+  // Geometry layout parameters
+  const originX = 145; // Pixel X where Main Scale 0 mm and Fixed Jaw inner face align
+  const scale = 7.0; // 7.0 pixels per mm (allows 0 to 65 mm on a 780px wide canvas)
+  const beamY = 170; // Top of the main scale beam
+  const beamH = 50; // Height of the main scale beam
+  const beamBottom = beamY + beamH;
+  const jawBottomY = 355; // Bottom tip of external jaws
+  const intJawTopY = 118; // Top tip of internal jaws
+
+  const sliderX = originX + distMm * scale; // Position of the Vernier zero mark
+
+  // --------------------------------------------------------------------------
+  // 0. Background & Workshop Lighting
+  // --------------------------------------------------------------------------
+  ctx.save();
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+  bgGrad.addColorStop(0, '#090D1A');
+  bgGrad.addColorStop(0.5, '#0E172A');
+  bgGrad.addColorStop(1, '#070B14');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Subtle millimeter workbench grid
+  ctx.strokeStyle = 'rgba(0, 229, 255, 0.035)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 30) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let y = 0; y < h; y += 30) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  // --------------------------------------------------------------------------
+  // 1. Depth Probe Rod (Extends out of the right side of the caliper)
+  // --------------------------------------------------------------------------
+  const rodWidth = 5;
+  const rodLength = 40 + distMm * scale;
+  const rodX = w - 60;
+  ctx.fillStyle = '#CBD5E1';
+  ctx.fillRect(rodX, beamY + beamH / 2 - 2, rodLength, rodWidth);
+  ctx.strokeStyle = '#64748B';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(rodX, beamY + beamH / 2 - 2, rodLength, rodWidth);
+
+  // --------------------------------------------------------------------------
+  // 2. Fixed Main Scale Beam & Jaws (Stainless Steel Body)
+  // --------------------------------------------------------------------------
+  // Main Beam
+  const beamGrad = ctx.createLinearGradient(0, beamY, 0, beamBottom);
+  beamGrad.addColorStop(0, '#F8FAFC');
+  beamGrad.addColorStop(0.15, '#E2E8F0');
+  beamGrad.addColorStop(0.7, '#CBD5E1');
+  beamGrad.addColorStop(1, '#94A3B8');
+
+  ctx.fillStyle = beamGrad;
+  ctx.fillRect(originX - 70, beamY, w - originX + 20, beamH);
+
+  // Fixed External Jaw (Left Lower Jaw)
+  ctx.beginPath();
+  ctx.moveTo(originX - 70, beamY);
+  ctx.lineTo(originX, beamY);
+  ctx.lineTo(originX, jawBottomY); // Flat vertical inner measuring face
+  ctx.lineTo(originX - 12, jawBottomY); // Pointed beveled tip
+  ctx.bezierCurveTo(originX - 25, jawBottomY - 40, originX - 55, jawBottomY - 90, originX - 70, beamBottom);
+  ctx.closePath();
+  ctx.fillStyle = beamGrad;
+  ctx.fill();
   ctx.strokeStyle = '#64748B';
   ctx.lineWidth = 1.5;
-  ctx.strokeRect(40, cy - 35, w - 80, 50);
+  ctx.stroke();
 
-  // Millimeter ticks
+  // Fixed Internal Jaw (Left Upper Jaw for measuring internal bores)
+  ctx.beginPath();
+  ctx.moveTo(originX - 70, beamY);
+  ctx.lineTo(originX - 60, intJawTopY + 12);
+  ctx.lineTo(originX - 10, intJawTopY);
+  ctx.lineTo(originX, intJawTopY); // Outer measuring face
+  ctx.lineTo(originX, beamY);
+  ctx.closePath();
+  ctx.fillStyle = beamGrad;
+  ctx.fill();
+  ctx.strokeStyle = '#64748B';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Stainless steel border along the beam
+  ctx.strokeStyle = '#64748B';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(originX - 70, beamY, w - originX + 20, beamH);
+
+  // --------------------------------------------------------------------------
+  // 3. Main Scale Graduations (0 to 65 mm)
+  // --------------------------------------------------------------------------
   ctx.fillStyle = '#0F172A';
-  for (let mm = 0; mm <= 50; mm++) {
-    const tx = 60 + mm * 11;
+  ctx.strokeStyle = '#1E293B';
+  ctx.lineWidth = 1.2;
+
+  // Scale baseline
+  const scaleBaseY = beamY + 34;
+
+  for (let mm = 0; mm <= 65; mm++) {
+    const tx = originX + mm * scale;
+    if (tx > w - 40) break;
+
     const isCm = mm % 10 === 0;
-    const tickH = isCm ? 20 : mm % 5 === 0 ? 14 : 8;
+    const isHalfCm = mm % 5 === 0 && !isCm;
+    const tickLen = isCm ? 18 : isHalfCm ? 12 : 7;
 
     ctx.beginPath();
-    ctx.moveTo(tx, cy + 15);
-    ctx.lineTo(tx, cy + 15 - tickH);
+    ctx.moveTo(tx, scaleBaseY);
+    ctx.lineTo(tx, scaleBaseY - tickLen);
     ctx.stroke();
 
     if (isCm) {
-      ctx.font = '10px JetBrains Mono';
-      ctx.fillText(`${mm / 10}`, tx - 3, cy + 30);
+      ctx.font = 'bold 10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${mm / 10}`, tx, scaleBaseY - 21);
     }
   }
 
-  // Gripped Object
-  const objW = distMm * 11;
-  ctx.fillStyle = 'rgba(0, 98, 255, 0.4)';
-  ctx.fillRect(60, cy - 25, objW, 30);
-  ctx.strokeStyle = '#0062FF';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(60, cy - 25, objW, 30);
+  // Label "cm" on the main scale
+  ctx.font = 'bold 9px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#475569';
+  ctx.textAlign = 'left';
+  ctx.fillText('cm', originX + 66 * scale, scaleBaseY - 20);
+  ctx.fillText('MAIN SCALE (1 div = 1 mm)', originX + 5, beamY + 12);
 
+  // --------------------------------------------------------------------------
+  // 4. Clamped Object (Specimen between the Jaws)
+  // --------------------------------------------------------------------------
+  if (distMm > 0.05) {
+    const objW = distMm * scale;
+    const objTop = beamBottom + 18;
+    const objH = 85;
+
+    // Realistic Machined Brass Cylinder Specimen
+    const objGrad = ctx.createLinearGradient(originX, 0, originX + objW, 0);
+    objGrad.addColorStop(0, '#B45309');
+    objGrad.addColorStop(0.2, '#F59E0B');
+    objGrad.addColorStop(0.5, '#FDE68A');
+    objGrad.addColorStop(0.8, '#D97706');
+    objGrad.addColorStop(1, '#92400E');
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(245, 158, 11, 0.35)';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = objGrad;
+    ctx.fillRect(originX, objTop, objW, objH);
+    ctx.restore();
+
+    ctx.strokeStyle = '#78350F';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(originX, objTop, objW, objH);
+
+    // Specimen specular line and measurement arrow
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(originX + objW * 0.45, objTop);
+    ctx.lineTo(originX + objW * 0.45, objTop + objH);
+    ctx.stroke();
+
+    // Measurement Dimension Callout Line
+    const dimY = objTop + objH / 2;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(originX + 4, dimY);
+    ctx.lineTo(originX + objW - 4, dimY);
+    ctx.stroke();
+
+    // Left and right arrows
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.moveTo(originX + 2, dimY);
+    ctx.lineTo(originX + 7, dimY - 3);
+    ctx.lineTo(originX + 7, dimY + 3);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(originX + objW - 2, dimY);
+    ctx.lineTo(originX + objW - 7, dimY - 3);
+    ctx.lineTo(originX + objW - 7, dimY + 3);
+    ctx.fill();
+
+    // Specimen text badge
+    if (objW > 45) {
+      ctx.font = 'bold 10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#1E1B4B';
+      const labelW = 46;
+      ctx.fillRect(originX + objW / 2 - labelW / 2, dimY - 8, labelW, 16);
+      ctx.fillStyle = '#00F0FF';
+      ctx.fillText(`${distMm}mm`, originX + objW / 2, dimY + 4);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // 5. Sliding Vernier Scale & Movable Jaws Assembly
+  // --------------------------------------------------------------------------
+  const sliderWidth = 115;
+  const sliderGrad = ctx.createLinearGradient(0, beamY - 8, 0, beamBottom + 12);
+  sliderGrad.addColorStop(0, '#E2E8F0');
+  sliderGrad.addColorStop(0.2, '#CBD5E1');
+  sliderGrad.addColorStop(0.8, '#94A3B8');
+  sliderGrad.addColorStop(1, '#64748B');
+
+  // Slider body that rides on the beam
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetX = 3;
+  ctx.shadowOffsetY = 4;
+
+  ctx.fillStyle = sliderGrad;
+  ctx.beginPath();
+  // Top lip over beam
+  ctx.moveTo(sliderX - 8, beamY - 8);
+  ctx.lineTo(sliderX + sliderWidth, beamY - 8);
+  ctx.lineTo(sliderX + sliderWidth, beamBottom + 10);
+  // Thumb roll knob bump on bottom right
+  ctx.arc(sliderX + sliderWidth - 12, beamBottom + 14, 8, 0, Math.PI / 2);
+  ctx.lineTo(sliderX, beamBottom + 10);
+  // Movable Lower External Jaw
+  ctx.lineTo(sliderX, jawBottomY); // Flat vertical left measuring face
+  ctx.lineTo(sliderX + 12, jawBottomY);
+  ctx.bezierCurveTo(sliderX + 25, jawBottomY - 40, sliderX + 45, jawBottomY - 90, sliderX + 55, beamBottom + 10);
+  ctx.lineTo(sliderX - 8, beamBottom + 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Movable Upper Internal Jaw
+  ctx.beginPath();
+  ctx.moveTo(sliderX, beamY - 8);
+  ctx.lineTo(sliderX, intJawTopY); // Outer vertical measuring face
+  ctx.lineTo(sliderX + 10, intJawTopY);
+  ctx.lineTo(sliderX + 40, beamY - 8);
+  ctx.closePath();
+  ctx.fillStyle = sliderGrad;
+  ctx.fill();
+  ctx.stroke();
+
+  // Thumbscrew / Locking Screw on Top
+  const screwX = sliderX + 45;
+  const screwY = beamY - 14;
+  ctx.fillStyle = '#64748B';
+  ctx.fillRect(screwX - 8, screwY - 6, 16, 7);
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillRect(screwX - 10, screwY - 13, 20, 7);
+  // Knurled ridges on screw
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1;
+  for (let sx = screwX - 8; sx <= screwX + 8; sx += 3) {
+    ctx.beginPath();
+    ctx.moveTo(sx, screwY - 13);
+    ctx.lineTo(sx, screwY - 6);
+    ctx.stroke();
+  }
+
+  // Thumb Grip Ridges on Slider Bottom
+  const gripX = sliderX + sliderWidth - 22;
+  const gripY = beamBottom + 14;
+  for (let gx = gripX - 10; gx <= gripX + 8; gx += 3) {
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(gx, gripY - 4);
+    ctx.lineTo(gx, gripY + 4);
+    ctx.stroke();
+  }
+
+  // Precision Vernier Cutout Window
+  const winX = sliderX + 2;
+  const winY = beamY + 18;
+  const winW = sliderWidth - 14;
+  const winH = 34;
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+  ctx.fillRect(winX, winY, winW, winH);
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 1.2;
+  ctx.strokeRect(winX, winY, winW, winH);
+
+  // --------------------------------------------------------------------------
+  // 6. Vernier Scale Markings (10 VSD = 9 MSD)
+  // Each VSD = 0.9 mm = 0.9 * scale px (6.3 px)
+  // --------------------------------------------------------------------------
+  const vsdStepPx = 0.9 * scale;
+  const vScaleY = winY;
+
+  ctx.fillStyle = '#0F172A';
+  ctx.strokeStyle = '#0F172A';
+
+  for (let v = 0; v <= 10; v++) {
+    const vx = sliderX + v * vsdStepPx;
+    const isMajor = v === 0 || v === 5 || v === 10;
+    const vTickLen = isMajor ? 14 : 9;
+
+    // Vernier tick mark extending down from the window edge
+    const isCoinciding = v === vsr;
+
+    ctx.save();
+    if (isCoinciding) {
+      ctx.strokeStyle = '#EC4899';
+      ctx.lineWidth = 2.2;
+    } else {
+      ctx.strokeStyle = '#0F172A';
+      ctx.lineWidth = 1.2;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(vx, vScaleY);
+    ctx.lineTo(vx, vScaleY + vTickLen);
+    ctx.stroke();
+    ctx.restore();
+
+    // Numbering: 0, 5, 10 (or every 2 divisions: 0, 2, 4, 6, 8, 10)
+    if (v % 2 === 0 || v === 5) {
+      ctx.font = 'bold 8px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = isCoinciding ? '#EC4899' : '#334155';
+      ctx.fillText(`${v}`, vx, vScaleY + 23);
+    }
+  }
+
+  // Label on Vernier Window
+  ctx.font = 'bold 7.5px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#475569';
+  ctx.textAlign = 'left';
+  ctx.fillText('VERNIER (0.1 mm)', winX + 4, winY + winH - 3);
+
+  // --------------------------------------------------------------------------
+  // 7. Coinciding Division Indicator on Main & Vernier Scale
+  // --------------------------------------------------------------------------
+  const coincX = sliderX + vsr * vsdStepPx;
+  ctx.save();
+  // Glowing alignment line through both scales
+  ctx.strokeStyle = 'rgba(236, 72, 153, 0.85)';
+  ctx.lineWidth = 1.8;
+  ctx.setLineDash([3, 2]);
+  ctx.beginPath();
+  ctx.moveTo(coincX, scaleBaseY - 14);
+  ctx.lineTo(coincX, vScaleY + 16);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Small pointer triangle at coinciding division
+  ctx.fillStyle = '#EC4899';
+  ctx.beginPath();
+  ctx.moveTo(coincX, vScaleY + 26);
+  ctx.lineTo(coincX - 4, vScaleY + 32);
+  ctx.lineTo(coincX + 4, vScaleY + 32);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // --------------------------------------------------------------------------
+  // 8. Inspection Zoom Loupe (3.0x Magnifier HUD in Upper Right)
+  // --------------------------------------------------------------------------
+  const loupeX = w - 245;
+  const loupeY = 16;
+  const loupeW = 225;
+  const loupeH = 115;
+
+  ctx.save();
+  // Glass HUD card
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+  ctx.fillRect(loupeX, loupeY, loupeW, loupeH);
+  ctx.strokeStyle = '#00E5FF';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(loupeX, loupeY, loupeW, loupeH);
+
+  // Title Bar
+  ctx.fillStyle = 'rgba(0, 229, 255, 0.15)';
+  ctx.fillRect(loupeX, loupeY, loupeW, 20);
+  ctx.fillStyle = '#00F0FF';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('🔍 PRECISION COINCIDENCE LOUPE (3×)', loupeX + 8, loupeY + 14);
+
+  // Loupe Scale Center (centered around coincidence point)
+  const loupeZoom = 3.0;
+  const loupeCenterX = loupeX + loupeW / 2;
+  const loupeMainY = loupeY + 50;
+  const loupeVernierY = loupeY + 56;
+
+  // Clip within loupe viewport
+  ctx.beginPath();
+  ctx.rect(loupeX + 4, loupeY + 24, loupeW - 8, loupeH - 28);
+  ctx.clip();
+
+  // Draw magnified Main Scale ticks
+  ctx.strokeStyle = '#94A3B8';
+  ctx.fillStyle = '#F8FAFC';
+  const mainCoincMm = msr + vsr;
+
+  for (let mm = mainCoincMm - 4; mm <= mainCoincMm + 4; mm++) {
+    const tickX = loupeCenterX + (mm - mainCoincMm) * (scale * loupeZoom);
+    const isCm = mm % 10 === 0;
+    const isCoinc = mm === mainCoincMm;
+
+    ctx.strokeStyle = isCoinc ? '#EC4899' : '#94A3B8';
+    ctx.lineWidth = isCoinc ? 2.5 : 1.5;
+
+    ctx.beginPath();
+    ctx.moveTo(tickX, loupeMainY);
+    ctx.lineTo(tickX, loupeMainY - (isCm ? 18 : 12));
+    ctx.stroke();
+
+    ctx.font = 'bold 9px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = isCoinc ? '#EC4899' : '#CBD5E1';
+    ctx.fillText(`${mm}`, tickX, loupeMainY - 21);
+  }
+
+  // Draw magnified Vernier Scale ticks
+  for (let v = 0; v <= 10; v++) {
+    const vOffsetMm = (v - vsr) * 0.9;
+    const tickX = loupeCenterX + vOffsetMm * (scale * loupeZoom);
+    const isCoinc = v === vsr;
+
+    ctx.strokeStyle = isCoinc ? '#EC4899' : '#38BDF8';
+    ctx.lineWidth = isCoinc ? 2.5 : 1.5;
+
+    ctx.beginPath();
+    ctx.moveTo(tickX, loupeVernierY);
+    ctx.lineTo(tickX, loupeVernierY + (v % 5 === 0 ? 18 : 12));
+    ctx.stroke();
+
+    ctx.font = 'bold 9px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = isCoinc ? '#EC4899' : '#7DD3FC';
+    ctx.fillText(`${v}`, tickX, loupeVernierY + 27);
+  }
+
+  // Target Reticle & Coincidence Line
+  ctx.strokeStyle = '#EC4899';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(loupeCenterX, loupeMainY - 18);
+  ctx.lineTo(loupeCenterX, loupeVernierY + 18);
+  ctx.stroke();
+
+  // Status tag in Loupe
+  ctx.fillStyle = '#EC4899';
+  ctx.font = 'bold 9px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`COINCIDENCE: VSR = ${vsr}`, loupeCenterX, loupeY + loupeH - 6);
+  ctx.restore();
+
+  // --------------------------------------------------------------------------
+  // 9. Laboratory Spec / Formula HUD (Top Left)
+  // --------------------------------------------------------------------------
+  const hudX = 20;
+  const hudY = 16;
+  const hudW = 215;
+  const hudH = 115;
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+  ctx.fillRect(hudX, hudY, hudW, hudH);
+  ctx.strokeStyle = 'rgba(0, 98, 255, 0.35)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(hudX, hudY, hudW, hudH);
+
+  // Header
+  ctx.fillStyle = 'rgba(0, 98, 255, 0.15)';
+  ctx.fillRect(hudX, hudY, hudW, 20);
+  ctx.fillStyle = '#38BDF8';
+  ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('🔬 VERNIER LAB FORMULA', hudX + 8, hudY + 14);
+
+  // Live Formula Breakdown
+  ctx.font = '9px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillText('1 MSD = 1.0 mm | 1 VSD = 0.9 mm', hudX + 10, hudY + 36);
+
+  ctx.fillStyle = '#00F0FF';
+  ctx.fillText('LC = 1 MSD - 1 VSD = 0.1 mm', hudX + 10, hudY + 52);
+
+  ctx.fillStyle = '#F8FAFC';
+  ctx.fillText(`MSR = ${msr} mm`, hudX + 10, hudY + 69);
+  ctx.fillText(`VSR = ${vsr} div × 0.1 = ${(vsr * 0.1).toFixed(1)} mm`, hudX + 10, hudY + 84);
+
+  // Highlighted Total Reading
+  ctx.fillStyle = '#34D399';
+  ctx.font = 'bold 10px "JetBrains Mono", monospace';
+  ctx.fillText(`TOTAL = ${totalMeasured} mm (${(Number(totalMeasured) / 10).toFixed(2)} cm)`, hudX + 10, hudY + 103);
+  ctx.restore();
+
+  // --------------------------------------------------------------------------
+  // 10. Send High-Precision Telemetry to Parent UI
+  // --------------------------------------------------------------------------
   onTelem({
-    main_reading: `${Math.floor(distMm)} mm`,
-    vernier_reading: `${Math.round((distMm % 1) * 10)} divisions (0.${Math.round((distMm % 1) * 10)} mm)`,
-    total_reading: `${distMm.toFixed(1)} mm`
+    main_reading: `${msr} mm`,
+    vernier_reading: `${vsr} div (${(vsr * 0.1).toFixed(1)} mm)`,
+    least_count: '0.1 mm (0.01 cm)',
+    total_reading: `${totalMeasured} mm (${(Number(totalMeasured) / 10).toFixed(2)} cm)`
   });
 }
 

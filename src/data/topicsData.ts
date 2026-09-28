@@ -504,12 +504,13 @@ export const TOPICS_DATA: Record<string, TopicData> = {
         tagline: 'Drag the caliper jaws and read millimeters with 0.1 mm precision.',
         description: 'Align the zero mark of the vernier scale with the main scale to learn how real laboratory tools measure thickness.',
         controls: [
-          { id: 'jaw_dist', label: 'Object Thickness (mm)', min: 5, max: 50, step: 0.1, defaultValue: 23.4, unit: 'mm' }
+          { id: 'jaw_dist', label: 'Object Thickness (mm)', min: 0, max: 60, step: 0.1, defaultValue: 23.4, unit: 'mm' }
         ],
         telemetryLabels: [
-          { key: 'main_reading', label: 'Main Scale Reading' },
-          { key: 'vernier_reading', label: 'Vernier Coincidence' },
-          { key: 'total_reading', label: 'Total Measured Size' }
+          { key: 'main_reading', label: 'Main Scale (MSR)' },
+          { key: 'vernier_reading', label: 'Vernier Coincidence (VSR)' },
+          { key: 'least_count', label: 'Least Count (LC)' },
+          { key: 'total_reading', label: 'Total Reading (MSR + VSR×LC)' }
         ]
       }
     ]
