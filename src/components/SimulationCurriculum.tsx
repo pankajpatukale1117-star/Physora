@@ -57,8 +57,8 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               display: 'inline-flex',
               alignItems: 'center',
               gap: 8,
-              background: 'rgba(241, 245, 249, 0.8)',
-              backdropFilter: 'blur(12px)',
+              background: 'rgba(15, 23, 42, 0.75)',
+              backdropFilter: 'blur(16px)',
               padding: '6px',
               borderRadius: 'var(--radius-pill)',
               border: '1px solid var(--border-subtle)'
@@ -69,13 +69,12 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               style={{
                 padding: '8px 20px',
                 borderRadius: 'var(--radius-pill)',
-                border: 'none',
-                background: filter === 'all' ? '#FFFFFF' : 'transparent',
+                border: filter === 'all' ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid transparent',
+                background: filter === 'all' ? 'rgba(0, 98, 255, 0.2)' : 'transparent',
                 color: filter === 'all' ? 'var(--electric-blue)' : 'var(--text-secondary)',
                 fontWeight: 700,
                 fontSize: '0.85rem',
                 cursor: 'pointer',
-                boxShadow: filter === 'all' ? 'var(--shadow-sm)' : 'none',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -86,13 +85,12 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               style={{
                 padding: '8px 20px',
                 borderRadius: 'var(--radius-pill)',
-                border: 'none',
-                background: filter === 'physics' ? '#FFFFFF' : 'transparent',
+                border: filter === 'physics' ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid transparent',
+                background: filter === 'physics' ? 'rgba(0, 98, 255, 0.2)' : 'transparent',
                 color: filter === 'physics' ? 'var(--electric-blue)' : 'var(--text-secondary)',
                 fontWeight: 700,
                 fontSize: '0.85rem',
                 cursor: 'pointer',
-                boxShadow: filter === 'physics' ? 'var(--shadow-sm)' : 'none',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -103,13 +101,12 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               style={{
                 padding: '8px 20px',
                 borderRadius: 'var(--radius-pill)',
-                border: 'none',
-                background: filter === 'maths' ? '#FFFFFF' : 'transparent',
+                border: filter === 'maths' ? '1px solid rgba(168, 85, 247, 0.3)' : '1px solid transparent',
+                background: filter === 'maths' ? 'rgba(124, 58, 237, 0.2)' : 'transparent',
                 color: filter === 'maths' ? 'var(--electric-violet)' : 'var(--text-secondary)',
                 fontWeight: 700,
                 fontSize: '0.85rem',
                 cursor: 'pointer',
-                boxShadow: filter === 'maths' ? 'var(--shadow-sm)' : 'none',
                 transition: 'all 0.2s ease'
               }}
             >
@@ -473,7 +470,7 @@ function MiniProjectileCanvas() {
       const totalFlight = (2 * u * Math.sin(rad)) / g;
 
       // Ground
-      ctx.strokeStyle = '#CBD5E1';
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(10, oy);
@@ -483,7 +480,7 @@ function MiniProjectileCanvas() {
       // Theoretical Parabola Arc
       ctx.beginPath();
       ctx.setLineDash([3, 3]);
-      ctx.strokeStyle = 'rgba(0, 98, 255, 0.35)';
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
       ctx.lineWidth = 2;
       for (let s = 0; s <= totalFlight; s += 0.05) {
         const px = ox + u * Math.cos(rad) * s * 10;
@@ -503,7 +500,7 @@ function MiniProjectileCanvas() {
 
       ctx.beginPath();
       ctx.arc(bx, by, 5, 0, Math.PI * 2);
-      ctx.fillStyle = '#0062FF';
+      ctx.fillStyle = '#00F0FF';
       ctx.fill();
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 1.5;
@@ -517,7 +514,7 @@ function MiniProjectileCanvas() {
   }, [angle]);
 
   return (
-    <div style={{ background: '#F8FAFC', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
+    <div style={{ background: 'rgba(5, 9, 22, 0.75)', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
       <canvas ref={canvasRef} width={340} height={125} style={{ width: '100%', height: 125, display: 'block' }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, fontSize: '0.74rem' }}>
         <span style={{ color: 'var(--text-tertiary)', fontWeight: 600 }}>Launch Angle θ: <strong>{angle}°</strong></span>
@@ -598,7 +595,7 @@ function MiniFieldCanvas() {
   }, []);
 
   return (
-    <div style={{ background: '#F8FAFC', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
+    <div style={{ background: 'rgba(5, 9, 22, 0.75)', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
       <canvas ref={canvasRef} width={340} height={125} style={{ width: '100%', height: 125, display: 'block' }} />
     </div>
   );
@@ -656,7 +653,7 @@ function MiniCircularCanvas() {
   }, []);
 
   return (
-    <div style={{ background: '#F8FAFC', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
+    <div style={{ background: 'rgba(5, 9, 22, 0.75)', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
       <canvas ref={canvasRef} width={340} height={125} style={{ width: '100%', height: 125, display: 'block' }} />
     </div>
   );
@@ -720,7 +717,7 @@ function MiniCalculusCanvas() {
   }, [partitions]);
 
   return (
-    <div style={{ background: '#F8FAFC', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
+    <div style={{ background: 'rgba(5, 9, 22, 0.75)', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
       <canvas ref={canvasRef} width={340} height={125} style={{ width: '100%', height: 125, display: 'block' }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6, fontSize: '0.74rem' }}>
         <span style={{ color: 'var(--text-tertiary)', fontWeight: 600 }}>Partitions n: <strong>{partitions}</strong></span>
@@ -800,7 +797,7 @@ function MiniVectorsCanvas() {
   }, []);
 
   return (
-    <div style={{ background: '#F8FAFC', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
+    <div style={{ background: 'rgba(5, 9, 22, 0.75)', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
       <canvas ref={canvasRef} width={340} height={125} style={{ width: '100%', height: 125, display: 'block' }} />
     </div>
   );
@@ -840,7 +837,7 @@ function MiniConicsCanvas() {
   }, []);
 
   return (
-    <div style={{ background: '#F8FAFC', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
+    <div style={{ background: 'rgba(5, 9, 22, 0.75)', borderRadius: 'var(--radius-md)', padding: 10, border: '1px solid var(--border-subtle)' }}>
       <canvas ref={canvasRef} width={340} height={125} style={{ width: '100%', height: 125, display: 'block' }} />
     </div>
   );

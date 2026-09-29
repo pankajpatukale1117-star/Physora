@@ -3,6 +3,7 @@ import { InteractiveBackground } from './components/InteractiveBackground';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { BasicTopicPreview } from './components/BasicTopicPreview';
+import { SimulationCurriculum } from './components/SimulationCurriculum';
 import { HowVisualLearningWorks } from './components/HowVisualLearningWorks';
 import { LabGatewayCTA } from './components/LabGatewayCTA';
 import { Footer } from './components/Footer';
@@ -139,6 +140,11 @@ export function App() {
               setSelectedTopicId(topicId);
               window.location.hash = `#sim/${topicId}`;
             }}
+          />
+
+          {/* Interactive Simulation Curriculum: 6 Live Micro-Laboratories */}
+          <SimulationCurriculum
+            onEnterLabClick={handleEnterLab}
           />
 
           {/* How Visual Learning Works for Class 11 & Below */}
