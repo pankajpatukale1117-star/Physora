@@ -593,7 +593,33 @@ em {
   display: none !important;
 }
 
-/* Simulation Canvas Touch Interactive Overlay */
+/* ==========================================================================
+   MOBILE-ONLY SIMULATION CANVAS OVERLAYS
+   Hidden on desktop (>= 768px). Visible on mobile (< 768px).
+   Desktop uses slider controls below the simulation — no canvas overlays.
+   ========================================================================== */
+
+/* Mobile touch overlay container & badges — hidden on desktop by default */
+.mobile-touch-hud-row,
+.canvas-touch-badge,
+.canvas-touch-actions,
+.canvas-param-selector,
+.canvas-nudge-group {
+  display: none !important;
+}
+
+.canvas-simulator-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  touch-action: auto;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+}
+
+/* Simulation Canvas Touch Interactive Overlay (styles apply when visible on mobile) */
 .canvas-touch-badge {
   display: inline-flex;
   align-items: center;
@@ -1322,6 +1348,31 @@ input[type="range"]::-moz-range-thumb {
 }
 
 @media (max-width: 768px) {
+  /* Mobile touch overlay containers become visible on mobile */
+  .mobile-touch-hud-row {
+    display: flex !important;
+  }
+
+  .canvas-touch-badge {
+    display: inline-flex !important;
+  }
+
+  .canvas-touch-actions {
+    display: flex !important;
+  }
+
+  .canvas-param-selector {
+    display: flex !important;
+  }
+
+  .canvas-nudge-group {
+    display: flex !important;
+  }
+
+  .canvas-simulator-wrapper {
+    touch-action: none;
+  }
+
   .experiment-studio-container {
     padding-top: 70px !important;
     padding-bottom: 50px !important;

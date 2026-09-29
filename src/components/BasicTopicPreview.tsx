@@ -218,7 +218,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
               <span className="hide-mobile">
                 {dom === 'All' ? 'All 14 Modules (42 Simulations)' : dom === 'Physics' ? '⚡ Physics (8 Modules)' : '📐 Mathematics (6 Modules)'}
               </span>
-              <span className="show-mobile-only" style={{ display: 'inline' }}>
+              <span className="show-mobile-only">
                 {dom === 'All' ? 'All (42)' : dom === 'Physics' ? '⚡ Physics (24)' : '📐 Math (18)'}
               </span>
             </button>

@@ -567,7 +567,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 </div>
 
                 <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                  Drag sliders or tap canvas to interact
+                  <span className="hide-mobile">Drag sliders to update live simulation</span>
+                  <span className="show-mobile-only">Drag sliders or tap canvas to interact</span>
                 </span>
               </div>
             </div>

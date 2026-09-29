@@ -36,19 +36,12 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef(0);
 
-  // Detect touch/mobile device — desktop must NOT get touch UI
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  // Track viewport width for canvas-drawn elements (can't use CSS for canvas rendering)
+  const isMobileRef = useRef(typeof window !== 'undefined' && window.innerWidth < 768);
   useEffect(() => {
-    const check = () => {
-      const coarse = window.matchMedia('(pointer: coarse)').matches;
-      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsTouchDevice(coarse || hasTouch);
-    };
-    check();
-    const mq = window.matchMedia('(pointer: coarse)');
-    const handler = () => check();
-    mq.addEventListener?.('change', handler);
-    return () => mq.removeEventListener?.('change', handler);
+    const onResize = () => { isMobileRef.current = window.innerWidth < 768; };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   const dimsRef = useRef<{
@@ -238,8 +231,11 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   };
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Canvas gesture controls are strictly mobile-only (< 768px). Desktop uses dedicated slider controls below canvas.
+    if (!isMobileRef.current) return;
+
     const now = Date.now();
-    // Quick double-tap anywhere on canvas toggles play/pause
+    // Quick double-tap anywhere on canvas toggles play/pause on mobile
     if (now - lastTapTimeRef.current < 320) {
       if (onTogglePlay) onTogglePlay();
       showHudMessage(isPlaying ? 'Simulation Paused' : 'Simulation Playing');
@@ -273,7 +269,7 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!touchReticleRef.current?.active) return;
+    if (!isMobileRef.current || !touchReticleRef.current?.active) return;
     const container = containerRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
@@ -288,6 +284,7 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isMobileRef.current) return;
     touchReticleRef.current = null;
     try {
       if (e.currentTarget.hasPointerCapture(e.pointerId)) {
@@ -505,8 +502,8 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
           renderDefaultFallback(ctx, w, h);
       }
 
-      // Live 60fps touch indicator and ripple on canvas — MOBILE ONLY
-      if (isTouchDevice && touchReticleRef.current?.active) {
+      // Live 60fps touch indicator and ripple on canvas — mobile viewport only
+      if (isMobileRef.current && touchReticleRef.current?.active) {
         const tx = touchReticleRef.current.x;
         const ty = touchReticleRef.current.y;
         ctx.save();
@@ -540,22 +537,11 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   return (
     <div
       ref={containerRef}
-      {...(isTouchDevice ? {
-        onPointerDown: handlePointerDown,
-        onPointerMove: handlePointerMove,
-        onPointerUp: handlePointerUp,
-        onPointerCancel: handlePointerUp
-      } : {})}
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        touchAction: isTouchDevice ? 'none' : 'auto',
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        overflow: 'hidden',
-        borderRadius: 'var(--radius-lg)'
-      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      className="canvas-simulator-wrapper"
     >
       <canvas
         ref={canvasRef}
@@ -569,115 +555,111 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
         }}
       />
 
-      {/* TOP FLOATING HUD ROW: Touch Status Badge & Quick Actions — MOBILE ONLY */}
-      {isTouchDevice && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 10,
-            left: 12,
-            right: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            pointerEvents: 'none',
-            zIndex: 10
-          }}
-        >
-          <div className={`canvas-touch-badge ${touchState.isDragging ? 'dragging' : ''}`}>
-            <Hand size={12} className="touch-icon" />
-            <span>{touchState.hudText || 'Touch & Drag Screen to Operate'}</span>
-          </div>
-
-          <div className="canvas-touch-actions">
-            {onTogglePlay && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onTogglePlay(); }}
-                className="canvas-action-btn"
-                title={isPlaying ? 'Pause Simulation' : 'Play Simulation'}
-              >
-                {isPlaying ? <Pause size={13} /> : <Play size={13} />}
-              </button>
-            )}
-            {onReset && (
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onReset(); }}
-                className="canvas-action-btn"
-                title="Reset Simulation"
-              >
-                <RotateCcw size={13} />
-              </button>
-            )}
-          </div>
+      {/* TOP FLOATING HUD ROW: Touch Status Badge & Quick Actions — CSS-hidden on desktop */}
+      <div
+        className="mobile-touch-hud-row"
+        style={{
+          position: 'absolute',
+          top: 10,
+          left: 12,
+          right: 12,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pointerEvents: 'none',
+          zIndex: 10
+        }}
+      >
+        <div className={`canvas-touch-badge ${touchState.isDragging ? 'dragging' : ''}`}>
+          <Hand size={12} className="touch-icon" />
+          <span>{touchState.hudText || 'Touch & Drag Screen to Operate'}</span>
         </div>
-      )}
 
-      {/* BOTTOM FLOATING CONTROLS: Parameter Chips & Stepper Nudge — MOBILE ONLY */}
-      {isTouchDevice && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 10,
-            left: 12,
-            right: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            pointerEvents: 'none',
-            zIndex: 10,
-            gap: 8
-          }}
-        >
-          {controls && controls.length > 0 ? (
-            <div className="canvas-param-selector">
-              {controls.map((c, idx) => {
-                const val = params[c.id] ?? c.defaultValue;
-                const isSelected = idx === activeControlIdx;
-                const shortLabel = c.label.includes('(') ? (c.label.match(/\((.*?)\)/)?.[1] || c.label) : c.label;
-                return (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setActiveControlIdx(idx);
-                      showHudMessage(`Active Touch: ${c.label} (${val}${c.unit ? ` ${c.unit}` : ''})`);
-                    }}
-                    className={`param-chip-btn ${isSelected ? 'active' : ''}`}
-                  >
-                    <span className="hide-mobile">{c.label}:</span>
-                    <span className="show-mobile-only">{shortLabel}:</span>
-                    <strong>{val}{c.unit ? ` ${c.unit}` : ''}</strong>
-                  </button>
-                );
-              })}
-            </div>
-          ) : <div />}
-
-          {controls && controls.length > 0 && onParamChange && (
-            <div className="canvas-nudge-group">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleNudge(-1); }}
-                className="canvas-nudge-btn"
-                title="Step decrease"
-              >
-                <Minus size={13} />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); handleNudge(1); }}
-                className="canvas-nudge-btn"
-                title="Step increase"
-              >
-                <Plus size={13} />
-              </button>
-            </div>
+        <div className="canvas-touch-actions">
+          {onTogglePlay && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onTogglePlay(); }}
+              className="canvas-action-btn"
+              title={isPlaying ? 'Pause Simulation' : 'Play Simulation'}
+            >
+              {isPlaying ? <Pause size={13} /> : <Play size={13} />}
+            </button>
+          )}
+          {onReset && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onReset(); }}
+              className="canvas-action-btn"
+              title="Reset Simulation"
+            >
+              <RotateCcw size={13} />
+            </button>
           )}
         </div>
-      )}
+      </div>
+
+      {/* BOTTOM FLOATING CONTROLS: Parameter Chips & Stepper Nudge — CSS-hidden on desktop */}
+      <div
+        className="mobile-touch-hud-row"
+        style={{
+          position: 'absolute',
+          bottom: 10,
+          left: 12,
+          right: 12,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pointerEvents: 'none',
+          zIndex: 10,
+          gap: 8
+        }}
+      >
+        {controls && controls.length > 0 ? (
+          <div className="canvas-param-selector">
+            {controls.map((c, idx) => {
+              const val = params[c.id] ?? c.defaultValue;
+              const isSelected = idx === activeControlIdx;
+              const shortLabel = c.label.includes('(') ? (c.label.match(/\((.*?)\)/)?.[1] || c.label) : c.label;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveControlIdx(idx);
+                    showHudMessage(`Active Touch: ${c.label} (${val}${c.unit ? ` ${c.unit}` : ''})`);
+                  }}
+                  className={`param-chip-btn ${isSelected ? 'active' : ''}`}
+                >
+                  <span className="hide-mobile">{c.label}:</span>
+                  <span className="show-mobile-only">{shortLabel}:</span>
+                  <strong>{val}{c.unit ? ` ${c.unit}` : ''}</strong>
+                </button>
+              );
+            })}
+          </div>
+        ) : <div />}
+
+        {controls && controls.length > 0 && onParamChange && (
+          <div className="canvas-nudge-group">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleNudge(-1); }}
+              className="canvas-nudge-btn"
+              title="Step decrease"
+            >
+              <Minus size={13} />
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleNudge(1); }}
+              className="canvas-nudge-btn"
+              title="Step increase"
+            >
+              <Plus size={13} />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

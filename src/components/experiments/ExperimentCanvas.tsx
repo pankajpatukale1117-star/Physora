@@ -30,19 +30,12 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
   const timeRef = useRef(0);
   const motionHistoryRef = useRef<{ t: number; s: number; v: number }[]>([]);
 
-  // Detect touch/mobile device — desktop must NOT get touch UI
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  // Track viewport width for canvas-drawn elements (can't use CSS for canvas rendering)
+  const isMobileRef = useRef(typeof window !== 'undefined' && window.innerWidth < 768);
   useEffect(() => {
-    const check = () => {
-      const coarse = window.matchMedia('(pointer: coarse)').matches;
-      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      setIsTouchDevice(coarse || hasTouch);
-    };
-    check();
-    const mq = window.matchMedia('(pointer: coarse)');
-    const handler = () => check();
-    mq.addEventListener?.('change', handler);
-    return () => mq.removeEventListener?.('change', handler);
+    const onResize = () => { isMobileRef.current = window.innerWidth < 768; };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   const dimsRef = useRef<{
@@ -294,8 +287,8 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
           break;
       }
 
-      // Draw Interactive Finger Touch Reticle — MOBILE ONLY
-      if (isTouchDevice && touchReticleRef.current?.active) {
+      // Draw Interactive Finger Touch Reticle — mobile viewport only
+      if (isMobileRef.current && touchReticleRef.current?.active) {
         const { x: tx, y: ty } = touchReticleRef.current;
         ctx.save();
         ctx.beginPath();
@@ -324,22 +317,11 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      {...(isTouchDevice ? {
-        onPointerDown: handlePointerDown,
-        onPointerMove: handlePointerMove,
-        onPointerUp: handlePointerUp,
-        onPointerCancel: handlePointerUp
-      } : {})}
-      style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        touchAction: isTouchDevice ? 'none' : 'auto',
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        overflow: 'hidden',
-        borderRadius: 'var(--radius-lg)'
-      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      className="canvas-simulator-wrapper"
     >
       <canvas
         ref={canvasRef}
@@ -353,75 +335,73 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
         }}
       />
 
-      {/* Floating HUD: Touch status & Quick Action Buttons — MOBILE ONLY */}
-      {isTouchDevice && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 10,
-            left: 12,
-            right: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            pointerEvents: 'none',
-            zIndex: 10
-          }}
-        >
-          <div className={`canvas-touch-badge ${touchState.isDragging ? 'dragging' : ''}`}>
-            <Hand size={12} className="touch-icon" />
-            <span>{touchState.hudText || 'Touch & Drag on Screen to Experiment'}</span>
-          </div>
-
-          <div className="canvas-touch-actions" style={{ pointerEvents: 'auto', display: 'flex', gap: 6 }}>
-            <button
-              type="button"
-              onClick={onTogglePlay}
-              className="canvas-action-btn"
-              title={isPlaying ? 'Pause Experiment' : 'Play Experiment'}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid rgba(0, 240, 255, 0.4)',
-                background: isPlaying ? 'rgba(0, 240, 255, 0.25)' : 'rgba(15, 23, 42, 0.85)',
-                color: '#FFFFFF',
-                fontSize: '0.74rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4
-              }}
-            >
-              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
-              <span>{isPlaying ? 'Pause' : 'Play'}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onReset}
-              className="canvas-action-btn"
-              title="Reset Experiment"
-              style={{
-                padding: '6px 10px',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid var(--border-subtle)',
-                background: 'rgba(15, 23, 42, 0.85)',
-                color: 'var(--text-secondary)',
-                fontSize: '0.74rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4
-              }}
-            >
-              <RotateCcw size={12} />
-              <span>Reset</span>
-            </button>
-          </div>
+      {/* Floating HUD: Touch status & Quick Action Buttons — CSS-hidden on desktop */}
+      <div
+        className="mobile-touch-hud-row"
+        style={{
+          position: 'absolute',
+          top: 10,
+          left: 12,
+          right: 12,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          pointerEvents: 'none',
+          zIndex: 10
+        }}
+      >
+        <div className={`canvas-touch-badge ${touchState.isDragging ? 'dragging' : ''}`}>
+          <Hand size={12} className="touch-icon" />
+          <span>{touchState.hudText || 'Touch & Drag on Screen to Experiment'}</span>
         </div>
-      )}
+
+        <div className="canvas-touch-actions" style={{ pointerEvents: 'auto', display: 'flex', gap: 6 }}>
+          <button
+            type="button"
+            onClick={onTogglePlay}
+            className="canvas-action-btn"
+            title={isPlaying ? 'Pause Experiment' : 'Play Experiment'}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid rgba(0, 240, 255, 0.4)',
+              background: isPlaying ? 'rgba(0, 240, 255, 0.25)' : 'rgba(15, 23, 42, 0.85)',
+              color: '#FFFFFF',
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+          >
+            {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+            <span>{isPlaying ? 'Pause' : 'Play'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onReset}
+            className="canvas-action-btn"
+            title="Reset Experiment"
+            style={{
+              padding: '6px 10px',
+              borderRadius: 'var(--radius-pill)',
+              border: '1px solid var(--border-subtle)',
+              background: 'rgba(15, 23, 42, 0.85)',
+              color: 'var(--text-secondary)',
+              fontSize: '0.74rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+          >
+            <RotateCcw size={12} />
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
