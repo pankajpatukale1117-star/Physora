@@ -149,7 +149,6 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
       style={{
         position: 'relative',
         zIndex: 5,
-        padding: '70px 24px 90px',
         pointerEvents: 'auto'
       }}
     >
@@ -229,10 +228,6 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
         <div
           className="topic-preview-grid"
           style={{
-            display: 'grid',
-            gridTemplateColumns: filterDomain === 'All' ? 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))' : '1fr',
-            gap: 28,
-            alignItems: 'start',
             maxWidth: filterDomain === 'All' ? '100%' : 780,
             margin: '0 auto'
           }}
@@ -312,25 +307,27 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                     className="topic-item-card"
                   >
                     <div
+                      className="topic-icon-box"
                       style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 'var(--radius-sm)',
-                        background: 'var(--bg-glass-card)',
-                        border: '1px solid rgba(124, 58, 237, 0.22)',
+                        width: 40,
+                        height: 40,
+                        borderRadius: 12,
+                        background: 'rgba(124, 58, 237, 0.12)',
+                        border: '1px solid rgba(168, 85, 247, 0.28)',
                         color: 'var(--electric-violet)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        boxShadow: '0 2px 8px rgba(168, 85, 247, 0.15)'
                       }}
                     >
-                      <Icon size={18} />
+                      <Icon size={20} />
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
-                        <h4 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
+                        <h4 style={{ fontSize: '0.96rem', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>
                           {topic.title}
                         </h4>
                         <span
@@ -339,7 +336,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                             fontSize: '0.68rem',
                             fontWeight: 700,
                             color: 'var(--electric-violet)',
-                            background: 'rgba(124, 58, 237, 0.12)',
+                            background: 'rgba(168, 85, 247, 0.12)',
                             padding: '2px 8px',
                             borderRadius: 'var(--radius-pill)',
                             whiteSpace: 'nowrap',
@@ -349,22 +346,44 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                           {topic.simCount}
                         </span>
                       </div>
-                      <p style={{ fontSize: '0.8rem', lineHeight: 1.4, margin: 0 }}>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <span
+                          className="font-mono"
+                          style={{
+                            fontSize: '0.66rem',
+                            fontWeight: 600,
+                            color: 'var(--electric-violet)',
+                            background: 'rgba(168, 85, 247, 0.08)',
+                            padding: '1px 6px',
+                            borderRadius: 4,
+                            border: '1px solid rgba(168, 85, 247, 0.2)',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {topic.tag}
+                        </span>
+                      </div>
+
+                      <p style={{ fontSize: '0.78rem', lineHeight: 1.4, margin: 0, color: 'var(--text-secondary)' }}>
                         {topic.summary}
                       </p>
                     </div>
 
                     <div
+                      className="topic-launch-btn"
                       style={{
-                        width: 28,
-                        height: 28,
+                        width: 30,
+                        height: 30,
                         borderRadius: '50%',
-                        background: 'rgba(124, 58, 237, 0.08)',
+                        background: 'rgba(168, 85, 247, 0.1)',
+                        border: '1px solid rgba(168, 85, 247, 0.25)',
                         color: 'var(--electric-violet)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        transition: 'all 0.2s ease'
                       }}
                     >
                       <Play size={12} fill="currentColor" />
@@ -451,25 +470,27 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                     className="topic-item-card"
                   >
                     <div
+                      className="topic-icon-box"
                       style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 'var(--radius-sm)',
-                        background: 'var(--bg-glass-card)',
-                        border: '1px solid rgba(0, 98, 255, 0.22)',
+                        width: 40,
+                        height: 40,
+                        borderRadius: 12,
+                        background: 'rgba(0, 98, 255, 0.12)',
+                        border: '1px solid rgba(0, 240, 255, 0.28)',
                         color: 'var(--electric-blue)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        boxShadow: '0 2px 8px rgba(0, 240, 255, 0.15)'
                       }}
                     >
-                      <Icon size={18} />
+                      <Icon size={20} />
                     </div>
 
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 3 }}>
-                        <h4 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 3 }}>
+                        <h4 style={{ fontSize: '0.96rem', fontWeight: 800, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: 'var(--text-primary)' }}>
                           {topic.title}
                         </h4>
                         <span
@@ -488,22 +509,44 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                           {topic.simCount}
                         </span>
                       </div>
-                      <p style={{ fontSize: '0.8rem', lineHeight: 1.4, margin: 0 }}>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <span
+                          className="font-mono"
+                          style={{
+                            fontSize: '0.66rem',
+                            fontWeight: 600,
+                            color: 'var(--electric-blue)',
+                            background: 'rgba(0, 98, 255, 0.08)',
+                            padding: '1px 6px',
+                            borderRadius: 4,
+                            border: '1px solid rgba(0, 240, 255, 0.2)',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {topic.tag}
+                        </span>
+                      </div>
+
+                      <p style={{ fontSize: '0.78rem', lineHeight: 1.4, margin: 0, color: 'var(--text-secondary)' }}>
                         {topic.summary}
                       </p>
                     </div>
 
                     <div
+                      className="topic-launch-btn"
                       style={{
-                        width: 28,
-                        height: 28,
+                        width: 30,
+                        height: 30,
                         borderRadius: '50%',
-                        background: 'rgba(0, 98, 255, 0.08)',
+                        background: 'rgba(0, 98, 255, 0.1)',
+                        border: '1px solid rgba(0, 240, 255, 0.25)',
                         color: 'var(--electric-blue)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        flexShrink: 0
+                        flexShrink: 0,
+                        transition: 'all 0.2s ease'
                       }}
                     >
                       <Play size={12} fill="currentColor" />
