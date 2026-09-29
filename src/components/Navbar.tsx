@@ -126,7 +126,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 color: 'var(--electric-blue)'
               }}
             >
-              CLASS 11 &amp; FOUNDATIONS • BY PANKAJ
+              CLASS 9–11 &amp; FOUNDATIONS • BY PANKAJ
             </span>
             {/* Mobile Subtitle */}
             <span
@@ -138,7 +138,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 color: 'var(--electric-blue)'
               }}
             >
-              CLASS 11 LAB • BY PANKAJ
+              CLASS 9–11 LAB • BY PANKAJ
             </span>
           </div>
         </a>

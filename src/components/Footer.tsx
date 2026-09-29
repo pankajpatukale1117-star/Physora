@@ -48,7 +48,7 @@ export const Footer: React.FC = () => {
               </span>
             </div>
             <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-              A friendly visual learning laboratory designed for students in Class 11 and below to explore fundamental Maths and Physics.
+              A friendly visual learning laboratory designed for students in Class 9–11 to explore fundamental Maths and Physics.
             </p>
           </div>
 
@@ -137,7 +137,7 @@ export const Footer: React.FC = () => {
             color: 'var(--text-muted)'
           }}
         >
-          <p>© 2026 Physora by Pankaj. Precision visual learning for Class 11 and below.</p>
+          <p>© 2026 Physora by Pankaj. Precision visual learning for Class 9–11.</p>
           <div style={{ display: 'flex', gap: 20 }}>
             <span style={{ color: 'var(--electric-blue)', fontWeight: 600 }}>Physora Laboratory</span>
             <span>Created by Pankaj</span>

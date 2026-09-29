@@ -215,6 +215,64 @@ const FORMULAS_DATA: FormulaItem[] = [
       { sym: 'W_net', name: 'Net Work Output', unit: 'J' }
     ],
     targetTopicId: 'thermodynamics'
+  },
+  {
+    id: 'f-dimensions-homogeneity',
+    name: 'Principle of Dimensional Homogeneity',
+    category: 'Physics',
+    domain: 'Units & Dimensions',
+    latex: '[F] = [M][L][T]^{-2} \\quad \\text{and} \\quad [E] = [M][L]^2[T]^{-2}',
+    description: 'Every valid physical formula must have identical fundamental dimensional powers on both sides.',
+    variables: [
+      { sym: '[M]', name: 'Mass Dimension', unit: 'Fundamental (kg)' },
+      { sym: '[L]', name: 'Length Dimension', unit: 'Fundamental (m)' },
+      { sym: '[T]', name: 'Time Dimension', unit: 'Fundamental (s)' }
+    ],
+    targetTopicId: 'units_dimensions'
+  },
+  {
+    id: 'f-function-transform',
+    name: 'Function Translation & Graph Transformations',
+    category: 'Mathematics',
+    domain: 'Functions & Graphs',
+    latex: 'g(x) = a \\cdot f(x - h) + k',
+    description: 'Shifts graph of f(x) horizontally by h, vertically by k, and scales vertical height by amplitude factor a.',
+    variables: [
+      { sym: 'h', name: 'Horizontal Translation', unit: 'Shift right (+h) / left (-h)' },
+      { sym: 'k', name: 'Vertical Translation', unit: 'Shift up (+k) / down (-k)' },
+      { sym: 'a', name: 'Vertical Scale Factor', unit: 'Stretch (|a| > 1) / Compress' }
+    ],
+    targetTopicId: 'functions'
+  },
+  {
+    id: 'f-arithmetic-progression',
+    name: 'Arithmetic Progression n-th Term & Sum (AP)',
+    category: 'Mathematics',
+    domain: 'Sequences & Series',
+    latex: 'a_n = a + (n - 1)d, \\quad S_n = \\frac{n}{2}[2a + (n - 1)d]',
+    description: 'Calculates the n-th value and cumulative total of a sequence with constant common difference d.',
+    variables: [
+      { sym: 'a', name: 'First Term', unit: 'Initial sequence value' },
+      { sym: 'd', name: 'Common Difference', unit: 'Step interval' },
+      { sym: 'n', name: 'Term Position', unit: 'Positive integer' },
+      { sym: 'S_n', name: 'Sum of n Terms', unit: 'Cumulative total' }
+    ],
+    targetTopicId: 'sequences'
+  },
+  {
+    id: 'f-geometric-progression',
+    name: 'Geometric Progression n-th Term & Sum (GP)',
+    category: 'Mathematics',
+    domain: 'Sequences & Series',
+    latex: 'a_n = a \\cdot r^{n-1}, \\quad S_n = \\frac{a(1 - r^n)}{1 - r} \\quad (r \\neq 1)',
+    description: 'Models exponential scaling and compound growth where consecutive terms multiply by common ratio r.',
+    variables: [
+      { sym: 'a', name: 'First Term', unit: 'Initial value' },
+      { sym: 'r', name: 'Common Ratio', unit: 'Multiplier per step' },
+      { sym: 'n', name: 'Term Position', unit: 'Positive integer' },
+      { sym: 'S_n', name: 'Sum of n Terms', unit: 'Geometric series total' }
+    ],
+    targetTopicId: 'sequences'
   }
 ];
 

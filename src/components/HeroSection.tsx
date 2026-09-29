@@ -43,7 +43,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           <div className="lab-pill-badge">
             <Sparkles size={14} className="badge-spark" />
             <span>Physora by Pankaj • Interactive Lab</span>
-            <span className="badge-ver">Class 11 &amp; Below</span>
+            <span className="badge-ver">Class 9–11</span>
           </div>
         </div>
 

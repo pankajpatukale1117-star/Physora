@@ -20,7 +20,7 @@ export const HowVisualLearningWorks: React.FC = () => {
     {
       num: '03',
       title: 'Build Lifelong Intuition',
-      desc: 'Master the basics clearly so Class 11, school exams, and future sciences feel intuitive rather than stressful.',
+      desc: 'Master the basics clearly so Class 9–11 school exams and future competitive sciences feel intuitive rather than stressful.',
       icon: Sparkles,
       color: '#00B4D8'
     }

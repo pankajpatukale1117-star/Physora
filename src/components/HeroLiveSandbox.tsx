@@ -200,7 +200,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       ctx.arc(apexX, apexY, 3.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.font = '10px JetBrains Mono';
-      ctx.fillText(`Apex: ${maxHeight.toFixed(1)}m`, apexX - 25, apexY - 8);
+      ctx.fillText(`Apex: ${maxHeight.toFixed(1)} m`, apexX - 25, apexY - 8);
 
       animId = requestAnimationFrame(render);
     };
@@ -240,19 +240,19 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
             onClick={() => setPlanet('earth')}
             className={`env-preset-pill ${planet === 'earth' ? 'active' : ''}`}
           >
-            🌍 Earth (9.8)
+            🌍 Earth (9.8 m/s²)
           </button>
           <button
             onClick={() => setPlanet('moon')}
             className={`env-preset-pill ${planet === 'moon' ? 'active' : ''}`}
           >
-            🌕 Moon (1.6)
+            🌕 Moon (1.6 m/s²)
           </button>
           <button
             onClick={() => setPlanet('mars')}
             className={`env-preset-pill ${planet === 'mars' ? 'active' : ''}`}
           >
-            🔴 Mars (3.7)
+            🔴 Mars (3.7 m/s²)
           </button>
         </div>
       </div>
@@ -394,13 +394,13 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
           <div style={{ padding: '6px 12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', flex: 1 }}>
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Range (R)</div>
             <div className="font-mono" style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--electric-cyan)' }}>
-              {totalRange.toFixed(1)}m
+              {totalRange.toFixed(1)} m
             </div>
           </div>
           <div style={{ padding: '6px 12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', flex: 1 }}>
             <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Flight Time</div>
             <div className="font-mono" style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              {flightTime.toFixed(2)}s
+              {flightTime.toFixed(2)} s
             </div>
           </div>
         </div>

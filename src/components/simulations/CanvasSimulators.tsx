@@ -160,7 +160,7 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
     } else if (simId === 'energy_spring_mass') {
       const neutralX = 390;
       const deltaX = (cx - neutralX) / 120;
-      const xCtrl = controls.find(c => c.id === 'x0' || c.id === 'x');
+      const xCtrl = controls.find(c => c.id === 'compression_x' || c.id === 'x0' || c.id === 'x');
       if (xCtrl) {
         const val = Math.max(xCtrl.min, Math.min(xCtrl.max, parseFloat(deltaX.toFixed(2))));
         onParamChange(xCtrl.id, val);
@@ -168,11 +168,11 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
       }
     } else if (simId === 'optics_thin_lens') {
       const lensX = 390;
-      const dist = Math.max(10, Math.min(120, Math.round((lensX - cx) * 0.35)));
-      const doCtrl = controls.find(c => c.id === 'do');
-      if (doCtrl) {
-        onParamChange('do', dist);
-        hudMsg = `Object Distance do = ${dist} cm`;
+      const dist = Math.max(30, Math.min(160, Math.round((lensX - cx) * 0.5)));
+      const distCtrl = controls.find(c => c.id === 'obj_dist' || c.id === 'do');
+      if (distCtrl) {
+        onParamChange(distCtrl.id, dist);
+        hudMsg = `Object Distance (u) = ${dist} mm`;
       }
     } else if (simId === 'calc_secant_tangent') {
       const normX = (cx - 120) / 450;
@@ -4284,14 +4284,15 @@ function renderEnergyRollercoaster(
   const bW = 32;
 
   // 1. Kinetic Energy (Electric Cyan)
-  const keH = (curKE / maxPE) * barMaxH;
+  const safeMaxPE = Math.max(1, maxPE);
+  const keH = (curKE / safeMaxPE) * barMaxH;
   ctx.fillStyle = '#00F0FF';
   ctx.shadowColor = '#00F0FF';
   ctx.shadowBlur = 8;
   ctx.fillRect(barBoxX + 20, barBaseY - keH, bW, keH);
 
   // 2. Potential Energy (Ultraviolet)
-  const peH = (curPE / maxPE) * barMaxH;
+  const peH = (curPE / safeMaxPE) * barMaxH;
   ctx.fillStyle = '#A855F7';
   ctx.shadowColor = '#A855F7';
   ctx.shadowBlur = 8;

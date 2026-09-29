@@ -718,7 +718,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 {/* 3. Student Takeaways */}
                 <div>
                   <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 10 }}>
-                    QUICK SUMMARY FOR CLASS 11
+                    KEY TAKEAWAYS (CLASS 9–11)
                   </h4>
                   <div
                     style={{
