@@ -8,6 +8,21 @@ interface HeroLiveSandboxProps {
 export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Detect touch/mobile device
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const coarse = window.matchMedia('(pointer: coarse)').matches;
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsTouchDevice(coarse || hasTouch);
+    };
+    check();
+    const mq = window.matchMedia('(pointer: coarse)');
+    const handler = () => check();
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+
   // Simulation parameters
   const [angleDeg, setAngleDeg] = useState<number>(45);
   const [speed, setSpeed] = useState<number>(24);
@@ -298,7 +313,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
           }}
         >
           <div className={`canvas-touch-badge ${touchHud ? 'dragging' : ''}`}>
-            <span>{touchHud || '👆 Touch & Drag to Aim Cannon'}</span>
+            <span>{touchHud || (isTouchDevice ? '👆 Touch & Drag to Aim Cannon' : '🖱️ Click & Drag to Aim Cannon')}</span>
           </div>
         </div>
       </div>

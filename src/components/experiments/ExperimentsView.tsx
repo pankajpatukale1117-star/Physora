@@ -251,7 +251,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
               </div>
 
               <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }} className="hide-mobile">
-                Touch or drag sliders to observe live physical changes
+                Drag sliders to observe live physical changes
               </span>
             </div>
 
