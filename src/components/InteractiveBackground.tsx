@@ -1,5 +1,27 @@
 import React, { useEffect, useRef } from 'react';
 
+interface Particle {
+  x: number;
+  y: number;
+  baseX: number;
+  baseY: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  color: string;
+  alpha: number;
+  twinkleSpeed: number;
+  phase: number;
+}
+
+interface Ripple {
+  x: number;
+  y: number;
+  radius: number;
+  maxRadius: number;
+  alpha: number;
+}
+
 export const InteractiveBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -15,36 +37,57 @@ export const InteractiveBackground: React.FC = () => {
     let isMobile = width < 768;
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Mouse & Touch tracking with smooth spring inertia
+    // Detect theme
+    let isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    const themeObserver = new MutationObserver(() => {
+      isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Smooth Mouse / Touch tracking with spring physics
     const mouse = {
       x: width / 2,
       y: height / 2,
       targetX: width / 2,
       targetY: height / 2,
-      vx: 0,
-      vy: 0
+      prevX: width / 2,
+      prevY: height / 2,
+      speed: 0
     };
+
+    // Gravitational ripple shockwaves
+    const ripples: Ripple[] = [];
 
     const handlePointerMove = (e: MouseEvent) => {
       mouse.targetX = e.clientX;
       mouse.targetY = e.clientY;
+
+      const dist = Math.hypot(e.clientX - mouse.prevX, e.clientY - mouse.prevY);
+      mouse.speed = dist;
+      mouse.prevX = e.clientX;
+      mouse.prevY = e.clientY;
+
+      // Spawn subtle gravitational wave ripple on distinct mouse movements
+      if (dist > 18 && ripples.length < 5 && !prefersReducedMotion) {
+        ripples.push({
+          x: e.clientX,
+          y: e.clientY,
+          radius: 10,
+          maxRadius: isMobile ? 80 : 140,
+          alpha: 0.35
+        });
+      }
     };
+
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches && e.touches.length > 0) {
         mouse.targetX = e.touches[0].clientX;
         mouse.targetY = e.touches[0].clientY;
       }
     };
-    const handleScroll = () => {
-      if (isMobile) {
-        // Subtle scroll-based inertia on mobile
-        mouse.targetY = ((window.scrollY * 0.4) % height);
-      }
-    };
 
     window.addEventListener('mousemove', handlePointerMove, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('scroll', handleScroll, { passive: true });
 
     const handleResize = () => {
       width = canvas.width = window.innerWidth;
@@ -53,376 +96,287 @@ export const InteractiveBackground: React.FC = () => {
     };
     window.addEventListener('resize', handleResize);
 
-    // -------------------------------------------------------------
-    // 1. Floating Mathematical Symbols
-    // -------------------------------------------------------------
-    const mathSymbols = [
-      { text: 'π', x: width * 0.12, y: height * 0.22, size: 28, color: '#0062FF', speed: 0.6 },
-      { text: 'θ', x: width * 0.88, y: height * 0.28, size: 24, color: '#7C3AED', speed: 0.8 },
-      { text: '√x', x: width * 0.08, y: height * 0.68, size: 22, color: '#00B4D8', speed: 0.5 },
-      { text: 'x²', x: width * 0.92, y: height * 0.65, size: 24, color: '#0062FF', speed: 0.7 },
-      { text: 'sin θ', x: width * 0.22, y: height * 0.82, size: 20, color: '#7C3AED', speed: 0.55 },
-      { text: '∑', x: width * 0.82, y: height * 0.85, size: 28, color: '#0062FF', speed: 0.65 },
-      { text: '+', x: width * 0.35, y: height * 0.15, size: 22, color: '#00E5FF', speed: 0.9 },
-      { text: '÷', x: width * 0.68, y: height * 0.18, size: 22, color: '#EC4899', speed: 0.75 },
-      { text: 'f(x)', x: width * 0.18, y: height * 0.45, size: 20, color: '#6366F1', speed: 0.5 },
-      { text: 'Δx', x: width * 0.84, y: height * 0.48, size: 20, color: '#10B981', speed: 0.6 }
-    ];
+    // -----------------------------------------------------------------
+    // 1. Quantum Constellation Star-Nodes
+    // -----------------------------------------------------------------
+    const particleCount = isMobile ? 38 : 82;
+    const colorsDark = ['#00F0FF', '#38BDF8', '#818CF8', '#A855F7', '#C084FC'];
+    const colorsLight = ['#0062FF', '#0091FF', '#6366F1', '#7C3AED', '#0284C7'];
 
-    // -------------------------------------------------------------
-    // 2. Small Floating Particles (Anime.js style geometric dots)
-    // -------------------------------------------------------------
-    const particleCount = isMobile ? 18 : 50;
-    const particles = Array.from({ length: particleCount }).map(() => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * (isMobile ? 0.35 : 0.6),
-      vy: (Math.random() - 0.5) * (isMobile ? 0.35 : 0.6),
-      radius: isMobile ? (Math.random() * 2 + 1) : (Math.random() * 3 + 1.5),
-      color: ['#00F0FF', '#38BDF8', '#A855F7', '#F43F5E', '#10B981'][Math.floor(Math.random() * 5)],
-      baseAlpha: isMobile ? (Math.random() * 0.3 + 0.15) : (Math.random() * 0.45 + 0.3)
-    }));
-
-    // -------------------------------------------------------------
-    // 3. Orbiting Dots
-    // -------------------------------------------------------------
-    const orbits = [
-      { cx: width * (isMobile ? 0.12 : 0.16), cy: height * 0.32, rx: isMobile ? 36 : 65, ry: isMobile ? 24 : 40, angle: 0, speed: isMobile ? 0.012 : 0.02, color: '#00F0FF' },
-      { cx: width * (isMobile ? 0.88 : 0.85), cy: height * 0.22, rx: isMobile ? 42 : 75, ry: isMobile ? 28 : 50, angle: Math.PI, speed: isMobile ? -0.01 : -0.018, color: '#A855F7' }
-    ];
+    const particles: Particle[] = Array.from({ length: particleCount }).map(() => {
+      const x = Math.random() * width;
+      const y = Math.random() * height;
+      return {
+        x,
+        y,
+        baseX: x,
+        baseY: y,
+        vx: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.45),
+        vy: (Math.random() - 0.5) * (isMobile ? 0.25 : 0.45),
+        radius: Math.random() * 1.8 + 1.0,
+        color: colorsDark[Math.floor(Math.random() * colorsDark.length)],
+        alpha: Math.random() * 0.5 + 0.3,
+        twinkleSpeed: Math.random() * 0.03 + 0.01,
+        phase: Math.random() * Math.PI * 2
+      };
+    });
 
     let t = 0;
 
-    // -------------------------------------------------------------
-    // Master Animation Loop (60 FPS)
-    // -------------------------------------------------------------
+    // -----------------------------------------------------------------
+    // 2. Main High-Precision Render Loop
+    // -----------------------------------------------------------------
     const animate = () => {
       animId = requestAnimationFrame(animate);
-      isMobile = width < 768 || window.innerWidth < 768;
-      t += prefersReducedMotion ? 0.003 : (isMobile ? 0.012 : 0.02);
+      t += prefersReducedMotion ? 0.004 : 0.012;
 
-      // Smooth mouse / touch follow with spring easing
-      mouse.x += (mouse.targetX - mouse.x) * (isMobile ? 0.03 : 0.05);
-      mouse.y += (mouse.targetY - mouse.y) * (isMobile ? 0.03 : 0.05);
-
-      const parallaxX = (mouse.x - width / 2) * 0.035;
-      const parallaxY = (mouse.y - height / 2) * 0.035;
+      // Spring follow for mouse
+      mouse.x += (mouse.targetX - mouse.x) * 0.06;
+      mouse.y += (mouse.targetY - mouse.y) * 0.06;
 
       ctx.clearRect(0, 0, width, height);
 
-      // --- Background Millimeter Grid ---
+      // --- A. Living Aurora Nebula Plasma Gradients (Atmospheric Depth) ---
+      if (isDark) {
+        // Deep Cosmos Void Base
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+        bgGrad.addColorStop(0, '#02050E');
+        bgGrad.addColorStop(0.5, '#04091A');
+        bgGrad.addColorStop(1, '#02040C');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Nebula Plasma 1: Cyan-Azure Vortex (top right)
+        const n1X = width * 0.65 + Math.sin(t * 0.5) * 120;
+        const n1Y = height * 0.25 + Math.cos(t * 0.4) * 80;
+        const n1Radius = Math.min(width, height) * 0.55;
+        const n1Grad = ctx.createRadialGradient(n1X, n1Y, 0, n1X, n1Y, n1Radius);
+        n1Grad.addColorStop(0, 'rgba(0, 240, 255, 0.09)');
+        n1Grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.035)');
+        n1Grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = n1Grad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Nebula Plasma 2: Celestial Ultraviolet Nebula (center left)
+        const n2X = width * 0.25 + Math.cos(t * 0.4) * 100;
+        const n2Y = height * 0.65 + Math.sin(t * 0.6) * 90;
+        const n2Radius = Math.min(width, height) * 0.52;
+        const n2Grad = ctx.createRadialGradient(n2X, n2Y, 0, n2X, n2Y, n2Radius);
+        n2Grad.addColorStop(0, 'rgba(168, 85, 247, 0.08)');
+        n2Grad.addColorStop(0.5, 'rgba(129, 140, 248, 0.03)');
+        n2Grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = n2Grad;
+        ctx.fillRect(0, 0, width, height);
+
+        // Nebula Plasma 3: Deep Indigo Core
+        const n3X = width * 0.5 + Math.sin(t * 0.3) * 70;
+        const n3Y = height * 0.85;
+        const n3Radius = Math.min(width, height) * 0.48;
+        const n3Grad = ctx.createRadialGradient(n3X, n3Y, 0, n3X, n3Y, n3Radius);
+        n3Grad.addColorStop(0, 'rgba(99, 102, 241, 0.06)');
+        n3Grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = n3Grad;
+        ctx.fillRect(0, 0, width, height);
+      } else {
+        // Light Theme Laboratory Clean Ambient
+        const bgGradLight = ctx.createLinearGradient(0, 0, 0, height);
+        bgGradLight.addColorStop(0, '#F8FAFC');
+        bgGradLight.addColorStop(1, '#EEF4FF');
+        ctx.fillStyle = bgGradLight;
+        ctx.fillRect(0, 0, width, height);
+
+        const nLight = ctx.createRadialGradient(width * 0.5, height * 0.2, 0, width * 0.5, height * 0.2, width * 0.6);
+        nLight.addColorStop(0, 'rgba(0, 98, 255, 0.06)');
+        nLight.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = nLight;
+        ctx.fillRect(0, 0, width, height);
+      }
+
+      // --- B. Scientific Coordinate Grid & Micro Cross Ticks ---
       ctx.save();
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.03)';
+      const gridSpacing = isMobile ? 65 : 80;
+      ctx.strokeStyle = isDark ? 'rgba(255, 255, 255, 0.022)' : 'rgba(0, 98, 255, 0.035)';
       ctx.lineWidth = 1;
-      const gridSize = 45;
-      for (let x = 0; x < width; x += gridSize) {
-        ctx.beginPath();
+
+      // Draw faint lines
+      ctx.beginPath();
+      for (let x = 0; x < width; x += gridSpacing) {
         ctx.moveTo(x, 0);
         ctx.lineTo(x, height);
-        ctx.stroke();
       }
-      for (let y = 0; y < height; y += gridSize) {
-        ctx.beginPath();
+      for (let y = 0; y < height; y += gridSpacing) {
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-      ctx.restore();
-
-      // --- 1. Coordinate Axes Diagram (Left Side - Desktop Only) ---
-      if (!isMobile) {
-        const axisX = 70 + parallaxX * 0.5;
-        const axisY = height * 0.52 + parallaxY * 0.5;
-        ctx.save();
-        ctx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
-        ctx.lineWidth = 1.5;
-        // Y axis
-        ctx.beginPath();
-        ctx.moveTo(axisX, axisY + 60);
-        ctx.lineTo(axisX, axisY - 70);
-        ctx.stroke();
-        // Y arrow
-        ctx.beginPath();
-        ctx.moveTo(axisX - 4, axisY - 65);
-        ctx.lineTo(axisX, axisY - 72);
-        ctx.lineTo(axisX + 4, axisY - 65);
-        ctx.stroke();
-        // X axis
-        ctx.beginPath();
-        ctx.moveTo(axisX - 20, axisY);
-        ctx.lineTo(axisX + 85, axisY);
-        ctx.stroke();
-        // X arrow
-        ctx.beginPath();
-        ctx.moveTo(axisX + 80, axisY - 4);
-        ctx.lineTo(axisX + 87, axisY);
-        ctx.lineTo(axisX + 80, axisY + 4);
-        ctx.stroke();
-
-        // Labels
-        ctx.fillStyle = '#00F0FF';
-        ctx.font = 'bold 11px JetBrains Mono';
-        ctx.fillText('Y', axisX - 14, axisY - 68);
-        ctx.fillText('X', axisX + 92, axisY + 4);
-        ctx.fillText('(0,0)', axisX - 24, axisY + 16);
-
-        // Simple Linear Graph y = mx
-        ctx.strokeStyle = '#38BDF8';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(axisX - 15, axisY + 30);
-        ctx.lineTo(axisX + 65, axisY - 50);
-        ctx.stroke();
-        ctx.fillStyle = '#38BDF8';
-        ctx.font = '600 10px JetBrains Mono';
-        ctx.fillText('y = mx + c', axisX + 20, axisY - 54);
-        ctx.restore();
-      }
-
-      // --- 2. Simple Wave Motion (Transverse Wave across screen) ---
-      ctx.save();
-      const waveY = height * 0.38 + Math.sin(t * 0.5) * 8 + parallaxY * 0.8;
-      ctx.beginPath();
-      ctx.strokeStyle = isMobile ? 'rgba(0, 240, 255, 0.12)' : 'rgba(0, 240, 255, 0.22)';
-      ctx.lineWidth = isMobile ? 1.5 : 2.2;
-      ctx.setLineDash([5, 4]);
-
-      for (let x = 0; x <= width; x += 10) {
-        const y = waveY + Math.sin(x * 0.015 + t) * (isMobile ? 14 : 22);
-        if (x === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
       }
       ctx.stroke();
-      ctx.setLineDash([]);
 
-      // Wave crest markers (Anime.js glowing micro dots)
-      if (!isMobile) {
-        for (let x = 80; x < width - 80; x += 220) {
-          const y = waveY + Math.sin(x * 0.015 + t) * 22;
+      // Intersection Cross Ticks (+)
+      ctx.strokeStyle = isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(0, 98, 255, 0.15)';
+      ctx.lineWidth = 1;
+      const crossSize = 3;
+      for (let x = gridSpacing; x < width; x += gridSpacing * 2) {
+        for (let y = gridSpacing; y < height; y += gridSpacing * 2) {
           ctx.beginPath();
-          ctx.arc(x, y, 4.5, 0, Math.PI * 2);
-          ctx.fillStyle = '#00F0FF';
-          ctx.fill();
-          ctx.strokeStyle = '#FFFFFF';
-          ctx.lineWidth = 1.5;
+          ctx.moveTo(x - crossSize, y);
+          ctx.lineTo(x + crossSize, y);
+          ctx.moveTo(x, y - crossSize);
+          ctx.lineTo(x, y + crossSize);
           ctx.stroke();
         }
       }
       ctx.restore();
 
-      // --- 3. Basic Physics Diagram: Simple Pendulum ---
-      if (!isMobile) {
-        const pendPivotX = width * 0.86 + parallaxX * 0.6;
-        const pendPivotY = height * 0.42 + parallaxY * 0.6;
-        const pendLen = 85;
-        const maxAngle = 0.45;
-        const pendTheta = Math.sin(t * 1.5) * maxAngle;
-        const bobX = pendPivotX + Math.sin(pendTheta) * pendLen;
-        const bobY = pendPivotY + Math.cos(pendTheta) * pendLen;
+      // --- C. Gravitational Wave Ripples (Spawned by Pointer) ---
+      for (let rIdx = ripples.length - 1; rIdx >= 0; rIdx--) {
+        const rip = ripples[rIdx];
+        rip.radius += 2.2;
+        rip.alpha *= 0.95;
 
-        ctx.save();
-        // Ceiling line
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(pendPivotX - 25, pendPivotY);
-        ctx.lineTo(pendPivotX + 25, pendPivotY);
-        ctx.stroke();
-
-        // Cord
-        ctx.strokeStyle = 'rgba(168, 85, 247, 0.7)';
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(pendPivotX, pendPivotY);
-        ctx.lineTo(bobX, bobY);
-        ctx.stroke();
-
-        // Angle Arc θ
-        ctx.beginPath();
-        ctx.arc(pendPivotX, pendPivotY, 26, Math.PI / 2 - Math.abs(pendTheta), Math.PI / 2 + Math.abs(pendTheta));
-        ctx.strokeStyle = '#00F0FF';
-        ctx.lineWidth = 1.2;
-        ctx.stroke();
-        ctx.fillStyle = '#A855F7';
-        ctx.font = 'italic 11px STIX Two Text';
-        ctx.fillText('θ', pendPivotX + 6, pendPivotY + 36);
-
-        // Pendulum Bob
-        ctx.beginPath();
-        ctx.arc(bobX, bobY, 9, 0, Math.PI * 2);
-        ctx.fillStyle = '#7C3AED';
-        ctx.fill();
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Restoring force vector arrow
-        const fvx = -Math.sin(pendTheta) * 28;
-        const fvy = 0;
-        drawSimpleArrow(ctx, bobX, bobY, bobX + fvx, bobY + fvy, '#0062FF', 'F');
-        ctx.restore();
-      }
-
-      // --- 4. Basic Physics Diagram: Free-Fall Vector Ball (Desktop Only) ---
-      if (!isMobile) {
-        const ballX = width * 0.14 + parallaxX;
-        const ballY = height * 0.84 + Math.sin(t * 2) * 16 + parallaxY;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(ballX, ballY, 8, 0, Math.PI * 2);
-        ctx.fillStyle = '#0062FF';
-        ctx.fill();
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Gravity acceleration vector downwards
-        drawSimpleArrow(ctx, ballX, ballY + 8, ballX, ballY + 38, '#10B981', 'g = 9.8 m/s²');
-        ctx.restore();
-      }
-
-      // --- 5. Orbiting Dots (Planetary / Atomic Circles) ---
-      orbits.forEach(orb => {
-        orb.angle += orb.speed;
-        const ox = orb.cx + parallaxX * 0.4;
-        const oy = orb.cy + parallaxY * 0.4;
-
-        ctx.save();
-        // Dashed elliptical orbit
-        ctx.beginPath();
-        ctx.ellipse(ox, oy, orb.rx, orb.ry, Math.PI / 6, 0, Math.PI * 2);
-        ctx.strokeStyle = isMobile ? 'rgba(124, 58, 237, 0.12)' : 'rgba(124, 58, 237, 0.2)';
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash([4, 4]);
-        ctx.stroke();
-
-        // Orbiting planet dot
-        const rot = Math.PI / 6;
-        const rawX = Math.cos(orb.angle) * orb.rx;
-        const rawY = Math.sin(orb.angle) * orb.ry;
-        const px = ox + (rawX * Math.cos(rot) - rawY * Math.sin(rot));
-        const py = oy + (rawX * Math.sin(rot) + rawY * Math.cos(rot));
-
-        ctx.beginPath();
-        ctx.arc(px, py, isMobile ? 3.5 : 4.5, 0, Math.PI * 2);
-        ctx.fillStyle = orb.color;
-        ctx.fill();
-        ctx.strokeStyle = '#FFFFFF';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-
-        // Center hub
-        ctx.beginPath();
-        ctx.arc(ox, oy, 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 98, 255, 0.4)';
-        ctx.fill();
-        ctx.restore();
-      });
-
-      // --- 6. Floating Geometric Shapes (Desktop Only) ---
-      if (!isMobile) {
-        ctx.save();
-        // Rotating Wireframe Triangle (Top Right)
-        const triX = width * 0.76 + parallaxX * 0.5;
-        const triY = height * 0.16 + parallaxY * 0.5;
-        const triRot = t * 0.4;
-        ctx.translate(triX, triY);
-        ctx.rotate(triRot);
-        ctx.beginPath();
-        const r = 24;
-        for (let i = 0; i < 3; i++) {
-          const a = (i * 2 * Math.PI) / 3 - Math.PI / 2;
-          const tx = Math.cos(a) * r;
-          const ty = Math.sin(a) * r;
-          if (i === 0) ctx.moveTo(tx, ty);
-          else ctx.lineTo(tx, ty);
+        if (rip.alpha < 0.02 || rip.radius >= rip.maxRadius) {
+          ripples.splice(rIdx, 1);
+          continue;
         }
-        ctx.closePath();
-        ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-        ctx.restore();
 
-        // Rotating Square (Bottom Left)
         ctx.save();
-        const sqX = width * 0.24 + parallaxX * 0.6;
-        const sqY = height * 0.72 + parallaxY * 0.6;
-        ctx.translate(sqX, sqY);
-        ctx.rotate(-t * 0.3);
-        ctx.strokeStyle = 'rgba(124, 58, 237, 0.35)';
-        ctx.lineWidth = 1.5;
-        ctx.strokeRect(-16, -16, 32, 32);
+        ctx.beginPath();
+        ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = isDark
+          ? `rgba(0, 240, 255, ${rip.alpha * 0.4})`
+          : `rgba(0, 98, 255, ${rip.alpha * 0.35})`;
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
         ctx.restore();
       }
 
-      // --- 7. Floating Mathematical Symbols ---
+      // --- D. Harmonic Wave Packet (Smooth Quantum Interference across lower third) ---
       ctx.save();
-      mathSymbols.forEach((sym, i) => {
-        // On mobile, position only along the perimeter so center text is 100% clean
-        let symX = sym.x;
-        if (isMobile) {
-          symX = (i % 2 === 0) ? width * 0.08 : width * 0.92;
-        }
-        const floatY = sym.y + Math.sin(t * sym.speed + i) * (isMobile ? 5 : 12) + parallaxY * 0.7;
-        const floatX = symX + Math.cos(t * sym.speed * 0.8 + i) * (isMobile ? 3 : 8) + parallaxX * 0.7;
-
-        ctx.font = `600 ${isMobile ? Math.round(sym.size * 0.65) : sym.size}px "STIX Two Text", serif`;
-        ctx.fillStyle = sym.color;
-        ctx.globalAlpha = isMobile ? 0.14 : 0.55;
-        ctx.fillText(sym.text, floatX, floatY);
-      });
+      const waveCenterY = height * 0.78 + Math.sin(t * 0.4) * 8;
+      ctx.beginPath();
+      for (let x = 0; x <= width; x += 6) {
+        const k1 = 0.008;
+        const k2 = 0.024;
+        const envelope = Math.sin(x * k1 + t * 0.6) * 18;
+        const carrier = Math.cos(x * k2 - t * 1.2) * 8;
+        const y = waveCenterY + envelope + carrier;
+        if (x === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = isDark ? 'rgba(0, 240, 255, 0.12)' : 'rgba(0, 98, 255, 0.14)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
       ctx.restore();
 
-      // --- 8. Small Animated Particles (Subtle Motion & Connections) ---
-      ctx.save();
-      particles.forEach((p, idx) => {
+      // --- E. Interactive Quantum Constellation & Gravitational Singularity ---
+      const proximityDist = isMobile ? 65 : 100;
+
+      // Update and draw particles
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+
+        // Natural Brownian Drift
         p.x += p.vx;
         p.y += p.vy;
 
-        if (p.x < 0) p.x = width;
-        if (p.x > width) p.x = 0;
-        if (p.y < 0) p.y = height;
-        if (p.y > height) p.y = 0;
+        // Bounce gently off boundaries
+        if (p.x < 0) { p.x = 0; p.vx *= -1; }
+        if (p.x > width) { p.x = width; p.vx *= -1; }
+        if (p.y < 0) { p.y = 0; p.vy *= -1; }
+        if (p.y > height) { p.y = height; p.vy *= -1; }
 
-        // Subtle reaction to mouse / touch
+        // Gravitational Warp towards cursor
         const dx = mouse.x - p.x;
         const dy = mouse.y - p.y;
         const dist = Math.hypot(dx, dy);
-        if (dist < 100) {
-          p.x -= (dx / dist) * 0.8;
-          p.y -= (dy / dist) * 0.8;
+        const gravityRadius = isMobile ? 120 : 200;
+
+        if (dist < gravityRadius && dist > 5) {
+          const force = (1 - dist / gravityRadius) * 0.06;
+          p.x += dx * force;
+          p.y += dy * force;
         }
 
+        // Particle Twinkle
+        p.phase += p.twinkleSpeed;
+        const currentAlpha = p.alpha * (0.7 + 0.3 * Math.sin(p.phase));
+
+        // Draw Star Node
+        const particleColor = isDark ? p.color : colorsLight[i % colorsLight.length];
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.baseAlpha;
+        ctx.fillStyle = particleColor;
+        ctx.globalAlpha = currentAlpha;
         ctx.fill();
 
-        // Connect nearby particles with gentle hair lines
-        for (let j = idx + 1; j < Math.min(idx + 5, particleCount); j++) {
+        // Node Glow Halo
+        if (!isMobile && p.radius > 1.6) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius * 2.8, 0, Math.PI * 2);
+          ctx.fillStyle = particleColor;
+          ctx.globalAlpha = currentAlpha * 0.15;
+          ctx.fill();
+        }
+
+        // Connect nearby nodes with delicate filament synapses
+        for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
-          const d = Math.hypot(p.x - p2.x, p.y - p2.y);
-          if (d < 65) {
+          const pDist = Math.hypot(p.x - p2.x, p.y - p2.y);
+
+          if (pDist < proximityDist) {
+            const lineAlpha = (1 - pDist / proximityDist) * (isDark ? 0.22 : 0.18);
             ctx.beginPath();
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = 'rgba(0, 240, 255, 0.16)';
-            ctx.lineWidth = 1;
+            ctx.strokeStyle = isDark ? '#00F0FF' : '#0062FF';
+            ctx.globalAlpha = lineAlpha;
+            ctx.lineWidth = 0.85;
             ctx.stroke();
           }
         }
-      });
-      ctx.restore();
+
+        ctx.globalAlpha = 1;
+      }
+
+      // --- F. Subtle Rotating Astrolabe / Orbital Ring (Desktop Corner Accents) ---
+      if (!isMobile) {
+        const astrolabeX = width * 0.88;
+        const astrolabeY = height * 0.22;
+        const ringRadius = 55;
+        const spin = t * 0.2;
+
+        ctx.save();
+        ctx.translate(astrolabeX, astrolabeY);
+        ctx.rotate(spin);
+
+        // Dashed Celestial Orbit Ring
+        ctx.beginPath();
+        ctx.arc(0, 0, ringRadius, 0, Math.PI * 2);
+        ctx.strokeStyle = isDark ? 'rgba(168, 85, 247, 0.18)' : 'rgba(124, 58, 237, 0.16)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 6]);
+        ctx.stroke();
+
+        // 3 Orbiting Celestial Electrons
+        for (let o = 0; o < 3; o++) {
+          const angle = (o * Math.PI * 2) / 3 + t * 0.8;
+          const ox = Math.cos(angle) * ringRadius;
+          const oy = Math.sin(angle) * ringRadius;
+          ctx.beginPath();
+          ctx.arc(ox, oy, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = isDark ? '#00F0FF' : '#0062FF';
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
     };
 
     animate();
 
     return () => {
       cancelAnimationFrame(animId);
+      themeObserver.disconnect();
       window.removeEventListener('mousemove', handlePointerMove);
       window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
   }, []);
@@ -437,46 +391,9 @@ export const InteractiveBackground: React.FC = () => {
         width: '100%',
         height: '100vh',
         zIndex: 0,
-        pointerEvents: 'none'
+        pointerEvents: 'none',
+        display: 'block'
       }}
     />
   );
 };
-
-function drawSimpleArrow(
-  ctx: CanvasRenderingContext2D,
-  fromX: number,
-  fromY: number,
-  toX: number,
-  toY: number,
-  color: string,
-  label: string
-) {
-  const dx = toX - fromX;
-  const dy = toY - fromY;
-  const angle = Math.atan2(dy, dx);
-  const headLen = 8;
-
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.fillStyle = color;
-  ctx.lineWidth = 1.8;
-
-  ctx.beginPath();
-  ctx.moveTo(fromX, fromY);
-  ctx.lineTo(toX, toY);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(toX, toY);
-  ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
-  ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
-  ctx.closePath();
-  ctx.fill();
-
-  if (label) {
-    ctx.font = '600 11px JetBrains Mono';
-    ctx.fillText(label, toX + 6, toY + 3);
-  }
-  ctx.restore();
-}

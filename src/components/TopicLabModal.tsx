@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Play, Pause, RotateCcw, Lightbulb, BookOpen, CheckCircle2, ChevronRight, HelpCircle, Award } from 'lucide-react';
-import { TOPICS_DATA } from '../data/topicsData';
+import { TOPICS_DATA, isSimulationAnimated } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
 import { CanvasSimulator } from './simulations/CanvasSimulators';
+import { MathView } from './MathView';
 
 interface TopicLabModalProps {
   topicId: string | null;
@@ -96,7 +97,7 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
         </span>
 
         {/* Interactive Numeric Input Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <input
             type="number"
             min={control.min}
@@ -110,28 +111,28 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
             title={`Click to type number (${control.min} to ${control.max})`}
             className="control-number-badge-input font-mono"
             style={{
-              width: '74px',
-              padding: '3px 6px',
+              width: '78px',
+              padding: '4px 8px',
               textAlign: 'right',
-              fontSize: '0.82rem',
+              fontSize: '0.86rem',
               fontWeight: 700,
               fontFamily: 'var(--font-mono)',
-              color: accentColor,
-              background: 'var(--bg-tertiary)',
-              border: isFocused ? `1.5px solid ${accentColor}` : '1px solid var(--border-subtle)',
+              color: '#F8FAFC',
+              background: 'rgba(15, 23, 42, 0.9)',
+              border: isFocused ? `1.5px solid ${accentColor}` : '1px solid rgba(255, 255, 255, 0.2)',
               borderRadius: 'var(--radius-sm)',
               outline: 'none',
-              boxShadow: isFocused ? `0 0 0 3px ${accentColor}25` : 'none',
+              boxShadow: isFocused ? `0 0 0 3px ${accentColor}35` : 'none',
               transition: 'all 0.15s ease'
             }}
           />
           {control.unit && (
             <span
               style={{
-                fontSize: '0.72rem',
-                color: 'var(--text-tertiary)',
+                fontSize: '0.76rem',
+                color: 'var(--text-secondary)',
                 fontWeight: 600,
-                minWidth: '22px'
+                minWidth: '24px'
               }}
             >
               {control.unit}
@@ -152,7 +153,7 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
         style={{ width: '100%', cursor: 'pointer', accentColor }}
       />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.64rem', color: 'var(--text-tertiary)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
         <span>Min: {control.min}</span>
         <span>Max: {control.max}</span>
       </div>
@@ -177,6 +178,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
   const topic = topicId ? TOPICS_DATA[topicId] : null;
   const currentSim = topic ? topic.simulations[activeSimIndex] || topic.simulations[0] : null;
+  const isAnimated = isSimulationAnimated(currentSim?.id);
 
   // Reset active simulation index when topic changes
   if (topicId !== prevTopicId) {
@@ -438,8 +440,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               style={{
                 width: '100%',
                 aspectRatio: '16 / 8.5',
-                maxHeight: '520px',
-                minHeight: '360px',
+                maxHeight: '440px',
+                minHeight: '320px',
                 position: 'relative',
                 background: 'var(--bg-tertiary)',
                 borderRadius: 'var(--radius-lg)',
@@ -456,7 +458,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 onTelemetryUpdate={setTelemetry}
                 controls={currentSim.controls}
                 onParamChange={handleControlChange}
-                onTogglePlay={() => setIsPlaying(!isPlaying)}
+                onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
                 onReset={handleReset}
               />
             </div>
@@ -476,17 +478,19 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 <div
                   key={tLabel.key}
                   style={{
-                    padding: '8px 14px',
+                    padding: '8px 16px',
                     borderRadius: 'var(--radius-md)',
-                    background: 'var(--bg-glass-card)',
-                    border: '1px solid var(--border-subtle)',
+                    background: 'rgba(15, 23, 42, 0.85)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
                     fontFamily: 'var(--font-mono)',
-                    fontSize: '0.78rem',
-                    boxShadow: 'var(--shadow-sm)'
+                    fontSize: '0.84rem',
+                    boxShadow: 'var(--shadow-sm)',
+                    display: 'flex',
+                    alignItems: 'center'
                   }}
                 >
-                  <span style={{ color: 'var(--text-tertiary)', marginRight: 6 }}>{tLabel.label}:</span>
-                  <strong style={{ color: accentColor }}>{telemetry[tLabel.key] || '—'}</strong>
+                  <span style={{ color: 'var(--text-secondary)', marginRight: 8, fontSize: '0.80rem' }}>{tLabel.label}:</span>
+                  <strong style={{ color: '#38BDF8', fontWeight: 700, fontSize: '0.88rem' }}>{telemetry[tLabel.key] || '—'}</strong>
                 </div>
               ))}
             </div>
@@ -525,25 +529,27 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               {/* Simulation Controls Bar */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '7px 16px',
-                      borderRadius: 'var(--radius-md)',
-                      border: 'none',
-                      background: accentColor,
-                      color: '#FFFFFF',
-                      fontSize: '0.8rem',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isPlaying ? <Pause size={14} /> : <Play size={14} />}
-                    <span>{isPlaying ? 'Pause' : 'Play'}</span>
-                  </button>
+                  {isAnimated && (
+                    <button
+                      onClick={() => setIsPlaying(!isPlaying)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 6,
+                        padding: '7px 16px',
+                        borderRadius: 'var(--radius-md)',
+                        border: 'none',
+                        background: accentColor,
+                        color: '#FFFFFF',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+                      <span>{isPlaying ? 'Pause' : 'Play'}</span>
+                    </button>
+                  )}
 
                   <button
                     onClick={handleReset}
@@ -776,19 +782,20 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                       style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column' }}
                     >
                       <div
-                        className="font-math"
                         style={{
                           fontSize: '1.08rem',
                           fontWeight: 700,
                           color: 'var(--text-primary)',
                           marginBottom: 8,
                           textAlign: 'center',
-                          padding: '8px 12px',
+                          padding: '10px 14px',
                           background: 'var(--bg-tertiary)',
-                          borderRadius: 'var(--radius-sm)'
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border-subtle)',
+                          overflowX: 'auto'
                         }}
                       >
-                        {f.formula}
+                        <MathView math={f.formula} block />
                       </div>
                       <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                         {f.explanation}

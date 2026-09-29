@@ -237,8 +237,10 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
     const now = Date.now();
     // Quick double-tap anywhere on canvas toggles play/pause on mobile
     if (now - lastTapTimeRef.current < 320) {
-      if (onTogglePlay) onTogglePlay();
-      showHudMessage(isPlaying ? 'Simulation Paused' : 'Simulation Playing');
+      if (onTogglePlay) {
+        onTogglePlay();
+        showHudMessage(isPlaying ? 'Simulation Paused' : 'Simulation Playing');
+      }
       lastTapTimeRef.current = 0;
       return;
     }
@@ -741,7 +743,68 @@ function drawCoordinateGrid(ctx: CanvasRenderingContext2D, w: number, h: number)
   ctx.restore();
 }
 
-function drawAxes(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number) {
+function drawCoordBadge(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  opts?: {
+    textColor?: string;
+    bgColor?: string;
+    borderColor?: string;
+    align?: 'center' | 'left' | 'right';
+    offsetY?: number;
+    offsetX?: number;
+    fontSize?: number;
+  }
+) {
+  const fontSize = opts?.fontSize ?? 11;
+  ctx.save();
+  ctx.font = `600 ${fontSize}px "JetBrains Mono", monospace`;
+  const metrics = ctx.measureText(text);
+  const textW = metrics.width;
+  const padX = 7;
+  const padY = 3.5;
+  const badgeW = textW + padX * 2;
+  const badgeH = fontSize + padY * 2;
+
+  const ox = opts?.offsetX ?? 0;
+  const oy = opts?.offsetY ?? 0;
+  let bx = x + ox;
+  let by = y + oy;
+
+  const align = opts?.align ?? 'center';
+  if (align === 'center') {
+    bx = x - badgeW / 2 + ox;
+  } else if (align === 'right') {
+    bx = x - badgeW + ox;
+  }
+
+  // Draw pill background with glass effect
+  ctx.fillStyle = opts?.bgColor ?? 'rgba(10, 15, 29, 0.92)';
+  ctx.strokeStyle = opts?.borderColor ?? 'rgba(148, 163, 184, 0.45)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(bx, by, badgeW, badgeH, 4);
+  ctx.fill();
+  ctx.stroke();
+
+  // Draw text
+  ctx.fillStyle = opts?.textColor ?? '#F8FAFC';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, bx + padX, by + badgeH / 2);
+  ctx.restore();
+}
+
+function drawAxes(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  w: number,
+  h: number,
+  tickScale?: number
+) {
   ctx.save();
   ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
   ctx.lineWidth = 1.5;
@@ -758,6 +821,56 @@ function drawAxes(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: numb
   ctx.lineTo(cx, h - 20);
   ctx.stroke();
 
+  // Axis Arrowheads
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.8)';
+  ctx.beginPath();
+  ctx.moveTo(w - 20, cy - 4);
+  ctx.lineTo(w - 10, cy);
+  ctx.lineTo(w - 20, cy + 4);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(cx - 4, 20);
+  ctx.lineTo(cx, 10);
+  ctx.lineTo(cx + 4, 20);
+  ctx.fill();
+
+  // Axis Numerical Ticks
+  const step = tickScale ?? 24;
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+  ctx.fillStyle = 'rgba(148, 163, 184, 0.75)';
+  ctx.font = '600 9px "JetBrains Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+
+  // X ticks
+  const maxUnitsX = Math.floor((w / 2 - 40) / step);
+  for (let u = -maxUnitsX; u <= maxUnitsX; u++) {
+    if (u === 0) continue;
+    if (maxUnitsX > 8 && Math.abs(u) % 2 !== 0) continue;
+    const tx = cx + u * step;
+    ctx.beginPath();
+    ctx.moveTo(tx, cy - 3);
+    ctx.lineTo(tx, cy + 3);
+    ctx.stroke();
+    ctx.fillText(`${u}`, tx, cy + 5);
+  }
+
+  // Y ticks
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  const maxUnitsY = Math.floor((h / 2 - 40) / step);
+  for (let u = -maxUnitsY; u <= maxUnitsY; u++) {
+    if (u === 0) continue;
+    if (maxUnitsY > 8 && Math.abs(u) % 2 !== 0) continue;
+    const ty = cy - u * step;
+    ctx.beginPath();
+    ctx.moveTo(cx - 3, ty);
+    ctx.lineTo(cx + 3, ty);
+    ctx.stroke();
+    ctx.fillText(`${u}`, cx - 6, ty);
+  }
+
   // Glowing Origin Point (0,0)
   ctx.save();
   ctx.shadowColor = '#00F0FF';
@@ -768,11 +881,21 @@ function drawAxes(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: numb
   ctx.fill();
   ctx.restore();
 
-  ctx.fillStyle = '#94A3B8';
-  ctx.font = 'bold 10px "JetBrains Mono", monospace';
-  ctx.fillText('X', w - 16, cy + 4);
-  ctx.fillText('Y', cx + 6, 26);
-  ctx.fillText('(0,0)', cx - 30, cy + 16);
+  ctx.fillStyle = '#38BDF8';
+  ctx.font = 'bold 11px "JetBrains Mono", monospace';
+  ctx.fillText('X', w - 12, cy - 8);
+  ctx.fillText('Y', cx + 14, 22);
+
+  // Origin label pill badge safely offset in 4th quadrant
+  drawCoordBadge(ctx, 'O(0,0)', cx, cy, {
+    textColor: '#94A3B8',
+    borderColor: 'rgba(0, 240, 255, 0.25)',
+    fontSize: 9.5,
+    offsetX: 6,
+    offsetY: 8,
+    align: 'left'
+  });
+
   ctx.restore();
 }
 
@@ -858,15 +981,19 @@ function renderLinearEquation(
   const yIntX = cx;
   const yIntY = cy - c * scale;
   ctx.beginPath();
-  ctx.arc(yIntX, yIntY, 5, 0, Math.PI * 2);
-  ctx.fillStyle = '#7C3AED';
+  ctx.arc(yIntX, yIntY, 5.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#A855F7';
   ctx.fill();
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 1.5;
   ctx.stroke();
-  ctx.fillStyle = '#7C3AED';
-  ctx.font = '600 11px JetBrains Mono';
-  ctx.fillText(`(0, ${c})`, yIntX + 8, yIntY - 6);
+
+  drawCoordBadge(ctx, `(0, ${c})`, yIntX, yIntY, {
+    textColor: '#D8B4FE',
+    borderColor: 'rgba(168, 85, 247, 0.7)',
+    offsetX: 10,
+    offsetY: c >= 0 ? -12 : 8
+  });
 
   // Highlight X-intercept (-c/m, 0) if m != 0
   let rootVal = 'None (Parallel)';
@@ -878,14 +1005,23 @@ function renderLinearEquation(
 
     if (rScreenX >= 30 && rScreenX <= w - 30) {
       ctx.beginPath();
-      ctx.arc(rScreenX, rScreenY, 5, 0, Math.PI * 2);
+      ctx.arc(rScreenX, rScreenY, 5.5, 0, Math.PI * 2);
       ctx.fillStyle = '#10B981';
       ctx.fill();
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 1.5;
       ctx.stroke();
-      ctx.fillStyle = '#10B981';
-      ctx.fillText(`(${rootX.toFixed(1)}, 0)`, rScreenX - 20, rScreenY + 18);
+
+      const isNearOrigin = Math.abs(rootX) < 2.2;
+      const offsetY = isNearOrigin ? -22 : 8;
+      const offsetX = rootX < 0 ? -10 : 10;
+
+      drawCoordBadge(ctx, `(${rootX.toFixed(1)}, 0)`, rScreenX, rScreenY, {
+        textColor: '#34D399',
+        borderColor: 'rgba(16, 185, 129, 0.7)',
+        offsetX,
+        offsetY
+      });
     }
   }
 
@@ -939,15 +1075,19 @@ function renderQuadraticParabola(
   const svy = cy - yv * scale;
 
   ctx.beginPath();
-  ctx.arc(svx, svy, 5, 0, Math.PI * 2);
+  ctx.arc(svx, svy, 5.5, 0, Math.PI * 2);
   ctx.fillStyle = '#EC4899';
   ctx.fill();
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 1.5;
   ctx.stroke();
-  ctx.fillStyle = '#EC4899';
-  ctx.font = '600 11px JetBrains Mono';
-  ctx.fillText(`Vertex (${xv.toFixed(1)}, ${yv.toFixed(1)})`, svx + 8, svy - 6);
+
+  drawCoordBadge(ctx, `Vertex (${xv.toFixed(1)}, ${yv.toFixed(1)})`, svx, svy, {
+    textColor: '#F472B6',
+    borderColor: 'rgba(236, 72, 153, 0.7)',
+    offsetX: 10,
+    offsetY: yv > 0 ? 8 : -22
+  });
 
   // Discriminant D = b^2 - 4ac
   const D = b * b - 4 * a * c;
@@ -958,7 +1098,7 @@ function renderQuadraticParabola(
     const r2 = (-b + Math.sqrt(D)) / (2 * a);
     rootsDisplay = `x₁ = ${r1.toFixed(1)}, x₂ = ${r2.toFixed(1)}`;
 
-    [r1, r2].forEach(r => {
+    [r1, r2].forEach((r, idx) => {
       const rx = cx + r * scale;
       ctx.beginPath();
       ctx.arc(rx, cy, 4.5, 0, Math.PI * 2);
@@ -967,6 +1107,13 @@ function renderQuadraticParabola(
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 1.5;
       ctx.stroke();
+
+      drawCoordBadge(ctx, `x${idx + 1}=${r.toFixed(1)}`, rx, cy, {
+        textColor: '#34D399',
+        borderColor: 'rgba(16, 185, 129, 0.7)',
+        fontSize: 10,
+        offsetY: 8
+      });
     });
   }
 
@@ -1027,9 +1174,12 @@ function renderLinearSystem(
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    ctx.fillStyle = '#10B981';
-    ctx.font = 'bold 11px JetBrains Mono';
-    ctx.fillText(`Intersect (${ix.toFixed(1)}, ${iy.toFixed(1)})`, isx + 10, isy - 8);
+    drawCoordBadge(ctx, `Intersect (${ix.toFixed(1)}, ${iy.toFixed(1)})`, isx, isy, {
+      textColor: '#34D399',
+      borderColor: 'rgba(16, 185, 129, 0.7)',
+      offsetX: 10,
+      offsetY: -12
+    });
 
     onTelem({
       intersect: `(${ix.toFixed(2)}, ${iy.toFixed(2)})`,
@@ -1162,9 +1312,13 @@ function renderUnitCircle(
   const cosVal = Math.cos(rad);
   const tanVal = Math.abs(cosVal) > 0.001 ? (sinVal / cosVal).toFixed(3) : 'Undefined';
 
-  ctx.fillStyle = '#F8FAFC';
-  ctx.font = 'bold 10px "JetBrains Mono", monospace';
-  ctx.fillText(`(${cosVal.toFixed(2)}, ${sinVal.toFixed(2)})`, px + (cosVal >= 0 ? 8 : -75), py + (sinVal >= 0 ? -10 : 18));
+  drawCoordBadge(ctx, `(${cosVal.toFixed(2)}, ${sinVal.toFixed(2)})`, px, py, {
+    textColor: '#38BDF8',
+    borderColor: 'rgba(56, 189, 248, 0.6)',
+    offsetX: cosVal >= 0 ? 12 : -12,
+    offsetY: sinVal >= 0 ? -14 : 14,
+    align: cosVal >= 0 ? 'left' : 'right'
+  });
 
   // Angle Arc
   ctx.strokeStyle = '#FBBF24';
@@ -1288,11 +1442,22 @@ function renderRightTriangle(
   ctx.strokeRect(bx - sq, by - sq, sq, sq);
 
   // Labels
-  ctx.fillStyle = '#0F172A';
-  ctx.font = '600 12px JetBrains Mono';
-  ctx.fillText(`Base: ${base}`, ox + (base * scale) / 2 - 20, oy + 20);
-  ctx.fillText(`Height: ${height}`, bx + 12, oy - (height * scale) / 2);
-  ctx.fillText(`Hyp: ${hyp.toFixed(1)}`, ox + 15, ay + 20);
+  drawCoordBadge(ctx, `Base: ${base}`, ox + (base * scale) / 2, oy, {
+    textColor: '#38BDF8',
+    borderColor: 'rgba(56, 189, 248, 0.5)',
+    offsetY: 10
+  });
+  drawCoordBadge(ctx, `Height: ${height}`, bx, oy - (height * scale) / 2, {
+    textColor: '#F472B6',
+    borderColor: 'rgba(244, 114, 182, 0.5)',
+    offsetX: 12
+  });
+  drawCoordBadge(ctx, `Hyp: ${hyp.toFixed(1)}`, (ox + ax) / 2, (oy + ay) / 2, {
+    textColor: '#34D399',
+    borderColor: 'rgba(52, 211, 153, 0.5)',
+    offsetX: -24,
+    offsetY: -12
+  });
 
   onTelem({
     hyp: `${hyp.toFixed(2)}`,
@@ -1351,13 +1516,25 @@ function renderDistanceMidpoint(
   ctx.arc(sx1, sy1, 6, 0, Math.PI * 2);
   ctx.fillStyle = '#0062FF';
   ctx.fill();
-  ctx.fillText(`A(${x1}, ${y1})`, sx1 - 35, sy1 - 10);
+  drawCoordBadge(ctx, `A(${x1}, ${y1})`, sx1, sy1, {
+    textColor: '#60A5FA',
+    borderColor: 'rgba(96, 165, 250, 0.6)',
+    offsetX: x1 >= 0 ? 10 : -10,
+    offsetY: y1 >= 0 ? -14 : 14,
+    align: x1 >= 0 ? 'left' : 'right'
+  });
 
   ctx.beginPath();
   ctx.arc(sx2, sy2, 6, 0, Math.PI * 2);
   ctx.fillStyle = '#7C3AED';
   ctx.fill();
-  ctx.fillText(`B(${x2}, ${y2})`, sx2 + 10, sy2 - 10);
+  drawCoordBadge(ctx, `B(${x2}, ${y2})`, sx2, sy2, {
+    textColor: '#C084FC',
+    borderColor: 'rgba(192, 132, 252, 0.6)',
+    offsetX: x2 >= 0 ? 10 : -10,
+    offsetY: y2 >= 0 ? -14 : 14,
+    align: x2 >= 0 ? 'left' : 'right'
+  });
 
   // Midpoint M
   const mx = (x1 + x2) / 2;
@@ -1369,6 +1546,11 @@ function renderDistanceMidpoint(
   ctx.arc(smx, smy, 5, 0, Math.PI * 2);
   ctx.fillStyle = '#10B981';
   ctx.fill();
+  drawCoordBadge(ctx, `M(${mx.toFixed(1)}, ${my.toFixed(1)})`, smx, smy, {
+    textColor: '#34D399',
+    borderColor: 'rgba(52, 211, 153, 0.6)',
+    offsetY: -16
+  });
 
   const dist = Math.hypot(x2 - x1, y2 - y1);
   const slope = x2 !== x1 ? ((y2 - y1) / (x2 - x1)).toFixed(2) : 'Vertical';
@@ -1416,9 +1598,12 @@ function renderCircleEquation(
   ctx.arc(scx, scy, 5, 0, Math.PI * 2);
   ctx.fillStyle = '#EC4899';
   ctx.fill();
-  ctx.fillStyle = '#EC4899';
-  ctx.font = '600 11px JetBrains Mono';
-  ctx.fillText(`Center (${hVal}, ${kVal})`, scx + 8, scy - 6);
+  drawCoordBadge(ctx, `Center (${hVal}, ${kVal})`, scx, scy, {
+    textColor: '#F472B6',
+    borderColor: 'rgba(236, 72, 153, 0.6)',
+    offsetX: 10,
+    offsetY: -10
+  });
 
   // Rotating radius vector
   const rx = scx + Math.cos(t) * sRadius;
@@ -1493,9 +1678,12 @@ function renderSectionFormula(
   ctx.strokeStyle = '#FFFFFF';
   ctx.lineWidth = 2;
   ctx.stroke();
-  ctx.fillStyle = '#10B981';
-  ctx.font = 'bold 11px JetBrains Mono';
-  ctx.fillText(`P(${px.toFixed(1)}, ${py.toFixed(1)})`, spx - 20, spy - 12);
+  drawCoordBadge(ctx, `P(${px.toFixed(1)}, ${py.toFixed(1)})`, spx, spy, {
+    textColor: '#34D399',
+    borderColor: 'rgba(16, 185, 129, 0.7)',
+    offsetX: 10,
+    offsetY: -12
+  });
 
   onTelem({
     ratio: `${m} : ${n}`,
@@ -1531,7 +1719,7 @@ function renderFunctionMachine(
   ctx.fill();
   ctx.stroke();
 
-  ctx.fillStyle = '#0F172A';
+  ctx.fillStyle = '#F8FAFC';
   ctx.font = 'bold 15px JetBrains Mono';
   ctx.textAlign = 'center';
   ctx.fillText('f(x) Machine', cx, cy - 20);
@@ -1630,9 +1818,19 @@ function renderFunctionTransform(
   const vx = cx + hVal * scale;
   const vy = cy - kVal * scale;
   ctx.beginPath();
-  ctx.arc(vx, vy, 5, 0, Math.PI * 2);
+  ctx.arc(vx, vy, 5.5, 0, Math.PI * 2);
   ctx.fillStyle = '#7C3AED';
   ctx.fill();
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  drawCoordBadge(ctx, `Vertex (${hVal}, ${kVal})`, vx, vy, {
+    textColor: '#C084FC',
+    borderColor: 'rgba(124, 58, 237, 0.6)',
+    offsetX: 10,
+    offsetY: -12
+  });
 
   onTelem({
     trans_eq: `y = ${aVal}(x - ${hVal})² + ${kVal}`,
@@ -1729,10 +1927,12 @@ function renderAPStaircase(
     ctx.lineWidth = 1.5;
     ctx.strokeRect(bx, by, barW, bh);
 
-    ctx.fillStyle = '#0F172A';
-    ctx.font = 'bold 11px JetBrains Mono';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${term}`, bx + barW / 2, by - 6);
+    drawCoordBadge(ctx, `${term}`, bx + barW / 2, by, {
+      textColor: '#F8FAFC',
+      borderColor: 'rgba(0, 98, 255, 0.6)',
+      fontSize: 11,
+      offsetY: -18
+    });
   }
 
   onTelem({
@@ -1775,9 +1975,13 @@ function renderGPGrowth(
     ctx.arc(px, py, 5, 0, Math.PI * 2);
     ctx.fillStyle = '#7C3AED';
     ctx.fill();
-    ctx.fillStyle = '#0F172A';
-    ctx.font = 'bold 11px JetBrains Mono';
-    ctx.fillText(`${term.toFixed(1)}`, px, py - 10);
+
+    drawCoordBadge(ctx, `${term.toFixed(1)}`, px, py, {
+      textColor: '#C084FC',
+      borderColor: 'rgba(124, 58, 237, 0.6)',
+      fontSize: 10,
+      offsetY: -18
+    });
   }
   ctx.stroke();
 
@@ -1891,17 +2095,36 @@ function renderSecantTangent(
   ctx.setLineDash([]);
 
   // Draw P and Q
-  [spx, spy].forEach(() => {
-    ctx.beginPath();
-    ctx.arc(spx, spy, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#0062FF';
-    ctx.fill();
+  ctx.beginPath();
+  ctx.arc(spx, spy, 5.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#0062FF';
+  ctx.fill();
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  drawCoordBadge(ctx, `P(${pxVal.toFixed(1)}, ${pyVal.toFixed(2)})`, spx, spy, {
+    textColor: '#60A5FA',
+    borderColor: 'rgba(96, 165, 250, 0.6)',
+    offsetX: -16,
+    offsetY: -14,
+    align: 'right'
   });
 
   ctx.beginPath();
-  ctx.arc(sqx, sqy, 5, 0, Math.PI * 2);
+  ctx.arc(sqx, sqy, 5.5, 0, Math.PI * 2);
   ctx.fillStyle = '#EC4899';
   ctx.fill();
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  drawCoordBadge(ctx, `Q(${qxVal.toFixed(1)}, ${qyVal.toFixed(2)})`, sqx, sqy, {
+    textColor: '#F472B6',
+    borderColor: 'rgba(236, 72, 153, 0.6)',
+    offsetX: 12,
+    offsetY: -14
+  });
 
   onTelem({
     secant_slope: secantSlope.toFixed(3),
@@ -1961,6 +2184,22 @@ function renderRiemannArea(
     else ctx.lineTo(sx, sy);
   }
   ctx.stroke();
+
+  // Boundary and Area badges
+  drawCoordBadge(ctx, `a = 0`, cx, cy + 18, {
+    textColor: '#94A3B8',
+    borderColor: 'rgba(148, 163, 184, 0.4)',
+    fontSize: 10
+  });
+  drawCoordBadge(ctx, `b = ${b}`, cx + b * scaleX, cy + 18, {
+    textColor: '#38BDF8',
+    borderColor: 'rgba(56, 189, 248, 0.4)',
+    fontSize: 10
+  });
+  drawCoordBadge(ctx, `Area ≈ ${approxArea.toFixed(2)}`, cx + (b * scaleX) / 2, cy - 35, {
+    textColor: '#C084FC',
+    borderColor: 'rgba(192, 132, 252, 0.6)'
+  });
 
   // Exact integral: ∫ (0.4 x^2 + 1) dx = [0.4/3 x^3 + x]
   const exactArea = (0.4 / 3) * Math.pow(b, 3) + b;
@@ -2060,7 +2299,7 @@ function renderScaleUniverse(
   ctx.lineWidth = 3;
   ctx.stroke();
 
-  ctx.fillStyle = '#0F172A';
+  ctx.fillStyle = '#F8FAFC';
   ctx.font = 'bold 16px JetBrains Mono';
   ctx.textAlign = 'center';
   ctx.fillText(info.name, cx, cy - 10);
@@ -2095,7 +2334,7 @@ function renderDimensionalChecker(
   const cur = data[choice];
 
   // Visual Balance Scale
-  ctx.strokeStyle = '#0F172A';
+  ctx.strokeStyle = '#64748B';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.moveTo(cx, cy + 60);
@@ -2116,7 +2355,7 @@ function renderDimensionalChecker(
   ctx.fillStyle = cur.valid.includes('YES') ? '#10B981' : '#EF4444';
   ctx.fillText(cur.right, cx + 120, cy - 50);
 
-  ctx.fillStyle = '#0F172A';
+  ctx.fillStyle = '#F8FAFC';
   ctx.font = 'bold 15px JetBrains Mono';
   ctx.fillText(cur.name, cx, cy + 100);
 
@@ -6087,7 +6326,7 @@ function renderCarnotCycle(
   ctx.fillText('4 (TC)', p4.x - 18, p4.y + 16);
 
   // Net Work Label in loop center
-  ctx.fillStyle = '#D97706';
+  ctx.fillStyle = '#FBBF24';
   ctx.font = 'bold 12px JetBrains Mono';
   ctx.textAlign = 'center';
   ctx.fillText(`Net Work ∮ P·dV = ${W_net.toFixed(0)} J`, (p1.x + p3.x) / 2, (p1.y + p3.y) / 2);
@@ -6129,7 +6368,7 @@ function renderCarnotCycle(
   ctx.stroke();
 
   // Active stage banner
-  ctx.fillStyle = '#1E293B';
+  ctx.fillStyle = '#F8FAFC';
   ctx.font = 'bold 11px JetBrains Mono';
   ctx.fillText(stageName, originX + plotW / 2, 28);
 
@@ -6186,7 +6425,7 @@ function renderHeatConduction(
   ctx.fillStyle = coldGrad;
   ctx.fillRect(barEndX, barY - 15, 60, barH + 30);
 
-  ctx.fillStyle = '#0F172A';
+  ctx.fillStyle = '#FFFFFF';
   ctx.fillText('COLD SINK', barEndX + 30, barY + 28);
   ctx.fillText(`${TC}°C`, barEndX + 30, barY + 46);
 

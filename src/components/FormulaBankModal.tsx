@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, Search, BookOpen, ArrowRight } from 'lucide-react';
+import { X, Search, BookOpen, ArrowRight, Copy, Check, Sparkles } from 'lucide-react';
+import { MathView } from './MathView';
 
 interface FormulaItem {
   id: string;
@@ -7,6 +8,7 @@ interface FormulaItem {
   category: 'Physics' | 'Mathematics';
   domain: string;
   latex: string;
+  plainEnglish: string;
   description: string;
   variables: { sym: string; name: string; unit: string }[];
   targetTopicId: string;
@@ -19,7 +21,8 @@ const FORMULAS_DATA: FormulaItem[] = [
     category: 'Physics',
     domain: 'Kinematics',
     latex: 'v = u + at',
-    description: 'Relates final velocity to initial velocity and constant acceleration over elapsed time.',
+    plainEnglish: 'Final Speed = Start Speed + (Acceleration × Time)',
+    description: 'Calculates how fast an object is moving after speeding up or slowing down for a given duration.',
     variables: [
       { sym: 'v', name: 'Final Velocity', unit: 'm/s' },
       { sym: 'u', name: 'Initial Velocity', unit: 'm/s' },
@@ -34,11 +37,12 @@ const FORMULAS_DATA: FormulaItem[] = [
     category: 'Physics',
     domain: 'Kinematics',
     latex: 's = ut + \\frac{1}{2}at^2',
-    description: 'Calculates position displacement from initial velocity and continuous acceleration.',
+    plainEnglish: 'Distance = (Start Speed × Time) + ½ × Acceleration × Time²',
+    description: 'Calculates the total distance an object travels while steadily accelerating.',
     variables: [
-      { sym: 's', name: 'Displacement', unit: 'm' },
+      { sym: 's', name: 'Distance (Displacement)', unit: 'm' },
       { sym: 'u', name: 'Initial Velocity', unit: 'm/s' },
-      { sym: 't', name: 'Time', unit: 's' },
+      { sym: 't', name: 'Elapsed Time', unit: 's' },
       { sym: 'a', name: 'Acceleration', unit: 'm/s²' }
     ],
     targetTopicId: 'motion'
@@ -49,11 +53,13 @@ const FORMULAS_DATA: FormulaItem[] = [
     category: 'Physics',
     domain: 'Dynamics',
     latex: 'F_{net} = ma = \\frac{dp}{dt}',
-    description: 'Net external force equals rate of change of momentum (or mass times acceleration).',
+    plainEnglish: 'Push/Pull Force = Mass × Acceleration',
+    description: 'The heavier an object is, the more force you need to push it and change its speed.',
     variables: [
-      { sym: 'F', name: 'Net Force', unit: 'N (kg·m/s²)' },
-      { sym: 'm', name: 'Inertial Mass', unit: 'kg' },
-      { sym: 'a', name: 'Acceleration', unit: 'm/s²' }
+      { sym: 'F_{net}', name: 'Net Force', unit: 'N (Newtons)' },
+      { sym: 'm', name: 'Object Mass', unit: 'kg' },
+      { sym: 'a', name: 'Acceleration', unit: 'm/s²' },
+      { sym: 'dp/dt', name: 'Rate of Momentum Change', unit: 'kg·m/s²' }
     ],
     targetTopicId: 'newtons_laws'
   },
@@ -63,214 +69,230 @@ const FORMULAS_DATA: FormulaItem[] = [
     category: 'Physics',
     domain: 'Energy',
     latex: 'W_{net} = \\Delta K = \\frac{1}{2}mv^2 - \\frac{1}{2}mu^2',
-    description: 'Net mechanical work done on an object equals the net change in its kinetic energy.',
+    plainEnglish: 'Work Done = Final Kinetic Energy − Starting Kinetic Energy',
+    description: 'Any mechanical work you do on an object directly turns into its energy of motion.',
     variables: [
-      { sym: 'W', name: 'Work Done', unit: 'J (Joules)' },
-      { sym: 'K', name: 'Kinetic Energy', unit: 'J' },
-      { sym: 'm', name: 'Mass', unit: 'kg' },
-      { sym: 'v', name: 'Velocity', unit: 'm/s' }
+      { sym: 'W_{net}', name: 'Work Done', unit: 'J (Joules)' },
+      { sym: '\\Delta K', name: 'Energy Change', unit: 'J (Joules)' },
+      { sym: 'm', name: 'Object Mass', unit: 'kg' },
+      { sym: 'v', name: 'Final Speed', unit: 'm/s' },
+      { sym: 'u', name: 'Starting Speed', unit: 'm/s' }
     ],
     targetTopicId: 'work_energy_power'
   },
   {
     id: 'f-gravitation',
-    name: "Newton's Law of Universal Gravitation",
+    name: "Newton's Universal Law of Gravitation",
     category: 'Physics',
     domain: 'Gravitation',
     latex: 'F_g = G \\frac{M m}{r^2}',
-    description: 'Every point mass attracts every other point mass with a force inversely proportional to distance squared.',
+    plainEnglish: 'Gravity Pull = G × (Mass₁ × Mass₂) ÷ Distance²',
+    description: 'Every two masses in the universe pull each other; moving twice as far away makes gravity 4× weaker.',
     variables: [
-      { sym: 'F_g', name: 'Gravitational Force', unit: 'N' },
-      { sym: 'G', name: 'Universal Constant', unit: '6.674×10⁻¹¹ N·m²/kg²' },
-      { sym: 'M, m', name: 'Interacting Masses', unit: 'kg' },
-      { sym: 'r', name: 'Orbital Radius / Separation', unit: 'm' }
+      { sym: 'F_g', name: 'Gravitational Pull', unit: 'N (Newtons)' },
+      { sym: 'G', name: 'Gravity Constant', unit: '6.674×10⁻¹¹ N·m²/kg²' },
+      { sym: 'M, m', name: 'Two Masses', unit: 'kg' },
+      { sym: 'r', name: 'Distance Between Centers', unit: 'm' }
     ],
     targetTopicId: 'gravitation'
   },
   {
     id: 'f-waves-speed',
-    name: 'Universal Wave Equation',
+    name: 'Universal Wave Speed Equation',
     category: 'Physics',
     domain: 'Waves & Sound',
     latex: 'v = f \\lambda = \\frac{\\lambda}{T}',
-    description: 'Propagation speed of any periodic wave equals frequency times wavelength.',
+    plainEnglish: 'Wave Speed = Frequency (Waves/sec) × Wavelength (Wave Length)',
+    description: 'Determines how fast ripples on water, sound waves, or light beams travel through a medium.',
     variables: [
-      { sym: 'v', name: 'Wave Propagation Speed', unit: 'm/s' },
-      { sym: 'f', name: 'Frequency', unit: 'Hz (s⁻¹)' },
-      { sym: 'λ', name: 'Wavelength', unit: 'm' },
-      { sym: 'T', name: 'Period', unit: 's' }
+      { sym: 'v', name: 'Wave Travel Speed', unit: 'm/s' },
+      { sym: 'f', name: 'Frequency (cycles/sec)', unit: 'Hz' },
+      { sym: '\\lambda', name: 'Wavelength', unit: 'm' },
+      { sym: 'T', name: 'Oscillation Time Period', unit: 's' }
     ],
     targetTopicId: 'waves'
   },
   {
     id: 'f-pythagorean-trig',
-    name: 'Fundamental Pythagorean Identity',
+    name: 'Pythagorean Trigonometric Identity',
     category: 'Mathematics',
     domain: 'Trigonometry',
     latex: '\\sin^2\\theta + \\cos^2\\theta = 1',
-    description: 'Geometric conservation of unit circle radius (x² + y² = 1) for any real angle θ.',
+    plainEnglish: '(Vertical Height)² + (Horizontal Width)² = (Radius)² = 1',
+    description: 'No matter what angle you pick on a unit circle, Pythagoras theorem guarantees the sum of squares is always 1.',
     variables: [
-      { sym: 'θ', name: 'Angle', unit: 'Radians / Degrees' },
-      { sym: 'sin θ', name: 'Vertical Component y', unit: 'Dimensionless' },
-      { sym: 'cos θ', name: 'Horizontal Component x', unit: 'Dimensionless' }
+      { sym: '\\theta', name: 'Rotation Angle', unit: 'Degrees / Radians' },
+      { sym: '\\sin\\theta', name: 'Vertical Height (y)', unit: 'Ratio (-1 to 1)' },
+      { sym: '\\cos\\theta', name: 'Horizontal Width (x)', unit: 'Ratio (-1 to 1)' }
     ],
     targetTopicId: 'trigonometry'
   },
   {
     id: 'f-calculus-power',
-    name: 'Calculus Power Rule for Derivatives',
+    name: 'Power Rule for Instantaneous Derivatives',
     category: 'Mathematics',
     domain: 'Calculus',
     latex: '\\frac{d}{dx}[x^n] = n x^{n-1}',
-    description: 'Finds the exact instantaneous slope/gradient of polynomial curves at any point x.',
+    plainEnglish: 'Slope of xⁿ = Exponent × x^(Exponent − 1)',
+    description: 'Finds the exact speed or steepness of any curve at a single instantaneous point.',
     variables: [
-      { sym: 'd/dx', name: 'Derivative Operator', unit: 'Rate of change' },
-      { sym: 'x', name: 'Independent Variable', unit: 'Arbitrary' },
-      { sym: 'n', name: 'Power Exponent', unit: 'Real Number' }
+      { sym: 'd/dx', name: 'Rate of Change Operator', unit: 'Slope' },
+      { sym: 'x', name: 'Input Variable', unit: 'Dimensionless' },
+      { sym: 'n', name: 'Power Exponent', unit: 'Constant' }
     ],
     targetTopicId: 'basic_calculus'
   },
   {
     id: 'f-quadratic-formula',
-    name: 'Quadratic Equation Roots & Discriminant',
+    name: 'Quadratic Formula & Root Finder',
     category: 'Mathematics',
     domain: 'Algebra',
     latex: 'x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
-    description: 'Finds the exact real or complex x-intercepts of any parabola ax² + bx + c = 0.',
+    plainEnglish: 'Finds where the U-shaped parabola crosses zero',
+    description: 'Gives the exact crossing points (roots) for any quadratic equation ax² + bx + c = 0.',
     variables: [
-      { sym: 'x', name: 'Parabola Roots', unit: 'Values' },
-      { sym: 'b²-4ac', name: 'Discriminant (Δ)', unit: 'Determines real/complex roots' },
-      { sym: 'a, b, c', name: 'Polynomial Coefficients', unit: 'Constants' }
+      { sym: 'x', name: 'X-Intercept Roots', unit: 'Values' },
+      { sym: 'b^2-4ac', name: 'Discriminant (Root Tester)', unit: '>0 (2 roots), =0 (1 root), <0 (none)' },
+      { sym: 'a, b, c', name: 'Shape Coefficients', unit: 'Constants' }
     ],
     targetTopicId: 'algebra'
   },
   {
     id: 'f-circle-geometry',
-    name: 'Standard Circle in Cartesian Plane',
+    name: 'Standard Cartesian Circle Equation',
     category: 'Mathematics',
     domain: 'Coordinate Geometry',
     latex: '(x - h)^2 + (y - k)^2 = r^2',
-    description: 'Locus of all points equidistant from fixed center point (h, k).',
+    plainEnglish: '(x − CenterX)² + (y − CenterY)² = Radius²',
+    description: 'Maps all points that sit at the exact distance r from center (h, k).',
     variables: [
       { sym: '(h, k)', name: 'Circle Center', unit: 'Coordinates' },
-      { sym: 'r', name: 'Circle Radius', unit: 'Length' }
+      { sym: 'r', name: 'Radius of Circle', unit: 'Units' }
     ],
     targetTopicId: 'coordinate_geometry'
   },
   {
     id: 'f-snells-law',
-    name: "Snell's Law of Refraction",
+    name: "Snell's Law of Optical Refraction",
     category: 'Physics',
     domain: 'Optics',
     latex: 'n_1 \\sin\\theta_1 = n_2 \\sin\\theta_2',
-    description: 'Relates angle of incidence to angle of refraction across optical media with different refractive indices.',
+    plainEnglish: 'Medium 1 Index × sin(Angle 1) = Medium 2 Index × sin(Angle 2)',
+    description: 'Explains why straws bend in water and how camera lenses and eyeglasses focus light rays.',
     variables: [
-      { sym: 'n₁, n₂', name: 'Refractive Indices', unit: 'Dimensionless' },
-      { sym: 'θ₁', name: 'Angle of Incidence', unit: 'Degrees (°)' },
-      { sym: 'θ₂', name: 'Angle of Refraction', unit: 'Degrees (°)' }
+      { sym: 'n_1, n_2', name: 'Refractive Indices (Glass/Water)', unit: 'Pure Number (Air=1.0, Glass≈1.5)' },
+      { sym: '\\theta_1', name: 'Incoming Light Angle', unit: 'Degrees (°)' },
+      { sym: '\\theta_2', name: 'Bent Light Angle', unit: 'Degrees (°)' }
     ],
     targetTopicId: 'optics'
   },
   {
     id: 'f-thin-lens',
-    name: 'Gaussian Thin Lens Equation',
+    name: 'Thin Lens Gaussian Focus Equation',
     category: 'Physics',
     domain: 'Optics',
     latex: '\\frac{1}{f} = \\frac{1}{v} - \\frac{1}{u}',
-    description: 'Relates focal length f, image distance v, and object distance u for spherical lenses.',
+    plainEnglish: '1 / Focal Length = (1 / Image Distance) − (1 / Object Distance)',
+    description: 'Tells you where a sharp image will form when looking through a magnifying glass or camera lens.',
     variables: [
-      { sym: 'f', name: 'Focal Length', unit: 'm / mm' },
-      { sym: 'v', name: 'Image Distance', unit: 'm / mm' },
-      { sym: 'u', name: 'Object Distance', unit: 'm / mm' }
+      { sym: 'f', name: 'Lens Focal Length', unit: 'mm / cm' },
+      { sym: 'v', name: 'Image Distance from Lens', unit: 'mm / cm' },
+      { sym: 'u', name: 'Object Distance from Lens', unit: 'mm / cm' }
     ],
     targetTopicId: 'optics'
   },
   {
     id: 'f-ideal-gas',
-    name: 'Ideal Gas Equation of State',
+    name: 'Ideal Gas Law of State',
     category: 'Physics',
     domain: 'Thermodynamics',
     latex: 'P V = n R T',
-    description: 'Macroscopic equation of state relating pressure, volume, substance quantity, and absolute temperature.',
+    plainEnglish: 'Pressure × Container Volume = Gas Amount × Constant × Temperature',
+    description: 'Explains why car tires expand when hot and how bicycle pumps heat up when compressing air.',
     variables: [
-      { sym: 'P', name: 'Gas Pressure', unit: 'Pa / kPa' },
-      { sym: 'V', name: 'Volume', unit: 'm³ / Liters' },
-      { sym: 'n', name: 'Amount of Substance', unit: 'mol' },
-      { sym: 'R', name: 'Universal Gas Constant', unit: '8.314 J/(mol·K)' },
-      { sym: 'T', name: 'Absolute Temperature', unit: 'K (Kelvin)' }
+      { sym: 'P', name: 'Gas Pressure', unit: 'Pa (Pascals)' },
+      { sym: 'V', name: 'Volume of Gas', unit: 'm³ (Liters)' },
+      { sym: 'n', name: 'Molar Amount of Gas', unit: 'moles' },
+      { sym: 'R', name: 'Gas Constant', unit: '8.314 J/(mol·K)' },
+      { sym: 'T', name: 'Temperature in Kelvin', unit: 'K' }
     ],
     targetTopicId: 'thermodynamics'
   },
   {
     id: 'f-carnot-efficiency',
-    name: 'Carnot Heat Engine Maximum Efficiency',
+    name: 'Carnot Engine Maximum Efficiency',
     category: 'Physics',
     domain: 'Thermodynamics',
     latex: '\\eta_{Carnot} = 1 - \\frac{T_C}{T_H} = \\frac{W_{net}}{Q_H}',
-    description: 'Upper physical bound on thermal efficiency for any engine operating between hot and cold heat reservoirs.',
+    plainEnglish: 'Max Efficiency = 1 − (Cold Temperature ÷ Hot Temperature)',
+    description: 'The absolute maximum energy any heat engine (like a car engine or power plant) can convert to work.',
     variables: [
-      { sym: 'η', name: 'Thermal Efficiency', unit: 'Fraction (0 to 1)' },
-      { sym: 'T_H', name: 'Hot Reservoir Temperature', unit: 'K' },
-      { sym: 'T_C', name: 'Cold Reservoir Temperature', unit: 'K' },
-      { sym: 'W_net', name: 'Net Work Output', unit: 'J' }
+      { sym: '\\eta', name: 'Engine Efficiency Ratio', unit: '0 to 1 (0% to 100%)' },
+      { sym: 'T_H', name: 'Hot Temperature Source', unit: 'K' },
+      { sym: 'T_C', name: 'Cold Temperature Exhaust', unit: 'K' },
+      { sym: 'W_{net}', name: 'Work Output', unit: 'Joules' }
     ],
     targetTopicId: 'thermodynamics'
   },
   {
     id: 'f-dimensions-homogeneity',
-    name: 'Principle of Dimensional Homogeneity',
+    name: 'Dimensional Homogeneity Rule',
     category: 'Physics',
     domain: 'Units & Dimensions',
     latex: '[F] = [M][L][T]^{-2} \\quad \\text{and} \\quad [E] = [M][L]^2[T]^{-2}',
-    description: 'Every valid physical formula must have identical fundamental dimensional powers on both sides.',
+    plainEnglish: 'Force Units = Mass × Length ÷ Time² (kg·m/s²)',
+    description: 'Verifies that every physics formula makes sense by checking that both sides match fundamental units.',
     variables: [
-      { sym: '[M]', name: 'Mass Dimension', unit: 'Fundamental (kg)' },
-      { sym: '[L]', name: 'Length Dimension', unit: 'Fundamental (m)' },
-      { sym: '[T]', name: 'Time Dimension', unit: 'Fundamental (s)' }
+      { sym: '[M]', name: 'Mass Dimension', unit: 'Kilograms (kg)' },
+      { sym: '[L]', name: 'Length Dimension', unit: 'Meters (m)' },
+      { sym: '[T]', name: 'Time Dimension', unit: 'Seconds (s)' }
     ],
     targetTopicId: 'units_dimensions'
   },
   {
     id: 'f-function-transform',
-    name: 'Function Translation & Graph Transformations',
+    name: 'Function Graph Shift & Scaling',
     category: 'Mathematics',
     domain: 'Functions & Graphs',
     latex: 'g(x) = a \\cdot f(x - h) + k',
-    description: 'Shifts graph of f(x) horizontally by h, vertically by k, and scales vertical height by amplitude factor a.',
+    plainEnglish: 'Shift curve Right by h, Up by k, Stretch height by a',
+    description: 'Takes any graph curve and lets you move or stretch it anywhere on the coordinate plane.',
     variables: [
-      { sym: 'h', name: 'Horizontal Translation', unit: 'Shift right (+h) / left (-h)' },
-      { sym: 'k', name: 'Vertical Translation', unit: 'Shift up (+k) / down (-k)' },
-      { sym: 'a', name: 'Vertical Scale Factor', unit: 'Stretch (|a| > 1) / Compress' }
+      { sym: 'h', name: 'Horizontal Shift', unit: 'Right (+h) / Left (-h)' },
+      { sym: 'k', name: 'Vertical Shift', unit: 'Up (+k) / Down (-k)' },
+      { sym: 'a', name: 'Vertical Stretch Factor', unit: 'Taller (>1) / Flatter (<1)' }
     ],
     targetTopicId: 'functions'
   },
   {
     id: 'f-arithmetic-progression',
-    name: 'Arithmetic Progression n-th Term & Sum (AP)',
+    name: 'Arithmetic Progression Step Rule (AP)',
     category: 'Mathematics',
     domain: 'Sequences & Series',
     latex: 'a_n = a + (n - 1)d, \\quad S_n = \\frac{n}{2}[2a + (n - 1)d]',
-    description: 'Calculates the n-th value and cumulative total of a sequence with constant common difference d.',
+    plainEnglish: 'Target Number = Start + (Step − 1) × Step Size',
+    description: 'Calculates any step and the total sum in steady staircase sequences like 2, 5, 8, 11...',
     variables: [
-      { sym: 'a', name: 'First Term', unit: 'Initial sequence value' },
-      { sym: 'd', name: 'Common Difference', unit: 'Step interval' },
-      { sym: 'n', name: 'Term Position', unit: 'Positive integer' },
-      { sym: 'S_n', name: 'Sum of n Terms', unit: 'Cumulative total' }
+      { sym: 'a', name: 'Starting Number', unit: 'First term' },
+      { sym: 'd', name: 'Step Difference', unit: 'Added each step' },
+      { sym: 'n', name: 'Step Position Number', unit: '1, 2, 3...' },
+      { sym: 'S_n', name: 'Sum of All Steps', unit: 'Total' }
     ],
     targetTopicId: 'sequences'
   },
   {
     id: 'f-geometric-progression',
-    name: 'Geometric Progression n-th Term & Sum (GP)',
+    name: 'Geometric Progression Multiplier Rule (GP)',
     category: 'Mathematics',
     domain: 'Sequences & Series',
-    latex: 'a_n = a \\cdot r^{n-1}, \\quad S_n = \\frac{a(1 - r^n)}{1 - r} \\quad (r \\neq 1)',
-    description: 'Models exponential scaling and compound growth where consecutive terms multiply by common ratio r.',
+    latex: 'a_n = a \\cdot r^{n-1}, \\quad S_n = \\frac{a(1 - r^n)}{1 - r}',
+    plainEnglish: 'Target Number = Start × (Multiplier)^(Step − 1)',
+    description: 'Models exponential doubling or compound growth sequences like 3, 6, 12, 24, 48...',
     variables: [
-      { sym: 'a', name: 'First Term', unit: 'Initial value' },
-      { sym: 'r', name: 'Common Ratio', unit: 'Multiplier per step' },
-      { sym: 'n', name: 'Term Position', unit: 'Positive integer' },
-      { sym: 'S_n', name: 'Sum of n Terms', unit: 'Geometric series total' }
+      { sym: 'a', name: 'Starting Value', unit: 'First term' },
+      { sym: 'r', name: 'Multiplier Ratio', unit: 'Factor per step' },
+      { sym: 'n', name: 'Step Number', unit: 'Positive integer' },
+      { sym: 'S_n', name: 'Cumulative Total', unit: 'Total sum' }
     ],
     targetTopicId: 'sequences'
   }
@@ -284,13 +306,24 @@ interface FormulaBankModalProps {
 export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onSelectTopic }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<'All' | 'Physics' | 'Mathematics'>('All');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyLatex = (id: string, latex: string) => {
+    try {
+      navigator.clipboard.writeText(latex);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch {
+      // Fallback
+    }
+  };
 
   const filteredFormulas = FORMULAS_DATA.filter((item) => {
     const matchesCat = activeCategory === 'All' || item.category === activeCategory;
     const matchesQuery =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.plainEnglish.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.latex.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCat && matchesQuery;
   });
@@ -306,9 +339,9 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px 16px',
-        backgroundColor: 'rgba(7, 11, 20, 0.75)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)'
+        backgroundColor: 'rgba(2, 5, 14, 0.82)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)'
       }}
       onClick={onClose}
     >
@@ -316,14 +349,15 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
         className="glass-card formula-modal-window"
         style={{
           width: '100%',
-          maxWidth: 960,
-          maxHeight: '90vh',
+          maxWidth: 980,
+          maxHeight: '92vh',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
           padding: 0,
           border: '1px solid var(--border-electric)',
-          background: 'var(--bg-glass-heavy)'
+          background: 'var(--bg-glass-heavy)',
+          boxShadow: 'var(--shadow-xl), 0 0 45px rgba(0, 240, 255, 0.15)'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -339,60 +373,64 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
             background: 'var(--bg-glass-card)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div
               style={{
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, #0062FF, #7C3AED)',
+                background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)',
+                border: '1px solid var(--border-electric)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#FFFFFF'
+                boxShadow: '0 0 16px rgba(0, 240, 255, 0.2)'
               }}
             >
-              <BookOpen size={20} />
+              <BookOpen size={22} color="var(--electric-blue)" />
             </div>
             <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Formulas &amp; Variable Index
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
+                Formula Bank &amp; Cheat Sheet
               </h2>
-              <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                Essential Class 11 formulas with SI units, derivations, and instant simulation links
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+                Crystal-clear formulas with Plain English translations, SI units, and 1-click simulations
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
+            aria-label="Close formula modal"
             style={{
               width: 36,
               height: 36,
-              borderRadius: '50%',
+              borderRadius: 'var(--radius-pill)',
               border: '1px solid var(--border-subtle)',
-              background: 'transparent',
+              background: 'var(--bg-tertiary)',
               color: 'var(--text-secondary)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              transition: 'all 0.2s ease'
             }}
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Filter & Search Bar */}
+        {/* Filter Bar & Search */}
         <div
           style={{
             padding: '16px 28px',
             borderBottom: '1px solid var(--border-subtle)',
             display: 'flex',
-            gap: 16,
             alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 16,
             flexWrap: 'wrap',
-            background: 'var(--bg-secondary)'
+            background: 'rgba(8, 14, 32, 0.6)'
           }}
         >
           {/* Category Tabs */}
@@ -402,15 +440,15 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
                 style={{
-                  padding: '6px 16px',
+                  padding: '7px 16px',
                   borderRadius: 'var(--radius-pill)',
-                  border: '1px solid',
-                  borderColor: activeCategory === cat ? 'var(--electric-blue)' : 'var(--border-subtle)',
+                  border: activeCategory === cat ? '1px solid var(--electric-blue)' : '1px solid var(--border-subtle)',
                   background: activeCategory === cat ? 'var(--electric-blue)' : 'var(--bg-glass-card)',
-                  color: activeCategory === cat ? '#FFFFFF' : 'var(--text-secondary)',
+                  color: activeCategory === cat ? '#000000' : 'var(--text-secondary)',
                   fontSize: '0.84rem',
-                  fontWeight: 600,
-                  cursor: 'pointer'
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
                 }}
               >
                 {cat}
@@ -419,22 +457,28 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
           </div>
 
           {/* Search Input */}
-          <div style={{ position: 'relative', flex: 1, minWidth: 220 }}>
+          <div style={{ position: 'relative', flex: '1', minWidth: 260, maxWidth: 420 }}>
             <Search
               size={16}
-              style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }}
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--text-muted)'
+              }}
             />
             <input
               type="text"
-              placeholder="Search formulas, variables, or topics..."
+              placeholder="Search by name, plain English, or topic..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 width: '100%',
-                padding: '8px 12px 8px 36px',
+                padding: '9px 14px 9px 36px',
                 borderRadius: 'var(--radius-pill)',
                 border: '1px solid var(--border-subtle)',
-                background: 'var(--bg-glass-card)',
+                background: 'var(--bg-tertiary)',
                 color: 'var(--text-primary)',
                 fontSize: '0.86rem',
                 outline: 'none'
@@ -444,9 +488,10 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
         </div>
 
         {/* Formulas Grid */}
-        <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {filteredFormulas.map((item) => {
-            const isExpanded = expandedId === item.id;
+            const isPhysics = item.category === 'Physics';
+
             return (
               <div
                 key={item.id}
@@ -454,118 +499,188 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 12
+                  gap: 14,
+                  padding: '20px 24px',
+                  borderRadius: 'var(--radius-lg)',
+                  background: 'var(--bg-glass-card)',
+                  border: '1px solid var(--border-subtle)',
+                  boxShadow: 'var(--shadow-sm)'
                 }}
               >
+                {/* 1. Header: Domain Badge, Formula Name, Simulate Button */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span
                       style={{
-                        padding: '3px 10px',
+                        padding: '3px 12px',
                         borderRadius: 'var(--radius-pill)',
                         fontSize: '0.72rem',
-                        fontWeight: 700,
-                        background: item.category === 'Physics' ? 'rgba(0, 98, 255, 0.12)' : 'rgba(124, 58, 237, 0.12)',
-                        color: item.category === 'Physics' ? 'var(--electric-blue)' : 'var(--electric-violet)'
+                        fontWeight: 800,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        background: isPhysics ? 'rgba(0, 240, 255, 0.12)' : 'rgba(168, 85, 247, 0.14)',
+                        color: isPhysics ? 'var(--electric-blue)' : 'var(--electric-violet)',
+                        border: isPhysics ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid rgba(168, 85, 247, 0.3)'
                       }}
                     >
                       {item.domain}
                     </span>
-                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                    <h3 style={{ fontSize: '1.08rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                       {item.name}
                     </h3>
                   </div>
 
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                      style={{
-                        fontSize: '0.78rem',
-                        color: 'var(--text-secondary)',
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        textDecoration: 'underline'
-                      }}
-                    >
-                      {isExpanded ? 'Hide Details' : 'Variable Details'}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        onClose();
-                        onSelectTopic(item.targetTopicId);
-                      }}
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        padding: '6px 14px',
-                        borderRadius: 'var(--radius-pill)',
-                        border: '1px solid var(--border-electric)',
-                        background: 'var(--electric-blue-soft)',
-                        color: 'var(--electric-blue)',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <span>Simulate</span>
-                      <ArrowRight size={14} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onSelectTopic(item.targetTopicId);
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '6px 16px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: '1px solid var(--border-electric)',
+                      background: 'var(--electric-blue-soft)',
+                      color: 'var(--electric-blue)',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span>Simulate Now</span>
+                    <ArrowRight size={14} />
+                  </button>
                 </div>
 
-                {/* Equation Display Box */}
+                {/* 2. Crisp KaTeX Formula Display Box with Copy LaTeX Action */}
                 <div
-                  className="font-math"
                   style={{
-                    padding: '12px 20px',
-                    borderRadius: 'var(--radius-sm)',
+                    position: 'relative',
+                    padding: '20px 24px',
+                    borderRadius: 'var(--radius-md)',
                     background: 'var(--bg-tertiary)',
                     border: '1px solid var(--border-subtle)',
-                    fontSize: '1.25rem',
-                    letterSpacing: '0.04em',
-                    color: 'var(--text-primary)',
-                    textAlign: 'center'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.3)',
+                    overflowX: 'auto'
                   }}
                 >
-                  {item.latex}
+                  <MathView math={item.latex} block style={{ fontSize: '1.38rem', width: '100%' }} />
+
+                  {/* Copy LaTeX Action */}
+                  <button
+                    onClick={() => handleCopyLatex(item.id, item.latex)}
+                    title="Copy LaTeX formula code"
+                    className="copy-latex-btn"
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '4px 9px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: copiedId === item.id ? '1px solid var(--accent-success)' : '1px solid var(--border-subtle)',
+                      background: copiedId === item.id ? 'rgba(16, 185, 129, 0.15)' : 'rgba(15, 23, 42, 0.8)',
+                      color: copiedId === item.id ? 'var(--accent-success)' : 'var(--text-secondary)',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      zIndex: 2
+                    }}
+                  >
+                    {copiedId === item.id ? (
+                      <>
+                        <Check size={12} color="var(--accent-success)" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={12} />
+                        <span>LaTeX</span>
+                      </>
+                    )}
+                  </button>
                 </div>
 
-                <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)' }}>
+                {/* 3. Plain English Meaning Banner (Instant Understanding) */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '8px 14px',
+                    borderRadius: 'var(--radius-sm)',
+                    background: isPhysics ? 'rgba(0, 240, 255, 0.07)' : 'rgba(168, 85, 247, 0.08)',
+                    border: isPhysics ? '1px solid rgba(0, 240, 255, 0.2)' : '1px solid rgba(168, 85, 247, 0.22)',
+                    fontSize: '0.86rem',
+                    fontWeight: 600,
+                    color: isPhysics ? 'var(--electric-blue)' : 'var(--electric-violet)'
+                  }}
+                >
+                  <Sparkles size={15} style={{ flexShrink: 0 }} />
+                  <span>
+                    <strong style={{ color: 'var(--text-primary)' }}>Plain English: </strong>
+                    {item.plainEnglish}
+                  </span>
+                </div>
+
+                {/* 4. Real-World Description */}
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
                   {item.description}
                 </p>
 
-                {/* Expanded Variables Table */}
-                {isExpanded && (
+                {/* 5. Clear, Always-Visible Variable Legend */}
+                <div
+                  style={{
+                    padding: '12px 16px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'rgba(5, 9, 22, 0.65)',
+                    border: '1px solid var(--border-subtle)'
+                  }}
+                >
                   <div
                     style={{
-                      marginTop: 8,
-                      padding: '12px 16px',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-subtle)'
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      color: 'var(--text-muted)',
+                      marginBottom: 8,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em'
                     }}
                   >
-                    <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 8, textTransform: 'uppercase' }}>
-                      Variables &amp; SI Units
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-                      {item.variables.map((v, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem' }}>
-                          <span className="font-mono" style={{ fontWeight: 800, color: 'var(--electric-blue)' }}>
-                            {v.sym}:
-                          </span>
-                          <span style={{ color: 'var(--text-primary)' }}>{v.name}</span>
-                          <span className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>
-                            ({v.unit})
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                    What the letters mean:
                   </div>
-                )}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 10 }}>
+                    {item.variables.map((v, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.83rem' }}>
+                        <span
+                          className="font-mono"
+                          style={{
+                            fontWeight: 800,
+                            color: isPhysics ? 'var(--electric-blue)' : 'var(--electric-violet)',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            minWidth: 26
+                          }}
+                        >
+                          <MathView math={v.sym} />:
+                        </span>
+                        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{v.name}</span>
+                        <span className="font-mono" style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>
+                          ({v.unit})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -574,3 +689,5 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
     </div>
   );
 };
+
+export default FormulaBankModal;

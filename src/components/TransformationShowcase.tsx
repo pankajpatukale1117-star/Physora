@@ -1,5 +1,6 @@
 import React from 'react';
 import { Layers, Activity, Compass, Orbit, Box, ArrowRight } from 'lucide-react';
+import { MathView } from './MathView';
 
 interface TransformationShowcaseProps {
   currentStage: number;
@@ -203,20 +204,20 @@ export const TransformationShowcase: React.FC<TransformationShowcaseProps> = ({
 
                 <div
                   style={{
-                    background: '#F8FAFC',
+                    background: 'rgba(15, 23, 42, 0.65)',
+                    border: '1px solid var(--border-subtle)',
                     borderRadius: 'var(--radius-md)',
                     padding: '8px 12px',
                     borderLeft: `3px solid ${stage.color}`,
-                    fontFamily: 'var(--font-math)',
-                    fontSize: '0.85rem',
                     color: 'var(--text-primary)',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    overflowX: 'auto'
                   }}
                 >
-                  <span>{stage.math}</span>
-                  <ArrowRight size={14} color={stage.color} />
+                  <MathView math={stage.math} />
+                  <ArrowRight size={14} color={stage.color} style={{ flexShrink: 0, marginLeft: 8 }} />
                 </div>
               </div>
             );

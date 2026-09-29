@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Play } from 'lucide-react';
+import { MathView } from './MathView';
 
 interface SimulationCurriculumProps {
   onEnterLabClick: () => void;
@@ -156,18 +157,18 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               {/* Formula */}
               <div
                 style={{
-                  background: '#F8FAFC',
+                  background: 'rgba(15, 23, 42, 0.65)',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-md)',
-                  padding: '8px 12px',
+                  padding: '10px 14px',
                   borderLeft: '3px solid var(--electric-blue)',
-                  fontFamily: 'var(--font-math)',
-                  fontSize: '0.88rem',
                   color: 'var(--text-primary)',
                   marginTop: 14,
-                  marginBottom: 16
+                  marginBottom: 16,
+                  overflowX: 'auto'
                 }}
               >
-                y = x tanθ - [g x² / (2 u² cos²θ)]
+                <MathView math="y = x \tan\theta - \frac{g x^2}{2 u^2 \cos^2\theta}" block />
               </div>
               <button
                 onClick={onEnterLabClick}
@@ -208,18 +209,18 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               <MiniFieldCanvas />
               <div
                 style={{
-                  background: '#F8FAFC',
+                  background: 'rgba(15, 23, 42, 0.65)',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-md)',
-                  padding: '8px 12px',
+                  padding: '10px 14px',
                   borderLeft: '3px solid var(--electric-cyan)',
-                  fontFamily: 'var(--font-math)',
-                  fontSize: '0.88rem',
                   color: 'var(--text-primary)',
                   marginTop: 14,
-                  marginBottom: 16
+                  marginBottom: 16,
+                  overflowX: 'auto'
                 }}
               >
-                ∮ E⃗ · dA⃗ = Q_enc / ε₀  •  p⃗ = q · 2a⃗
+                <MathView math="\oint \vec{E} \cdot d\vec{A} = \frac{Q_{enc}}{\varepsilon_0} \quad \bullet \quad \vec{p} = q \cdot 2\vec{a}" block />
               </div>
               <button
                 onClick={onEnterLabClick}
@@ -260,18 +261,18 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               <MiniCircularCanvas />
               <div
                 style={{
-                  background: '#F8FAFC',
+                  background: 'rgba(15, 23, 42, 0.65)',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-md)',
-                  padding: '8px 12px',
+                  padding: '10px 14px',
                   borderLeft: '3px solid var(--electric-blue)',
-                  fontFamily: 'var(--font-math)',
-                  fontSize: '0.88rem',
                   color: 'var(--text-primary)',
                   marginTop: 14,
-                  marginBottom: 16
+                  marginBottom: 16,
+                  overflowX: 'auto'
                 }}
               >
-                tanθ = v² / (R g)  •  a⃗_c = -(v² / R) r̂
+                <MathView math="\tan\theta = \frac{v^2}{R g} \quad \bullet \quad \vec{a}_c = -\frac{v^2}{R} \hat{r}" block />
               </div>
               <button
                 onClick={onEnterLabClick}
@@ -312,18 +313,18 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               <MiniCalculusCanvas />
               <div
                 style={{
-                  background: '#F8FAFC',
+                  background: 'rgba(15, 23, 42, 0.65)',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-md)',
-                  padding: '8px 12px',
+                  padding: '10px 14px',
                   borderLeft: '3px solid var(--electric-violet)',
-                  fontFamily: 'var(--font-math)',
-                  fontSize: '0.88rem',
                   color: 'var(--text-primary)',
                   marginTop: 14,
-                  marginBottom: 16
+                  marginBottom: 16,
+                  overflowX: 'auto'
                 }}
               >
-                {"∫_a^b f(x)dx = lim_{n→∞} Σ f(xᵢ*) Δx"}
+                <MathView math="\int_a^b f(x)dx = \lim_{n \to \infty} \sum f(x_i^*) \Delta x" block />
               </div>
               <button
                 onClick={onEnterLabClick}
@@ -364,18 +365,18 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               <MiniVectorsCanvas />
               <div
                 style={{
-                  background: '#F8FAFC',
+                  background: 'rgba(15, 23, 42, 0.65)',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-md)',
-                  padding: '8px 12px',
+                  padding: '10px 14px',
                   borderLeft: '3px solid var(--electric-violet)',
-                  fontFamily: 'var(--font-math)',
-                  fontSize: '0.88rem',
                   color: 'var(--text-primary)',
                   marginTop: 14,
-                  marginBottom: 16
+                  marginBottom: 16,
+                  overflowX: 'auto'
                 }}
               >
-                a⃗ × b⃗ = |a⃗||b⃗| sinθ n̂  •  [a⃗, b⃗, c⃗] = 0
+                <MathView math="\vec{a} \times \vec{b} = |\vec{a}| |\vec{b}| \sin\theta \hat{n} \quad \bullet \quad [\vec{a}, \vec{b}, \vec{c}] = 0" block />
               </div>
               <button
                 onClick={onEnterLabClick}
@@ -416,18 +417,18 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
               <MiniConicsCanvas />
               <div
                 style={{
-                  background: '#F8FAFC',
+                  background: 'rgba(15, 23, 42, 0.65)',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: 'var(--radius-md)',
-                  padding: '8px 12px',
+                  padding: '10px 14px',
                   borderLeft: '3px solid var(--electric-violet)',
-                  fontFamily: 'var(--font-math)',
-                  fontSize: '0.88rem',
                   color: 'var(--text-primary)',
                   marginTop: 14,
-                  marginBottom: 16
+                  marginBottom: 16,
+                  overflowX: 'auto'
                 }}
               >
-                SP / PM = e  •  (x² / a²) ± (y² / b²) = 1
+                <MathView math="\frac{SP}{PM} = e \quad \bullet \quad \frac{x^2}{a^2} \pm \frac{y^2}{b^2} = 1" block />
               </div>
               <button
                 onClick={onEnterLabClick}

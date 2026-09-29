@@ -16,6 +16,7 @@ import {
   Flame,
   Play
 } from 'lucide-react';
+import { MathView } from './MathView';
 
 interface BasicTopicPreviewProps {
   onSelectTopic: (topicId: string) => void;
@@ -361,7 +362,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                             whiteSpace: 'nowrap'
                           }}
                         >
-                          {topic.tag}
+                          <MathView math={topic.tag} />
                         </span>
                       </div>
 
@@ -524,7 +525,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                             whiteSpace: 'nowrap'
                           }}
                         >
-                          {topic.tag}
+                          <MathView math={topic.tag} />
                         </span>
                       </div>
 

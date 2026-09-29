@@ -355,28 +355,30 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
         </div>
 
         <div className="canvas-touch-actions" style={{ pointerEvents: 'auto', display: 'flex', gap: 6 }}>
-          <button
-            type="button"
-            onClick={onTogglePlay}
-            className="canvas-action-btn"
-            title={isPlaying ? 'Pause Experiment' : 'Play Experiment'}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-pill)',
-              border: '1px solid rgba(0, 240, 255, 0.4)',
-              background: isPlaying ? 'rgba(0, 240, 255, 0.25)' : 'rgba(15, 23, 42, 0.85)',
-              color: '#FFFFFF',
-              fontSize: '0.74rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4
-            }}
-          >
-            {isPlaying ? <Pause size={12} /> : <Play size={12} />}
-            <span>{isPlaying ? 'Pause' : 'Play'}</span>
-          </button>
+          {experimentId !== 'vector_exp' && onTogglePlay && (
+            <button
+              type="button"
+              onClick={onTogglePlay}
+              className="canvas-action-btn"
+              title={isPlaying ? 'Pause Experiment' : 'Play Experiment'}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid rgba(0, 240, 255, 0.4)',
+                background: isPlaying ? 'rgba(0, 240, 255, 0.25)' : 'rgba(15, 23, 42, 0.85)',
+                color: '#FFFFFF',
+                fontSize: '0.74rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}
+            >
+              {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+              <span>{isPlaying ? 'Pause' : 'Play'}</span>
+            </button>
+          )}
 
           <button
             type="button"

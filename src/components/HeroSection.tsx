@@ -27,6 +27,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         pointerEvents: 'none'
       }}
     >
+      {/* Hypnotic Aurora Glow Lens (Living Cosmic Lighting) */}
+      <div className="hero-aurora-glow" aria-hidden="true" />
+
       <div
         className="section-container"
         style={{

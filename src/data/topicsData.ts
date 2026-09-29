@@ -1016,3 +1016,35 @@ export const TOPICS_DATA: Record<string, TopicData> = {
     ]
   }
 };
+
+/**
+ * Set of simulation IDs that genuinely animate with time (t).
+ * Static graphers, formula calculators, and direct geometric/parameter tools do not use time t
+ * and must NOT display a Play/Pause button.
+ */
+export const ANIMATED_SIMULATION_IDS = new Set<string>([
+  'trig_wave_unroll',
+  'coord_circle',
+  'func_machine',
+  'calc_kinematics_deriv',
+  'motion_car_track',
+  'motion_free_fall',
+  'motion_relative',
+  'newton_inertia_friction',
+  'newton_f_ma',
+  'newton_action_reaction',
+  'energy_rollercoaster',
+  'energy_spring_mass',
+  'grav_orbit_satellite',
+  'wave_transverse_string',
+  'wave_sound_particles',
+  'wave_superposition',
+  'thermo_ideal_gas_chamber',
+  'thermo_carnot_cycle',
+  'thermo_heat_conduction'
+]);
+
+export const isSimulationAnimated = (simId?: string): boolean => {
+  if (!simId) return false;
+  return ANIMATED_SIMULATION_IDS.has(simId);
+};

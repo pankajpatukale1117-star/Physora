@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { EXPERIMENTS_DATA, type ExperimentItem } from '../../data/experimentsData';
 import { ExperimentCanvas } from './ExperimentCanvas';
+import { MathView } from '../MathView';
 
 interface ExperimentsViewProps {
   initialExperimentId?: string | null;
@@ -468,7 +469,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                 }}
               >
                 <span>Governing Formula:</span>
-                <strong>{discovery.formula}</strong>
+                <MathView math={discovery.formula} />
               </div>
             )}
           </div>
