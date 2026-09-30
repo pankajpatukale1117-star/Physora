@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FlaskConical,
   Sparkles,
@@ -6,9 +6,20 @@ import {
   ArrowLeft,
   Sliders,
   Lightbulb,
-  ChevronRight
+  ChevronRight,
+  ClipboardList,
+  PlusCircle,
+  Trash2,
+  Download,
+  CheckCircle2,
+  Wrench,
+  Variable
 } from 'lucide-react';
-import { EXPERIMENTS_DATA, type ExperimentItem } from '../../data/experimentsData';
+import {
+  EXPERIMENTS_DATA,
+  type ExperimentItem,
+  type LabDomain
+} from '../../data/experimentsData';
 import { ExperimentCanvas } from './ExperimentCanvas';
 import { MathView } from '../MathView';
 
@@ -21,6 +32,15 @@ interface ExperimentStudioViewProps {
   experiment: ExperimentItem;
   onBack: () => void;
   onSelectExperiment: (id: string) => void;
+}
+
+interface LabTrialRecord {
+  id: number;
+  timestamp: string;
+  independentVal: string;
+  dependentMeasured: string;
+  theoreticalVal: string;
+  variance: string;
 }
 
 const NumericControlBadge: React.FC<{
@@ -124,6 +144,13 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
 
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [telemetry, setTelemetry] = useState<Record<string, string>>({});
+  const [trials, setTrials] = useState<LabTrialRecord[]>([]);
+  const [showLogFeedback, setShowLogFeedback] = useState<boolean>(false);
+
+  // Scroll to top immediately when an experiment studio loads
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [experiment.id]);
 
   const handleParamChange = (id: string, value: number) => {
     setParams(prev => ({ ...prev, [id]: value }));
@@ -137,6 +164,51 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
     setParams(initial);
   };
 
+  // Record an observation into the digital lab notebook
+  const handleRecordTrial = () => {
+    const trialData = experiment.getTrialData(params, telemetry);
+    const now = new Date();
+    const timeStr = now.toTimeString().split(' ')[0];
+
+    const newRecord: LabTrialRecord = {
+      id: trials.length + 1,
+      timestamp: timeStr,
+      independentVal: trialData.independentVal,
+      dependentMeasured: trialData.dependentMeasured,
+      theoreticalVal: trialData.theoreticalVal,
+      variance: trialData.variance
+    };
+
+    setTrials(prev => [newRecord, ...prev]);
+    setShowLogFeedback(true);
+    setTimeout(() => setShowLogFeedback(false), 2000);
+  };
+
+  const handleClearTrials = () => {
+    setTrials([]);
+  };
+
+  const handleExportCSV = () => {
+    if (trials.length === 0) return;
+    const headers = ['Trial #', 'Timestamp', 'Independent Variable', 'Measured Output', 'Theoretical Expectation', 'Variance'];
+    const rows = trials.map(t => [
+      t.id,
+      t.timestamp,
+      `"${t.independentVal}"`,
+      `"${t.dependentMeasured}"`,
+      `"${t.theoreticalVal}"`,
+      `"${t.variance}"`
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `${experiment.id}_lab_data.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const discovery = experiment.getDiscovery(params);
 
   return (
@@ -144,22 +216,22 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
       className="experiment-studio-container"
       style={{
         minHeight: '100vh',
-        paddingTop: '80px',
+        paddingTop: '96px',
         paddingBottom: '80px',
         background: 'var(--bg-primary)'
       }}
     >
-      <div className="section-container" style={{ padding: '0 20px' }}>
+      <div className="section-container" style={{ padding: '0 20px', maxWidth: 1280, margin: '0 auto' }}>
         
-        {/* Top Bar: Back Button, Tab Selector & Level Badge */}
+        {/* Top Header Bar: Back Button, Domain Badge & Quick Lab Switcher */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             flexWrap: 'wrap',
-            gap: 10,
-            marginBottom: 16
+            gap: 12,
+            marginBottom: 20
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -170,7 +242,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                padding: '7px 14px',
+                padding: '8px 16px',
                 borderRadius: 'var(--radius-pill)',
                 border: '1px solid var(--border-subtle)',
                 background: 'var(--bg-glass-card)',
@@ -182,22 +254,23 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
               }}
             >
               <ArrowLeft size={15} />
-              <span>All Experiments</span>
+              <span>All Laboratory Investigations</span>
             </button>
 
             <span
               style={{
-                fontSize: '0.72rem',
+                fontSize: '0.74rem',
                 fontWeight: 700,
                 fontFamily: 'var(--font-mono)',
-                padding: '4px 10px',
+                padding: '4px 12px',
                 borderRadius: 'var(--radius-pill)',
                 background: 'rgba(0, 240, 255, 0.12)',
                 color: 'var(--electric-blue)',
-                border: '1px solid rgba(0, 240, 255, 0.25)'
+                border: '1px solid rgba(0, 240, 255, 0.25)',
+                letterSpacing: '0.04em'
               }}
             >
-              {experiment.level} • {experiment.category}
+              🔬 {experiment.domain.toUpperCase()}
             </span>
           </div>
 
@@ -213,8 +286,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
               border: '1px solid var(--border-subtle)',
               overflowX: 'auto',
               WebkitOverflowScrolling: 'touch',
-              maxWidth: '100%',
-              width: '100%'
+              maxWidth: '100%'
             }}
           >
             {EXPERIMENTS_DATA.map(exp => {
@@ -243,36 +315,102 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
           </div>
         </div>
 
-        {/* Title & Core Question */}
+        {/* Experiment Title & Challenge */}
         <div style={{ marginBottom: 20 }}>
           <h1
             style={{
-              fontSize: 'clamp(1.05rem, 4.5vw, 2.2rem)',
+              fontSize: 'clamp(1.2rem, 4vw, 2.3rem)',
               fontWeight: 800,
-              letterSpacing: '-0.02em',
-              marginBottom: 6,
+              letterSpacing: '-0.025em',
+              marginBottom: 8,
               color: 'var(--text-primary)',
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word'
+              wordBreak: 'break-word'
             }}
           >
             {experiment.title}
           </h1>
           <p
             style={{
-              fontSize: 'clamp(0.82rem, 3.2vw, 1.02rem)',
+              fontSize: 'clamp(0.85rem, 2.5vw, 1.05rem)',
               color: 'var(--electric-blue)',
               fontWeight: 600,
               display: 'flex',
               alignItems: 'flex-start',
               gap: 8,
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word'
+              wordBreak: 'break-word'
             }}
           >
             <Lightbulb size={18} color="var(--electric-blue)" style={{ flexShrink: 0, marginTop: 2 }} />
-            <span>Challenge: {experiment.question}</span>
+            <span>Investigation Question: {experiment.question}</span>
           </p>
+        </div>
+
+        {/* Laboratory Protocol & Variables Specification Card */}
+        <div
+          className="lab-protocol-card"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 16,
+            padding: '16px 20px',
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--bg-glass-card)',
+            border: '1px solid var(--border-subtle)',
+            marginBottom: 20,
+            boxShadow: 'var(--shadow-sm)'
+          }}
+        >
+          {/* Col 1: Objective & Hypothesis */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--electric-blue)' }}>
+              <FlaskConical size={16} />
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.06em' }}>RESEARCH OBJECTIVE &amp; HYPOTHESIS</span>
+            </div>
+            <p style={{ fontSize: '0.84rem', color: 'var(--text-primary)', lineHeight: 1.5, margin: 0 }}>
+              <strong>Objective:</strong> {experiment.objective}
+            </p>
+            <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
+              <em>Hypothesis:</em> {experiment.hypothesis}
+            </p>
+          </div>
+
+          {/* Col 2: Variables Setup */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#10B981' }}>
+              <Variable size={16} />
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.06em' }}>EXPERIMENTAL VARIABLES</span>
+            </div>
+            <div style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div><strong style={{ color: '#10B981' }}>Independent (Manipulated):</strong> {experiment.variables.independent}</div>
+              <div><strong style={{ color: '#38BDF8' }}>Dependent (Measured):</strong> {experiment.variables.dependent}</div>
+              <div><strong style={{ color: '#F59E0B' }}>Controlled:</strong> {experiment.variables.controlled}</div>
+            </div>
+          </div>
+
+          {/* Col 3: Laboratory Apparatus */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#C084FC' }}>
+              <Wrench size={16} />
+              <span style={{ fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.06em' }}>LABORATORY APPARATUS</span>
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {experiment.apparatus.map((item, idx) => (
+                <span
+                  key={idx}
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    color: 'var(--text-secondary)'
+                  }}
+                >
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Main Laboratory Layout */}
@@ -284,7 +422,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
             gap: 20
           }}
         >
-          {/* 1. LARGE DEDICATED SIMULATION CANVAS */}
+          {/* 1. LARGE DEDICATED EXPERIMENT CANVAS */}
           <div
             className="experiment-canvas-container"
             style={{
@@ -311,7 +449,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
             />
           </div>
 
-          {/* 2. VARIABLES & CONTROLS DOCK (Below the simulation) */}
+          {/* 2. WORKBENCH CONTROLS DOCK (Below simulation canvas) */}
           <div
             className="experiment-controls-dock"
             style={{
@@ -333,12 +471,12 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Sliders size={18} color={experiment.accentColor} />
                 <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Variables &amp; Lab Controls
+                  Experimental Parameters &amp; Controls
                 </h3>
               </div>
 
               <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }} className="hide-mobile">
-                Drag sliders or type numbers directly to observe physical changes
+                Manipulate independent variables via slider or direct numerical typing
               </span>
             </div>
 
@@ -355,20 +493,25 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                 return (
                   <div
                     key={ctrl.id}
+                    className="control-card"
                     style={{
-                      padding: '14px 16px',
+                      padding: '14px',
                       borderRadius: 'var(--radius-md)',
-                      background: 'var(--bg-tertiary)',
-                      border: '1px solid var(--border-subtle)',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 10
+                      background: 'rgba(0, 0, 0, 0.25)',
+                      border: '1px solid var(--border-subtle)'
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 10
+                      }}
+                    >
+                      <label style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>
                         {ctrl.label}
-                      </span>
+                      </label>
                       <NumericControlBadge
                         min={ctrl.min}
                         max={ctrl.max}
@@ -376,11 +519,10 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                         value={val}
                         unit={ctrl.unit}
                         accentColor={experiment.accentColor}
-                        onChange={(newVal) => handleParamChange(ctrl.id, newVal)}
+                        onChange={(newV) => handleParamChange(ctrl.id, newV)}
                       />
                     </div>
 
-                    {/* Slider Input */}
                     <input
                       type="range"
                       min={ctrl.min}
@@ -388,32 +530,34 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                       step={ctrl.step}
                       value={val}
                       onChange={(e) => handleParamChange(ctrl.id, parseFloat(e.target.value))}
-                      className="thumb-friendly-slider"
                       style={{
                         width: '100%',
-                        height: '8px',
                         cursor: 'pointer',
                         accentColor: experiment.accentColor
                       }}
                     />
 
-                    {/* Presets Chips (if provided) */}
+                    {/* Preset buttons */}
                     {ctrl.presets && ctrl.presets.length > 0 && (
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                        {ctrl.presets.map(preset => (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+                        {ctrl.presets.map((preset, idx) => (
                           <button
-                            key={preset.label}
+                            key={idx}
                             type="button"
                             onClick={() => handleParamChange(ctrl.id, preset.value)}
                             style={{
-                              padding: '3px 8px',
+                              fontSize: '0.68rem',
+                              padding: '2px 8px',
                               borderRadius: 'var(--radius-pill)',
-                              border: '1px solid var(--border-subtle)',
-                              background: val === preset.value ? experiment.accentColor : 'transparent',
+                              border: val === preset.value
+                                ? `1px solid ${experiment.accentColor}`
+                                : '1px solid rgba(255, 255, 255, 0.1)',
+                              background: val === preset.value
+                                ? `${experiment.accentColor}25`
+                                : 'rgba(255, 255, 255, 0.04)',
                               color: val === preset.value ? '#FFFFFF' : 'var(--text-secondary)',
-                              fontSize: '0.7rem',
-                              fontWeight: 600,
                               cursor: 'pointer',
+                              fontWeight: val === preset.value ? 700 : 500,
                               transition: 'all 0.15s ease'
                             }}
                           >
@@ -428,73 +572,230 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
             </div>
           </div>
 
-          {/* 3. LIVE RESULTS & TELEMETRY ROW */}
+          {/* 3. DIGITAL LABORATORY NOTEBOOK: OBSERVATION TABLE & DATA LOGGER */}
           <div
+            className="experiment-notebook-dock"
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
-              gap: 12
+              padding: '20px',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--bg-glass-card)',
+              border: '1px solid var(--border-subtle)',
+              boxShadow: 'var(--shadow-sm)'
             }}
           >
-            {experiment.telemetryFields.map(f => (
-              <div
-                key={f.key}
-                style={{
-                  padding: '14px 18px',
-                  borderRadius: 'var(--radius-md)',
-                  background: 'var(--bg-glass-card)',
-                  border: '1px solid var(--border-subtle)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 4
-                }}
-              >
-                <span style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  {f.label}
-                </span>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 12,
+                marginBottom: 16
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ClipboardList size={18} color="#10B981" />
+                <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Laboratory Notebook &amp; Observation Table
+                </h3>
                 <span
-                  className="font-mono"
                   style={{
-                    fontSize: '1.15rem',
-                    fontWeight: 800,
-                    color: experiment.accentColor
+                    fontSize: '0.72rem',
+                    fontFamily: 'var(--font-mono)',
+                    padding: '2px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                    background: 'rgba(16, 185, 129, 0.15)',
+                    color: '#10B981',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    fontWeight: 700
                   }}
                 >
-                  {telemetry[f.key] || '—'}
+                  {trials.length} {trials.length === 1 ? 'Trial Logged' : 'Trials Logged'}
                 </span>
               </div>
-            ))}
+
+              {/* Action Buttons for Lab Notebook */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  onClick={handleRecordTrial}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '8px 16px',
+                    borderRadius: 'var(--radius-pill)',
+                    border: 'none',
+                    background: showLogFeedback
+                      ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
+                      : 'linear-gradient(135deg, #0062FF 0%, #00F0FF 100%)',
+                    color: '#FFFFFF',
+                    fontSize: '0.80rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 10px rgba(0, 240, 255, 0.25)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {showLogFeedback ? <CheckCircle2 size={15} /> : <PlusCircle size={15} />}
+                  <span>{showLogFeedback ? 'Observation Logged!' : 'Record Trial Observation'}</span>
+                </button>
+
+                {trials.length > 0 && (
+                  <>
+                    <button
+                      onClick={handleExportCSV}
+                      title="Export CSV"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '8px 12px',
+                        borderRadius: 'var(--radius-pill)',
+                        border: '1px solid var(--border-subtle)',
+                        background: 'rgba(0, 0, 0, 0.3)',
+                        color: 'var(--text-secondary)',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Download size={14} />
+                      <span className="hide-mobile">CSV</span>
+                    </button>
+
+                    <button
+                      onClick={handleClearTrials}
+                      title="Clear Table"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '8px 12px',
+                        borderRadius: 'var(--radius-pill)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        color: '#EF4444',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Trash2 size={14} />
+                      <span className="hide-mobile">Clear</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Observation Table */}
+            {trials.length === 0 ? (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '28px 16px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  border: '1px dashed var(--border-subtle)',
+                  color: 'var(--text-muted)',
+                  fontSize: '0.84rem'
+                }}
+              >
+                No experimental observations recorded yet. Adjust the workbench controls above and click{' '}
+                <strong style={{ color: 'var(--electric-blue)' }}>"Record Trial Observation"</strong> to log data points for verification.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <table
+                  style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    fontSize: '0.82rem',
+                    textAlign: 'left'
+                  }}
+                >
+                  <thead>
+                    <tr
+                      style={{
+                        borderBottom: '1px solid var(--border-subtle)',
+                        color: 'var(--text-secondary)',
+                        fontFamily: 'var(--font-mono)'
+                      }}
+                    >
+                      <th style={{ padding: '8px 12px' }}>Trial #</th>
+                      <th style={{ padding: '8px 12px' }}>Time</th>
+                      <th style={{ padding: '8px 12px' }}>Independent Variable</th>
+                      <th style={{ padding: '8px 12px' }}>Measured Output</th>
+                      <th style={{ padding: '8px 12px' }}>Theoretical Expectation</th>
+                      <th style={{ padding: '8px 12px' }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {trials.map((t) => (
+                      <tr
+                        key={t.id}
+                        style={{
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                          fontFamily: 'var(--font-mono)'
+                        }}
+                      >
+                        <td style={{ padding: '8px 12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          #{t.id}
+                        </td>
+                        <td style={{ padding: '8px 12px', color: 'var(--text-muted)' }}>
+                          {t.timestamp}
+                        </td>
+                        <td style={{ padding: '8px 12px', color: experiment.accentColor }}>
+                          {t.independentVal}
+                        </td>
+                        <td style={{ padding: '8px 12px', fontWeight: 700, color: '#FFFFFF' }}>
+                          {t.dependentMeasured}
+                        </td>
+                        <td style={{ padding: '8px 12px', color: '#10B981' }}>
+                          {t.theoreticalVal}
+                        </td>
+                        <td style={{ padding: '8px 12px' }}>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 4,
+                              fontSize: '0.72rem',
+                              color: '#10B981',
+                              background: 'rgba(16, 185, 129, 0.12)',
+                              padding: '2px 8px',
+                              borderRadius: 'var(--radius-pill)',
+                              fontWeight: 700
+                            }}
+                          >
+                            <CheckCircle2 size={12} />
+                            Verified ({t.variance})
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
-          {/* 4. "WHAT DID YOU DISCOVER?" DYNAMIC TAKEAWAY CARD */}
+          {/* 4. SCIENTIFIC LAW VERIFICATION & MATHEMATICAL DISCOVERY */}
           <div
-            className="experiment-discovery-card"
+            className="experiment-discovery-dock"
             style={{
-              padding: '24px',
+              padding: '22px',
               borderRadius: 'var(--radius-lg)',
-              background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%)',
-              border: '1px solid rgba(0, 240, 255, 0.25)',
-              boxShadow: 'var(--shadow-md)',
+              background: 'linear-gradient(135deg, rgba(0, 98, 255, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%)',
+              border: `1px solid ${experiment.accentColor}35`,
+              boxShadow: 'var(--shadow-sm)',
               display: 'flex',
               flexDirection: 'column',
-              gap: 12
+              gap: 14
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: 'rgba(0, 240, 255, 0.15)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: 'var(--electric-blue)'
-                }}
-              >
-                <Sparkles size={20} />
-              </div>
+              <Sparkles size={20} color={experiment.accentColor} />
               <div>
                 <span
                   className="font-mono"
@@ -505,10 +806,10 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                     letterSpacing: '0.08em'
                   }}
                 >
-                  LAB OBSERVATION TAKEAWAY
+                  EMPIRICAL LAW VERIFICATION
                 </span>
                 <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                  What did you discover?
+                  {discovery.headline}
                 </h4>
               </div>
             </div>
@@ -518,7 +819,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
               style={{
                 padding: '10px 14px',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(0, 0, 0, 0.25)',
+                background: 'rgba(0, 0, 0, 0.35)',
                 borderLeft: `4px solid ${experiment.accentColor}`,
                 fontFamily: 'var(--font-mono)',
                 fontSize: '0.9rem',
@@ -550,7 +851,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                   fontWeight: 700
                 }}
               >
-                <span>Governing Formula:</span>
+                <span>Governing Law:</span>
                 <MathView math={discovery.formula} />
               </div>
             )}
@@ -607,7 +908,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                 cursor: 'pointer'
               }}
             >
-              <span>Next Experiment</span>
+              <span>Next Laboratory Investigation</span>
               <ChevronRight size={16} />
             </button>
           </div>
@@ -618,11 +919,15 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
 };
 
 export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
-  initialExperimentId = null,
-  onBackToSimulations
+  initialExperimentId = null
 }) => {
   const [activeExperimentId, setActiveExperimentId] = useState<string | null>(initialExperimentId);
-  const [filterLevel, setFilterLevel] = useState<'All' | 'Class 9' | 'Class 10' | 'Class 11'>('All');
+  const [selectedDomain, setSelectedDomain] = useState<'All' | LabDomain>('All');
+
+  // Ensure scroll is instantly at top whenever switching views
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [activeExperimentId]);
 
   // Active experiment item
   const activeExperiment: ExperimentItem | undefined = EXPERIMENTS_DATA.find(
@@ -630,41 +935,58 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
   );
 
   const filteredExperiments = EXPERIMENTS_DATA.filter(exp => {
-    if (filterLevel === 'All') return true;
-    return exp.level === filterLevel;
+    if (selectedDomain === 'All') return true;
+    return exp.domain === selectedDomain;
   });
 
+  const availableDomains: ('All' | LabDomain)[] = [
+    'All',
+    'Mechanics & Dynamics',
+    'Optics & Refraction',
+    'Energy & Work',
+    'Elasticity & Springs',
+    'Wave Physics',
+    'Vectors & Equilibrium',
+    'Gravity & Free Fall'
+  ];
+
   // =========================================================================
-  // VIEW A: DIGITAL EXPERIMENT STUDIO (Active Experiment View)
+  // VIEW A: DIGITAL EXPERIMENT STUDIO (Active Laboratory Investigation)
   // =========================================================================
   if (activeExperiment) {
     return (
       <ExperimentStudioView
         key={activeExperiment.id}
         experiment={activeExperiment}
-        onBack={() => setActiveExperimentId(null)}
-        onSelectExperiment={setActiveExperimentId}
+        onBack={() => {
+          setActiveExperimentId(null);
+          window.location.hash = '#experiments';
+        }}
+        onSelectExperiment={(id) => {
+          setActiveExperimentId(id);
+          window.location.hash = `#experiments/${id}`;
+        }}
       />
     );
   }
 
   // =========================================================================
-  // VIEW B: DIGITAL LABORATORY OVERVIEW (Experiment Cards)
+  // VIEW B: DIGITAL LABORATORY OVERVIEW (Experiment Investigation Cards)
   // =========================================================================
   return (
     <div
       className="experiments-page-wrapper"
       style={{
         minHeight: '100vh',
-        paddingTop: '90px',
+        paddingTop: '96px',
         paddingBottom: '100px',
         background: 'var(--bg-primary)'
       }}
     >
-      <div className="section-container" style={{ padding: '0 24px' }}>
+      <div className="section-container" style={{ padding: '0 24px', maxWidth: 1280, margin: '0 auto' }}>
 
         {/* Hero Banner */}
-        <div style={{ textAlign: 'center', maxWidth: 760, margin: '0 auto 40px' }}>
+        <div style={{ textAlign: 'center', maxWidth: 820, margin: '0 auto 40px' }}>
           
           <div
             className="lab-pill-badge"
@@ -672,12 +994,12 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              padding: '6px 12px',
+              padding: '6px 14px',
               borderRadius: 'var(--radius-pill)',
               background: 'rgba(0, 240, 255, 0.1)',
               border: '1px solid rgba(0, 240, 255, 0.25)',
               color: 'var(--electric-blue)',
-              fontSize: 'clamp(0.66rem, 2.6vw, 0.78rem)',
+              fontSize: 'clamp(0.68rem, 2.6vw, 0.80rem)',
               fontWeight: 700,
               fontFamily: 'var(--font-mono)',
               marginBottom: 16,
@@ -686,43 +1008,42 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
             }}
           >
             <FlaskConical size={15} style={{ flexShrink: 0 }} />
-            <span>DISCOVERY LABORATORY</span>
+            <span>VIRTUAL SCIENCE LABORATORY</span>
           </div>
 
           <h1
             style={{
-              fontSize: 'clamp(1.75rem, 7vw, 3.4rem)',
+              fontSize: 'clamp(1.8rem, 6vw, 3.2rem)',
               fontWeight: 900,
               letterSpacing: '-0.03em',
               lineHeight: 1.15,
               marginBottom: 14,
               color: 'var(--text-primary)',
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word'
+              wordBreak: 'break-word'
             }}
           >
-            Experiment. Change. <span className="gradient-text">Discover.</span>
+            Experiment. Manipulate. <span className="gradient-text">Discover.</span>
           </h1>
 
           <p
             style={{
-              fontSize: 'clamp(0.9rem, 2vw, 1.15rem)',
+              fontSize: 'clamp(0.92rem, 2vw, 1.12rem)',
               color: 'var(--text-secondary)',
               lineHeight: 1.6,
-              maxWidth: 640,
+              maxWidth: 680,
               margin: '0 auto 24px'
             }}
           >
-            Play with variables and see mathematics and physics come to life.
-            Change values, observe dynamic effects, and discover the fundamental laws of nature.
+            Real interactive science investigations: form a hypothesis, manipulate independent parameters,
+            collect quantitative trials in your laboratory notebook, and verify empirical physical laws.
           </p>
 
-          {/* Level Filter Tabs */}
+          {/* Scientific Domain Filter Tabs (NO Class 9/10/11) */}
           <div
             style={{
               display: 'inline-flex',
               gap: 6,
-              padding: '4px',
+              padding: '5px',
               borderRadius: 'var(--radius-pill)',
               background: 'var(--bg-glass-card)',
               border: '1px solid var(--border-subtle)',
@@ -732,23 +1053,24 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
               WebkitOverflowScrolling: 'touch'
             }}
           >
-            {(['All', 'Class 9', 'Class 10', 'Class 11'] as const).map(lvl => (
+            {availableDomains.map(dom => (
               <button
-                key={lvl}
-                onClick={() => setFilterLevel(lvl)}
+                key={dom}
+                onClick={() => setSelectedDomain(dom)}
                 style={{
                   padding: '7px 16px',
                   borderRadius: 'var(--radius-pill)',
                   border: 'none',
-                  background: filterLevel === lvl ? 'var(--electric-blue)' : 'transparent',
-                  color: filterLevel === lvl ? '#FFFFFF' : 'var(--text-secondary)',
-                  fontSize: '0.8rem',
+                  background: selectedDomain === dom ? 'var(--electric-blue)' : 'transparent',
+                  color: selectedDomain === dom ? '#FFFFFF' : 'var(--text-secondary)',
+                  fontSize: '0.78rem',
                   fontWeight: 700,
                   cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                   transition: 'all 0.2s ease'
                 }}
               >
-                {lvl === 'All' ? 'All Experiments' : lvl}
+                {dom === 'All' ? 'All Laboratories (8)' : dom}
               </button>
             ))}
           </div>
@@ -760,219 +1082,191 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
-            gap: 24,
-            marginBottom: 60,
-            alignItems: 'stretch'
+            gap: 24
           }}
         >
-          {filteredExperiments.map(exp => (
-            <div
-              key={exp.id}
-              className="experiment-card"
-              style={{
-                borderRadius: 'var(--radius-lg)',
-                background: 'var(--bg-glass-card)',
-                border: '1px solid var(--border-subtle)',
-                boxShadow: 'var(--shadow-sm)',
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                minHeight: 440,
-                transition: 'all 0.25s ease'
-              }}
-            >
-              {/* Visual Preview Header */}
+          {filteredExperiments.map(exp => {
+            const previewDiscovery = exp.getDiscovery({});
+            return (
               <div
+                key={exp.id}
+                className="experiment-card"
                 style={{
-                  height: 140,
-                  flexShrink: 0,
-                  position: 'relative',
-                  background: 'radial-gradient(ellipse at 50% 30%, #0F172A 0%, #030712 100%)',
-                  borderBottom: '1px solid var(--border-subtle)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden'
-                }}
-              >
-                {/* Decorative Laboratory Elements based on experiment */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    opacity: 0.15,
-                    backgroundImage: 'radial-gradient(#00F0FF 1px, transparent 1px)',
-                    backgroundSize: '16px 16px'
-                  }}
-                />
-
-                <div
-                  style={{
-                    width: 64,
-                    height: 64,
-                    borderRadius: 'var(--radius-lg)',
-                    background: `linear-gradient(135deg, ${exp.accentColor}25 0%, ${exp.accentColor}08 100%)`,
-                    border: `1px solid ${exp.accentColor}60`,
-                    boxShadow: `0 0 24px ${exp.accentColor}30`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: exp.accentColor
-                  }}
-                >
-                  <FlaskConical size={32} />
-                </div>
-
-                {/* Level Badge in top corner */}
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: 12,
-                    right: 12,
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-mono)',
-                    padding: '3px 10px',
-                    borderRadius: 'var(--radius-pill)',
-                    background: 'rgba(0, 0, 0, 0.6)',
-                    color: exp.accentColor,
-                    border: `1px solid ${exp.accentColor}50`
-                  }}
-                >
-                  {exp.level}
-                </span>
-
-                <span
-                  style={{
-                    position: 'absolute',
-                    bottom: 10,
-                    left: 14,
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    fontFamily: 'var(--font-mono)',
-                    color: 'var(--text-tertiary)',
-                    letterSpacing: '0.06em'
-                  }}
-                >
-                  {exp.category.toUpperCase()}
-                </span>
-              </div>
-
-              {/* Card Body */}
-              <div
-                style={{
-                  padding: '22px 20px 24px',
+                  borderRadius: 'var(--radius-lg)',
+                  background: 'var(--bg-glass-card)',
+                  border: '1px solid var(--border-subtle)',
+                  overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
-                  flex: '1 0 auto',
-                  minHeight: 260,
-                  gap: 14,
-                  boxSizing: 'border-box'
+                  minHeight: '440px',
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  setActiveExperimentId(exp.id);
+                  window.location.hash = `#experiments/${exp.id}`;
                 }}
               >
-                <h3
-                  style={{
-                    fontSize: '1.2rem',
-                    fontWeight: 800,
-                    color: 'var(--text-primary)',
-                    lineHeight: 1.25
-                  }}
-                >
-                  {exp.title}
-                </h3>
-
-                <p
-                  style={{
-                    fontSize: '0.86rem',
-                    color: 'var(--text-secondary)',
-                    lineHeight: 1.55,
-                    flex: 1
-                  }}
-                >
-                  {exp.shortDesc}
-                </p>
-
-                {/* Variables List */}
+                {/* Visual Header / Micro Preview */}
                 <div
                   style={{
-                    padding: '8px 12px',
-                    borderRadius: 'var(--radius-md)',
-                    background: 'var(--bg-tertiary)',
-                    border: '1px solid var(--border-subtle)',
-                    fontSize: '0.74rem',
-                    fontFamily: 'var(--font-mono)',
-                    color: 'var(--text-secondary)'
-                  }}
-                >
-                  <span style={{ color: 'var(--text-tertiary)' }}>Variables: </span>
-                  <strong style={{ color: exp.accentColor }}>
-                    {exp.controls.map(c => c.label.split(' ')[0]).join(', ')}
-                  </strong>
-                </div>
-
-                {/* Start Experiment Button */}
-                <button
-                  onClick={() => setActiveExperimentId(exp.id)}
-                  style={{
-                    marginTop: 8,
-                    width: '100%',
-                    padding: '11px 18px',
-                    borderRadius: 'var(--radius-pill)',
-                    border: 'none',
-                    background: `linear-gradient(135deg, ${exp.accentColor} 0%, #0050D8 100%)`,
-                    color: '#FFFFFF',
-                    fontSize: '0.86rem',
-                    fontWeight: 700,
+                    height: '140px',
+                    flexShrink: 0,
+                    background: `linear-gradient(135deg, ${exp.accentColor}18 0%, rgba(0, 0, 0, 0.4) 100%)`,
+                    borderBottom: '1px solid var(--border-subtle)',
+                    position: 'relative',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: 8,
-                    cursor: 'pointer',
-                    boxShadow: `0 4px 16px ${exp.accentColor}30`,
-                    transition: 'all 0.2s ease'
+                    overflow: 'hidden'
                   }}
                 >
-                  <span>Start Experiment</span>
-                  <ArrowRight size={15} />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+                  <div
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: '50%',
+                      background: 'var(--bg-glass)',
+                      border: `1px solid ${exp.accentColor}40`,
+                      boxShadow: `0 0 20px ${exp.accentColor}25`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    <FlaskConical size={26} color={exp.accentColor} />
+                  </div>
 
-        {/* Bottom Switch to Conceptual Curriculum */}
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '30px 20px',
-            borderRadius: 'var(--radius-lg)',
-            background: 'var(--bg-glass-card)',
-            border: '1px solid var(--border-subtle)',
-            maxWidth: 680,
-            margin: '0 auto'
-          }}
-        >
-          <h4 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 6 }}>
-            Want to learn the core theory step-by-step?
-          </h4>
-          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', marginBottom: 16 }}>
-            Visit our 14 comprehensive curriculum topics covering Class 11 and foundational Physics &amp; Mathematics.
-          </p>
-          <button
-            onClick={onBackToSimulations}
-            style={{
-              padding: '9px 22px',
-              borderRadius: 'var(--radius-pill)',
-              border: '1px solid var(--border-subtle)',
-              background: 'var(--bg-tertiary)',
-              color: 'var(--text-primary)',
-              fontSize: '0.84rem',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            ← View Conceptual Simulations &amp; Curriculum
-          </button>
+                  {/* Domain Tag */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 12,
+                      right: 12,
+                      fontSize: '0.66rem',
+                      fontFamily: 'var(--font-mono)',
+                      fontWeight: 700,
+                      color: exp.accentColor,
+                      background: 'rgba(0, 0, 0, 0.65)',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: `1px solid ${exp.accentColor}35`
+                    }}
+                  >
+                    {exp.domain}
+                  </div>
+                </div>
+
+                {/* Card Body */}
+                <div
+                  style={{
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: '1 0 auto',
+                    minHeight: '260px',
+                    justifyContent: 'space-between',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  <div>
+                    <h3
+                      style={{
+                        fontSize: '1.15rem',
+                        fontWeight: 800,
+                        color: 'var(--text-primary)',
+                        marginBottom: 8,
+                        lineHeight: 1.3
+                      }}
+                    >
+                      {exp.title}
+                    </h3>
+
+                    <p
+                      style={{
+                        fontSize: '0.84rem',
+                        color: 'var(--text-secondary)',
+                        lineHeight: 1.55,
+                        marginBottom: 14
+                      }}
+                    >
+                      {exp.shortDesc}
+                    </p>
+
+                    {/* Governing Formula */}
+                    {previewDiscovery.formula && (
+                      <div
+                        style={{
+                          marginBottom: 12,
+                          padding: '6px 10px',
+                          borderRadius: 'var(--radius-md)',
+                          background: 'rgba(0, 0, 0, 0.3)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          fontSize: '0.80rem',
+                          color: exp.accentColor,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6
+                        }}
+                      >
+                        <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Law:</span>
+                        <MathView math={previewDiscovery.formula} />
+                      </div>
+                    )}
+
+                    {/* Variables pill list */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+                      {exp.controls.map(c => (
+                        <span
+                          key={c.id}
+                          className="font-mono"
+                          style={{
+                            fontSize: '0.70rem',
+                            padding: '2px 8px',
+                            borderRadius: 'var(--radius-pill)',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            color: 'var(--text-secondary)'
+                          }}
+                        >
+                          {c.label.split(' ')[0]}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Launch Investigation Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveExperimentId(exp.id);
+                      window.location.hash = `#experiments/${exp.id}`;
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 16px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: 'none',
+                      background: `linear-gradient(135deg, ${exp.accentColor} 0%, #0062FF 100%)`,
+                      color: '#FFFFFF',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      boxShadow: `0 4px 14px ${exp.accentColor}25`,
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span>Launch Laboratory Investigation</span>
+                    <ArrowRight size={14} />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
       </div>

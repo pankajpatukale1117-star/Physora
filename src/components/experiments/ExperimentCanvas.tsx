@@ -469,7 +469,7 @@ function drawLaboratoryGrid(ctx: CanvasRenderingContext2D, w: number, h: number)
 }
 
 // ==========================================
-// 1. MOTION EXPERIMENT (Class 9)
+// 1. UNIFORM MOTION & VELOCITY EXPERIMENT
 // ==========================================
 function renderMotionExperiment(
   ctx: CanvasRenderingContext2D,
@@ -625,7 +625,7 @@ function renderMotionExperiment(
 }
 
 // ==========================================
-// 2. FORCE & ACCELERATION EXPERIMENT (Class 9 & 10)
+// 2. FORCE & ACCELERATION EXPERIMENT (NEWTON'S 2ND LAW)
 // ==========================================
 function renderForceExperiment(
   ctx: CanvasRenderingContext2D,
@@ -710,7 +710,7 @@ function renderForceExperiment(
 }
 
 // ==========================================
-// 3. GRAVITY & FREE FALL EXPERIMENT (Class 10)
+// 3. GRAVITY & FREE FALL EXPERIMENT
 // ==========================================
 function renderGravityExperiment(
   ctx: CanvasRenderingContext2D,
@@ -848,7 +848,7 @@ function renderGravityExperiment(
 }
 
 // ==========================================
-// 4. SPRING & HOOKE'S LAW EXPERIMENT (Class 10 & 11)
+// 4. SPRING & HOOKE'S LAW EXPERIMENT
 // ==========================================
 function renderSpringExperiment(
   ctx: CanvasRenderingContext2D,
@@ -1018,7 +1018,7 @@ function renderSpringExperiment(
 }
 
 // ==========================================
-// 5. WAVE FREQUENCY & WAVELENGTH EXPERIMENT (Class 9 & 11)
+// 5. WAVE FREQUENCY & WAVELENGTH EXPERIMENT
 // ==========================================
 function renderWaveExperiment(
   ctx: CanvasRenderingContext2D,
@@ -1169,7 +1169,7 @@ function renderWaveExperiment(
 }
 
 // ==========================================
-// 6. VECTOR RESOLUTION EXPERIMENT (Class 11)
+// 6. VECTOR RESOLUTION EXPERIMENT
 // ==========================================
 function renderVectorExperiment(
   ctx: CanvasRenderingContext2D,
@@ -1366,7 +1366,7 @@ function drawVectorArrow(
 }
 
 // ==========================================
-// 7. OPTICS & REFRACTION EXPERIMENT (Class 10)
+// 7. OPTICS & REFRACTION EXPERIMENT
 // ==========================================
 function renderOpticsExperiment(
   ctx: CanvasRenderingContext2D,
@@ -1609,7 +1609,7 @@ function renderOpticsExperiment(
 }
 
 // ==========================================
-// 8. MECHANICAL ENERGY CONSERVATION EXPERIMENT (Class 9 & 11)
+// 8. MECHANICAL ENERGY CONSERVATION EXPERIMENT
 // ==========================================
 function renderEnergyExperiment(
   ctx: CanvasRenderingContext2D,

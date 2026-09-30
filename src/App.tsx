@@ -108,8 +108,9 @@ export function App() {
   };
 
   const handleEnterLab = () => {
-    // When clicking enter lab, switch to experiments lab or scroll to curriculum
-    handleSelectNavTab('experiments');
+    // Open primary interactive simulation laboratory modal
+    setSelectedTopicId('motion');
+    window.location.hash = '#sim/motion';
   };
 
   return (
