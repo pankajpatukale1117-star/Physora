@@ -17,11 +17,11 @@ export interface ExperimentDiscovery {
 }
 
 export interface ExperimentItem {
-  id: 'motion_exp' | 'force_exp' | 'gravity_exp' | 'spring_exp' | 'wave_exp' | 'vector_exp';
+  id: 'motion_exp' | 'force_exp' | 'gravity_exp' | 'spring_exp' | 'wave_exp' | 'vector_exp' | 'optics_exp' | 'energy_exp';
   title: string;
   shortDesc: string;
   level: 'Class 9' | 'Class 10' | 'Class 11';
-  category: 'Kinematics' | 'Dynamics' | 'Gravity' | 'Elasticity' | 'Wave Physics' | 'Vectors';
+  category: 'Kinematics' | 'Dynamics' | 'Gravity' | 'Elasticity' | 'Wave Physics' | 'Vectors' | 'Optics' | 'Energy & Work';
   question: string;
   accentColor: string;
   controls: ExperimentControl[];
@@ -84,7 +84,7 @@ export const EXPERIMENTS_DATA: ExperimentItem[] = [
         headline: 'Velocity × Time = Total Distance',
         relationship: 'Velocity increased → distance traveled increased proportionally.',
         detail: `At ${v} m/s for ${t} seconds, the object covers ${dist} meters. The slope of the distance-time graph directly equals velocity (${v} m/s). Doubling velocity doubles distance in the same time!`,
-        formula: 's = v · t'
+        formula: 's = v \\cdot t'
       };
     }
   },
@@ -143,7 +143,7 @@ export const EXPERIMENTS_DATA: ExperimentItem[] = [
         headline: "Newton's Second Law: a = F / m",
         relationship: 'Force increased → acceleration increased. Mass increased → acceleration decreased.',
         detail: `Pushing a ${m} kg block with ${f} N produces an acceleration of ${a} m/s². Doubling the force doubles the acceleration, while doubling the mass cuts acceleration in half!`,
-        formula: 'F = m · a  ⇒  a = F / m'
+        formula: 'F = m \\cdot a \\implies a = \\frac{F}{m}'
       };
     }
   },
@@ -219,7 +219,7 @@ export const EXPERIMENTS_DATA: ExperimentItem[] = [
         headline: 'Free Fall is Independent of Mass',
         relationship: 'Gravity increased → fall time decreased and impact velocity increased.',
         detail: `From ${h} m with g = ${g} m/s², the ${m} kg object hits the ground in ${t} seconds at ${v} m/s (${kmh} km/h). Notice that changing mass (1 kg vs 20 kg) makes zero difference to fall time—all masses accelerate equally in gravity!`,
-        formula: 'v = √(2gh),  t = √(2h / g)'
+        formula: 'v = \\sqrt{2gh}, \\quad t = \\sqrt{\\frac{2h}{g}}'
       };
     }
   },
@@ -279,7 +279,7 @@ export const EXPERIMENTS_DATA: ExperimentItem[] = [
         headline: "Hooke's Law: F = k · x",
         relationship: 'Force increased → spring extension increased. Stiffer spring → stretched less.',
         detail: `Applying ${f} N to a spring with stiffness ${k} N/m causes an elongation of ${x.toFixed(2)} m (${cm} cm) storing ${pe} J of elastic potential energy. Extension is directly proportional to applied force!`,
-        formula: 'F = k · x  ⇒  x = F / k'
+        formula: 'F = k \\cdot x \\implies x = \\frac{F}{k}, \\quad PE = \\frac{1}{2} k x^2'
       };
     }
   },
@@ -339,7 +339,7 @@ export const EXPERIMENTS_DATA: ExperimentItem[] = [
         headline: 'Wave Speed Equation: v = f · λ',
         relationship: 'Frequency increased → wavelength decreased (crests bunched closer together).',
         detail: `Oscillating at ${f} Hz with amplitude ${a} px produces a wavelength of ${lambda} px and period of ${t} s. Because speed v is constant in this medium, doubling frequency halves the wavelength!`,
-        formula: 'v = f · λ  ⇒  λ = v / f'
+        formula: 'v = f \\cdot \\lambda \\implies \\lambda = \\frac{v}{f}'
       };
     }
   },
@@ -400,7 +400,171 @@ export const EXPERIMENTS_DATA: ExperimentItem[] = [
         headline: 'Vector Decomposition on Orthogonal Axes',
         relationship: 'Angle increased → Y component increased, X component decreased.',
         detail: `A vector of ${r} N at ${deg}° resolves into ${rx} N horizontally and ${ry} N vertically. At 0°, the vector is 100% horizontal; at 90°, it is 100% vertical. Pythagoras verifies: √(${rx}² + ${ry}²) = ${r} N!`,
-        formula: 'R_x = R · cos θ,   R_y = R · sin θ'
+        formula: 'R_x = R \\cos\\theta, \\quad R_y = R \\sin\\theta'
+      };
+    }
+  },
+
+  // 7. OPTICS & REFRACTION EXPERIMENT (Class 10)
+  {
+    id: 'optics_exp',
+    title: "Snell's Law & Refraction Lab",
+    shortDesc: 'Shoot an incident laser across optical interfaces to observe how light bends toward or away from the normal and discover Total Internal Reflection.',
+    level: 'Class 10',
+    category: 'Optics',
+    question: 'How do refractive indices determine light bending, and at what critical angle does light completely reflect?',
+    accentColor: '#00F0FF',
+    controls: [
+      {
+        id: 'angle',
+        label: 'Incident Angle (θ₁)',
+        min: 0,
+        max: 85,
+        step: 1,
+        defaultValue: 35,
+        unit: '°',
+        presets: [
+          { label: 'Normal (0°)', value: 0 },
+          { label: 'Moderate (30°)', value: 30 },
+          { label: 'Steep (45°)', value: 45 },
+          { label: 'Glancing (60°)', value: 60 }
+        ]
+      },
+      {
+        id: 'n1',
+        label: 'Medium 1 Index (n₁)',
+        min: 1.0,
+        max: 2.4,
+        step: 0.05,
+        defaultValue: 1.0,
+        unit: '',
+        presets: [
+          { label: 'Air (1.00)', value: 1.0 },
+          { label: 'Water (1.33)', value: 1.33 },
+          { label: 'Glass (1.50)', value: 1.5 }
+        ]
+      },
+      {
+        id: 'n2',
+        label: 'Medium 2 Index (n₂)',
+        min: 1.0,
+        max: 2.4,
+        step: 0.05,
+        defaultValue: 1.5,
+        unit: '',
+        presets: [
+          { label: 'Air (1.00)', value: 1.0 },
+          { label: 'Water (1.33)', value: 1.33 },
+          { label: 'Glass (1.50)', value: 1.5 },
+          { label: 'Diamond (2.42)', value: 2.42 }
+        ]
+      }
+    ],
+    telemetryFields: [
+      { key: 'theta1', label: 'Incident Angle (θ₁)', unit: '°' },
+      { key: 'theta2', label: 'Refracted Angle (θ₂)' },
+      { key: 'critAngle', label: 'Critical Angle (θ_c)' },
+      { key: 'status', label: 'Optical Regime' }
+    ],
+    getDiscovery: (vals) => {
+      const t1 = vals.angle ?? 35;
+      const n1 = vals.n1 ?? 1.0;
+      const n2 = vals.n2 ?? 1.5;
+      const sinT1 = Math.sin((t1 * Math.PI) / 180);
+      const sinT2 = (n1 / n2) * sinT1;
+      const isTIR = sinT2 > 1.0;
+      const t2 = isTIR ? 'TIR' : ((Math.asin(sinT2) * 180) / Math.PI).toFixed(1) + '°';
+      const crit = n1 > n2 ? ((Math.asin(n2 / n1) * 180) / Math.PI).toFixed(1) + '°' : 'None (n₁ ≤ n₂)';
+
+      if (isTIR) {
+        return {
+          headline: 'Total Internal Reflection (TIR) Occurs!',
+          relationship: `Incident angle (${t1}°) exceeds the critical angle (${crit}). Light cannot escape Medium 1!`,
+          detail: `Because n₁ (${n1}) > n₂ (${n2}) and sin(θ₁) > n₂/n₁, 100% of the light reflects back inside Medium 1. This exact optical trap allows modern fiber-optic cables to transmit high-speed data across oceans!`,
+          formula: 'n_1 \\sin\\theta_1 = n_2 \\sin\\theta_2 \\implies \\theta_c = \\arcsin\\left(\\frac{n_2}{n_1}\\right)'
+        };
+      }
+
+      const bends = Number(parseFloat(t2)) < t1 ? 'toward the normal (denser medium)' : 'away from the normal (rarer medium)';
+      return {
+        headline: "Snell's Law: n₁ sin θ₁ = n₂ sin θ₂",
+        relationship: `Light bends ${bends} as it passes from n₁=${n1} to n₂=${n2}.`,
+        detail: `At an incident angle of ${t1}°, light enters Medium 2 at ${t2}. The index ratio (n₁/n₂ = ${(n1 / n2).toFixed(2)}) governs refraction. Light slows down in higher index media, bending closer to the perpendicular normal line.`,
+        formula: 'n_1 \\sin\\theta_1 = n_2 \\sin\\theta_2 \\implies \\theta_2 = \\arcsin\\left(\\frac{n_1}{n_2}\\sin\\theta_1\\right)'
+      };
+    }
+  },
+
+  // 8. ENERGY CONSERVATION EXPERIMENT (Class 9 & 11)
+  {
+    id: 'energy_exp',
+    title: 'Conservation of Mechanical Energy',
+    shortDesc: 'Track a mass oscillating in a frictionless parabolic bowl to observe the continuous dynamic exchange between Potential Energy and Kinetic Energy.',
+    level: 'Class 9',
+    category: 'Energy & Work',
+    question: 'How do kinetic energy and potential energy trade off while total mechanical energy stays invariant?',
+    accentColor: '#10B981',
+    controls: [
+      {
+        id: 'height',
+        label: 'Release Height (h₀)',
+        min: 2,
+        max: 20,
+        step: 1,
+        defaultValue: 10,
+        unit: 'm',
+        presets: [
+          { label: 'Low (4 m)', value: 4 },
+          { label: 'Medium (10 m)', value: 10 },
+          { label: 'High (18 m)', value: 18 }
+        ]
+      },
+      {
+        id: 'mass',
+        label: 'Bob Mass (m)',
+        min: 1,
+        max: 10,
+        step: 0.5,
+        defaultValue: 2,
+        unit: 'kg',
+        presets: [
+          { label: 'Light (1 kg)', value: 1 },
+          { label: 'Medium (2 kg)', value: 2 },
+          { label: 'Heavy (5 kg)', value: 5 }
+        ]
+      },
+      {
+        id: 'gravity',
+        label: 'Gravity (g)',
+        min: 1.6,
+        max: 25,
+        step: 0.1,
+        defaultValue: 9.8,
+        unit: 'm/s²',
+        presets: [
+          { label: 'Moon (1.6 m/s²)', value: 1.6 },
+          { label: 'Earth (9.8 m/s²)', value: 9.8 },
+          { label: 'Jupiter (24.8 m/s²)', value: 24.8 }
+        ]
+      }
+    ],
+    telemetryFields: [
+      { key: 'totalE', label: 'Total Energy (E)', unit: 'J' },
+      { key: 'maxVel', label: 'Max Bottom Speed (v_max)', unit: 'm/s' },
+      { key: 'peFrac', label: 'Peak Potential Energy', unit: 'J' },
+      { key: 'conservation', label: 'Energy Status' }
+    ],
+    getDiscovery: (vals) => {
+      const h0 = vals.height ?? 10;
+      const m = vals.mass ?? 2;
+      const g = vals.gravity ?? 9.8;
+      const totalE = (m * g * h0).toFixed(1);
+      const vMax = Math.sqrt(2 * g * h0).toFixed(2);
+      return {
+        headline: 'Energy Cannot Be Created or Destroyed',
+        relationship: 'At top: PE is maximum, KE is zero. At bottom: KE is maximum, PE is zero.',
+        detail: `For a ${m} kg mass dropped from ${h0} m under g = ${g} m/s², the total mechanical energy is always exactly ${totalE} Joules. As it descends, all gravitational potential energy converts cleanly into kinetic energy, reaching peak velocity of ${vMax} m/s at the trough!`,
+        formula: 'E_{\\text{total}} = KE + PE = \\frac{1}{2}mv^2 + mgh = \\text{constant}'
       };
     }
   }

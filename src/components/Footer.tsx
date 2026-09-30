@@ -110,6 +110,19 @@ export const Footer: React.FC = () => {
                 className="font-mono"
                 style={{
                   fontSize: '0.72rem',
+                  color: '#10B981',
+                  background: 'rgba(16, 185, 129, 0.08)',
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-pill)',
+                  fontWeight: 600
+                }}
+              >
+                8 Discovery Labs
+              </span>
+              <span
+                className="font-mono"
+                style={{
+                  fontSize: '0.72rem',
                   color: '#7C3AED',
                   background: 'rgba(124, 58, 237, 0.08)',
                   padding: '4px 10px',

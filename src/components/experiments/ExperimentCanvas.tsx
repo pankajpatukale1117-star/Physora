@@ -182,6 +182,29 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
         onParamChange('magnitude', mag);
         showHudMessage(`Vector: ${mag} N @ ${deg}°`);
       }
+    } else if (experimentId === 'optics_exp') {
+      // Direct drag incident laser source / angle
+      const { virtualW, virtualH } = dimsRef.current;
+      const centerX = virtualW * 0.4;
+      const boundaryY = virtualH * 0.48;
+      const dx = centerX - cx;
+      const dy = boundaryY - cy;
+      if (dy > 8 && dx >= 0) {
+        const rad = Math.atan2(dx, dy);
+        const deg = Math.max(0, Math.min(85, Math.round((rad * 180) / Math.PI)));
+        onParamChange('angle1', deg);
+        showHudMessage(`Incident Angle θ₁ = ${deg}°`);
+      }
+    } else if (experimentId === 'energy_exp') {
+      // Direct drag release height or bob position
+      const { virtualH } = dimsRef.current;
+      const bowlBottomY = virtualH - 90;
+      const bowlH = Math.min(virtualH * 0.5, 180);
+      const dy = bowlBottomY - cy;
+      const ratio = Math.max(0.1, Math.min(1.0, dy / bowlH));
+      const h0 = Math.round(2 + ratio * 23);
+      onParamChange('height', h0);
+      showHudMessage(`Release Height h₀ = ${h0} m`);
     }
   };
 
@@ -285,6 +308,12 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
         case 'vector_exp':
           renderVectorExperiment(ctx, w, h, params, t, onTelemetryUpdate);
           break;
+        case 'optics_exp':
+          renderOpticsExperiment(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+        case 'energy_exp':
+          renderEnergyExperiment(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
       }
 
       // Draw Interactive Finger Touch Reticle — mobile viewport only
@@ -355,7 +384,7 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
         </div>
 
         <div className="canvas-touch-actions" style={{ pointerEvents: 'auto', display: 'flex', gap: 6 }}>
-          {experimentId !== 'vector_exp' && onTogglePlay && (
+          {experimentId !== 'vector_exp' && experimentId !== 'optics_exp' && onTogglePlay && (
             <button
               type="button"
               onClick={onTogglePlay}
@@ -847,6 +876,7 @@ function renderSpringExperiment(
   const baseSpringLen = 90;
   const stretchPixels = (x / 1.0) * 160; // scale
   const totalSpringLen = baseSpringLen + stretchPixels;
+  const massY = anchorY + totalSpringLen;
 
   ctx.save();
 
@@ -870,11 +900,16 @@ function renderSpringExperiment(
   ctx.textAlign = 'right';
   ctx.fillText('Equilibrium (x = 0)', anchorX - 88, anchorY + baseSpringLen + 4);
 
-  // Draw Realistic Helical Coil Spring
-  ctx.strokeStyle = '#8B5CF6';
-  ctx.lineWidth = 3.5;
+  // Draw Realistic Helical Coil Spring with 3D metallic gradient
+  const springGrad = ctx.createLinearGradient(anchorX - 25, anchorY, anchorX + 25, massY);
+  springGrad.addColorStop(0, '#D8B4FE');
+  springGrad.addColorStop(0.3, '#A855F7');
+  springGrad.addColorStop(0.7, '#7C3AED');
+  springGrad.addColorStop(1, '#6366F1');
+  ctx.strokeStyle = springGrad;
+  ctx.lineWidth = 3.8;
   ctx.shadowColor = '#8B5CF6';
-  ctx.shadowBlur = 10;
+  ctx.shadowBlur = 12;
   ctx.beginPath();
   ctx.moveTo(anchorX, anchorY);
 
@@ -890,20 +925,33 @@ function renderSpringExperiment(
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // Hanging Mass Block
-  const massY = anchorY + totalSpringLen;
-  ctx.fillStyle = '#6366F1';
+  // Hanging Mass Block with 3D bevel and specular shine
+  const massW = 64;
+  const massH = 46;
+  const massGrad = ctx.createLinearGradient(anchorX - massW / 2, massY, anchorX + massW / 2, massY + massH);
+  massGrad.addColorStop(0, '#818CF8');
+  massGrad.addColorStop(0.6, '#4F46E5');
+  massGrad.addColorStop(1, '#312E81');
+  ctx.fillStyle = massGrad;
   ctx.shadowColor = '#6366F1';
-  ctx.shadowBlur = 12;
+  ctx.shadowBlur = 14;
   ctx.beginPath();
-  ctx.roundRect(anchorX - 30, massY, 60, 44, 8);
+  ctx.roundRect(anchorX - massW / 2, massY, massW, massH, 8);
   ctx.fill();
   ctx.shadowBlur = 0;
+
+  // Top highlight line on mass block
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(anchorX - massW / 2 + 8, massY + 3);
+  ctx.lineTo(anchorX + massW / 2 - 8, massY + 3);
+  ctx.stroke();
 
   ctx.fillStyle = '#FFFFFF';
   ctx.font = 'bold 12px JetBrains Mono, monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(`${f} N`, anchorX, massY + 26);
+  ctx.fillText(`${f} N`, anchorX, massY + 27);
 
   // Extension Bracket & Indicator
   ctx.strokeStyle = '#00F0FF';
@@ -1013,11 +1061,28 @@ function renderWaveExperiment(
   const omega = 2 * Math.PI * f;
   const k = (2 * Math.PI) / lambda;
 
+  // Ethereal glowing wave fill between sine curve and equilibrium
+  ctx.beginPath();
+  ctx.moveTo(startX, centerY);
+  for (let x = startX; x <= endX; x += 3) {
+    const y = centerY + a * Math.sin(k * (x - startX) - omega * t);
+    ctx.lineTo(x, y);
+  }
+  ctx.lineTo(endX, centerY);
+  ctx.closePath();
+  const waveFillGrad = ctx.createLinearGradient(0, centerY - a, 0, centerY + a);
+  waveFillGrad.addColorStop(0, 'rgba(56, 189, 248, 0.12)');
+  waveFillGrad.addColorStop(0.5, 'rgba(0, 240, 255, 0.04)');
+  waveFillGrad.addColorStop(1, 'rgba(56, 189, 248, 0.12)');
+  ctx.fillStyle = waveFillGrad;
+  ctx.fill();
+
+  // Wave crest curve with vibrant neon glow
   ctx.beginPath();
   ctx.strokeStyle = '#38BDF8';
   ctx.lineWidth = 3;
-  ctx.shadowColor = '#38BDF8';
-  ctx.shadowBlur = 12;
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 14;
 
   for (let x = startX; x <= endX; x += 3) {
     const y = centerY + a * Math.sin(k * (x - startX) - omega * t);
@@ -1027,15 +1092,21 @@ function renderWaveExperiment(
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // Wave Particles / Nodes
+  // Wave Particles / Nodes with glowing halo
   const particleSpacing = Math.max(20, Math.round(lambda / 4));
   for (let x = startX + 20; x < endX - 20; x += particleSpacing) {
     const y = centerY + a * Math.sin(k * (x - startX) - omega * t);
+    // Outer halo
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, Math.PI * 2);
+    ctx.arc(x, y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(56, 189, 248, 0.25)';
+    ctx.fill();
+    // Inner crisp node
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
     ctx.fillStyle = '#FFFFFF';
     ctx.fill();
-    ctx.strokeStyle = '#38BDF8';
+    ctx.strokeStyle = '#00F0FF';
     ctx.lineWidth = 1.5;
     ctx.stroke();
   }
@@ -1222,7 +1293,7 @@ function renderVectorExperiment(
 }
 
 // ==========================================
-// HELPER: Vector Arrow Drawing with Glowing Head
+// HELPER: Vector Arrow Drawing with Glowing Head & Origin Pivot
 // ==========================================
 function drawVectorArrow(
   ctx: CanvasRenderingContext2D,
@@ -1244,34 +1315,513 @@ function drawVectorArrow(
   ctx.shadowColor = color;
   ctx.shadowBlur = 8;
 
+  // Origin pivot dot
+  ctx.beginPath();
+  ctx.arc(fromX, fromY, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
   // Arrow shaft
   ctx.beginPath();
   ctx.moveTo(fromX, fromY);
   ctx.lineTo(toX, toY);
   ctx.stroke();
 
-  // Arrowhead
-  const headLen = 10;
+  // Swept-back aerodynamic arrowhead
+  const headLen = 11;
   const headAngle = Math.PI / 7;
   ctx.beginPath();
   ctx.moveTo(toX, toY);
   ctx.lineTo(toX - headLen * Math.cos(angleRad - headAngle), toY - headLen * Math.sin(angleRad - headAngle));
+  ctx.lineTo(toX - headLen * 0.7 * Math.cos(angleRad), toY - headLen * 0.7 * Math.sin(angleRad));
   ctx.lineTo(toX - headLen * Math.cos(angleRad + headAngle), toY - headLen * Math.sin(angleRad + headAngle));
   ctx.closePath();
   ctx.fill();
   ctx.shadowBlur = 0;
 
-  // Label text
+  // Label text with frosted high-contrast micro-badge
   if (label) {
     ctx.font = 'bold 11px JetBrains Mono, monospace';
-    ctx.fillStyle = color;
-    ctx.textAlign = 'center';
     const midX = (fromX + toX) / 2;
     const midY = (fromY + toY) / 2;
     const normX = -Math.sin(angleRad);
     const normY = Math.cos(angleRad);
-    ctx.fillText(label, midX + normX * 14, midY + normY * 14);
+    const labelX = midX + normX * 16;
+    const labelY = midY + normY * 16;
+
+    const metrics = ctx.measureText(label);
+    const padX = 5;
+    const padY = 3;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+    ctx.fillRect(labelX - metrics.width / 2 - padX, labelY - 10 - padY, metrics.width + padX * 2, 14 + padY * 2);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(labelX - metrics.width / 2 - padX, labelY - 10 - padY, metrics.width + padX * 2, 14 + padY * 2);
+
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.fillText(label, labelX, labelY);
   }
 
+  ctx.restore();
+}
+
+// ==========================================
+// 7. OPTICS & REFRACTION EXPERIMENT (Class 10)
+// ==========================================
+function renderOpticsExperiment(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  params: Record<string, number>,
+  _t: number,
+  onTelemetry: (t: Record<string, string>) => void
+) {
+  const theta1Deg = params.angle ?? 35;
+  const n1 = params.n1 ?? 1.0;
+  const n2 = params.n2 ?? 1.5;
+
+  const theta1Rad = (theta1Deg * Math.PI) / 180;
+  const sinTheta1 = Math.sin(theta1Rad);
+  const sinTheta2 = (n1 / n2) * sinTheta1;
+  const isTIR = sinTheta2 > 1.0;
+  const theta2Rad = isTIR ? 0 : Math.asin(sinTheta2);
+  const theta2Deg = isTIR ? 0 : (theta2Rad * 180) / Math.PI;
+
+  const critAngleStr = n1 > n2 ? `${((Math.asin(n2 / n1) * 180) / Math.PI).toFixed(1)}°` : 'None (n₁ ≤ n₂)';
+
+  onTelemetry({
+    theta1: `${theta1Deg}°`,
+    theta2: isTIR ? 'TIR (No Transmission)' : `${theta2Deg.toFixed(1)}°`,
+    critAngle: critAngleStr,
+    status: isTIR ? 'Total Internal Reflection' : (n1 < n2 ? 'Bends Toward Normal' : 'Bends Away from Normal')
+  });
+
+  const boundaryY = h * 0.5;
+  const centerX = w * 0.45;
+  const rayLen = Math.min(w * 0.38, 200);
+
+  ctx.save();
+
+  // Medium 1 (Top)
+  ctx.fillStyle = 'rgba(10, 18, 38, 0.4)';
+  ctx.fillRect(0, 0, w, boundaryY);
+
+  // Medium 2 (Bottom - Tinted dielectric medium)
+  const med2Grad = ctx.createLinearGradient(0, boundaryY, 0, h);
+  med2Grad.addColorStop(0, 'rgba(0, 98, 255, 0.16)');
+  med2Grad.addColorStop(1, 'rgba(0, 240, 255, 0.08)');
+  ctx.fillStyle = med2Grad;
+  ctx.fillRect(0, boundaryY, w, h - boundaryY);
+
+  // Interface Boundary Line
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(30, boundaryY);
+  ctx.lineTo(w - 30, boundaryY);
+  ctx.stroke();
+
+  // Normal Line (Dashed)
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.moveTo(centerX, 30);
+  ctx.lineTo(centerX, h - 30);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Labels for Normal
+  ctx.font = 'bold 11px JetBrains Mono, monospace';
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.textAlign = 'center';
+  ctx.fillText('Normal (90°)', centerX, 24);
+
+  // Medium Labels & Indices
+  ctx.font = 'bold 13px Inter, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.textAlign = 'left';
+  ctx.fillText(`Medium 1 (n₁ = ${n1.toFixed(2)})`, 40, boundaryY - 24);
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.fillStyle = '#00F0FF';
+  ctx.fillText(`v₁ = ${(3.0 / n1).toFixed(2)} × 10⁸ m/s`, 40, boundaryY - 8);
+
+  ctx.font = 'bold 13px Inter, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText(`Medium 2 (n₂ = ${n2.toFixed(2)})`, 40, boundaryY + 24);
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.fillStyle = '#38BDF8';
+  ctx.fillText(`v₂ = ${(3.0 / n2).toFixed(2)} × 10⁸ m/s`, 40, boundaryY + 40);
+
+  // Incident Ray (Starts at top-left, travels toward (centerX, boundaryY))
+  const incStartX = centerX - rayLen * Math.sin(theta1Rad);
+  const incStartY = boundaryY - rayLen * Math.cos(theta1Rad);
+
+  ctx.strokeStyle = '#00F0FF';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.moveTo(incStartX, incStartY);
+  ctx.lineTo(centerX, boundaryY);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  drawLaserArrowHead(ctx, incStartX, incStartY, centerX, boundaryY, '#00F0FF');
+
+  // Angle theta 1 Arc
+  if (theta1Deg > 3) {
+    const arcR = 40;
+    ctx.beginPath();
+    ctx.arc(centerX, boundaryY, arcR, -Math.PI / 2 - theta1Rad, -Math.PI / 2);
+    ctx.strokeStyle = '#F59E0B';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#F59E0B';
+    ctx.font = 'bold 11px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText(`θ₁ = ${theta1Deg}°`, centerX - 12, boundaryY - arcR / 2);
+  }
+
+  if (isTIR) {
+    // Total Internal Reflection Ray
+    const reflEndX = centerX + rayLen * Math.sin(theta1Rad);
+    const reflEndY = boundaryY - rayLen * Math.cos(theta1Rad);
+
+    ctx.strokeStyle = '#EC4899';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#EC4899';
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.moveTo(centerX, boundaryY);
+    ctx.lineTo(reflEndX, reflEndY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    drawLaserArrowHead(ctx, centerX, boundaryY, reflEndX, reflEndY, '#EC4899');
+
+    // Reflected Arc
+    const arcR = 40;
+    ctx.beginPath();
+    ctx.arc(centerX, boundaryY, arcR, -Math.PI / 2, -Math.PI / 2 + theta1Rad);
+    ctx.strokeStyle = '#EC4899';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Glowing TIR Alert Box
+    const alertX = w - 280;
+    const alertY = boundaryY + 30;
+    ctx.fillStyle = 'rgba(236, 72, 153, 0.15)';
+    ctx.strokeStyle = '#EC4899';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(alertX, alertY, 240, 95, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('⚡ TOTAL INTERNAL REFLECTION', alertX + 12, alertY + 24);
+    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.fillStyle = '#EC4899';
+    ctx.fillText(`Critical Angle θ_c = ${critAngleStr}`, alertX + 12, alertY + 46);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.fillText(`θ₁ (${theta1Deg}°) > θ_c (${critAngleStr})`, alertX + 12, alertY + 66);
+    ctx.fillText('Transmission: 0% | Reflection: 100%', alertX + 12, alertY + 84);
+  } else {
+    // Refracted Ray into Medium 2
+    const refrEndX = centerX + rayLen * Math.sin(theta2Rad);
+    const refrEndY = boundaryY + rayLen * Math.cos(theta2Rad);
+
+    ctx.strokeStyle = '#38BDF8';
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#38BDF8';
+    ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.moveTo(centerX, boundaryY);
+    ctx.lineTo(refrEndX, refrEndY);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    drawLaserArrowHead(ctx, centerX, boundaryY, refrEndX, refrEndY, '#38BDF8');
+
+    // Angle theta 2 Arc
+    if (theta2Deg > 3) {
+      const arcR = 45;
+      ctx.beginPath();
+      ctx.arc(centerX, boundaryY, arcR, Math.PI / 2 - theta2Rad, Math.PI / 2);
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#38BDF8';
+      ctx.font = 'bold 11px JetBrains Mono, monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText(`θ₂ = ${theta2Deg.toFixed(1)}°`, centerX + 12, boundaryY + arcR / 2 + 10);
+    }
+
+    // Partial faint Fresnel reflection in Medium 1
+    const reflEndX = centerX + rayLen * Math.sin(theta1Rad) * 0.7;
+    const reflEndY = boundaryY - rayLen * Math.cos(theta1Rad) * 0.7;
+    ctx.strokeStyle = 'rgba(236, 72, 153, 0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(centerX, boundaryY);
+    ctx.lineTo(reflEndX, reflEndY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Right Side Telemetry Card
+  const boxX = w - 270;
+  const boxY = 40;
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(boxX, boxY, 240, 125, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 13px Inter, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText("Snell's Law Calculation", boxX + 14, boxY + 24);
+
+  ctx.font = '11px JetBrains Mono, monospace';
+  ctx.fillStyle = '#00F0FF';
+  ctx.fillText(`n₁ · sin(θ₁) = ${n1.toFixed(2)} · sin(${theta1Deg}°)`, boxX + 14, boxY + 48);
+  ctx.fillText(`           = ${(n1 * sinTheta1).toFixed(3)}`, boxX + 14, boxY + 66);
+
+  ctx.fillStyle = isTIR ? '#EC4899' : '#38BDF8';
+  if (isTIR) {
+    ctx.fillText(`n₁ · sin(θ₁) > n₂ (${(n1 * sinTheta1).toFixed(2)} > ${n2.toFixed(2)})`, boxX + 14, boxY + 92);
+    ctx.fillText(`=> TIR: No Real θ₂ Exists!`, boxX + 14, boxY + 110);
+  } else {
+    ctx.fillText(`θ₂ = arcsin(${(sinTheta2).toFixed(3)})`, boxX + 14, boxY + 92);
+    ctx.fillText(`   = ${theta2Deg.toFixed(1)}°`, boxX + 14, boxY + 110);
+  }
+
+  ctx.restore();
+}
+
+// ==========================================
+// 8. MECHANICAL ENERGY CONSERVATION EXPERIMENT (Class 9 & 11)
+// ==========================================
+function renderEnergyExperiment(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  params: Record<string, number>,
+  t: number,
+  onTelemetry: (t: Record<string, string>) => void
+) {
+  const h0 = params.height ?? 10;
+  const m = params.mass ?? 2;
+  const g = params.gravity ?? 9.8;
+
+  // Total Mechanical Energy (conserved at all times)
+  const totalE = m * g * h0;
+  const vMax = Math.sqrt(2 * g * h0);
+
+  // Oscillation in frictionless parabolic half-pipe
+  const omega = Math.sqrt(g / 8);
+  const phase = Math.cos(omega * t);
+
+  // Height varies between 0 and h0
+  const currentH = h0 * phase * phase;
+  const pe = m * g * currentH;
+  const ke = Math.max(0, totalE - pe);
+  const curSpeed = Math.sqrt((2 * ke) / m);
+
+  onTelemetry({
+    totalE: `${totalE.toFixed(1)} J`,
+    maxVel: `${vMax.toFixed(2)} m/s`,
+    peFrac: `${pe.toFixed(1)} J (${((pe / (totalE || 1)) * 100).toFixed(0)}%)`,
+    conservation: 'Conserved (ΔE = 0%)'
+  });
+
+  const bowlCenterX = w * 0.4;
+  const bowlBottomY = h - 90;
+  const bowlWidth = Math.min(w * 0.6, 360);
+  const bowlHeight = Math.min(h * 0.5, 180);
+
+  ctx.save();
+
+  // Draw Smooth Parabolic Half-Pipe Bowl Track
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  for (let px = -bowlWidth / 2; px <= bowlWidth / 2; px += 4) {
+    const normX = px / (bowlWidth / 2);
+    const py = bowlBottomY - bowlHeight * (normX * normX);
+    if (px === -bowlWidth / 2) ctx.moveTo(bowlCenterX + px, py);
+    else ctx.lineTo(bowlCenterX + px, py);
+  }
+  ctx.stroke();
+
+  // Track Support Struts
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.lineWidth = 1;
+  for (let px = -bowlWidth / 2; px <= bowlWidth / 2; px += 40) {
+    const normX = px / (bowlWidth / 2);
+    const py = bowlBottomY - bowlHeight * (normX * normX);
+    ctx.beginPath();
+    ctx.moveTo(bowlCenterX + px, py);
+    ctx.lineTo(bowlCenterX + px, bowlBottomY + 20);
+    ctx.stroke();
+  }
+
+  // Base ground line
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(bowlCenterX - bowlWidth / 2 - 30, bowlBottomY + 20);
+  ctx.lineTo(bowlCenterX + bowlWidth / 2 + 30, bowlBottomY + 20);
+  ctx.stroke();
+
+  // Bob position on the track
+  const ballNormX = phase; // ranges -1 to +1
+  const ballPx = bowlCenterX + ballNormX * (bowlWidth / 2);
+  const ballPy = bowlBottomY - bowlHeight * (ballNormX * ballNormX);
+  const ballRadius = Math.max(10, Math.min(22, 10 + m * 1.5));
+
+  // Height guide dashed line from bottom to current height
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath();
+  ctx.moveTo(ballPx, ballPy);
+  ctx.lineTo(ballPx, bowlBottomY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Rolling Bob with Glow
+  ctx.beginPath();
+  ctx.arc(ballPx, ballPy, ballRadius, 0, Math.PI * 2);
+  const ballGrad = ctx.createRadialGradient(ballPx - 3, ballPy - 3, 2, ballPx, ballPy, ballRadius);
+  ballGrad.addColorStop(0, '#FFFFFF');
+  ballGrad.addColorStop(0.4, '#10B981');
+  ballGrad.addColorStop(1, '#065F46');
+  ctx.fillStyle = ballGrad;
+  ctx.shadowColor = '#10B981';
+  ctx.shadowBlur = 14;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Instantaneous Velocity Vector on the Bob
+  const movingRight = -Math.sin(omega * t) > 0;
+  const slope = -2 * ballNormX; // derivative dy/dx
+  const tangentAngle = Math.atan(slope) + (movingRight ? 0 : Math.PI);
+  const velVecLen = (curSpeed / (vMax || 1)) * 45;
+  if (velVecLen > 3) {
+    drawVectorArrow(ctx, ballPx, ballPy, velVecLen, tangentAngle, '#00F0FF', `${curSpeed.toFixed(1)} m/s`);
+  }
+
+  // Right Side Live Dynamic Energy Bar Meters
+  const meterX = w - 280;
+  const meterY = 55;
+  const meterW = 240;
+  const meterH = 220;
+
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(meterX, meterY, meterW, meterH, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 13px Inter, sans-serif';
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillText('Energy Conservation Meters', meterX + 16, meterY + 24);
+
+  const barMaxW = 208;
+  const peWidth = totalE > 0 ? (pe / totalE) * barMaxW : 0;
+  const keWidth = totalE > 0 ? (ke / totalE) * barMaxW : 0;
+
+  // 1. Potential Energy (PE)
+  ctx.font = 'bold 11px JetBrains Mono, monospace';
+  ctx.fillStyle = '#F59E0B';
+  ctx.fillText(`Potential Energy (PE = mgh)`, meterX + 16, meterY + 54);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${pe.toFixed(1)} J`, meterX + 16 + barMaxW, meterY + 54);
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.fillRect(meterX + 16, meterY + 60, barMaxW, 14);
+  ctx.fillStyle = '#F59E0B';
+  ctx.fillRect(meterX + 16, meterY + 60, peWidth, 14);
+
+  // 2. Kinetic Energy (KE)
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#00F0FF';
+  ctx.fillText(`Kinetic Energy (KE = ½mv²)`, meterX + 16, meterY + 98);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${ke.toFixed(1)} J`, meterX + 16 + barMaxW, meterY + 98);
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.fillRect(meterX + 16, meterY + 104, barMaxW, 14);
+  ctx.fillStyle = '#00F0FF';
+  ctx.fillRect(meterX + 16, meterY + 104, keWidth, 14);
+
+  // 3. Total Mechanical Energy (E = KE + PE)
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#10B981';
+  ctx.fillText(`Total Mechanical Energy (E)`, meterX + 16, meterY + 142);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${totalE.toFixed(1)} J`, meterX + 16 + barMaxW, meterY + 142);
+
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.fillRect(meterX + 16, meterY + 148, barMaxW, 16);
+  // Stacked bar: PE (amber) + KE (cyan)
+  ctx.fillStyle = '#F59E0B';
+  ctx.fillRect(meterX + 16, meterY + 148, peWidth, 16);
+  ctx.fillStyle = '#00F0FF';
+  ctx.fillRect(meterX + 16 + peWidth, meterY + 148, keWidth, 16);
+  ctx.strokeStyle = '#10B981';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(meterX + 16, meterY + 148, barMaxW, 16);
+
+  // Conservation check tag
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 11px JetBrains Mono, monospace';
+  ctx.fillStyle = '#10B981';
+  ctx.fillText(`PE (${pe.toFixed(0)}J) + KE (${ke.toFixed(0)}J) = ${totalE.toFixed(0)} J`, meterX + meterW / 2, meterY + 194);
+
+  ctx.restore();
+}
+
+function drawLaserArrowHead(
+  ctx: CanvasRenderingContext2D,
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+  color: string
+) {
+  const midX = (fromX + toX) / 2;
+  const midY = (fromY + toY) / 2;
+  const angle = Math.atan2(toY - fromY, toX - fromX);
+  const headLen = 10;
+  const headAngle = Math.PI / 6;
+
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(midX + headLen * Math.cos(angle), midY + headLen * Math.sin(angle));
+  ctx.lineTo(midX - headLen * Math.cos(angle - headAngle), midY - headLen * Math.sin(angle - headAngle));
+  ctx.lineTo(midX - headLen * Math.cos(angle + headAngle), midY - headLen * Math.sin(angle + headAngle));
+  ctx.closePath();
+  ctx.fill();
   ctx.restore();
 }
