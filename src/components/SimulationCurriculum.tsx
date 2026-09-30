@@ -4,9 +4,13 @@ import { MathView } from './MathView';
 
 interface SimulationCurriculumProps {
   onEnterLabClick: () => void;
+  onLaunchSimulation?: (topicId: string) => void;
 }
 
-export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEnterLabClick }) => {
+export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({
+  onEnterLabClick,
+  onLaunchSimulation
+}) => {
   const [filter, setFilter] = useState<'all' | 'physics' | 'maths'>('all');
 
   return (
@@ -168,7 +172,7 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
                 <MathView math="y = x \tan\theta - \frac{g x^2}{2 u^2 \cos^2\theta}" block />
               </div>
               <button
-                onClick={onEnterLabClick}
+                onClick={() => onLaunchSimulation ? onLaunchSimulation('motion') : onEnterLabClick()}
                 className="btn-secondary-lab"
                 style={{ width: '100%', justifyContent: 'center', padding: '10px 0', marginTop: 'auto' }}
               >
@@ -220,7 +224,7 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
                 <MathView math="\oint \vec{E} \cdot d\vec{A} = \frac{Q_{enc}}{\varepsilon_0} \quad \bullet \quad \vec{p} = q \cdot 2\vec{a}" block />
               </div>
               <button
-                onClick={onEnterLabClick}
+                onClick={() => onLaunchSimulation ? onLaunchSimulation('gravitation') : onEnterLabClick()}
                 className="btn-secondary-lab"
                 style={{ width: '100%', justifyContent: 'center', padding: '10px 0', marginTop: 'auto' }}
               >
@@ -272,7 +276,7 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
                 <MathView math="\tan\theta = \frac{v^2}{R g} \quad \bullet \quad \vec{a}_c = -\frac{v^2}{R} \hat{r}" block />
               </div>
               <button
-                onClick={onEnterLabClick}
+                onClick={() => onLaunchSimulation ? onLaunchSimulation('newtons_laws') : onEnterLabClick()}
                 className="btn-secondary-lab"
                 style={{ width: '100%', justifyContent: 'center', padding: '10px 0', marginTop: 'auto' }}
               >
@@ -324,7 +328,7 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
                 <MathView math="\int_a^b f(x)dx = \lim_{n \to \infty} \sum f(x_i^*) \Delta x" block />
               </div>
               <button
-                onClick={onEnterLabClick}
+                onClick={() => onLaunchSimulation ? onLaunchSimulation('basic_calculus') : onEnterLabClick()}
                 className="btn-secondary-lab"
                 style={{ width: '100%', justifyContent: 'center', padding: '10px 0', marginTop: 'auto' }}
               >
@@ -376,7 +380,7 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
                 <MathView math="\vec{a} \times \vec{b} = |\vec{a}| |\vec{b}| \sin\theta \hat{n} \quad \bullet \quad [\vec{a}, \vec{b}, \vec{c}] = 0" block />
               </div>
               <button
-                onClick={onEnterLabClick}
+                onClick={() => onLaunchSimulation ? onLaunchSimulation('functions') : onEnterLabClick()}
                 className="btn-secondary-lab"
                 style={{ width: '100%', justifyContent: 'center', padding: '10px 0', marginTop: 'auto' }}
               >
@@ -428,7 +432,7 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({ onEn
                 <MathView math="\frac{SP}{PM} = e \quad \bullet \quad \frac{x^2}{a^2} \pm \frac{y^2}{b^2} = 1" block />
               </div>
               <button
-                onClick={onEnterLabClick}
+                onClick={() => onLaunchSimulation ? onLaunchSimulation('coordinate_geometry') : onEnterLabClick()}
                 className="btn-secondary-lab"
                 style={{ width: '100%', justifyContent: 'center', padding: '10px 0', marginTop: 'auto' }}
               >

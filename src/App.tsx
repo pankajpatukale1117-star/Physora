@@ -61,6 +61,7 @@ export function App() {
       const hash = window.location.hash;
       if (hash.startsWith('#experiments')) {
         setActiveNavTab('experiments');
+        window.scrollTo({ top: 0, behavior: 'instant' });
         const parts = hash.split('/');
         if (parts.length > 1 && parts[1]) {
           setInitialExperimentId(parts[1]);
@@ -79,6 +80,7 @@ export function App() {
 
   const handleSelectNavTab = (tab: 'simulations' | 'experiments') => {
     setActiveNavTab(tab);
+    window.scrollTo({ top: 0, behavior: 'instant' });
     if (tab === 'experiments') {
       window.location.hash = '#experiments';
     } else {
@@ -146,6 +148,10 @@ export function App() {
           {/* Interactive Simulation Curriculum: 6 Live Micro-Laboratories */}
           <SimulationCurriculum
             onEnterLabClick={handleEnterLab}
+            onLaunchSimulation={(topicId) => {
+              setSelectedTopicId(topicId);
+              window.location.hash = `#sim/${topicId}`;
+            }}
           />
 
           {/* How Visual Learning Works for Class 11 & Below */}

@@ -679,7 +679,8 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
             gap: 24,
-            marginBottom: 60
+            marginBottom: 60,
+            alignItems: 'stretch'
           }}
         >
           {filteredExperiments.map(exp => (
@@ -694,6 +695,7 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
+                minHeight: 440,
                 transition: 'all 0.25s ease'
               }}
             >
@@ -701,6 +703,7 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
               <div
                 style={{
                   height: 140,
+                  flexShrink: 0,
                   position: 'relative',
                   background: 'radial-gradient(ellipse at 50% 30%, #0F172A 0%, #030712 100%)',
                   borderBottom: '1px solid var(--border-subtle)',
@@ -776,11 +779,13 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
               {/* Card Body */}
               <div
                 style={{
-                  padding: '20px',
+                  padding: '22px 20px 24px',
                   display: 'flex',
                   flexDirection: 'column',
-                  flex: 1,
-                  gap: 12
+                  flex: '1 0 auto',
+                  minHeight: 260,
+                  gap: 14,
+                  boxSizing: 'border-box'
                 }}
               >
                 <h3
