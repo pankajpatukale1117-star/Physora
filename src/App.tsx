@@ -65,6 +65,8 @@ export function App() {
         const parts = hash.split('/');
         if (parts.length > 1 && parts[1]) {
           setInitialExperimentId(parts[1]);
+        } else {
+          setInitialExperimentId(null);
         }
       } else if (hash.startsWith('#sim/') || hash.startsWith('#topic/')) {
         setActiveNavTab('simulations');

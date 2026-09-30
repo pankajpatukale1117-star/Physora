@@ -921,8 +921,14 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
 export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
   initialExperimentId = null
 }) => {
+  const [prevInitId, setPrevInitId] = useState(initialExperimentId);
   const [activeExperimentId, setActiveExperimentId] = useState<string | null>(initialExperimentId);
   const [selectedDomain, setSelectedDomain] = useState<'All' | LabDomain>('All');
+
+  if (initialExperimentId !== prevInitId) {
+    setPrevInitId(initialExperimentId);
+    setActiveExperimentId(initialExperimentId);
+  }
 
   // Ensure scroll is instantly at top whenever switching views
   useEffect(() => {
