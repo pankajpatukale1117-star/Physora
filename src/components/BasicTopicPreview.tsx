@@ -14,6 +14,9 @@ import {
   Waves,
   Eye,
   Flame,
+  Magnet,
+  Radio,
+  Move3d,
   Play
 } from 'lucide-react';
 import { MathView } from './MathView';
@@ -72,6 +75,14 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
       summary: 'Understanding rates of change and finding the slope of a curve.',
       icon: Activity,
       tag: 'slope = Δy / Δx',
+      simCount: '3 Simulations'
+    },
+    {
+      id: 'vectors_3d',
+      title: 'Vectors & 3D Space',
+      summary: 'Dot product projection, 3D cross product area, and relative river-boat navigation.',
+      icon: Move3d,
+      tag: 'A⃗ × B⃗ = |A||B|sinθ n̂',
       simCount: '3 Simulations'
     }
   ];
@@ -134,11 +145,27 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
       simCount: '3 Simulations'
     },
     {
+      id: 'wave_optics',
+      title: 'Wave Optics',
+      summary: 'Young’s double slit experiment (YDSE), single slit diffraction, and soap film iridescence.',
+      icon: Radio,
+      tag: 'β = λD / d',
+      simCount: '3 Simulations'
+    },
+    {
       id: 'thermodynamics',
       title: 'Thermodynamics',
       summary: 'Kinetic molecular theory, ideal gas chamber (PV = nRT), Carnot cycles, and heat conduction.',
       icon: Flame,
       tag: 'PV = nRT · η = 1 - Tc/Th',
+      simCount: '3 Simulations'
+    },
+    {
+      id: 'electromagnetism',
+      title: 'Electromagnetism',
+      summary: 'Lorentz force, charged particle cyclotron helical motion, Coulomb dipoles, and Faraday induction.',
+      icon: Magnet,
+      tag: 'F⃗ = q(v⃗ × B⃗)',
       simCount: '3 Simulations'
     }
   ];

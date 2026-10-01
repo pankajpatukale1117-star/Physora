@@ -1,5 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Play, Pause, RotateCcw, Plus, Minus, Hand } from 'lucide-react';
+import {
+  renderLorentzCyclotron,
+  renderCoulombDipole,
+  renderFaradayInduction
+} from './renderers/electromagnetism';
+import {
+  renderCrossDotProduct,
+  renderRiverBoatNavigator,
+  renderComponentDecomposition
+} from './renderers/vectors3d';
+import {
+  renderYDSE,
+  renderSingleSlitDiffraction,
+  renderThinFilmInterference
+} from './renderers/waveOptics';
 
 export interface SimControlDef {
   id: string;
@@ -498,6 +513,39 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
           break;
         case 'thermo_heat_conduction':
           renderHeatConduction(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+
+        // --- ELECTROMAGNETISM ---
+        case 'em_lorentz_cyclotron':
+          renderLorentzCyclotron(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+        case 'em_coulomb_dipole':
+          renderCoulombDipole(ctx, w, h, params, onTelemetryUpdate);
+          break;
+        case 'em_faraday_induction':
+          renderFaradayInduction(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+
+        // --- VECTORS & 3D GEOMETRY ---
+        case 'vec_cross_dot_product':
+          renderCrossDotProduct(ctx, w, h, params, onTelemetryUpdate);
+          break;
+        case 'vec_river_boat':
+          renderRiverBoatNavigator(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+        case 'vec_component_decomposition':
+          renderComponentDecomposition(ctx, w, h, params, onTelemetryUpdate);
+          break;
+
+        // --- WAVE OPTICS ---
+        case 'optics_ydse':
+          renderYDSE(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+        case 'optics_single_slit_diffraction':
+          renderSingleSlitDiffraction(ctx, w, h, params, onTelemetryUpdate);
+          break;
+        case 'optics_thin_film_interference':
+          renderThinFilmInterference(ctx, w, h, params, onTelemetryUpdate);
           break;
 
         default:

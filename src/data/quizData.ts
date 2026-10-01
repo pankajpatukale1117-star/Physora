@@ -289,5 +289,95 @@ export const QUIZ_DATA: Record<string, QuizQuestion[]> = {
       correctIndex: 1,
       explanation: 'By the First Law of Thermodynamics, ΔU = Q - W. Since the expansion is adiabatic (Q = 0), ΔU = 0 - (+500 J) = -500 J. The work done on the surroundings comes directly at the expense of internal kinetic energy, causing the gas to cool.'
     }
+  ],
+  electromagnetism: [
+    {
+      id: 'q-em-1',
+      question: 'A proton enters a uniform magnetic field with velocity vector perpendicular to the field lines. What shape does its resulting trajectory follow?',
+      options: ['Straight line with increasing speed', 'Uniform circular path', 'Parabolic trajectory', 'Exponential spiral'],
+      correctIndex: 1,
+      explanation: 'Since the magnetic force F = q(v × B) is always perpendicular to the instantaneous velocity v, it does zero work on the charge and cannot change its kinetic energy or speed. It acts purely as a centripetal force, resulting in uniform circular motion with radius r = mv / (qB).'
+    },
+    {
+      id: 'q-em-2',
+      question: 'What is the net electric flux passing through a closed Gaussian surface that encloses an electric dipole consisting of charges +q and -q?',
+      options: ['q / ε₀', '2q / ε₀', 'Zero', '-q / ε₀'],
+      correctIndex: 2,
+      explanation: 'By Gauss’s Law, net electric flux Φ_E = Q_enclosed / ε₀. For a dipole, the enclosed net charge is (+q) + (-q) = 0. Therefore, the net electric flux entering and leaving the closed surface is exactly zero.'
+    },
+    {
+      id: 'q-em-3',
+      question: 'According to Faraday’s Law and Lenz’s Law, why is there a negative sign in the induced EMF equation ε = -dΦ/dt?',
+      options: [
+        'Because energy is lost to thermal radiation',
+        'Because the induced current produces a magnetic field that opposes the change in magnetic flux',
+        'Because magnetic charge is always negative',
+        'It is a mathematical convention with no physical meaning'
+      ],
+      correctIndex: 1,
+      explanation: 'Lenz’s Law is a direct statement of Conservation of Energy: the induced current always flows in such a direction that its own magnetic field opposes the original flux change that produced it, preventing runaway spontaneous energy creation.'
+    }
+  ],
+  vectors_3d: [
+    {
+      id: 'q-vec-1',
+      question: 'Two non-zero vectors A and B satisfy A · B = 0. What is the angle between them?',
+      options: ['0° (Parallel)', '45°', '90° (Perpendicular)', '180° (Antiparallel)'],
+      correctIndex: 2,
+      explanation: 'The scalar dot product is given by A · B = |A||B| cos θ. For non-zero magnitudes, A · B = 0 requires cos θ = 0, which corresponds strictly to θ = 90° (orthogonal vectors).'
+    },
+    {
+      id: 'q-vec-2',
+      question: 'If a boat has speed 5 m/s in still water and the river flows downstream at 3 m/s, at what angle to the downstream current should the boat steer to reach the point directly opposite on the other bank (shortest path)?',
+      options: ['90°', '120°', '126.9° (or 143.1°)', '150°'],
+      correctIndex: 2,
+      explanation: 'For zero net downstream drift, the horizontal component of the boat’s velocity must cancel the river flow: v_b · cos α = v_r where α is the upstream angle with the bank. cos α = 3/5 = 0.6 => α = 53.1° upstream, which corresponds to an angle of 180° - 53.1° = 126.9° with the downstream direction.'
+    },
+    {
+      id: 'q-vec-3',
+      question: 'What is the geometric meaning of the magnitude of the cross product |A × B|?',
+      options: [
+        'The length of vector A projected onto vector B',
+        'The area of the parallelogram formed by vectors A and B',
+        'The volume of the tetrahedron formed by A and B',
+        'The sum of the lengths of A and B'
+      ],
+      correctIndex: 1,
+      explanation: 'By definition, |A × B| = |A||B| sin θ. In geometry, base = |A| and height = |B| sin θ, so |A × B| equals the exact geometric area of the parallelogram bounded by vectors A and B.'
+    }
+  ],
+  wave_optics: [
+    {
+      id: 'q-wo-1',
+      question: 'In Young’s Double Slit Experiment (YDSE), if the separation between the two slits d is halved while screen distance D and wavelength λ remain constant, what happens to the fringe width β?',
+      options: ['Fringe width is halved', 'Fringe width doubles', 'Fringe width quadruples', 'Fringe width remains unchanged'],
+      correctIndex: 1,
+      explanation: 'The fringe width formula is β = λD / d. Since fringe width β is inversely proportional to slit separation d, halving d causes the fringe width to double (2× wider).'
+    },
+    {
+      id: 'q-wo-2',
+      question: 'In Fraunhofer single-slit diffraction, why is the central maximum twice as wide as the secondary maxima?',
+      options: [
+        'Because the first minima occur at sin θ = ±λ/a on either side of the center (total width 2λ/a), whereas subsequent minima are spaced by λ/a',
+        'Because two light rays interfere at the center',
+        'Because wavelength doubles upon entering the slit',
+        'Because of total internal reflection inside the slit'
+      ],
+      correctIndex: 0,
+      explanation: 'Minima in single-slit diffraction occur at a sin θ = nλ (for n = ±1, ±2, ...). The central maximum spans from the first negative minimum (-λ/a) to the first positive minimum (+λ/a), giving an angular span of 2λ/a, which is exactly double the distance between consecutive higher-order minima (λ/a).'
+    },
+    {
+      id: 'q-wo-3',
+      question: 'Why do soap bubbles and thin oil slicks display bright iridescent rainbow colors under white sunlight?',
+      options: [
+        'Light gets absorbed by soap molecules and re-emitted as fluorescence',
+        'Thin-film interference causes constructive interference for specific wavelengths depending on thickness and angle of view',
+        'Light undergoes total internal reflection repeatedly until it polarizes',
+        'Prismatic refraction occurs through soap droplets'
+      ],
+      correctIndex: 1,
+      explanation: 'When sunlight reflects off both the front and back surfaces of a thin dielectric film, optical path differences 2μt cos r produce constructive interference for specific visible wavelengths depending on local film thickness t. Different thicknesses reflect different spectral colors, creating shimmering rainbow bands.'
+    }
   ]
 };
+

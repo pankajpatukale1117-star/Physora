@@ -1014,6 +1014,241 @@ export const TOPICS_DATA: Record<string, TopicData> = {
         ]
       }
     ]
+  },
+
+  // ==========================================
+  // ELECTROMAGNETISM (PHYSICS)
+  // ==========================================
+  electromagnetism: {
+    id: 'electromagnetism',
+    subject: 'physics',
+    title: 'Electromagnetism',
+    category: 'PHYSICS',
+    shortDesc: 'Lorentz force, charged particle cyclotron motion, Coulomb dipole field lines, and Faraday induction.',
+    conceptIntro:
+      'Electromagnetism unifies the electric force between static charges and the magnetic force produced by moving charges. From electric motors to cyclotrons and transformers, electromagnetic interactions govern how electricity generates magnetism and changing magnetic fields induce electromotive force.',
+    realWorldExample:
+      'Electric power generators spinning turbines to light up cities, MRI machines using strong magnetic fields, and wireless charging pads transferring energy through induction.',
+    keyFormulas: [
+      { formula: '\\vec{F} = q(\\vec{E} + \\vec{v} \\times \\vec{B})', explanation: 'Lorentz Force Law: total electromagnetic force on a charge q moving with velocity v.' },
+      { formula: 'r = \\frac{mv_{\\perp}}{qB}', explanation: 'Cyclotron Radius: circular orbit radius for a charged particle in a uniform magnetic field.' },
+      { formula: '\\mathcal{E} = -\\frac{d\\Phi_B}{dt}', explanation: 'Faraday’s Law of Induction: rate of change of magnetic flux produces induced electromotive force.' }
+    ],
+    keyTakeaways: [
+      'Magnetic fields exert force ONLY on moving charges, and the force is always perpendicular to both velocity and the B-field.',
+      'Electric field lines always originate on positive charges and terminate on negative charges.',
+      'A changing magnetic flux through a conducting loop induces an EMF that opposes the change (Lenz’s Law).'
+    ],
+    simulations: [
+      {
+        id: 'em_lorentz_cyclotron',
+        name: 'Lorentz Force & Helical Cyclotron',
+        tagline: 'Watch charged particles curve or spiral in a uniform magnetic field.',
+        description: 'Inject a charged particle into a magnetic field B. Adjust charge, velocity, and pitch angle to see circular cyclotron orbits or 3D helical spirals.',
+        controls: [
+          { id: 'charge', label: 'Charge (q)', min: -2, max: 2, step: 1, defaultValue: 1, unit: 'e' },
+          { id: 'velocity', label: 'Speed (v)', min: 10, max: 60, step: 5, defaultValue: 30, unit: 'm/s' },
+          { id: 'b_field', label: 'Magnetic Field (B)', min: -4, max: 4, step: 0.5, defaultValue: 2, unit: 'T' },
+          { id: 'pitch_angle', label: 'Pitch Angle (α)', min: 0, max: 60, step: 10, defaultValue: 20, unit: '°' }
+        ],
+        telemetryLabels: [
+          { key: 'cyclotron_radius', label: 'Orbit Radius (r)' },
+          { key: 'cyclotron_omega', label: 'Cyclotron Frequency (ω)' },
+          { key: 'time_period', label: 'Orbital Period (T)' },
+          { key: 'lorentz_force', label: 'Lorentz Force' }
+        ]
+      },
+      {
+        id: 'em_coulomb_dipole',
+        name: 'Electric Dipole & Field Lines',
+        tagline: 'Visualize electric vector fields and equipotential curves around point charges.',
+        description: 'Position two charges and observe the electric field lines flowing between them. Toggle between opposite dipole charges and like repulsive charges.',
+        controls: [
+          { id: 'q1', label: 'Charge Q₁', min: -5, max: 5, step: 1, defaultValue: 2, unit: 'μC' },
+          { id: 'q2', label: 'Charge Q₂', min: -5, max: 5, step: 1, defaultValue: -2, unit: 'μC' },
+          { id: 'separation', label: 'Separation (d)', min: 8, max: 22, step: 2, defaultValue: 14, unit: 'cm' }
+        ],
+        telemetryLabels: [
+          { key: 'coulomb_force', label: 'Coulomb Interaction' },
+          { key: 'dipole_moment', label: 'Dipole Moment (p)' },
+          { key: 'separation_dist', label: 'Separation' },
+          { key: 'config_type', label: 'Configuration' }
+        ]
+      },
+      {
+        id: 'em_faraday_induction',
+        name: 'Faraday’s Law & AC Generator',
+        tagline: 'Spin a coil inside magnetic poles to generate alternating current.',
+        description: 'Rotate a conducting armature coil inside permanent magnetic pole shoes. Watch magnetic flux oscillate and power an AC indicator light bulb.',
+        controls: [
+          { id: 'b_field', label: 'Field Strength (B)', min: 0.5, max: 3.0, step: 0.5, defaultValue: 1.5, unit: 'T' },
+          { id: 'rpm', label: 'Rotation Speed', min: 20, max: 120, step: 10, defaultValue: 60, unit: 'RPM' },
+          { id: 'num_turns', label: 'Coil Turns (N)', min: 10, max: 100, step: 10, defaultValue: 50 }
+        ],
+        telemetryLabels: [
+          { key: 'instant_emf', label: 'Instantaneous EMF' },
+          { key: 'peak_emf', label: 'Peak Voltage (V_peak)' },
+          { key: 'magnetic_flux', label: 'Magnetic Flux (Φ)' },
+          { key: 'ac_frequency', label: 'AC Frequency (f)' }
+        ]
+      }
+    ]
+  },
+
+  // ==========================================
+  // VECTORS & 3D GEOMETRY (MATHEMATICS)
+  // ==========================================
+  vectors_3d: {
+    id: 'vectors_3d',
+    subject: 'maths',
+    title: 'Vectors & 3D Space',
+    category: 'MATHEMATICS',
+    shortDesc: 'Dot product projection, 3D cross product parallelogram, and 2D relative velocity navigation.',
+    conceptIntro:
+      'Vectors are mathematical quantities that possess both magnitude and direction. In physics and 3D geometry, vectors represent velocity, force, and spatial displacements. The dot product measures collinear alignment, while the cross product computes rotational torque and perpendicular normal vectors.',
+    realWorldExample:
+      'Flight navigation computing crosswind drift, 3D game engines calculating lighting surface normals, and torque turning a wrench on a bolt.',
+    keyFormulas: [
+      { formula: '\\vec{A} \\cdot \\vec{B} = |A||B|\\cos\\theta', explanation: 'Dot Product: scalar projection measuring how much two vectors point along each other.' },
+      { formula: '\\vec{A} \\times \\vec{B} = |A||B|\\sin\\theta\\,\\hat{n}', explanation: 'Cross Product: normal vector perpendicular to both, magnitude equals parallelogram area.' },
+      { formula: '\\vec{v}_{\\text{rel}} = \\vec{v}_A - \\vec{v}_B', explanation: 'Relative Velocity: motion of body A as observed from the reference frame of body B.' }
+    ],
+    keyTakeaways: [
+      'If two non-zero vectors have a dot product of zero, they are strictly perpendicular (orthogonal).',
+      'The cross product is anti-commutative: A × B = -(B × A). Swapping order flips the direction.',
+      'To cross a river in the shortest time, always aim the boat straight across perpendicular to the bank.'
+    ],
+    simulations: [
+      {
+        id: 'vec_cross_dot_product',
+        name: '3D Cross & Dot Product Studio',
+        tagline: 'See the shaded area of A × B and the projected shadow of A · B.',
+        description: 'Adjust vector lengths and the angle between them. Inspect the perpendicular normal vector and the scalar projection in real time.',
+        controls: [
+          { id: 'mag_a', label: 'Vector A Magnitude', min: 2, max: 10, step: 1, defaultValue: 6 },
+          { id: 'mag_b', label: 'Vector B Magnitude', min: 2, max: 10, step: 1, defaultValue: 5 },
+          { id: 'theta', label: 'Angle θ between A & B', min: 0, max: 180, step: 5, defaultValue: 50, unit: '°' }
+        ],
+        telemetryLabels: [
+          { key: 'dot_product', label: 'Dot Product (A · B)' },
+          { key: 'cross_magnitude', label: 'Cross Product Area' },
+          { key: 'direction_rule', label: 'Right Hand Rule' },
+          { key: 'orthogonality', label: 'Perpendicular Status' }
+        ]
+      },
+      {
+        id: 'vec_river_boat',
+        name: 'River-Boat Relative Velocity',
+        tagline: 'Steer across a flowing river and solve shortest path vs shortest time.',
+        description: 'Classic JEE physics problem: aim your boat upstream against the river current. Calculate drift distance, crossing time, and resultant ground velocity.',
+        controls: [
+          { id: 'boat_speed', label: 'Boat Speed (v_b)', min: 2, max: 10, step: 0.5, defaultValue: 5, unit: 'm/s' },
+          { id: 'river_speed', label: 'River Speed (v_r)', min: 1, max: 8, step: 0.5, defaultValue: 3, unit: 'm/s' },
+          { id: 'heading_angle', label: 'Steering Angle (θ)', min: 60, max: 150, step: 5, defaultValue: 120, unit: '°' }
+        ],
+        telemetryLabels: [
+          { key: 'crossing_time', label: 'Crossing Time' },
+          { key: 'drift_distance', label: 'Downstream Drift' },
+          { key: 'net_velocity', label: 'Ground Velocity' },
+          { key: 'shortest_path_condition', label: 'Shortest Path Angle' }
+        ]
+      },
+      {
+        id: 'vec_component_decomposition',
+        name: '3D Vector Resolution & Projections',
+        tagline: 'Break any 3D vector into orthogonal components Vx î + Vy ĵ + Vz k̂.',
+        description: 'Observe the 3D projection box and directional cosines as you vary vector magnitude, azimuth, and elevation.',
+        controls: [
+          { id: 'magnitude', label: 'Vector Magnitude', min: 3, max: 12, step: 1, defaultValue: 8 },
+          { id: 'theta', label: 'Azimuth Angle (θ)', min: 0, max: 90, step: 5, defaultValue: 35, unit: '°' },
+          { id: 'phi_3d', label: 'Elevation Angle (φ)', min: 0, max: 75, step: 5, defaultValue: 25, unit: '°' }
+        ],
+        telemetryLabels: [
+          { key: 'vector_notation', label: 'Cartesian Form' },
+          { key: 'v_magnitude', label: 'Magnitude |V|' },
+          { key: 'pythagorean_verify', label: 'Pythagorean Test' },
+          { key: 'direction_cosines', label: 'Direction Cosines' }
+        ]
+      }
+    ]
+  },
+
+  // ==========================================
+  // WAVE OPTICS & INTERFERENCE (PHYSICS)
+  // ==========================================
+  wave_optics: {
+    id: 'wave_optics',
+    subject: 'physics',
+    title: 'Wave Optics',
+    category: 'PHYSICS',
+    shortDesc: 'Young’s double slit experiment (YDSE), single slit Fraunhofer diffraction, and thin film iridescence.',
+    conceptIntro:
+      'Wave Optics treats light as an electromagnetic wave capable of interference and diffraction. When two coherent wave sources overlap, their amplitudes add vectorially, creating striking alternating patterns of bright constructive fringes and dark destructive nodes.',
+    realWorldExample:
+      'Rainbow shimmer on soap bubbles and peacock feathers, anti-reflective coatings on eyeglasses, and holograms on credit cards.',
+    keyFormulas: [
+      { formula: '\\beta = \\frac{\\lambda D}{d}', explanation: 'Fringe Width: distance between two consecutive bright or dark fringes in YDSE.' },
+      { formula: 'a \\sin\\theta = n\\lambda', explanation: 'Diffraction Minima: angular condition for destructive interference in single slit diffraction.' },
+      { formula: '2\\mu t \\cos r = (m + \\tfrac{1}{2})\\lambda', explanation: 'Thin Film Interference: constructive condition for reflected light accounting for π phase flip.' }
+    ],
+    keyTakeaways: [
+      'Decreasing slit separation d in YDSE widens the fringes on the screen (inverse relationship).',
+      'The central diffraction maximum in single slit diffraction is twice as wide as all secondary maxima.',
+      'Thin film interference colors occur because different wavelengths experience constructive interference at different film thicknesses.'
+    ],
+    simulations: [
+      {
+        id: 'optics_ydse',
+        name: 'Young’s Double Slit Experiment',
+        tagline: 'Watch coherent ripples interfere and create alternating fringe bands.',
+        description: 'Adjust wavelength from violet to deep red and change slit separation d. Observe live fringe width changes and the intensity distribution curve.',
+        controls: [
+          { id: 'wavelength', label: 'Wavelength (λ)', min: 400, max: 700, step: 25, defaultValue: 550, unit: 'nm' },
+          { id: 'slit_distance', label: 'Slit Separation (d)', min: 0.2, max: 1.0, step: 0.1, defaultValue: 0.5, unit: 'mm' },
+          { id: 'screen_distance', label: 'Screen Distance (D)', min: 0.5, max: 2.0, step: 0.1, defaultValue: 1.2, unit: 'm' }
+        ],
+        telemetryLabels: [
+          { key: 'fringe_width', label: 'Fringe Width (β)' },
+          { key: 'beam_color', label: 'Wavelength & Color' },
+          { key: 'path_diff_first_min', label: 'Path Difference for Min' },
+          { key: 'fringe_spacing', label: 'Formula Reference' }
+        ]
+      },
+      {
+        id: 'optics_single_slit_diffraction',
+        name: 'Single Slit Fraunhofer Diffraction',
+        tagline: 'See light bend around narrow edges to form a wide central maximum.',
+        description: 'Vary aperture slit width a to observe how wave spreading broadens when the aperture approaches the scale of light wavelengths.',
+        controls: [
+          { id: 'wavelength', label: 'Wavelength (λ)', min: 400, max: 700, step: 25, defaultValue: 600, unit: 'nm' },
+          { id: 'slit_width', label: 'Slit Width (a)', min: 5, max: 30, step: 2.5, defaultValue: 12, unit: 'μm' },
+          { id: 'screen_distance', label: 'Screen Distance (D)', min: 0.5, max: 2.0, step: 0.1, defaultValue: 1.0, unit: 'm' }
+        ],
+        telemetryLabels: [
+          { key: 'central_maximum_width', label: 'Central Width (2y₀)' },
+          { key: 'angular_half_width', label: 'Angular Half-Width (θ)' },
+          { key: 'first_minima_condition', label: 'First Minima Rule' },
+          { key: 'diffraction_scale', label: 'Diffraction Regime' }
+        ]
+      },
+      {
+        id: 'optics_thin_film_interference',
+        name: 'Thin Film Interference & Iridescence',
+        tagline: 'Trace phase-shifted ray reflections that give soap bubbles rainbow colors.',
+        description: 'Light reflecting off the upper and lower surfaces of a thin soap or oil film. See constructive reinforcement produce vibrant spectral swatches.',
+        controls: [
+          { id: 'thickness', label: 'Film Thickness (t)', min: 200, max: 800, step: 20, defaultValue: 480, unit: 'nm' },
+          { id: 'refractive_index', label: 'Refractive Index (μ)', min: 1.2, max: 1.7, step: 0.05, defaultValue: 1.33 },
+          { id: 'incident_angle', label: 'Incident Angle (i)', min: 0, max: 60, step: 5, defaultValue: 30, unit: '°' }
+        ],
+        telemetryLabels: [
+          { key: 'path_difference', label: 'Optical Path Diff' },
+          { key: 'refraction_angle', label: 'Angle in Film (r)' },
+          { key: 'constructive_colors', label: 'Constructive Bands' },
+          { key: 'phase_flip_status', label: 'Boundary Phase Flip' }
+        ]
+      }
+    ]
   }
 };
 
@@ -1041,7 +1276,11 @@ export const ANIMATED_SIMULATION_IDS = new Set<string>([
   'wave_superposition',
   'thermo_ideal_gas_chamber',
   'thermo_carnot_cycle',
-  'thermo_heat_conduction'
+  'thermo_heat_conduction',
+  'em_lorentz_cyclotron',
+  'em_faraday_induction',
+  'vec_river_boat',
+  'optics_ydse'
 ]);
 
 export const isSimulationAnimated = (simId?: string): boolean => {
