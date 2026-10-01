@@ -5,7 +5,6 @@ import { HeroSection } from './components/HeroSection';
 import { BasicTopicPreview } from './components/BasicTopicPreview';
 import { SimulationCurriculum } from './components/SimulationCurriculum';
 import { HowVisualLearningWorks } from './components/HowVisualLearningWorks';
-import { EngineRigor } from './components/EngineRigor';
 import { LabGatewayCTA } from './components/LabGatewayCTA';
 import { Footer } from './components/Footer';
 import { TopicLabModal } from './components/TopicLabModal';
@@ -116,9 +115,6 @@ export function App() {
 
         {/* How Visual Learning Works for Class 11 & Below */}
         <HowVisualLearningWorks />
-
-        {/* Numerical Engine Rigor & 4th-Order Symplectic Architecture */}
-        <EngineRigor />
 
         {/* Call to Action */}
         <LabGatewayCTA
