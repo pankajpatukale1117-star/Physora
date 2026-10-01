@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Play, Pause, RotateCcw, Lightbulb, BookOpen, CheckCircle2, ChevronRight, HelpCircle, Award } from 'lucide-react';
+import { X, Play, Pause, RotateCcw, Lightbulb, BookOpen, CheckCircle2, ChevronRight, HelpCircle, Award, Maximize2, Minimize2 } from 'lucide-react';
 import { TOPICS_DATA, isSimulationAnimated } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
 import { CanvasSimulator } from './simulations/CanvasSimulators';
@@ -172,6 +172,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [telemetry, setTelemetry] = useState<Record<string, string>>({});
   const [sideTab, setSideTab] = useState<'intuition' | 'formulas' | 'quiz'>('intuition');
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
+  const [isFullWindow, setIsFullWindow] = useState<boolean>(false);
 
   const [prevTopicId, setPrevTopicId] = useState(topicId);
   const [prevSimId, setPrevSimId] = useState<string | null>(null);
@@ -197,14 +198,20 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
     setIsPlaying(true);
   }
 
-  // Close on Escape key
+  // Close on Escape key (exits full window first if active, otherwise closes modal)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (isFullWindow) {
+          setIsFullWindow(false);
+        } else {
+          onClose();
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [isFullWindow, onClose]);
 
   if (!topic || !currentSim) return null;
 
@@ -229,7 +236,16 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   return (
     <div
       className="topic-modal-overlay"
-      style={{
+      style={isFullWindow ? {
+        position: 'fixed',
+        inset: 0,
+        zIndex: 200,
+        background: '#070B14',
+        display: 'flex',
+        flexDirection: 'column',
+        padding: 0,
+        overflow: 'hidden'
+      } : {
         position: 'fixed',
         inset: 0,
         zIndex: 200,
@@ -244,12 +260,24 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
         animation: 'modalFadeIn 0.25s ease-out'
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (!isFullWindow && e.target === e.currentTarget) onClose();
       }}
     >
       <div
         className="glass-card topic-modal-window"
-        style={{
+        style={isFullWindow ? {
+          width: '100vw',
+          height: '100vh',
+          maxWidth: 'none',
+          maxHeight: 'none',
+          background: '#070B14',
+          borderRadius: 0,
+          border: 'none',
+          boxShadow: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        } : {
           width: '100%',
           maxWidth: 1140,
           maxHeight: '92vh',
@@ -270,7 +298,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '16px 24px',
+            padding: '14px 24px',
             background: 'var(--bg-glass-card)',
             borderBottom: '1px solid var(--border-subtle)',
             gap: 16,
@@ -292,13 +320,70 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             >
               {topic.category}
             </span>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
+            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               {topic.title}
             </h2>
-            <span className="hide-mobile" style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
-              &bull; Class 11 &amp; Below
-            </span>
+            {isFullWindow ? (
+              <span
+                className="font-mono hide-mobile"
+                style={{
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  color: accentColor,
+                  background: `${accentColor}15`,
+                  border: `1px solid ${accentColor}35`,
+                  padding: '2px 8px',
+                  borderRadius: 'var(--radius-pill)',
+                  letterSpacing: '0.04em'
+                }}
+              >
+                FULL GRAPH STUDIO
+              </span>
+            ) : (
+              <span className="hide-mobile" style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
+                &bull; Class 11 &amp; Below
+              </span>
+            )}
           </div>
+
+          {/* In Full Window, show Sim Tabs in the Header */}
+          {isFullWindow && (
+            <div
+              style={{
+                display: 'flex',
+                gap: 6,
+                padding: '3px 6px',
+                background: 'rgba(15, 23, 42, 0.85)',
+                borderRadius: 'var(--radius-pill)',
+                border: '1px solid var(--border-subtle)',
+                overflowX: 'auto'
+              }}
+            >
+              {topic.simulations.map((sim, idx) => {
+                const isActive = idx === activeSimIndex;
+                return (
+                  <button
+                    key={sim.id}
+                    onClick={() => setActiveSimIndex(idx)}
+                    style={{
+                      padding: '5px 14px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: 'none',
+                      background: isActive ? accentColor : 'transparent',
+                      color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    Sim {idx + 1}: {sim.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Quick Topic Switcher Dropdown */}
@@ -337,6 +422,32 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               </optgroup>
             </select>
 
+            {isFullWindow && (
+              <button
+                onClick={() => setIsFullWindow(false)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-pill)',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#F87171',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                title="Exit Full View (Esc)"
+                aria-label="Exit Full View"
+              >
+                <Minimize2 size={13} />
+                <span>Exit Full View</span>
+                <span style={{ opacity: 0.6, fontSize: '0.7rem' }}>Esc</span>
+              </button>
+            )}
+
             <button
               onClick={onClose}
               style={{
@@ -359,143 +470,345 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Main Body (Vertical Stack: Simulation on Top, All Info & Concept Guide Below) */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            flex: 1,
-            overflowY: 'auto',
-            overflowX: 'hidden'
-          }}
-          className="modal-content-grid"
-        >
-          {/* TOP: Primary Simulation Workbench */}
+        {/* Modal Main Body: Split Full Window Studio vs Vertical Stack */}
+        {isFullWindow ? (
+          /* Full Window Studio Layout (Side-by-side on desktop, stacked on mobile) */
           <div
-            className="modal-workbench"
             style={{
-              padding: '24px 28px 20px',
-              borderRight: 'none',
-              borderBottom: '1px solid var(--border-subtle)',
               display: 'flex',
-              flexDirection: 'column',
-              background: 'var(--bg-secondary)',
-              width: '100%',
-              boxSizing: 'border-box'
+              flex: 1,
+              minHeight: 0,
+              overflow: 'hidden',
+              flexDirection: window.innerWidth < 900 ? 'column' : 'row'
             }}
           >
-            {/* Simulation Tabs (2 to 3 distinct simulations per topic) */}
-            <div style={{ marginBottom: 16 }}>
+            {/* Left / Main: The Full Simulation Graph */}
+            <div
+              style={{
+                flex: 1,
+                minWidth: 0,
+                height: '100%',
+                padding: '16px 20px',
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative',
+                boxSizing: 'border-box'
+              }}
+            >
               <div
-                className="modal-sim-tab-strip"
+                className="modal-canvas-box full-window-canvas"
                 style={{
-                  display: 'flex',
-                  gap: 8,
-                  padding: 4,
+                  width: '100%',
+                  height: '100%',
+                  flex: 1,
+                  minHeight: 0,
+                  aspectRatio: 'auto',
+                  maxHeight: 'none',
+                  position: 'relative',
                   background: 'var(--bg-tertiary)',
-                  borderRadius: 'var(--radius-pill)',
+                  borderRadius: 'var(--radius-lg)',
                   border: '1px solid var(--border-subtle)',
-                  overflowX: 'auto'
+                  boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(0, 0, 0, 0.3)',
+                  overflow: 'hidden',
+                  marginBottom: 0
                 }}
               >
-                {topic.simulations.map((sim, idx) => {
-                  const isActive = idx === activeSimIndex;
-                  return (
-                    <button
-                      key={sim.id}
-                      onClick={() => setActiveSimIndex(idx)}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: 'var(--radius-pill)',
-                        border: 'none',
-                        background: isActive ? accentColor : 'transparent',
-                        color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
-                        fontSize: '0.78rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
-                        transition: 'all 0.2s ease',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      Sim {idx + 1}: {sim.name}
-                    </button>
-                  );
-                })}
-              </div>
+                <button
+                  onClick={() => setIsFullWindow(false)}
+                  className="sim-full-view-btn"
+                  title="Exit Full View (Esc)"
+                  aria-label="Exit Full View"
+                >
+                  <Minimize2 size={13} />
+                  <span>Exit Full View</span>
+                </button>
 
-              <div style={{ marginTop: 10 }}>
-                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
-                  {currentSim.name}
-                </h4>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                <CanvasSimulator
+                  simId={currentSim.id}
+                  params={params}
+                  isPlaying={isPlaying}
+                  onTelemetryUpdate={setTelemetry}
+                  controls={currentSim.controls}
+                  onParamChange={handleControlChange}
+                  onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                  onReset={handleReset}
+                />
+              </div>
+            </div>
+
+            {/* Right: Real-time Settings & Telemetry Dock */}
+            <div
+              style={{
+                width: window.innerWidth < 900 ? '100%' : '370px',
+                minWidth: window.innerWidth < 900 ? '100%' : '340px',
+                maxWidth: window.innerWidth < 900 ? '100%' : '400px',
+                height: window.innerWidth < 900 ? '45vh' : '100%',
+                borderLeft: window.innerWidth < 900 ? 'none' : '1px solid var(--border-subtle)',
+                borderTop: window.innerWidth < 900 ? '1px solid var(--border-subtle)' : 'none',
+                background: 'var(--bg-secondary)',
+                padding: '20px 22px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 16,
+                overflowY: 'auto',
+                boxSizing: 'border-box'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                    {currentSim.name}
+                  </h4>
+                  <span style={{ fontSize: '0.70rem', color: accentColor, fontWeight: 700, background: `${accentColor}18`, padding: '2px 8px', borderRadius: 'var(--radius-pill)', border: `1px solid ${accentColor}30` }}>
+                    LIVE CONTROLS
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
                   {currentSim.tagline}
                 </p>
               </div>
-            </div>
 
-            {/* Interactive Simulation Canvas Box */}
-            <div
-              className="modal-canvas-box"
-              style={{
-                width: '100%',
-                aspectRatio: '16 / 8.5',
-                maxHeight: '440px',
-                minHeight: '320px',
-                position: 'relative',
-                background: 'var(--bg-tertiary)',
-                borderRadius: 'var(--radius-lg)',
-                border: '1px solid var(--border-subtle)',
-                boxShadow: 'inset 0 0 35px rgba(0, 0, 0, 0.7), 0 4px 20px rgba(0, 0, 0, 0.3)',
-                overflow: 'hidden',
-                marginBottom: 16
-              }}
-            >
-              <CanvasSimulator
-                simId={currentSim.id}
-                params={params}
-                isPlaying={isPlaying}
-                onTelemetryUpdate={setTelemetry}
-                controls={currentSim.controls}
-                onParamChange={handleControlChange}
-                onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
-                onReset={handleReset}
-              />
-            </div>
+              {/* Telemetry Chips */}
+              {currentSim.telemetryLabels.length > 0 && (
+                <div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                    Live Telemetry &amp; Metrics
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {currentSim.telemetryLabels.map(tLabel => (
+                      <div
+                        key={tLabel.key}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: 'var(--radius-md)',
+                          background: 'rgba(15, 23, 42, 0.85)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.80rem',
+                          flex: 1,
+                          minWidth: '120px'
+                        }}
+                      >
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.70rem' }}>{tLabel.label}</div>
+                        <strong style={{ color: '#38BDF8', fontWeight: 700, fontSize: '0.86rem' }}>
+                          {telemetry[tLabel.key] || '—'}
+                        </strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-            {/* Live Telemetry Chips */}
-            <div
-              className="modal-telemetry-box"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                flexWrap: 'wrap',
-                marginBottom: 16
-              }}
-            >
-              {currentSim.telemetryLabels.map(tLabel => (
-                <div
-                  key={tLabel.key}
+              {/* Sliders & Numeric Inputs */}
+              <div>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+                  Parameters &amp; Variables
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {currentSim.controls.map(ctrl => (
+                    <NumericControlItem
+                      key={ctrl.id}
+                      control={ctrl}
+                      value={params[ctrl.id] ?? ctrl.defaultValue}
+                      onChange={(val) => handleControlChange(ctrl.id, val)}
+                      accentColor={accentColor}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Simulation Actions */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 'auto', paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
+                {isAnimated && (
+                  <button
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '8px 18px',
+                      borderRadius: 'var(--radius-md)',
+                      border: 'none',
+                      background: accentColor,
+                      color: '#FFFFFF',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+                    <span>{isPlaying ? 'Pause' : 'Play'}</span>
+                  </button>
+                )}
+
+                <button
+                  onClick={handleReset}
                   style={{
-                    padding: '8px 16px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    padding: '8px 14px',
                     borderRadius: 'var(--radius-md)',
-                    background: 'rgba(15, 23, 42, 0.85)',
-                    border: '1px solid rgba(255, 255, 255, 0.14)',
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.84rem',
-                    boxShadow: 'var(--shadow-sm)',
-                    display: 'flex',
-                    alignItems: 'center'
+                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--bg-glass-card)',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer'
                   }}
                 >
-                  <span style={{ color: 'var(--text-secondary)', marginRight: 8, fontSize: '0.80rem' }}>{tLabel.label}:</span>
-                  <strong style={{ color: '#38BDF8', fontWeight: 700, fontSize: '0.88rem' }}>{telemetry[tLabel.key] || '—'}</strong>
-                </div>
-              ))}
+                  <RotateCcw size={14} />
+                  <span>Reset</span>
+                </button>
+              </div>
             </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              overflowY: 'auto',
+              overflowX: 'hidden'
+            }}
+            className="modal-content-grid"
+          >
+            {/* TOP: Primary Simulation Workbench */}
+            <div
+              className="modal-workbench"
+              style={{
+                padding: '24px 28px 20px',
+                borderRight: 'none',
+                borderBottom: '1px solid var(--border-subtle)',
+                display: 'flex',
+                flexDirection: 'column',
+                background: 'var(--bg-secondary)',
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
+              {/* Simulation Tabs (2 to 3 distinct simulations per topic) */}
+              <div style={{ marginBottom: 16 }}>
+                <div
+                  className="modal-sim-tab-strip"
+                  style={{
+                    display: 'flex',
+                    gap: 8,
+                    padding: 4,
+                    background: 'var(--bg-tertiary)',
+                    borderRadius: 'var(--radius-pill)',
+                    border: '1px solid var(--border-subtle)',
+                    overflowX: 'auto'
+                  }}
+                >
+                  {topic.simulations.map((sim, idx) => {
+                    const isActive = idx === activeSimIndex;
+                    return (
+                      <button
+                        key={sim.id}
+                        onClick={() => setActiveSimIndex(idx)}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: 'var(--radius-pill)',
+                          border: 'none',
+                          background: isActive ? accentColor : 'transparent',
+                          color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
+                          transition: 'all 0.2s ease',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        Sim {idx + 1}: {sim.name}
+                      </button>
+                    );
+                  })}
+                </div>
 
-            {/* Interactive Sliders & Play/Reset Dock */}
+                <div style={{ marginTop: 10 }}>
+                  <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
+                    {currentSim.name}
+                  </h4>
+                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                    {currentSim.tagline}
+                  </p>
+                </div>
+              </div>
+
+              {/* Interactive Simulation Canvas Box */}
+              <div
+                className="modal-canvas-box"
+                style={{
+                  width: '100%',
+                  aspectRatio: '16 / 8.5',
+                  maxHeight: '440px',
+                  minHeight: '320px',
+                  position: 'relative',
+                  background: 'var(--bg-tertiary)',
+                  borderRadius: 'var(--radius-lg)',
+                  border: '1px solid var(--border-subtle)',
+                  boxShadow: 'inset 0 0 35px rgba(0, 0, 0, 0.7), 0 4px 20px rgba(0, 0, 0, 0.3)',
+                  overflow: 'hidden',
+                  marginBottom: 16
+                }}
+              >
+                <button
+                  onClick={() => setIsFullWindow(true)}
+                  className="sim-full-view-btn"
+                  title="Open full graph with settings covering whole window"
+                  aria-label="Open full graph and settings view"
+                >
+                  <Maximize2 size={13} />
+                  <span>Full Graph &amp; Settings</span>
+                </button>
+
+                <CanvasSimulator
+                  simId={currentSim.id}
+                  params={params}
+                  isPlaying={isPlaying}
+                  onTelemetryUpdate={setTelemetry}
+                  controls={currentSim.controls}
+                  onParamChange={handleControlChange}
+                  onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                  onReset={handleReset}
+                />
+              </div>
+
+              {/* Live Telemetry Chips */}
+              <div
+                className="modal-telemetry-box"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  flexWrap: 'wrap',
+                  marginBottom: 16
+                }}
+              >
+                {currentSim.telemetryLabels.map(tLabel => (
+                  <div
+                    key={tLabel.key}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: 'var(--radius-md)',
+                      background: 'rgba(15, 23, 42, 0.85)',
+                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.84rem',
+                      boxShadow: 'var(--shadow-sm)',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <span style={{ color: 'var(--text-secondary)', marginRight: 8, fontSize: '0.80rem' }}>{tLabel.label}:</span>
+                    <strong style={{ color: '#38BDF8', fontWeight: 700, fontSize: '0.88rem' }}>{telemetry[tLabel.key] || '—'}</strong>
+                  </div>
+                ))}
+              </div>
+
+              {/* Interactive Sliders & Play/Reset Dock */}
             <div
               className="modal-controls-dock"
               style={{
@@ -569,6 +882,28 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   >
                     <RotateCcw size={13} />
                     <span>Reset</span>
+                  </button>
+
+                  <button
+                    onClick={() => setIsFullWindow(true)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '7px 14px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1.5px solid rgba(0, 240, 255, 0.5)',
+                      background: 'rgba(0, 240, 255, 0.1)',
+                      color: '#00F0FF',
+                      fontSize: '0.8rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      boxShadow: '0 0 12px rgba(0, 240, 255, 0.2)'
+                    }}
+                    title="Open full graph with settings covering whole window"
+                  >
+                    <Maximize2 size={13} />
+                    <span>Full Graph &amp; Settings</span>
                   </button>
                 </div>
 
@@ -948,6 +1283,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Sparkles, Compass, FlaskConical } from 'lucide-react';
+import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Compass, Sparkles } from 'lucide-react';
 
 interface NavbarProps {
   onEnterLabClick: () => void;
@@ -7,8 +7,6 @@ interface NavbarProps {
   onOpenFormulas: () => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
-  activeTab?: 'simulations' | 'experiments';
-  onSelectTab?: (tab: 'simulations' | 'experiments') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -16,9 +14,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onExploreClick,
   onOpenFormulas,
   theme,
-  onToggleTheme,
-  activeTab = 'simulations',
-  onSelectTab
+  onToggleTheme
 }) => {
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -85,7 +81,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           onClick={(e) => {
             e.preventDefault();
             if (isMobileMenuOpen) setIsMobileMenuOpen(false);
-            if (onSelectTab) onSelectTab('simulations');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
         >
@@ -152,71 +147,28 @@ export const Navbar: React.FC<NavbarProps> = ({
           }}
           className="hide-mobile"
         >
-          {/* 1. Simulations / Curriculum Tab */}
+          {/* 1. Simulations / Curriculum */}
           <button
-            onClick={() => {
-              if (onSelectTab) onSelectTab('simulations');
-              onExploreClick();
-            }}
+            onClick={onExploreClick}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              background: activeTab === 'simulations' ? 'rgba(0, 240, 255, 0.08)' : 'transparent',
-              border: activeTab === 'simulations' ? '1px solid rgba(0, 240, 255, 0.25)' : '1px solid transparent',
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-pill)',
+              background: 'transparent',
+              border: 'none',
               fontSize: '0.88rem',
-              fontWeight: 700,
-              color: activeTab === 'simulations' ? 'var(--electric-blue)' : 'var(--text-secondary)',
+              fontWeight: 600,
+              color: 'var(--text-secondary)',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'color 0.2s ease',
+              padding: '6px 8px'
             }}
           >
             <Atom size={15} />
             <span>Simulations</span>
           </button>
 
-          {/* 2. NEW Top-Level Tab: EXPERIMENTS */}
-          <button
-            onClick={() => {
-              if (onSelectTab) onSelectTab('experiments');
-            }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              background: activeTab === 'experiments' ? 'linear-gradient(135deg, rgba(0, 98, 255, 0.2) 0%, rgba(0, 240, 255, 0.15) 100%)' : 'rgba(0, 240, 255, 0.04)',
-              border: activeTab === 'experiments' ? '1px solid var(--electric-blue)' : '1px solid rgba(0, 240, 255, 0.2)',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-pill)',
-              fontSize: '0.88rem',
-              fontWeight: 700,
-              color: activeTab === 'experiments' ? '#FFFFFF' : 'var(--text-primary)',
-              boxShadow: activeTab === 'experiments' ? '0 0 16px rgba(0, 240, 255, 0.3)' : 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <FlaskConical size={15} color={activeTab === 'experiments' ? '#00F0FF' : 'var(--electric-blue)'} />
-            <span>Experiments</span>
-            <span
-              style={{
-                fontSize: '0.62rem',
-                fontWeight: 800,
-                fontFamily: 'var(--font-mono)',
-                padding: '1px 6px',
-                borderRadius: 'var(--radius-pill)',
-                background: 'var(--electric-blue)',
-                color: '#000000',
-                marginLeft: 2
-              }}
-            >
-              LAB
-            </span>
-          </button>
-
-          {/* 3. Formulas Bank Modal */}
+          {/* 2. Formulas Bank Modal */}
           <button
             onClick={onOpenFormulas}
             style={{
@@ -237,18 +189,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>Formulas</span>
           </button>
 
-          {/* 4. How Visual Learning Works */}
+          {/* 3. How Visual Learning Works */}
           <a
             href="#how-it-works"
             onClick={(e) => {
-              if (activeTab !== 'simulations' && onSelectTab) {
-                e.preventDefault();
-                onSelectTab('simulations');
-                setTimeout(() => {
-                  const el = document.getElementById('how-it-works');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-              }
+              e.preventDefault();
+              const el = document.getElementById('how-it-works');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
             }}
             style={{
               fontSize: '0.88rem',
@@ -344,14 +291,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
             {/* 1. Simulations / Curriculum */}
             <button
-              onClick={() => {
-                if (onSelectTab) onSelectTab('simulations');
-                handleMobileNavClick(onExploreClick);
-              }}
+              onClick={() => handleMobileNavClick(onExploreClick)}
               className="mobile-nav-link-btn"
-              style={{
-                background: activeTab === 'simulations' ? 'rgba(0, 240, 255, 0.08)' : undefined
-              }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Atom size={18} color="var(--electric-blue)" />
@@ -363,44 +304,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <ArrowRight size={15} color="var(--text-tertiary)" />
             </button>
 
-            {/* 2. Experiments (Digital Lab) */}
-            <button
-              onClick={() => {
-                if (onSelectTab) onSelectTab('experiments');
-                setIsMobileMenuOpen(false);
-              }}
-              className="mobile-nav-link-btn"
-              style={{
-                background: activeTab === 'experiments' ? 'rgba(0, 240, 255, 0.12)' : 'rgba(0, 240, 255, 0.04)',
-                border: '1px solid rgba(0, 240, 255, 0.25)'
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <FlaskConical size={18} color="#00F0FF" />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ fontWeight: 700, color: '#FFFFFF' }}>Experiments</span>
-                    <span
-                      style={{
-                        fontSize: '0.62rem',
-                        fontWeight: 800,
-                        fontFamily: 'var(--font-mono)',
-                        padding: '1px 6px',
-                        borderRadius: 'var(--radius-pill)',
-                        background: 'var(--electric-blue)',
-                        color: '#000000'
-                      }}
-                    >
-                      NEW
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>Change variables &amp; discover</span>
-                </div>
-              </div>
-              <ArrowRight size={15} color="var(--electric-blue)" />
-            </button>
-
-            {/* 3. Formulas */}
+            {/* 2. Formulas */}
             <button
               onClick={() => handleMobileNavClick(onOpenFormulas)}
               className="mobile-nav-link-btn"
@@ -412,12 +316,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               <ArrowRight size={15} color="var(--text-tertiary)" />
             </button>
 
-            {/* 4. How It Works */}
+            {/* 3. How It Works */}
             <a
               href="#how-it-works"
               onClick={() => {
-                if (onSelectTab) onSelectTab('simulations');
                 setIsMobileMenuOpen(false);
+                const el = document.getElementById('how-it-works');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
               className="mobile-nav-link-btn"
               style={{ textDecoration: 'none' }}

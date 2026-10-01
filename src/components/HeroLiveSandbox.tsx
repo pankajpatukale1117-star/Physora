@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, RotateCcw, ArrowUpRight, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, ArrowUpRight, Zap, Maximize2, Minimize2 } from 'lucide-react';
 
 interface HeroLiveSandboxProps {
   onOpenFullLab: () => void;
@@ -7,6 +7,9 @@ interface HeroLiveSandboxProps {
 
 export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const simTimeRef = useRef<number>(0);
+  const isPlayingRef = useRef<boolean>(true);
+  const lastTimeRef = useRef<number | null>(null);
 
   // Simulation parameters
   const [angleDeg, setAngleDeg] = useState<number>(45);
@@ -14,6 +17,38 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
   const [planet, setPlanet] = useState<'earth' | 'moon' | 'mars'>('earth');
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [touchHud, setTouchHud] = useState<string | null>(null);
+  const [isFullWindow, setIsFullWindow] = useState<boolean>(false);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+    if (isPlaying) {
+      lastTimeRef.current = performance.now();
+    }
+  }, [isPlaying]);
+
+  // Handle Escape key to exit full window mode
+  useEffect(() => {
+    if (!isFullWindow) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsFullWindow(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFullWindow]);
+
+  // Lock body scroll when in full window mode
+  useEffect(() => {
+    if (isFullWindow) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isFullWindow]);
 
   const handleSandboxPointer = (e: React.PointerEvent<HTMLDivElement>) => {
     const canvas = canvasRef.current;
@@ -63,25 +98,42 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
     if (!ctx) return;
 
     let animId: number;
-    let t = 0;
     
-    // Auto-sync canvas resolution to displayed container width
+    // Auto-sync canvas resolution to displayed container width & height
     const updateCanvasDims = () => {
       const parentW = canvas.parentElement?.clientWidth || 672;
+      const parentH = canvas.parentElement?.clientHeight || (window.innerWidth < 768 ? 175 : 230);
       canvas.width = parentW;
-      canvas.height = window.innerWidth < 768 ? 175 : 230;
+      canvas.height = parentH;
     };
     updateCanvasDims();
 
     window.addEventListener('resize', updateCanvasDims);
 
     const isMobileViewport = window.innerWidth < 768;
-    const scale = isMobileViewport ? 3.4 : 5.2; // pixels per meter
     const originX = isMobileViewport ? 24 : 50;
-    const originY = canvas.height - 35;
 
     const render = () => {
+      const now = performance.now();
+      if (lastTimeRef.current === null) {
+        lastTimeRef.current = now;
+      }
+      const dt = Math.min((now - lastTimeRef.current) / 1000, 0.05);
+      lastTimeRef.current = now;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const originY = canvas.height - 35;
+
+      // Dynamic responsive scale for full window vs card mode
+      const availableW = canvas.width - originX - 40;
+      const availableH = originY - 30;
+      const fitScaleX = availableW / Math.max(totalRange * 1.15, 50);
+      const fitScaleY = availableH / Math.max(maxHeight * 1.35, 20);
+      const dynamicScale = Math.min(fitScaleX, fitScaleY);
+      const scale = isFullWindow 
+        ? Math.max(3.8, Math.min(dynamicScale, 11))
+        : (isMobileViewport ? 3.4 : 5.2);
 
       // 1. Grid & Ground
       ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
@@ -142,14 +194,16 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       ctx.stroke();
 
       // 4. Projectile Ball & Vectors
-      if (isPlaying) {
-        t += 0.025;
-        if (t > flightTime + 0.4) {
-          t = 0; // Loop flight
+      // Advance flight time ONLY if active (not paused)
+      if (isPlayingRef.current) {
+        simTimeRef.current += dt * 1.25;
+        if (simTimeRef.current > flightTime + 0.4) {
+          simTimeRef.current = 0; // Loop flight
         }
       }
 
-      const curT = Math.min(t, flightTime);
+      // Exact current time elapsed in flight
+      const curT = Math.min(simTimeRef.current, flightTime);
       const currX = originX + speed * Math.cos(theta) * curT * scale;
       const currY = originY - (speed * Math.sin(theta) * curT - 0.5 * g * curT * curT) * scale;
       const vx = speed * Math.cos(theta);
@@ -202,6 +256,16 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       ctx.font = '10px JetBrains Mono';
       ctx.fillText(`Apex: ${maxHeight.toFixed(1)} m`, apexX - 25, apexY - 8);
 
+      // Paused status badge overlay on canvas
+      if (!isPlaying) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.9)';
+        ctx.font = '700 11px JetBrains Mono, monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(`⏸ PAUSED (t = ${curT.toFixed(2)}s)`, canvas.width - 16, 22);
+        ctx.restore();
+      }
+
       animId = requestAnimationFrame(render);
     };
 
@@ -210,12 +274,28 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', updateCanvasDims);
     };
-  }, [angleDeg, speed, planet, isPlaying, theta, g, flightTime, maxHeight]);
+  }, [angleDeg, speed, planet, isPlaying, theta, g, flightTime, maxHeight, isFullWindow]);
 
   return (
     <div
       className="glass-card hero-sandbox-card"
-      style={{
+      style={isFullWindow ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        background: '#070B14',
+        padding: '16px 24px',
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        maxWidth: 'none',
+        margin: 0,
+        borderRadius: 0,
+        overflow: 'hidden'
+      } : {
         width: '100%',
         maxWidth: 720,
         margin: '32px auto 0',
@@ -226,250 +306,450 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       }}
     >
       {/* Header Bar */}
-      <div className="hero-sandbox-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div
+        className="hero-sandbox-header"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: isFullWindow ? 14 : 16,
+          flexWrap: 'wrap',
+          gap: 12
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 10px #10B981' }} />
           <span className="hero-sandbox-title" style={{ fontSize: '0.86rem', fontWeight: 800, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
             LIVE HERO SANDBOX • 2D VECTOR TRAJECTORY
           </span>
+          {isFullWindow && (
+            <span
+              className="font-mono"
+              style={{
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                color: 'var(--electric-blue)',
+                background: 'rgba(0, 240, 255, 0.12)',
+                border: '1px solid rgba(0, 240, 255, 0.3)',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-pill)',
+                letterSpacing: '0.04em'
+              }}
+            >
+              FULL WINDOW STUDIO
+            </span>
+          )}
         </div>
 
-        {/* Planet Presets */}
-        <div className="hero-sandbox-presets" style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={() => setPlanet('earth')}
-            className={`env-preset-pill ${planet === 'earth' ? 'active' : ''}`}
-          >
-            🌍 Earth (9.8 m/s²)
-          </button>
-          <button
-            onClick={() => setPlanet('moon')}
-            className={`env-preset-pill ${planet === 'moon' ? 'active' : ''}`}
-          >
-            🌕 Moon (1.6 m/s²)
-          </button>
-          <button
-            onClick={() => setPlanet('mars')}
-            className={`env-preset-pill ${planet === 'mars' ? 'active' : ''}`}
-          >
-            🔴 Mars (3.7 m/s²)
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Planet Presets */}
+          <div className="hero-sandbox-presets" style={{ display: 'flex', gap: 6 }}>
+            <button
+              onClick={() => setPlanet('earth')}
+              className={`env-preset-pill ${planet === 'earth' ? 'active' : ''}`}
+            >
+              🌍 Earth (9.8 m/s²)
+            </button>
+            <button
+              onClick={() => setPlanet('moon')}
+              className={`env-preset-pill ${planet === 'moon' ? 'active' : ''}`}
+            >
+              🌕 Moon (1.6 m/s²)
+            </button>
+            <button
+              onClick={() => setPlanet('mars')}
+              className={`env-preset-pill ${planet === 'mars' ? 'active' : ''}`}
+            >
+              🔴 Mars (3.7 m/s²)
+            </button>
+          </div>
+
+          {isFullWindow && (
+            <button
+              onClick={() => setIsFullWindow(false)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-pill)',
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.4)',
+                color: '#F87171',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              title="Exit Full View (Esc)"
+              aria-label="Exit Full View"
+            >
+              <Minimize2 size={13} />
+              <span>Exit Full View</span>
+              <span style={{ opacity: 0.6, fontSize: '0.7rem' }}>Esc</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Canvas */}
+      {/* Main Studio Area (Row in full window, Column in card) */}
       <div
-        className="hero-sandbox-canvas-box"
-        onPointerDown={(e) => {
-          try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
-          handleSandboxPointer(e);
-        }}
-        onPointerMove={(e) => {
-          if (e.buttons > 0) handleSandboxPointer(e);
-        }}
-        onPointerUp={() => {
-          setTimeout(() => setTouchHud(null), 1800);
-        }}
-        style={{
-          width: '100%',
-          height: 230,
-          background: 'rgba(0, 0, 0, 0.03)',
-          borderRadius: 'var(--radius-md)',
+        style={isFullWindow ? {
+          display: 'flex',
+          flex: 1,
+          minHeight: 0,
+          gap: 18,
           overflow: 'hidden',
-          position: 'relative',
-          touchAction: 'none',
-          userSelect: 'none',
-          cursor: 'crosshair'
+          flexDirection: window.innerWidth < 900 ? 'column' : 'row'
+        } : {
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
-        <canvas
-          ref={canvasRef}
-          width={672}
-          height={230}
-          style={{ width: '100%', height: '100%', display: 'block' }}
-        />
-        {/* Floating Touch Status Badge — CSS-hidden on desktop via mobile-touch-hud-row */}
+        {/* Canvas Box */}
         <div
-          className="mobile-touch-hud-row"
-          style={{
-            position: 'absolute',
-            top: 8,
-            left: 10,
-            pointerEvents: 'none'
+          className="hero-sandbox-canvas-box"
+          onPointerDown={(e) => {
+            try { e.currentTarget.setPointerCapture(e.pointerId); } catch {}
+            handleSandboxPointer(e);
+          }}
+          onPointerMove={(e) => {
+            if (e.buttons > 0) handleSandboxPointer(e);
+          }}
+          onPointerUp={() => {
+            setTimeout(() => setTouchHud(null), 1800);
+          }}
+          style={isFullWindow ? {
+            flex: 1,
+            height: '100%',
+            minHeight: 0,
+            background: 'rgba(0, 0, 0, 0.25)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-subtle)',
+            overflow: 'hidden',
+            position: 'relative',
+            touchAction: 'none',
+            userSelect: 'none',
+            cursor: 'crosshair',
+            boxShadow: 'inset 0 0 35px rgba(0, 0, 0, 0.7)'
+          } : {
+            width: '100%',
+            height: 230,
+            background: 'rgba(0, 0, 0, 0.03)',
+            borderRadius: 'var(--radius-md)',
+            overflow: 'hidden',
+            position: 'relative',
+            touchAction: 'none',
+            userSelect: 'none',
+            cursor: 'crosshair'
           }}
         >
-          <div className={`canvas-touch-badge ${touchHud ? 'dragging' : ''}`}>
-            <span>{touchHud || '👆 Touch & Drag to Aim Cannon'}</span>
+          {/* Small Full Graph & Settings Button inside Canvas Area */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsFullWindow(!isFullWindow);
+            }}
+            className="sim-full-view-btn"
+            title={isFullWindow ? 'Exit Full View (Esc)' : 'Open full graph with settings covering whole window'}
+            aria-label={isFullWindow ? 'Exit Full View' : 'Open full graph and settings view'}
+          >
+            {isFullWindow ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+            <span>{isFullWindow ? 'Exit Full View' : 'Full Graph & Settings'}</span>
+          </button>
+
+          <canvas
+            ref={canvasRef}
+            style={{ width: '100%', height: '100%', display: 'block' }}
+          />
+
+          {/* Floating Touch Status Badge — CSS-hidden on desktop via mobile-touch-hud-row */}
+          <div
+            className="mobile-touch-hud-row"
+            style={{
+              position: 'absolute',
+              top: 8,
+              left: 10,
+              pointerEvents: 'none'
+            }}
+          >
+            <div className={`canvas-touch-badge ${touchHud ? 'dragging' : ''}`}>
+              <span>{touchHud || '👆 Touch & Drag to Aim Cannon'}</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Controls & Metrics Row */}
-      <div className="hero-sandbox-controls" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginTop: 16, alignItems: 'center' }}>
-        {/* Angle Slider */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
-            <span>Launch Angle (θ)</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        {/* Controls & Metrics Dock (Side Dock in Full Window, Bottom Grid in Card) */}
+        <div
+          style={isFullWindow ? {
+            width: window.innerWidth < 900 ? '100%' : '340px',
+            minWidth: window.innerWidth < 900 ? '100%' : '310px',
+            maxWidth: window.innerWidth < 900 ? '100%' : '360px',
+            height: window.innerWidth < 900 ? '45vh' : '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+            padding: '18px 20px',
+            background: 'var(--bg-glass-card)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-subtle)',
+            overflowY: 'auto',
+            boxSizing: 'border-box'
+          } : {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+            marginTop: 16
+          }}
+        >
+          {isFullWindow && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', paddingBottom: 10 }}>
+              <span style={{ fontSize: '0.82rem', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+                CONTROLS &amp; SETTINGS
+              </span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                Zero Scroll Mode
+              </span>
+            </div>
+          )}
+
+          {/* Sliders Area */}
+          <div
+            className={isFullWindow ? '' : 'hero-sandbox-controls'}
+            style={isFullWindow ? {
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 14
+            } : {
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: 16,
+              alignItems: 'center'
+            }}
+          >
+            {/* Angle Slider */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
+                <span>Launch Angle (θ)</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <input
+                    type="number"
+                    min={15}
+                    max={75}
+                    value={angleDeg}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val)) setAngleDeg(Math.min(75, Math.max(15, val)));
+                    }}
+                    title="Type launch angle (15° to 75°)"
+                    className="control-number-badge-input font-mono"
+                    style={{
+                      width: '54px',
+                      padding: '2px 4px',
+                      textAlign: 'right',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: 'var(--electric-blue)',
+                      background: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-sm)',
+                      outline: 'none'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.8rem', color: 'var(--electric-blue)', fontWeight: 700 }}>°</span>
+                </div>
+              </div>
               <input
-                type="number"
+                type="range"
                 min={15}
                 max={75}
                 value={angleDeg}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) setAngleDeg(Math.min(75, Math.max(15, val)));
-                }}
-                title="Type launch angle (15° to 75°)"
-                className="control-number-badge-input font-mono"
-                style={{
-                  width: '54px',
-                  padding: '2px 4px',
-                  textAlign: 'right',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  color: 'var(--electric-blue)',
-                  background: 'var(--bg-tertiary)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-sm)',
-                  outline: 'none'
-                }}
+                onChange={(e) => setAngleDeg(Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--electric-blue)', cursor: 'pointer' }}
               />
-              <span style={{ fontSize: '0.8rem', color: 'var(--electric-blue)', fontWeight: 700 }}>°</span>
             </div>
-          </div>
-          <input
-            type="range"
-            min={15}
-            max={75}
-            value={angleDeg}
-            onChange={(e) => setAngleDeg(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--electric-blue)', cursor: 'pointer' }}
-          />
-        </div>
 
-        {/* Speed Slider */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
-            <span>Launch Speed (v₀)</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {/* Speed Slider */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
+                <span>Launch Speed (v₀)</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <input
+                    type="number"
+                    min={12}
+                    max={36}
+                    value={speed}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (!isNaN(val)) setSpeed(Math.min(36, Math.max(12, val)));
+                    }}
+                    title="Type launch speed (12 to 36 m/s)"
+                    className="control-number-badge-input font-mono"
+                    style={{
+                      width: '54px',
+                      padding: '2px 4px',
+                      textAlign: 'right',
+                      fontSize: '0.82rem',
+                      fontWeight: 700,
+                      color: 'var(--electric-violet)',
+                      background: 'var(--bg-tertiary)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-sm)',
+                      outline: 'none'
+                    }}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--electric-violet)', fontWeight: 600 }}>m/s</span>
+                </div>
+              </div>
               <input
-                type="number"
+                type="range"
                 min={12}
                 max={36}
                 value={speed}
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value);
-                  if (!isNaN(val)) setSpeed(Math.min(36, Math.max(12, val)));
-                }}
-                title="Type launch speed (12 to 36 m/s)"
-                className="control-number-badge-input font-mono"
-                style={{
-                  width: '54px',
-                  padding: '2px 4px',
-                  textAlign: 'right',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  color: 'var(--electric-violet)',
-                  background: 'var(--bg-tertiary)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: 'var(--radius-sm)',
-                  outline: 'none'
-                }}
+                onChange={(e) => setSpeed(Number(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--electric-violet)', cursor: 'pointer' }}
               />
-              <span style={{ fontSize: '0.72rem', color: 'var(--electric-violet)', fontWeight: 600 }}>m/s</span>
             </div>
-          </div>
-          <input
-            type="range"
-            min={12}
-            max={36}
-            value={speed}
-            onChange={(e) => setSpeed(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--electric-violet)', cursor: 'pointer' }}
-          />
-        </div>
 
-        {/* Live Telemetry Chips */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ padding: '6px 12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', flex: 1 }}>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Range (R)</div>
-            <div className="font-mono" style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--electric-cyan)' }}>
-              {totalRange.toFixed(1)} m
+            {/* Live Telemetry Chips */}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ padding: '6px 12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', flex: 1, minWidth: '100px' }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Range (R)</div>
+                <div className="font-mono" style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--electric-cyan)' }}>
+                  {totalRange.toFixed(1)} m
+                </div>
+              </div>
+              <div style={{ padding: '6px 12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', flex: 1, minWidth: '100px' }}>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Flight Time</div>
+                <div className="font-mono" style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  {flightTime.toFixed(2)} s
+                </div>
+              </div>
+              {isFullWindow && (
+                <div style={{ padding: '6px 12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', flex: 1, minWidth: '100px' }}>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Max Apex (H)</div>
+                  <div className="font-mono" style={{ fontSize: '0.88rem', fontWeight: 800, color: '#EC4899' }}>
+                    {maxHeight.toFixed(1)} m
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          <div style={{ padding: '6px 12px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-subtle)', flex: 1 }}>
-            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>Flight Time</div>
-            <div className="font-mono" style={{ fontSize: '0.88rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              {flightTime.toFixed(2)} s
-            </div>
-          </div>
-        </div>
-      </div>
 
-      {/* Action Footer */}
-      <div className="hero-sandbox-footer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--border-subtle)', flexWrap: 'wrap', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
+          {/* Action Buttons (Pause / Resume, Reset, Open Full Lab) */}
+          <div
+            className="hero-sandbox-footer"
             style={{
-              display: 'inline-flex',
+              display: 'flex',
               alignItems: 'center',
-              gap: 6,
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-pill)',
-              border: '1px solid var(--border-subtle)',
-              background: 'var(--bg-glass-card)',
-              color: 'var(--text-primary)',
-              fontSize: '0.78rem',
-              fontWeight: 700,
-              cursor: 'pointer'
+              justifyContent: 'space-between',
+              marginTop: isFullWindow ? 'auto' : 0,
+              paddingTop: 12,
+              borderTop: '1px solid var(--border-subtle)',
+              flexWrap: 'wrap',
+              gap: 10
             }}
           >
-            {isPlaying ? 'Pause' : <Play size={12} />}
-            <span>{isPlaying ? 'Freeze' : 'Launch'}</span>
-          </button>
-          <button
-            onClick={() => { setAngleDeg(45); setSpeed(24); setPlanet('earth'); }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-pill)',
-              border: '1px solid var(--border-subtle)',
-              background: 'var(--bg-glass-card)',
-              color: 'var(--text-secondary)',
-              fontSize: '0.78rem',
-              cursor: 'pointer'
-            }}
-          >
-            <RotateCcw size={12} />
-            <span>Reset</span>
-          </button>
-        </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => {
+                  if (!isPlaying && simTimeRef.current >= flightTime) {
+                    simTimeRef.current = 0;
+                  }
+                  setIsPlaying(!isPlaying);
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: isPlaying ? '1px solid var(--border-subtle)' : '1px solid rgba(0, 240, 255, 0.4)',
+                  background: isPlaying ? 'var(--bg-glass-card)' : 'rgba(0, 240, 255, 0.12)',
+                  color: isPlaying ? 'var(--text-primary)' : 'var(--electric-blue)',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                id="heroSandboxPauseBtn"
+                aria-label={isPlaying ? 'Pause simulation' : 'Resume simulation'}
+                title={isPlaying ? 'Pause at exact position' : 'Resume trajectory'}
+              >
+                {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+                <span>{isPlaying ? 'Pause' : 'Resume'}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setAngleDeg(45);
+                  setSpeed(24);
+                  setPlanet('earth');
+                  simTimeRef.current = 0;
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-glass-card)',
+                  color: 'var(--text-secondary)',
+                  fontSize: '0.78rem',
+                  cursor: 'pointer'
+                }}
+                id="heroSandboxResetBtn"
+              >
+                <RotateCcw size={12} />
+                <span>Reset</span>
+              </button>
+              <button
+                onClick={() => setIsFullWindow(!isFullWindow)}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '6px 14px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1.5px solid rgba(0, 240, 255, 0.5)',
+                  background: 'rgba(0, 240, 255, 0.1)',
+                  color: '#00F0FF',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 0 12px rgba(0, 240, 255, 0.2)'
+                }}
+                title={isFullWindow ? 'Exit Full View (Esc)' : 'Open full graph and settings covering whole window'}
+              >
+                {isFullWindow ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                <span>{isFullWindow ? 'Exit Full View' : 'Full Graph & Settings'}</span>
+              </button>
+            </div>
 
-        <button
-          onClick={onOpenFullLab}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 16px',
-            borderRadius: 'var(--radius-pill)',
-            border: 'none',
-            background: 'linear-gradient(135deg, #0062FF 0%, #7C3AED 100%)',
-            color: '#FFFFFF',
-            fontSize: '0.82rem',
-            fontWeight: 700,
-            cursor: 'pointer',
-            boxShadow: '0 2px 10px rgba(0, 98, 255, 0.3)'
-          }}
-        >
-          <Zap size={14} />
-          <span>Open Full 42-Sim Lab</span>
-          <ArrowUpRight size={14} />
-        </button>
+            <button
+              onClick={onOpenFullLab}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 16px',
+                borderRadius: 'var(--radius-pill)',
+                border: 'none',
+                background: 'linear-gradient(135deg, #0062FF 0%, #7C3AED 100%)',
+                color: '#FFFFFF',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 2px 10px rgba(0, 98, 255, 0.3)'
+              }}
+            >
+              <Zap size={14} />
+              <span>Open Full 42-Sim Lab</span>
+              <ArrowUpRight size={14} />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
