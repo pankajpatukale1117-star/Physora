@@ -2,9 +2,11 @@ import React, { useState, useMemo } from 'react';
 import {
   Atom,
   Search,
-  ArrowRight,
   Compass,
-  BookOpen
+  BookOpen,
+  Play,
+  FlaskConical,
+  Target
 } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { MathView } from './MathView';
@@ -18,7 +20,6 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
   onSelectTopic,
   onOpenFormulas
 }) => {
-
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<'All' | 'Physics' | 'Mathematics'>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -63,23 +64,165 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
     >
       <div className="section-container">
         {/* Section Header */}
-        <div style={{ marginBottom: 36, textAlign: 'center' }}>
+        <div style={{ marginBottom: 32, textAlign: 'center' }}>
           <div style={{ display: 'inline-flex', marginBottom: 12 }}>
             <span className="badge badge-primary">
               <Atom size={13} />
-              <span>Simulations Library</span>
+              <span>Simulations Catalog • 42 Interactive Models</span>
             </span>
           </div>
           <h2 className="text-h1" style={{ marginBottom: 10 }}>
-            Interactive Models for <span style={{ color: 'var(--brand-primary)' }}>Maths &amp; Physics</span>
+            Interactive Simulations for <span style={{ color: 'var(--brand-primary)' }}>Physics &amp; Mathematics</span>
           </h2>
           <p
             className="text-body"
             style={{ maxWidth: 640, margin: '0 auto', color: 'var(--text-secondary)' }}
           >
-            Explore 14 curriculum domains and 42 interactive models. Adjust parameters, observe
-            synchronous graphs, and connect visual concepts directly to scientific equations.
+            Research-based interactive learning tools. Manipulate physical parameters, observe real-time vector
+            fields, and test first-principles mathematical behavior.
           </p>
+        </div>
+
+        {/* PhET Subject Category Cards (The Subject Bar) */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 16,
+            marginBottom: 28
+          }}
+        >
+          {/* Card 1: Physics */}
+          <div
+            className={`phet-category-card ${selectedSubject === 'Physics' ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedSubject('Physics');
+              setSelectedCategory('All');
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--brand-primary-soft)',
+                color: 'var(--brand-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <Atom size={24} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                Physics
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                Motion, Waves, Energy, Optics, Thermo (24 Sims)
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Mathematics */}
+          <div
+            className={`phet-category-card ${selectedSubject === 'Mathematics' ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedSubject('Mathematics');
+              setSelectedCategory('All');
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--electric-violet-soft)',
+                color: 'var(--electric-violet)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <Compass size={24} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                Mathematics
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                Calculus, Trigonometry, Vectors (18 Sims)
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Discovery Experiments */}
+          <div
+            className="phet-category-card"
+            onClick={() => {
+              const el = document.getElementById('experiments-lab');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--accent-teal-soft)',
+                color: 'var(--accent-teal)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <FlaskConical size={24} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                Discovery Labs
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                Predict → Experiment → Explain (8 Labs)
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Class 11 & JEE Rigor */}
+          <div
+            className={`phet-category-card ${selectedSubject === 'All' ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedSubject('All');
+              setSelectedCategory('All');
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--accent-amber-soft)',
+                color: 'var(--accent-amber)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <Target size={24} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                Class 9–11 &amp; JEE
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                Full Standard &amp; Advanced Syllabus (42 Sims)
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Filter and Search Bar */}
@@ -253,7 +396,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                 }}
               >
                 <div>
-                  {/* Top Meta row */}
+                  {/* Top Meta row with PhET Play Badge */}
                   <div
                     style={{
                       display: 'flex',
@@ -262,23 +405,31 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                       marginBottom: 12
                     }}
                   >
-                    <span
-                      className={`badge ${
-                        topic.subject === 'physics' ? 'badge-physics' : 'badge-math'
-                      }`}
-                      style={{ fontSize: '0.72rem' }}
-                    >
-                      {topic.subject === 'physics' ? 'Physics' : 'Mathematics'} • Class 9–11
-                    </span>
-                    <span
-                      className="font-mono"
-                      style={{
-                        fontSize: '0.72rem',
-                        color: 'var(--text-tertiary)'
-                      }}
-                    >
-                      3 Simulations
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span
+                        className={`badge ${
+                          topic.subject === 'physics' ? 'badge-physics' : 'badge-math'
+                        }`}
+                        style={{ fontSize: '0.72rem' }}
+                      >
+                        {topic.subject === 'physics' ? 'Physics' : 'Mathematics'}
+                      </span>
+                      <span
+                        className="badge font-mono"
+                        style={{
+                          fontSize: '0.68rem',
+                          background: 'var(--bg-subtle)',
+                          color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-subtle)'
+                        }}
+                      >
+                        3 Models
+                      </span>
+                    </div>
+
+                    <div className="phet-play-badge" title={`Play ${topic.title}`}>
+                      <Play size={18} fill="#FFFFFF" style={{ marginLeft: 2 }} />
+                    </div>
                   </div>
 
                   {/* Title */}
@@ -390,39 +541,33 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                   </div>
                 </div>
 
-                {/* Bottom CTA Button */}
+                {/* Bottom PhET Play Simulation Action */}
                 <div
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingTop: 12,
+                    paddingTop: 14,
                     borderTop: '1px solid var(--border-subtle)'
                   }}
                 >
-                  <span
-                    style={{
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      color: 'var(--brand-primary)'
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectTopic(topic.id);
                     }}
-                  >
-                    Open Topic Lab
-                  </span>
-                  <div
+                    className="btn btn-primary"
                     style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'var(--brand-primary-soft)',
-                      display: 'flex',
-                      alignItems: 'center',
+                      width: '100%',
+                      padding: '9px 16px',
+                      borderRadius: 'var(--radius-pill)',
                       justifyContent: 'center',
-                      color: 'var(--brand-primary)'
+                      gap: 8,
+                      fontWeight: 700,
+                      fontSize: '0.84rem'
                     }}
                   >
-                    <ArrowRight size={14} />
-                  </div>
+                    <Play size={14} fill="#FFFFFF" />
+                    <span>Play Simulation</span>
+                  </button>
                 </div>
               </div>
             ))}

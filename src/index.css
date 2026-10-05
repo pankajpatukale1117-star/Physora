@@ -880,3 +880,142 @@ input[type="range"]::-moz-range-thumb {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ==========================================================================
+   PhET Scientific Laboratory Usability System (Desktop + Mobile Parity)
+   ========================================================================== */
+
+/* PhET-Style Stepper Buttons [-] and [+] on All Parameter Sliders */
+.phet-stepper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  user-select: none;
+  touch-action: manipulation;
+  box-shadow: var(--shadow-xs);
+}
+
+@media (max-width: 768px) {
+  .phet-stepper-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+  }
+}
+
+.phet-stepper-btn:hover:not(:disabled) {
+  background: var(--bg-subtle);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.phet-stepper-btn:active:not(:disabled) {
+  transform: scale(0.92);
+  background: var(--brand-primary-soft);
+}
+
+.phet-stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* PhET Iconic Circular Orange Reset Button (#FF6A00) */
+.phet-reset-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 50%;
+  background: #FF6A00;
+  color: #FFFFFF;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(255, 106, 0, 0.35);
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  touch-action: manipulation;
+}
+
+.phet-reset-btn:hover {
+  background: #E55F00;
+  box-shadow: 0 3px 10px rgba(255, 106, 0, 0.45);
+  transform: rotate(-30deg);
+}
+
+.phet-reset-btn:active {
+  transform: scale(0.92) rotate(-90deg);
+}
+
+/* PhET Simulation Playback Controls Bar */
+.phet-playback-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
+  flex-wrap: wrap;
+}
+
+/* PhET Simulation Card Play Badge */
+.phet-play-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(10, 102, 194, 0.35);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+}
+
+.scientific-card-interactive:hover .phet-play-badge {
+  transform: scale(1.1);
+  background: var(--brand-primary-hover);
+}
+
+/* PhET Subject Category Tiles */
+.phet-category-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+  box-shadow: var(--shadow-sm);
+}
+
+.phet-category-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.phet-category-card.active {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-soft);
+  box-shadow: 0 0 0 2px var(--brand-primary-border);
+}
+

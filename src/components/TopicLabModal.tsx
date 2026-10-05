@@ -17,7 +17,11 @@ import {
   Activity,
   Layers,
   ArrowDown,
-  ArrowUp
+  ArrowUp,
+  Minus,
+  Plus,
+  StepForward,
+  Gauge
 } from 'lucide-react';
 import { TOPICS_DATA, isSimulationAnimated, type EditorialTeaching } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
@@ -62,6 +66,22 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
     }
   }
 
+  const handleStepDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const precision = control.step.toString().includes('.') ? control.step.toString().split('.')[1].length : 0;
+    const nextVal = Math.max(control.min, parseFloat((value - control.step).toFixed(precision)));
+    setTextValue(String(nextVal));
+    onChange(nextVal);
+  };
+
+  const handleStepUp = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const precision = control.step.toString().includes('.') ? control.step.toString().split('.')[1].length : 0;
+    const nextVal = Math.min(control.max, parseFloat((value + control.step).toFixed(precision)));
+    setTextValue(String(nextVal));
+    onChange(nextVal);
+  };
+
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     setTextValue(raw);
@@ -101,17 +121,17 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 6,
-        padding: '10px 12px',
+        gap: 8,
+        padding: '12px 14px',
         borderRadius: 'var(--radius-md)',
         background: 'var(--bg-glass-card)',
         border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-sm)',
+        boxShadow: 'var(--shadow-xs)',
         transition: 'border-color 0.2s ease'
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: '0.80rem', fontWeight: 650, color: 'var(--text-secondary)' }}>
           {control.label}
         </span>
 
@@ -130,28 +150,28 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
             title={`Click to type number (${control.min} to ${control.max})`}
             className="control-number-badge-input font-mono"
             style={{
-              width: '78px',
-              padding: '4px 8px',
+              width: '74px',
+              padding: '4px 6px',
               textAlign: 'right',
-              fontSize: '0.86rem',
+              fontSize: '0.84rem',
               fontWeight: 700,
               fontFamily: 'var(--font-mono)',
-              color: '#F8FAFC',
-              background: 'rgba(15, 23, 42, 0.9)',
-              border: isFocused ? `1.5px solid ${accentColor}` : '1px solid rgba(255, 255, 255, 0.2)',
-              borderRadius: 'var(--radius-sm)',
+              color: 'var(--text-primary)',
+              background: 'var(--bg-subtle)',
+              border: isFocused ? `1.5px solid ${accentColor}` : '1px solid var(--border-medium)',
+              borderRadius: 'var(--radius-xs)',
               outline: 'none',
-              boxShadow: isFocused ? `0 0 0 3px ${accentColor}35` : 'none',
+              boxShadow: isFocused ? `0 0 0 2px ${accentColor}25` : 'none',
               transition: 'all 0.15s ease'
             }}
           />
           {control.unit && (
             <span
               style={{
-                fontSize: '0.76rem',
+                fontSize: '0.74rem',
                 color: 'var(--text-secondary)',
                 fontWeight: 600,
-                minWidth: '24px'
+                minWidth: '22px'
               }}
             >
               {control.unit}
@@ -160,19 +180,43 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
         </div>
       </div>
 
-      {/* Slider */}
-      <input
-        type="range"
-        min={control.min}
-        max={control.max}
-        step={control.step}
-        value={value}
-        onChange={handleSliderChange}
-        className="card-range-slider"
-        style={{ width: '100%', cursor: 'pointer', accentColor }}
-      />
+      {/* PhET Stepper Slider Row [-] Slider [+] */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button
+          type="button"
+          onClick={handleStepDown}
+          disabled={value <= control.min}
+          className="phet-stepper-btn"
+          title={`Decrease by ${control.step}`}
+          aria-label={`Decrease ${control.label}`}
+        >
+          <Minus size={13} strokeWidth={2.5} />
+        </button>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+        <input
+          type="range"
+          min={control.min}
+          max={control.max}
+          step={control.step}
+          value={value}
+          onChange={handleSliderChange}
+          className="card-range-slider"
+          style={{ flex: 1, cursor: 'pointer', accentColor }}
+        />
+
+        <button
+          type="button"
+          onClick={handleStepUp}
+          disabled={value >= control.max}
+          className="phet-stepper-btn"
+          title={`Increase by ${control.step}`}
+          aria-label={`Increase ${control.label}`}
+        >
+          <Plus size={13} strokeWidth={2.5} />
+        </button>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
         <span>Min: {control.min}</span>
         <span>Max: {control.max}</span>
       </div>
@@ -187,6 +231,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 }) => {
   const [activeSimIndex, setActiveSimIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [speed, setSpeed] = useState<number>(1); // 1 = Normal, 0.25 = Slow motion
+  const [stepTrigger, setStepTrigger] = useState<number>(0);
   const [params, setParams] = useState<Record<string, number>>({});
   const [telemetry, setTelemetry] = useState<Record<string, string>>({});
   const [sideTab, setSideTab] = useState<'intuition' | 'formulas' | 'quiz'>('intuition');
@@ -202,6 +248,13 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const topic = topicId ? TOPICS_DATA[topicId] : null;
   const currentSim = topic ? topic.simulations[activeSimIndex] || topic.simulations[0] : null;
   const isAnimated = isSimulationAnimated(currentSim?.id);
+
+  const handleStepForward = () => {
+    if (isPlaying) {
+      setIsPlaying(false);
+    }
+    setStepTrigger((prev) => prev + 1);
+  };
 
   // Reset active simulation index when topic changes
   if (topicId !== prevTopicId) {
@@ -270,6 +323,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
       initialParams[ctrl.id] = ctrl.defaultValue;
     });
     setParams(initialParams);
+    setSpeed(1);
+    setStepTrigger(0);
   };
 
   const isMath = topic.subject === 'maths';
@@ -509,6 +564,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               simId={currentSim.id}
               params={params}
               isPlaying={isPlaying}
+              speed={speed}
+              stepTrigger={stepTrigger}
               onTelemetryUpdate={setTelemetry}
               controls={currentSim.controls}
               onParamChange={handleControlChange}
@@ -832,13 +889,14 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
           >
             {isAnimated && (
               <button
+                type="button"
                 onClick={() => setIsPlaying(!isPlaying)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
-                  background: isPlaying ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.2)',
-                  border: isPlaying ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(56, 189, 248, 0.4)',
+                  background: isPlaying ? 'rgba(239, 68, 68, 0.2)' : 'rgba(10, 102, 194, 0.2)',
+                  border: isPlaying ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(10, 102, 194, 0.4)',
                   color: isPlaying ? '#F87171' : '#38BDF8',
                   borderRadius: 'var(--radius-pill)',
                   padding: '6px 14px',
@@ -852,24 +910,63 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               </button>
             )}
 
+            {isAnimated && (
+              <button
+                type="button"
+                onClick={handleStepForward}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '6px 12px',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontSize: '0.78rem',
+                  fontWeight: 650
+                }}
+                title="Step forward 1 frame"
+                aria-label="Step forward 1 frame"
+              >
+                <StepForward size={13} />
+                <span>Step</span>
+              </button>
+            )}
+
+            {isAnimated && (
+              <button
+                type="button"
+                onClick={() => setSpeed((prev) => (prev === 1 ? 0.25 : 1))}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  background: speed === 0.25 ? 'rgba(10, 102, 194, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                  border: speed === 0.25 ? '1px solid rgba(10, 102, 194, 0.4)' : '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '6px 12px',
+                  color: speed === 0.25 ? '#38BDF8' : 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  fontSize: '0.78rem',
+                  fontWeight: 700
+                }}
+                title="Toggle speed"
+              >
+                <Gauge size={13} />
+                <span>{speed === 1 ? '1x' : '0.25x'}</span>
+              </button>
+            )}
+
             <button
+              type="button"
               onClick={handleReset}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-pill)',
-                padding: '6px 12px',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                fontSize: '0.78rem'
-              }}
-              title="Reset Simulation"
+              className="phet-reset-btn"
+              title="Reset simulation and clock"
+              aria-label="Reset simulation"
             >
-              <RotateCcw size={13} />
-              <span>Reset</span>
+              <RotateCcw size={15} strokeWidth={2.5} />
             </button>
 
             <div style={{ height: 16, width: 1, background: 'rgba(255, 255, 255, 0.15)' }} />
@@ -1484,6 +1581,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   simId={currentSim.id}
                   params={params}
                   isPlaying={isPlaying}
+                  speed={speed}
+                  stepTrigger={stepTrigger}
                   onTelemetryUpdate={setTelemetry}
                   controls={currentSim.controls}
                   onParamChange={handleControlChange}
@@ -1573,9 +1672,9 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     gap: 6,
                     padding: '9px 14px',
                     borderRadius: 'var(--radius-md)',
-                    background: 'rgba(255, 255, 255, 0.05)',
+                    background: 'var(--bg-subtle)',
                     border: '1px solid var(--border-subtle)',
-                    color: 'var(--electric-blue)',
+                    color: 'var(--brand-primary)',
                     fontSize: '0.80rem',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -1596,24 +1695,30 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 </button>
               )}
 
-              {/* Simulation Controls Bar */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
-                <div style={{ display: 'flex', gap: 8 }}>
+              {/* PhET Interactive Simulation Controls Bar */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingTop: 12,
+                  borderTop: '1px solid var(--border-subtle)',
+                  flexWrap: 'wrap',
+                  gap: 10
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  {/* Play / Pause Button */}
                   {isAnimated && (
                     <button
+                      type="button"
                       onClick={() => setIsPlaying(!isPlaying)}
+                      className="btn btn-primary btn-sm"
                       style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 6,
                         padding: '7px 16px',
-                        borderRadius: 'var(--radius-md)',
-                        border: 'none',
-                        background: accentColor,
-                        color: '#FFFFFF',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        cursor: 'pointer'
+                        gap: 6,
+                        fontSize: '0.82rem',
+                        fontWeight: 700
                       }}
                     >
                       {isPlaying ? <Pause size={14} /> : <Play size={14} />}
@@ -1621,48 +1726,83 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     </button>
                   )}
 
-                  <button
-                    onClick={handleReset}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '7px 14px',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--border-subtle)',
-                      background: 'var(--bg-tertiary)',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.8rem',
-                      fontWeight: 600,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <RotateCcw size={13} />
-                    <span>Reset</span>
-                  </button>
+                  {/* PhET Step Forward [>|] Button (Advances 1 frame) */}
+                  {isAnimated && (
+                    <button
+                      type="button"
+                      onClick={handleStepForward}
+                      className="btn btn-secondary btn-sm"
+                      style={{
+                        padding: '7px 12px',
+                        gap: 5,
+                        fontSize: '0.80rem',
+                        fontWeight: 650,
+                        color: 'var(--text-secondary)'
+                      }}
+                      title="Step forward 1 frame (slow-motion analysis)"
+                      aria-label="Step forward 1 frame"
+                    >
+                      <StepForward size={14} />
+                      <span className="hide-mobile">Step</span>
+                    </button>
+                  )}
 
+                  {/* PhET Simulation Speed Toggle (1x / 0.25x Slow Motion) */}
+                  {isAnimated && (
+                    <button
+                      type="button"
+                      onClick={() => setSpeed((prev) => (prev === 1 ? 0.25 : 1))}
+                      className="btn btn-secondary btn-sm"
+                      style={{
+                        padding: '7px 12px',
+                        gap: 5,
+                        fontSize: '0.80rem',
+                        fontWeight: 700,
+                        color: speed === 0.25 ? 'var(--brand-primary)' : 'var(--text-secondary)',
+                        background: speed === 0.25 ? 'var(--brand-primary-soft)' : undefined,
+                        borderColor: speed === 0.25 ? 'var(--brand-primary-border)' : undefined
+                      }}
+                      title="Toggle normal speed vs slow motion"
+                      aria-label={`Simulation speed: ${speed === 1 ? 'Normal' : 'Slow motion'}`}
+                    >
+                      <Gauge size={14} />
+                      <span>{speed === 1 ? '1x Normal' : '0.25x Slow'}</span>
+                    </button>
+                  )}
+
+                  {/* PhET Iconic Circular Orange Reset Button */}
                   <button
-                    onClick={() => setIsFullWindow(true)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '7px 14px',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1.5px solid rgba(0, 240, 255, 0.5)',
-                      background: 'rgba(0, 240, 255, 0.1)',
-                      color: '#00F0FF',
-                      fontSize: '0.8rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      boxShadow: '0 0 12px rgba(0, 240, 255, 0.2)'
-                    }}
-                    title="Open full graph with settings covering whole window"
+                    type="button"
+                    onClick={handleReset}
+                    className="phet-reset-btn"
+                    title="Reset all parameters and clock to initial state"
+                    aria-label="Reset all parameters to default"
                   >
-                    <Maximize2 size={13} />
-                    <span>Full Graph &amp; Settings</span>
+                    <RotateCcw size={16} strokeWidth={2.5} />
                   </button>
                 </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsFullWindow(true)}
+                    className="btn btn-secondary btn-sm"
+                    style={{
+                      padding: '7px 14px',
+                      gap: 6,
+                      fontSize: '0.80rem',
+                      fontWeight: 650,
+                      color: 'var(--brand-primary)',
+                      borderColor: 'var(--brand-primary-border)',
+                      background: 'var(--brand-primary-soft)'
+                    }}
+                    title="Open full stage view with editorial theory"
+                  >
+                    <Maximize2 size={13} />
+                    <span>Stage View</span>
+                  </button>
+                </div>
+              </div>
 
                 <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
                   <span className="hide-mobile">Drag sliders to update live simulation</span>
@@ -1670,7 +1810,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 </span>
               </div>
             </div>
-          </div>
 
           {/* BELOW: Complete Topic & Simulation Guide (Theory, Real-world Intuition, Formulas, Quiz) */}
           <div

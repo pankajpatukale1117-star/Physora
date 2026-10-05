@@ -30,6 +30,8 @@ interface CanvasSimulatorProps {
   simId: string;
   params: Record<string, number>;
   isPlaying: boolean;
+  speed?: number;
+  stepTrigger?: number;
   onTelemetryUpdate: (telemetry: Record<string, string>) => void;
   controls?: SimControlDef[];
   onParamChange?: (id: string, value: number) => void;
@@ -41,6 +43,8 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   simId,
   params,
   isPlaying,
+  speed = 1,
+  stepTrigger = 0,
   onTelemetryUpdate,
   controls,
   onParamChange,
@@ -50,6 +54,18 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const timeRef = useRef(0);
+
+  // Reset internal clock when simulation changes
+  useEffect(() => {
+    timeRef.current = 0;
+  }, [simId]);
+
+  // Step Forward frame trigger (advances simulation by 1 step when paused)
+  useEffect(() => {
+    if (stepTrigger > 0) {
+      timeRef.current += 0.04;
+    }
+  }, [stepTrigger]);
 
   // Track viewport width for canvas-drawn elements (can't use CSS for canvas rendering)
   const isMobileRef = useRef(typeof window !== 'undefined' && window.innerWidth < 768);
@@ -342,7 +358,7 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
 
     const render = () => {
       if (isPlaying) {
-        timeRef.current += 0.02;
+        timeRef.current += 0.02 * speed;
       }
       const t = timeRef.current;
       const { dpr, virtualW, virtualH, cssWidth } = dimsRef.current;
