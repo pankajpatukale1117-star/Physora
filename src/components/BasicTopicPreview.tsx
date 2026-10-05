@@ -99,10 +99,10 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
     {
       id: 'motion',
       title: 'Motion',
-      summary: 'Speed, velocity, acceleration, and tracking objects moving in straight lines.',
+      summary: 'Two motions one ball (Galileo decomposition), velocity, acceleration, and straight lines.',
       icon: Car,
-      tag: 'v = u + at',
-      simCount: '3 Simulations'
+      tag: 'x = u_x · t, y = u_y · t - ½gt²',
+      simCount: '4 Simulations'
     },
     {
       id: 'newtons_laws',
@@ -195,11 +195,24 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
               letterSpacing: '-0.025em',
               color: 'var(--text-primary)',
               lineHeight: 1.18,
-              marginBottom: 14
+              marginBottom: 8
             }}
           >
             Explore Topics &amp; <span className="gradient-text">Simulations</span>
           </h2>
+
+          <div style={{ marginBottom: 14 }}>
+            <span
+              className="font-editorial"
+              style={{
+                fontSize: '1.2rem',
+                fontStyle: 'italic',
+                color: 'var(--text-secondary)'
+              }}
+            >
+              Interactive laboratories built for conceptual clarity.
+            </span>
+          </div>
 
           <p
             style={{
@@ -208,7 +221,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
               lineHeight: 1.6
             }}
           >
-            Click on any topic below to open its dedicated laboratory with <strong>2 to 3 interactive simulations</strong> and step-by-step explanations.
+            Click on any topic below to open its dedicated laboratory with <strong>2 to 4 interactive simulations</strong> and step-by-step explanations.
           </p>
         </div>
 
@@ -262,14 +275,17 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
         >
           {/* Card 1: MATHEMATICS */}
           {(filterDomain === 'All' || filterDomain === 'Mathematics') && (
-            <div
-              className="glass-card topic-domain-card"
-              style={{
-                background: 'var(--bg-glass-card)',
-                border: '1.5px solid rgba(124, 58, 237, 0.22)',
-                boxShadow: 'var(--shadow-lg)'
-              }}
-            >
+            <div className="card-stacked-container">
+              <div className="card-stacked-shadow-2" />
+              <div className="card-stacked-shadow-1" />
+              <div
+                className="glass-card topic-domain-card card-stacked-main"
+                style={{
+                  background: 'var(--bg-glass-card)',
+                  border: '1.5px solid rgba(124, 58, 237, 0.22)',
+                  boxShadow: 'var(--shadow-lg)'
+                }}
+              >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div
@@ -421,18 +437,22 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
               })}
             </div>
           </div>
-          )}
+        </div>
+      )}
 
           {/* Card 2: PHYSICS */}
           {(filterDomain === 'All' || filterDomain === 'Physics') && (
-            <div
-              className="glass-card topic-domain-card"
-              style={{
-                background: 'var(--bg-glass-card)',
-                border: '1.5px solid rgba(0, 98, 255, 0.22)',
-                boxShadow: 'var(--shadow-lg)'
-              }}
-            >
+            <div className="card-stacked-container">
+              <div className="card-stacked-shadow-2" />
+              <div className="card-stacked-shadow-1" />
+              <div
+                className="glass-card topic-domain-card card-stacked-main"
+                style={{
+                  background: 'var(--bg-glass-card)',
+                  border: '1.5px solid rgba(0, 98, 255, 0.22)',
+                  boxShadow: 'var(--shadow-lg)'
+                }}
+              >
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div
@@ -583,6 +603,7 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
                 );
               })}
             </div>
+          </div>
           </div>
           )}
         </div>

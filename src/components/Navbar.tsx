@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Compass, Sparkles } from 'lucide-react';
+import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass } from 'lucide-react';
 
 interface NavbarProps {
   onEnterLabClick: () => void;
   onExploreClick: () => void;
+  onSimulationsClick: () => void;
+  onExperimentsClick: () => void;
   onOpenFormulas: () => void;
+  onOpenSearch: () => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
 }
@@ -12,7 +15,10 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   onEnterLabClick,
   onExploreClick,
+  onSimulationsClick,
+  onExperimentsClick,
   onOpenFormulas,
+  onOpenSearch,
   theme,
   onToggleTheme
 }) => {
@@ -21,13 +27,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      setScrolled(window.scrollY > 15);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile drawer on resize to desktop
+  // Close mobile drawer on desktop resize
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
@@ -38,225 +44,183 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Global keyboard shortcut for search (Cmd+K or Ctrl+K or /)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        onOpenSearch();
+      } else if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault();
+        onOpenSearch();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onOpenSearch]);
+
   const handleMobileNavClick = (action: () => void) => {
     setIsMobileMenuOpen(false);
     action();
   };
 
   return (
-    <header
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 100,
-        transition: 'all 0.25s ease',
-        background: scrolled || isMobileMenuOpen ? 'var(--bg-glass-heavy)' : 'var(--bg-glass)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid var(--border-subtle)',
-        boxShadow: scrolled || isMobileMenuOpen ? 'var(--shadow-md)' : 'none'
-      }}
-    >
+    <header className={`physora-header ${scrolled ? 'physora-header-scrolled' : ''}`}>
       <div
         className="section-container"
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '14px 24px'
+          height: 64
         }}
       >
         {/* Brand */}
         <a
           href="#"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-            textDecoration: 'none',
-            color: 'var(--text-primary)'
-          }}
           onClick={(e) => {
             e.preventDefault();
             if (isMobileMenuOpen) setIsMobileMenuOpen(false);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            textDecoration: 'none',
+            color: 'var(--text-primary)'
+          }}
         >
           <div
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: 'var(--radius-md)',
-              background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.15) 0%, rgba(124, 58, 237, 0.2) 100%)',
-              boxShadow: '0 0 16px rgba(0, 240, 255, 0.25)',
-              border: '1px solid rgba(0, 240, 255, 0.35)',
+              width: 34,
+              height: 34,
+              borderRadius: 'var(--radius-sm)',
+              background: 'var(--brand-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              flexShrink: 0
+              color: '#FFFFFF',
+              boxShadow: 'var(--shadow-sm)'
             }}
           >
-            <Atom size={22} color="var(--electric-blue)" />
+            <Atom size={20} strokeWidth={2.2} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span
               style={{
-                fontSize: '1.25rem',
+                fontSize: '1.2rem',
                 fontWeight: 800,
                 letterSpacing: '-0.025em',
-                lineHeight: 1.1
+                lineHeight: 1.1,
+                color: 'var(--text-primary)'
               }}
             >
-              Phys<span className="gradient-text">ora</span>
+              Phys<span style={{ color: 'var(--brand-primary)' }}>ora</span>
             </span>
-            {/* Desktop Subtitle */}
             <span
               className="font-mono hide-mobile"
               style={{
                 fontSize: '0.62rem',
                 fontWeight: 700,
-                letterSpacing: '0.08em',
-                color: 'var(--electric-blue)'
-              }}
-            >
-              CLASS 9–11 &amp; FOUNDATIONS • BY PANKAJ
-            </span>
-            {/* Mobile Subtitle */}
-            <span
-              className="font-mono show-mobile-only"
-              style={{
-                fontSize: '0.58rem',
-                fontWeight: 700,
                 letterSpacing: '0.04em',
-                color: 'var(--electric-blue)'
+                color: 'var(--text-tertiary)'
               }}
             >
-              CLASS 9–11 LAB • BY PANKAJ
+              INTERACTIVE MATHS &amp; PHYSICS
             </span>
           </div>
         </a>
 
-        {/* Desktop Links */}
+        {/* Desktop Primary Nav Links */}
         <nav
+          className="hide-mobile"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 22
+            gap: 4
           }}
-          className="hide-mobile"
         >
-          {/* 1. Simulations / Curriculum */}
-          <button
-            onClick={onExploreClick}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'transparent',
-              border: 'none',
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              transition: 'color 0.2s ease',
-              padding: '6px 8px'
-            }}
-          >
-            <Atom size={15} />
-            <span>Simulations</span>
+          <button onClick={onExploreClick} className="nav-link">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Compass size={15} />
+              <span>Explore</span>
+            </div>
           </button>
 
-          {/* 2. Formulas Bank Modal */}
-          <button
-            onClick={onOpenFormulas}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              background: 'transparent',
-              border: 'none',
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              transition: 'color 0.2s ease',
-              padding: '6px 8px'
-            }}
-          >
-            <BookOpen size={15} />
-            <span>Formulas</span>
+          <button onClick={onSimulationsClick} className="nav-link">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Atom size={15} />
+              <span>Simulations</span>
+            </div>
           </button>
 
-          {/* 3. How Visual Learning Works */}
-          <a
-            href="#how-it-works"
-            onClick={(e) => {
-              e.preventDefault();
-              const el = document.getElementById('how-it-works');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-            style={{
-              fontSize: '0.88rem',
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-              textDecoration: 'none',
-              transition: 'color 0.2s ease',
-              padding: '6px 8px'
-            }}
-          >
-            How It Works
-          </a>
+          <button onClick={onExperimentsClick} className="nav-link">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <FlaskConical size={15} />
+              <span>Experiments</span>
+            </div>
+          </button>
+
+          <button onClick={onOpenFormulas} className="nav-link">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <BookOpen size={15} />
+              <span>Formulas</span>
+            </div>
+          </button>
         </nav>
 
-        {/* Right Action */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {/* Right Action Tools */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Quick Search Button */}
+          <button
+            onClick={onOpenSearch}
+            className="btn btn-secondary btn-sm"
+            style={{
+              padding: '6px 12px',
+              gap: 8,
+              fontSize: '0.82rem',
+              color: 'var(--text-secondary)'
+            }}
+            title="Search simulations (Ctrl+K or /)"
+            aria-label="Search simulations"
+          >
+            <Search size={15} color="var(--text-tertiary)" />
+            <span className="hide-mobile">Search</span>
+            <kbd
+              className="hide-mobile"
+              style={{
+                fontSize: '0.68rem',
+                padding: '1px 5px',
+                borderRadius: 'var(--radius-xs)',
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-medium)',
+                color: 'var(--text-tertiary)',
+                fontFamily: 'var(--font-mono)'
+              }}
+            >
+              ⌘K
+            </kbd>
+          </button>
+
           {/* Theme Switcher Toggle */}
           <button
             onClick={onToggleTheme}
             className="theme-toggle-btn"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            title={theme === 'dark' ? 'Switch to Clean Light Theme' : 'Switch to Dark Slate Theme'}
             aria-label="Toggle color theme"
           >
-            {theme === 'dark' ? <Sun size={17} color="#FBBF24" /> : <Moon size={17} color="#6366F1" />}
+            {theme === 'dark' ? (
+              <Sun size={17} color="#FBBF24" />
+            ) : (
+              <Moon size={17} color="var(--text-secondary)" />
+            )}
           </button>
 
-          {/* Desktop Badge */}
-          <span
-            className="hide-mobile font-mono"
-            style={{
-              fontSize: '0.74rem',
-              fontWeight: 600,
-              color: 'var(--text-secondary)',
-              background: 'var(--electric-blue-soft)',
-              padding: '6px 14px',
-              borderRadius: 'var(--radius-pill)',
-              border: '1px solid var(--border-subtle)'
-            }}
-          >
-            Crafted by <strong style={{ color: 'var(--electric-blue)' }}>Pankaj</strong>
-          </span>
-
-          {/* Desktop Enter Lab CTA */}
+          {/* Primary Enter Lab CTA */}
           <button
             onClick={onEnterLabClick}
-            className="hide-mobile"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              padding: '9px 20px',
-              background: 'linear-gradient(135deg, #0062FF 0%, #0050D8 100%)',
-              color: '#FFFFFF',
-              fontSize: '0.88rem',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-pill)',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(0, 98, 255, 0.3)',
-              transition: 'all 0.2s ease'
-            }}
+            className="btn btn-primary btn-sm hide-mobile"
           >
             <span>Enter the Lab</span>
             <ArrowRight size={14} />
@@ -274,106 +238,176 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Navigation Drawer / Menu (Only rendered when open on mobile) */}
+      {/* Mobile Drawer (Clean, Accessible) */}
       {isMobileMenuOpen && (
         <div
-          className="mobile-menu-drawer show-mobile-only"
+          className="show-mobile-only animate-fade-in"
           style={{
             flexDirection: 'column',
             width: '100%',
-            background: 'var(--bg-glass-heavy)',
+            background: 'var(--bg-surface)',
             borderTop: '1px solid var(--border-subtle)',
-            padding: '18px 20px 24px',
-            boxShadow: 'var(--shadow-xl)',
-            animation: 'mobileMenuFadeIn 0.25s var(--ease-spring)'
+            padding: '16px 20px 24px',
+            boxShadow: 'var(--shadow-lg)'
           }}
         >
+          {/* Quick Search in Mobile Drawer */}
+          <button
+            onClick={() => handleMobileNavClick(onOpenSearch)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 14px',
+              borderRadius: 'var(--radius-md)',
+              background: 'var(--bg-subtle)',
+              border: '1px solid var(--border-subtle)',
+              color: 'var(--text-secondary)',
+              fontSize: '0.9rem',
+              cursor: 'pointer',
+              marginBottom: 14
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Search size={16} color="var(--brand-primary)" />
+              <span>Search simulations &amp; topics...</span>
+            </div>
+            <kbd
+              style={{
+                fontSize: '0.7rem',
+                padding: '2px 6px',
+                borderRadius: 'var(--radius-xs)',
+                background: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-tertiary)'
+              }}
+            >
+              Search
+            </kbd>
+          </button>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
-            {/* 1. Simulations / Curriculum */}
+            {/* 1. Explore */}
             <button
               onClick={() => handleMobileNavClick(onExploreClick)}
-              className="mobile-nav-link-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-md)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Atom size={18} color="var(--electric-blue)" />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Simulations</span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>14 Curriculum Topics (Class 9-11)</span>
+                <Compass size={18} color="var(--brand-primary)" />
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                  Explore Curriculum
+                </span>
+              </div>
+              <ArrowRight size={15} color="var(--text-tertiary)" />
+            </button>
+
+            {/* 2. Simulations */}
+            <button
+              onClick={() => handleMobileNavClick(onSimulationsClick)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-md)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Atom size={18} color="var(--brand-primary)" />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                    Simulations
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                    42 Interactive Models (Class 9–11)
+                  </span>
                 </div>
               </div>
               <ArrowRight size={15} color="var(--text-tertiary)" />
             </button>
 
-            {/* 2. Formulas */}
+            {/* 3. Experiments */}
             <button
-              onClick={() => handleMobileNavClick(onOpenFormulas)}
-              className="mobile-nav-link-btn"
+              onClick={() => handleMobileNavClick(onExperimentsClick)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-md)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <BookOpen size={16} color="#00B4D8" />
-                <span>Formulas &amp; Variable Index</span>
+                <FlaskConical size={18} color="var(--accent-teal)" />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                    Digital Experiments
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                    8 Scientific Inquiry Labs
+                  </span>
+                </div>
               </div>
               <ArrowRight size={15} color="var(--text-tertiary)" />
             </button>
 
-            {/* 3. How It Works */}
-            <a
-              href="#how-it-works"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                const el = document.getElementById('how-it-works');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
+            {/* 4. Formulas */}
+            <button
+              onClick={() => handleMobileNavClick(onOpenFormulas)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-md)',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
               }}
-              className="mobile-nav-link-btn"
-              style={{ textDecoration: 'none' }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Compass size={16} color="#10B981" />
-                <span>How Visual Learning Works</span>
+                <BookOpen size={18} color="var(--electric-cyan)" />
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                  Formula Bank &amp; Variable Index
+                </span>
               </div>
               <ArrowRight size={15} color="var(--text-tertiary)" />
-            </a>
+            </button>
           </div>
 
-          {/* Prominent Full-Width Mobile CTA */}
+          {/* Full-Width Mobile CTA */}
           <button
             onClick={() => handleMobileNavClick(onEnterLabClick)}
+            className="btn btn-primary"
             style={{
               width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: '14px 20px',
-              background: 'linear-gradient(135deg, #0062FF 0%, #0050D8 100%)',
-              color: '#FFFFFF',
-              fontSize: '0.98rem',
-              fontWeight: 700,
-              borderRadius: 'var(--radius-pill)',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 16px rgba(0, 98, 255, 0.35)',
-              marginBottom: 12
+              padding: '12px',
+              fontSize: '0.95rem'
             }}
           >
-            <span>Enter the Interactive Lab</span>
+            <span>Open Interactive Laboratory</span>
             <ArrowRight size={16} />
           </button>
-
-          {/* Micro Footer Inside Drawer */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 6,
-              fontSize: '0.74rem',
-              color: 'var(--text-secondary)'
-            }}
-          >
-            <Sparkles size={12} color="var(--electric-blue)" />
-            <span>Class 11 &amp; Below • Crafted by Pankaj</span>
-          </div>
         </div>
       )}
     </header>

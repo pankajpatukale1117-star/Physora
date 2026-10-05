@@ -1,123 +1,157 @@
 import React from 'react';
-import { Eye, Sliders, Sparkles } from 'lucide-react';
+import { Compass, Sliders, Eye, BrainCircuit } from 'lucide-react';
 
 export const HowVisualLearningWorks: React.FC = () => {
   const steps = [
     {
-      num: '01',
-      title: 'See the Concept in Motion',
-      desc: 'Instead of memorizing flat textbook formulas, watch waves ripple, pendulums swing, and graphs bend in real time.',
-      icon: Eye,
-      color: '#0062FF'
+      step: '01',
+      action: 'Explore',
+      title: 'Choose a Phenomenon',
+      desc: 'Select from 14 foundational domains in physics and mathematics. Enter a dedicated virtual laboratory with clean, calibrated models.',
+      icon: Compass,
+      accent: 'var(--brand-primary)'
     },
     {
-      num: '02',
-      title: 'Tweak Sliders & Experiment',
-      desc: 'Change gravity, alter launch angles, or adjust equation coefficients to see immediate cause and effect.',
+      step: '02',
+      action: 'Change',
+      title: 'Manipulate Variables',
+      desc: 'Use interactive sliders to vary velocity, angle, spring constant, or function coefficients. Direct cause-and-effect replaces rote memorization.',
       icon: Sliders,
-      color: '#7C3AED'
+      accent: 'var(--accent-teal)'
     },
     {
-      num: '03',
-      title: 'Build Lifelong Intuition',
-      desc: 'Master the basics clearly so Class 9–11 school exams and future competitive sciences feel intuitive rather than stressful.',
-      icon: Sparkles,
-      color: '#00B4D8'
+      step: '03',
+      action: 'Observe',
+      title: 'See Invisible Quantities',
+      desc: 'Watch real-time motion, dynamic vector arrows (velocity, force, acceleration), live numerical telemetry, and synchronous graphs.',
+      icon: Eye,
+      accent: 'var(--electric-cyan)'
+    },
+    {
+      step: '04',
+      action: 'Understand',
+      title: 'Connect to Equations',
+      desc: 'See how the physical observations map directly onto exact KaTeX mathematical formulas (such as s = vt, F = ma, or Snell’s law).',
+      icon: BrainCircuit,
+      accent: 'var(--electric-violet)'
     }
   ];
 
   return (
     <section
       id="how-it-works"
-      className="how-works-section"
       style={{
-        position: 'relative',
-        zIndex: 5,
-        padding: '70px 24px 80px',
-        pointerEvents: 'auto'
+        padding: '70px 0',
+        background: 'var(--bg-subtle)',
+        borderBottom: '1px solid var(--border-subtle)'
       }}
     >
       <div className="section-container">
-        <div style={{ textAlign: 'center', maxWidth: 600, margin: '0 auto 48px' }}>
-          <div className="lab-pill-badge" style={{ marginBottom: 14 }}>
-            <span>💡 WHY VISUAL LEARNING WORKS</span>
+        {/* Header */}
+        <div style={{ textAlign: 'center', maxWidth: 680, margin: '0 auto 44px' }}>
+          <div style={{ display: 'inline-flex', marginBottom: 12 }}>
+            <span className="badge badge-primary">
+              <span>Scientific Inquiry Method</span>
+            </span>
           </div>
-          <h2
-            style={{
-              fontSize: 'clamp(2rem, 3.5vw, 2.8rem)',
-              fontWeight: 800,
-              letterSpacing: '-0.025em',
-              color: 'var(--text-primary)',
-              lineHeight: 1.15,
-              marginBottom: 12
-            }}
-          >
-            Science and Maths Made <span className="gradient-text">Intuitive</span>
+          <h2 className="text-h1" style={{ marginBottom: 12 }}>
+            How <span style={{ color: 'var(--brand-primary)' }}>Physora</span> Works
           </h2>
-          <p style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>
-            Designed specifically for students who want to truly understand how things work.
+          <p className="text-body">
+            A 4-step pedagogical inquiry cycle designed to build durable mental models and deep conceptual understanding for Class 9–11 students.
           </p>
         </div>
 
+        {/* 4 Steps Grid */}
         <div
-          className="how-works-grid"
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: 24
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: 20
           }}
         >
-          {steps.map((s, idx) => {
+          {steps.map((s) => {
             const Icon = s.icon;
             return (
               <div
-                key={idx}
-                className="glass-card how-works-card"
+                key={s.step}
+                className="scientific-card"
                 style={{
-                  padding: 30,
-                  background: 'var(--bg-glass-card)'
+                  padding: '24px 20px',
+                  background: 'var(--bg-surface)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between'
                 }}
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 18
-                  }}
-                >
+                <div>
                   <div
                     style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 'var(--radius-md)',
-                      background: `${s.color}15`,
-                      color: s.color,
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'space-between',
+                      marginBottom: 16
                     }}
                   >
-                    <Icon size={22} />
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--bg-subtle)',
+                        border: '1px solid var(--border-subtle)',
+                        color: s.accent,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Icon size={20} />
+                    </div>
+                    <span
+                      className="font-mono"
+                      style={{
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        color: 'var(--text-tertiary)'
+                      }}
+                    >
+                      STEP {s.step}
+                    </span>
                   </div>
-                  <span
-                    className="font-mono"
+
+                  <div
                     style={{
-                      fontSize: '0.82rem',
+                      fontSize: '0.75rem',
                       fontWeight: 700,
-                      color: 'var(--text-tertiary)'
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      color: s.accent,
+                      marginBottom: 4
                     }}
                   >
-                    STEP {s.num}
-                  </span>
+                    {s.action}
+                  </div>
+                  <h3
+                    style={{
+                      fontSize: '1.05rem',
+                      fontWeight: 750,
+                      color: 'var(--text-primary)',
+                      marginBottom: 8
+                    }}
+                  >
+                    {s.title}
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: '0.86rem',
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.55
+                    }}
+                  >
+                    {s.desc}
+                  </p>
                 </div>
-
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
-                  {s.title}
-                </h3>
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
-                  {s.desc}
-                </p>
               </div>
             );
           })}

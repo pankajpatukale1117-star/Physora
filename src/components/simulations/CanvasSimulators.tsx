@@ -335,8 +335,8 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const rawCtx = canvas.getContext('2d');
+    if (!rawCtx) return;
 
     let animId: number;
 
@@ -348,10 +348,36 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
       const { dpr, virtualW, virtualH, cssWidth } = dimsRef.current;
       const scale = (cssWidth / virtualW) * dpr;
 
-      ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.scale(scale, scale);
+      rawCtx.save();
+      rawCtx.setTransform(1, 0, 0, 1, 0, 0);
+      rawCtx.clearRect(0, 0, canvas.width, canvas.height);
+      rawCtx.scale(scale, scale);
+
+      // Mobile legibility enhancer: automatically scales fonts and vector line weights on narrow phone screens
+      const ctx: CanvasRenderingContext2D = (isMobileRef.current && cssWidth < 600)
+        ? new Proxy(rawCtx, {
+            set(target, prop, value) {
+              if (prop === 'font' && typeof value === 'string') {
+                const fontMultiplier = Math.min(1.45, 650 / Math.max(300, cssWidth));
+                const boosted = value.replace(/(\d+(?:\.\d+)?)\s*px/g, (_m, sz) => {
+                  return `${Math.round(parseFloat(sz) * fontMultiplier)}px`;
+                });
+                (target as any)[prop] = boosted;
+                return true;
+              }
+              if (prop === 'lineWidth' && typeof value === 'number') {
+                (target as any)[prop] = Math.max(1.2, value * 1.25);
+                return true;
+              }
+              (target as any)[prop] = value;
+              return true;
+            },
+            get(target, prop) {
+              const val = (target as any)[prop];
+              return typeof val === 'function' ? val.bind(target) : val;
+            }
+          })
+        : rawCtx;
 
       const w = virtualW;
       const h = virtualH;
@@ -439,6 +465,9 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
           break;
 
         // --- MOTION ---
+        case 'motion_two_motions':
+          renderTwoMotionsOneBall(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
         case 'motion_car_track':
           renderKinematicCar(ctx, w, h, params, t, onTelemetryUpdate);
           break;
@@ -2951,6 +2980,375 @@ function renderVernierCaliper(
 /* ==========================================================================
    08. MOTION (KINEMATICS) SIMULATIONS
    ========================================================================== */
+
+function drawSimArrow(
+  ctx: CanvasRenderingContext2D,
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+  color: string,
+  lineWidth = 2
+) {
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  const len = Math.hypot(dx, dy);
+  if (len < 3) return;
+
+  const headLength = 9;
+  const angle = Math.atan2(dy, dx);
+
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = lineWidth;
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+  ctx.lineTo(toX, toY);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(toX, toY);
+  ctx.lineTo(toX - headLength * Math.cos(angle - Math.PI / 6), toY - headLength * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(toX - headLength * Math.cos(angle + Math.PI / 6), toY - headLength * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+/**
+ * Flagship Simulation: Two Motions, One Ball (Galileo's 2D Projectile Decomposition)
+ * Inspired by Throughline (https://throughline.in/)
+ * Simultaneously tracks:
+ * 1. 2D Projectile ball traversing curved flight path
+ * 2. Horizontal ball rolling along ground rail at constant velocity u_x
+ * 3. Vertical ball thrown straight up along vertical rail with u_y - gt
+ * 4. Orthogonal dashed projection lines connecting the projectile to both guide balls
+ */
+function renderTwoMotionsOneBall(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  p: Record<string, number>,
+  t: number,
+  onTelem: (t: Record<string, string>) => void
+) {
+  const ux = p.u_x ?? 30;
+  const uy = p.u_y ?? 40;
+  const g = p.gravity && p.gravity < 9.9 ? 9.8 : 10;
+
+  const uSpeed = Math.round(Math.hypot(ux, uy) * 10) / 10;
+  const thetaDeg = Math.round(Math.atan2(uy, ux) * (180 / Math.PI));
+
+  // Flight kinematics
+  const flightTime = (2 * uy) / g;
+  const maxHeight = (uy * uy) / (2 * g);
+  const totalRange = ux * flightTime;
+
+  // Cyclic loop time (flight time + 1s rest before replay)
+  const cycleDuration = flightTime + 1.2;
+  const loopT = (t * 1.15) % cycleDuration;
+  const curT = Math.min(loopT, flightTime);
+
+  // Instantaneous physics metrics
+  const curX = ux * curT;
+  const curY = Math.max(0, uy * curT - 0.5 * g * curT * curT);
+  const curVx = ux;
+  const curVy = uy - g * curT;
+  const curV = Math.sqrt(curVx * curVx + curVy * curVy);
+
+  // Toggles
+  const showProj = (p.show_proj ?? 1) !== 0;
+  const showVert = (p.show_vert ?? 1) !== 0;
+  const showHoriz = (p.show_horiz ?? 1) !== 0;
+  const showVectors = (p.show_vectors ?? 1) !== 0;
+
+  // Layout boundaries
+  const originX = 110;
+  const groundY = h - 65;
+  const availW = w - originX - 50;
+  const availH = groundY - 75;
+
+  const scaleX = availW / Math.max(60, totalRange * 1.05);
+  const scaleY = availH / Math.max(40, maxHeight * 1.15);
+  const pxPerMeter = Math.min(scaleX, scaleY);
+
+  const screenProjX = originX + curX * pxPerMeter;
+  const screenProjY = groundY - curY * pxPerMeter;
+  const screenHorizX = screenProjX;
+  const screenHorizY = groundY;
+  const screenVertX = originX - 42;
+  const screenVertY = screenProjY;
+
+  // 1. Blueprint Grid & Background
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+  bgGrad.addColorStop(0, '#040714');
+  bgGrad.addColorStop(0.5, '#070D1E');
+  bgGrad.addColorStop(1, '#030611');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Subtle coordinate grid
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.04)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < w; x += 32) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let y = 0; y < h; y += 32) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  // 2. Guide Rails: Ground Track & Vertical Guide Rail
+  // Ground Horizontal Guide Rail
+  ctx.fillStyle = '#0F172A';
+  ctx.fillRect(originX - 10, groundY + 8, availW + 30, 8);
+  ctx.strokeStyle = 'rgba(16, 185, 129, 0.45)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(originX - 10, groundY + 8);
+  ctx.lineTo(originX + availW + 20, groundY + 8);
+  ctx.stroke();
+
+  // Rail metric distance ticks
+  ctx.fillStyle = 'rgba(16, 185, 129, 0.25)';
+  for (let m = 0; m <= totalRange; m += 20) {
+    const rx = originX + m * pxPerMeter;
+    if (rx < w - 20) {
+      ctx.fillRect(rx - 1, groundY + 4, 2, 8);
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#64748B';
+      ctx.textAlign = 'center';
+      ctx.fillText(`${m}m`, rx, groundY + 26);
+    }
+  }
+
+  // Vertical Guide Rail
+  ctx.fillStyle = '#0F172A';
+  ctx.fillRect(screenVertX - 4, groundY - availH - 10, 8, availH + 18);
+  ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(screenVertX, groundY + 8);
+  ctx.lineTo(screenVertX, groundY - availH - 10);
+  ctx.stroke();
+
+  // Vertical height ticks
+  for (let m = 0; m <= maxHeight; m += 10) {
+    const ry = groundY - m * pxPerMeter;
+    if (ry > 40) {
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.25)';
+      ctx.fillRect(screenVertX - 8, ry - 1, 8, 2);
+      ctx.font = 'bold 9px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#64748B';
+      ctx.textAlign = 'right';
+      ctx.fillText(`${m}m`, screenVertX - 12, ry + 3);
+    }
+  }
+
+  // 3. Parabolic Trajectory Arc (Pre-calculated path)
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  const stepCount = 80;
+  for (let s = 0; s <= stepCount; s++) {
+    const simTime = (s / stepCount) * flightTime;
+    const simX = originX + ux * simTime * pxPerMeter;
+    const simY = groundY - (uy * simTime - 0.5 * g * simTime * simTime) * pxPerMeter;
+    if (s === 0) ctx.moveTo(simX, simY);
+    else ctx.lineTo(simX, simY);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  // Highlight traced path up to current time
+  if (curT > 0 && showProj) {
+    ctx.save();
+    ctx.strokeStyle = '#00F0FF';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = '#00F0FF';
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    const curSteps = Math.max(2, Math.round((curT / flightTime) * stepCount));
+    for (let s = 0; s <= curSteps; s++) {
+      const simTime = (s / curSteps) * curT;
+      const simX = originX + ux * simTime * pxPerMeter;
+      const simY = groundY - (uy * simTime - 0.5 * g * simTime * simTime) * pxPerMeter;
+      if (s === 0) ctx.moveTo(simX, simY);
+      else ctx.lineTo(simX, simY);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // 4. Galileo Orthogonal Projection Lines (The Visual Proof)
+  if (curT > 0) {
+    ctx.save();
+    ctx.setLineDash([4, 4]);
+
+    // Vertical dashed projection down to Horizontal Ball
+    if (showProj || showHoriz) {
+      ctx.strokeStyle = 'rgba(16, 185, 129, 0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(screenProjX, screenProjY);
+      ctx.lineTo(screenHorizX, screenHorizY);
+      ctx.stroke();
+    }
+
+    // Horizontal dashed projection across to Vertical Ball
+    if (showProj || showVert) {
+      ctx.strokeStyle = 'rgba(245, 158, 11, 0.7)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(screenProjX, screenProjY);
+      ctx.lineTo(screenVertX, screenVertY);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // 5. The Three Companion Balls
+  // --- A. Horizontal Ball (Constant Motion on ground rail) ---
+  if (showHoriz) {
+    ctx.save();
+    ctx.shadowColor = '#10B981';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = '#10B981';
+    ctx.beginPath();
+    ctx.arc(screenHorizX, screenHorizY, 8.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // Constant Horizontal Velocity Arrow
+    if (showVectors) {
+      const vecLen = Math.min(60, ux * 1.2);
+      drawSimArrow(ctx, screenHorizX, screenHorizY, screenHorizX + vecLen, screenHorizY, '#10B981', 2);
+      ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#10B981';
+      ctx.textAlign = 'left';
+      ctx.fillText(`u_x = ${ux.toFixed(0)} m/s (Const)`, screenHorizX + vecLen + 6, screenHorizY + 3);
+    }
+  }
+
+  // --- B. Vertical Ball (Accelerated free-fall on vertical rail) ---
+  if (showVert) {
+    ctx.save();
+    ctx.shadowColor = '#F59E0B';
+    ctx.shadowBlur = 12;
+    ctx.fillStyle = '#F59E0B';
+    ctx.beginPath();
+    ctx.arc(screenVertX, screenVertY, 8.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // Dynamic Vertical Velocity Arrow (shrinks to 0 at apex, points down on fall)
+    if (showVectors) {
+      const vecVy = -curVy * 1.2;
+      if (Math.abs(vecVy) > 3) {
+        drawSimArrow(ctx, screenVertX, screenVertY, screenVertX, screenVertY + vecVy, '#F59E0B', 2);
+      }
+      ctx.font = 'bold 9.5px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#F59E0B';
+      ctx.textAlign = 'right';
+      ctx.fillText(`v_y = ${curVy.toFixed(1)} m/s`, screenVertX - 12, screenVertY + 3);
+    }
+  }
+
+  // --- C. The Projectile Ball (Doing both simultaneously!) ---
+  if (showProj) {
+    ctx.save();
+    ctx.shadowColor = '#00F0FF';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = '#00F0FF';
+    ctx.beginPath();
+    ctx.arc(screenProjX, screenProjY, 9.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // Resultant Velocity Vector & Tangent Arrow
+    if (showVectors) {
+      const vLenX = curVx * 1.2;
+      const vLenY = -curVy * 1.2;
+      drawSimArrow(ctx, screenProjX, screenProjY, screenProjX + vLenX, screenProjY + vLenY, '#00F0FF', 2.5);
+
+      // Component Projection Triangle at Projectile
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(screenProjX + vLenX, screenProjY);
+      ctx.lineTo(screenProjX + vLenX, screenProjY + vLenY);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.font = 'bold 10px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#00F0FF';
+      ctx.textAlign = 'left';
+      ctx.fillText(`v = ${curV.toFixed(1)} m/s`, screenProjX + vLenX + 6, screenProjY + vLenY - 2);
+    }
+  }
+
+  // 6. Throughline-style Sticky Note Callout on Canvas
+  ctx.save();
+  const noteX = w - 245;
+  const noteY = 18;
+  const noteW = 225;
+  const noteH = 92;
+
+  ctx.fillStyle = '#FFFBEA';
+  ctx.strokeStyle = '#E8E0A0';
+  ctx.lineWidth = 1;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
+  ctx.shadowBlur = 10;
+  ctx.fillRect(noteX, noteY, noteW, noteH);
+  ctx.strokeRect(noteX, noteY, noteW, noteH);
+
+  // Top tape bar
+  ctx.fillStyle = '#F5E882';
+  ctx.fillRect(noteX, noteY, noteW, 6);
+
+  ctx.shadowColor = 'transparent';
+  ctx.font = 'bold 10.5px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#5C4E1A';
+  ctx.textAlign = 'left';
+  ctx.fillText('GALILEO DECOMPOSITION', noteX + 12, noteY + 23);
+
+  ctx.font = '9.5px "Plus Jakarta Sans", sans-serif';
+  ctx.fillStyle = '#8B7E3A';
+  ctx.fillText('• Horizontal: v_x = u_x (constant)', noteX + 12, noteY + 41);
+  ctx.fillText('• Vertical: v_y = u_y - gt (free fall)', noteX + 12, noteY + 57);
+  ctx.fillText(`• Launch: u=${uSpeed} m/s, θ=${thetaDeg}°, g=${g}`, noteX + 12, noteY + 73);
+  ctx.fillText('• Independent orthogonal dimensions', noteX + 12, noteY + 86);
+  ctx.restore();
+
+  // 7. Telemetry Report
+  onTelem({
+    t_flight: `${flightTime.toFixed(2)} s`,
+    max_height: `${maxHeight.toFixed(1)} m`,
+    range_dist: `${totalRange.toFixed(1)} m`,
+    v_proj: `${curV.toFixed(1)} m/s`,
+    v_vert: `${curVy.toFixed(1)} m/s`,
+    v_horiz: `${curVx.toFixed(1)} m/s`
+  });
+}
 
 function renderKinematicCar(
   ctx: CanvasRenderingContext2D,

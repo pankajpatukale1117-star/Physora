@@ -339,14 +339,14 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
         alignItems: 'center',
         justifyContent: 'center',
         padding: '20px 16px',
-        backgroundColor: 'rgba(2, 5, 14, 0.82)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)'
+        backgroundColor: 'rgba(15, 23, 42, 0.65)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
       }}
       onClick={onClose}
     >
       <div
-        className="glass-card formula-modal-window"
+        className="scientific-card formula-modal-window"
         style={{
           width: '100%',
           maxWidth: 980,
@@ -355,9 +355,9 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
           flexDirection: 'column',
           overflow: 'hidden',
           padding: 0,
-          border: '1px solid var(--border-electric)',
-          background: 'var(--bg-glass-heavy)',
-          boxShadow: 'var(--shadow-xl), 0 0 45px rgba(0, 240, 255, 0.15)'
+          border: '1px solid var(--border-medium)',
+          background: 'var(--bg-surface)',
+          boxShadow: 'var(--shadow-xl)'
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -370,31 +370,31 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'var(--bg-glass-card)'
+            background: 'var(--bg-surface)'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div
               style={{
-                width: 44,
-                height: 44,
+                width: 40,
+                height: 40,
                 borderRadius: 'var(--radius-md)',
-                background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)',
-                border: '1px solid var(--border-electric)',
+                background: 'var(--brand-primary)',
+                color: '#FFFFFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 0 16px rgba(0, 240, 255, 0.2)'
+                boxShadow: 'var(--shadow-xs)'
               }}
             >
-              <BookOpen size={22} color="var(--electric-blue)" />
+              <BookOpen size={20} />
             </div>
             <div>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
-                Formula Bank &amp; Cheat Sheet
+                Formula Bank &amp; Variable Index
               </h2>
               <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: '4px 0 0' }}>
-                Crystal-clear formulas with Plain English translations, SI units, and 1-click simulations
+                Rigorous KaTeX mathematical expressions with Plain English definitions, SI units, and direct simulation links
               </p>
             </div>
           </div>
@@ -402,18 +402,15 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
           <button
             onClick={onClose}
             aria-label="Close formula modal"
+            className="btn btn-secondary btn-sm"
             style={{
-              width: 36,
-              height: 36,
-              borderRadius: 'var(--radius-pill)',
-              border: '1px solid var(--border-subtle)',
-              background: 'var(--bg-tertiary)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
+              width: 34,
+              height: 34,
+              padding: 0,
+              borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s ease'
+              justifyContent: 'center'
             }}
           >
             <X size={18} />
@@ -422,42 +419,34 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
 
         {/* Filter Bar & Search */}
         <div
+          className="formula-filter-bar"
           style={{
-            padding: '16px 28px',
+            padding: '14px 28px',
             borderBottom: '1px solid var(--border-subtle)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             gap: 16,
             flexWrap: 'wrap',
-            background: 'rgba(8, 14, 32, 0.6)'
+            background: 'var(--bg-subtle)'
           }}
         >
           {/* Category Tabs */}
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
             {(['All', 'Physics', 'Mathematics'] as const).map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: activeCategory === cat ? '1px solid var(--electric-blue)' : '1px solid var(--border-subtle)',
-                  background: activeCategory === cat ? 'var(--electric-blue)' : 'var(--bg-glass-card)',
-                  color: activeCategory === cat ? '#000000' : 'var(--text-secondary)',
-                  fontSize: '0.84rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
+                className={`btn btn-sm ${activeCategory === cat ? 'btn-primary' : 'btn-secondary'}`}
               >
                 {cat}
               </button>
             ))}
           </div>
 
+
           {/* Search Input */}
-          <div style={{ position: 'relative', flex: '1', minWidth: 260, maxWidth: 420 }}>
+          <div className="formula-search-box" style={{ position: 'relative', flex: '1', minWidth: 260, maxWidth: 420 }}>
             <Search
               size={16}
               style={{
@@ -495,14 +484,14 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
             return (
               <div
                 key={item.id}
-                className="formula-card"
+                className="scientific-card formula-card"
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 14,
                   padding: '20px 24px',
                   borderRadius: 'var(--radius-lg)',
-                  background: 'var(--bg-glass-card)',
+                  background: 'var(--bg-surface)',
                   border: '1px solid var(--border-subtle)',
                   boxShadow: 'var(--shadow-sm)'
                 }}
@@ -511,16 +500,10 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span
+                      className={`badge ${isPhysics ? 'badge-physics' : 'badge-math'}`}
                       style={{
-                        padding: '3px 12px',
-                        borderRadius: 'var(--radius-pill)',
                         fontSize: '0.72rem',
-                        fontWeight: 800,
-                        letterSpacing: '0.04em',
-                        textTransform: 'uppercase',
-                        background: isPhysics ? 'rgba(0, 240, 255, 0.12)' : 'rgba(168, 85, 247, 0.14)',
-                        color: isPhysics ? 'var(--electric-blue)' : 'var(--electric-violet)',
-                        border: isPhysics ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid rgba(168, 85, 247, 0.3)'
+                        fontWeight: 700
                       }}
                     >
                       {item.domain}
@@ -535,42 +518,30 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
                       onClose();
                       onSelectTopic(item.targetTopicId);
                     }}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '6px 16px',
-                      borderRadius: 'var(--radius-pill)',
-                      border: '1px solid var(--border-electric)',
-                      background: 'var(--electric-blue-soft)',
-                      color: 'var(--electric-blue)',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
+                    className="btn btn-primary btn-sm"
                   >
-                    <span>Simulate Now</span>
+                    <span>Try in Simulation</span>
                     <ArrowRight size={14} />
                   </button>
                 </div>
 
                 {/* 2. Crisp KaTeX Formula Display Box with Copy LaTeX Action */}
                 <div
+                  className="formula-math-display"
                   style={{
                     position: 'relative',
-                    padding: '20px 24px',
+                    padding: '18px 24px',
                     borderRadius: 'var(--radius-md)',
-                    background: 'var(--bg-tertiary)',
+                    background: 'var(--bg-subtle)',
                     border: '1px solid var(--border-subtle)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.3)',
                     overflowX: 'auto'
                   }}
                 >
-                  <MathView math={item.latex} block style={{ fontSize: '1.38rem', width: '100%' }} />
+                  <MathView math={item.latex} block style={{ fontSize: '1.32rem', width: '100%' }} />
+
 
                   {/* Copy LaTeX Action */}
                   <button
@@ -658,7 +629,10 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
                   >
                     What the letters mean:
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 10 }}>
+                  <div
+                    className="formula-variables-grid"
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 10 }}
+                  >
                     {item.variables.map((v, i) => (
                       <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.83rem' }}>
                         <span

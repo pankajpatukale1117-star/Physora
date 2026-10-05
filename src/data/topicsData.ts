@@ -15,6 +15,15 @@ export interface SimulationConfig {
   telemetryLabels: { key: string; label: string; unit?: string }[];
 }
 
+export interface EditorialTeaching {
+  headline: string;
+  story: string;
+  controlsGuide: string;
+  variablesAndOutputs: string;
+  modelAssumptions: string;
+  learningObjective: string;
+}
+
 export interface TopicData {
   id: string;
   subject: 'maths' | 'physics';
@@ -25,6 +34,7 @@ export interface TopicData {
   realWorldExample: string;
   keyFormulas: { formula: string; explanation: string }[];
   keyTakeaways: string[];
+  editorialTeaching?: EditorialTeaching;
   simulations: SimulationConfig[];
 }
 
@@ -536,7 +546,45 @@ export const TOPICS_DATA: Record<string, TopicData> = {
       'A flat line on a position-time graph means the object is stationary; a tilted straight line means constant velocity.',
       'The area under a velocity-time graph equals the total distance traveled!'
     ],
+    editorialTeaching: {
+      headline: 'Two Motions, One Ball',
+      story:
+        'When you launch a projectile, it does two things at the same time: it moves forward, and it falls. Neither one gets in the way of the other. Here you launch three balls together. One only moves up and down on a vertical rail. One only rolls forward along a ground rail. The third one is the projectile, doing both. Watch it stay right above the rolling ball and right beside the one going up, the entire way.',
+      controlsGuide:
+        'Set the launch with the u_x and u_y sliders, or with total speed u and angle θ — all four are linked, so moving one updates the others. Show or hide any of the three balls. Switch gravity between 10 m/s² (classroom round number) and 9.8 m/s² (Earth standard). Press Play to fire, pause at any instant, or drag the time slider to inspect exact moments.',
+      variablesAndOutputs:
+        'Once launched, dashed orthogonal lines connect the projectile down to the rolling ball and across to the rising ball. Velocity arrows appear on all three. The arrow on the vertical ball shrinks to zero at the maximum height apex and reverses downward. The arrow on the rolling ball never changes at all. The telemetry HUD shows time, projectile speed, horizontal and vertical components, and height.',
+      modelAssumptions:
+        'Ideal vacuum projectile (no air drag). Flat horizontal ground, launched from ground level.',
+      learningObjective:
+        'You should be able to hide the projectile, look only at the other two companion balls, and point to where the projectile is at any second.'
+    },
     simulations: [
+      {
+        id: 'motion_two_motions',
+        name: 'Two Motions, One Ball (Galileo Decomposition)',
+        tagline: 'See how a projectile combines a constant horizontal motion and an accelerating vertical motion.',
+        description: 'Galileo’s famous revelation: horizontal and vertical motions are completely independent. Watch the projectile match the rolling floor ball horizontally and the free-fall ball vertically at every microsecond.',
+        controls: [
+          { id: 'u_x', label: 'Horizontal Velocity (u_x)', min: 0, max: 60, step: 1, defaultValue: 30, unit: 'm/s' },
+          { id: 'u_y', label: 'Vertical Velocity (u_y)', min: 0, max: 60, step: 1, defaultValue: 40, unit: 'm/s' },
+          { id: 'u', label: 'Total Launch Speed (u)', min: 0, max: 85, step: 1, defaultValue: 50, unit: 'm/s' },
+          { id: 'theta', label: 'Launch Angle (θ)', min: 0, max: 90, step: 1, defaultValue: 53, unit: '°' },
+          { id: 'gravity', label: 'Gravity (10 vs 9.8)', min: 9.8, max: 10, step: 0.2, defaultValue: 10, unit: 'm/s²' },
+          { id: 'show_proj', label: 'Show Projectile Ball', min: 0, max: 1, step: 1, defaultValue: 1 },
+          { id: 'show_vert', label: 'Show Vertical Ball', min: 0, max: 1, step: 1, defaultValue: 1 },
+          { id: 'show_horiz', label: 'Show Horizontal Ball', min: 0, max: 1, step: 1, defaultValue: 1 },
+          { id: 'show_vectors', label: 'Show Velocity Vectors', min: 0, max: 1, step: 1, defaultValue: 1 }
+        ],
+        telemetryLabels: [
+          { key: 't_flight', label: 'Flight Time (T)' },
+          { key: 'max_height', label: 'Max Height (H)' },
+          { key: 'range_dist', label: 'Range (R)' },
+          { key: 'v_proj', label: 'Projectile Speed (v)' },
+          { key: 'v_vert', label: 'Vertical Speed (v_y)' },
+          { key: 'v_horiz', label: 'Horizontal Speed (v_x)' }
+        ]
+      },
       {
         id: 'motion_car_track',
         name: 'Kinematic Car Track & Graphs',
@@ -1118,6 +1166,19 @@ export const TOPICS_DATA: Record<string, TopicData> = {
       'The cross product is anti-commutative: A × B = -(B × A). Swapping order flips the direction.',
       'To cross a river in the shortest time, always aim the boat straight across perpendicular to the bank.'
     ],
+    editorialTeaching: {
+      headline: 'Vectors from First Principles',
+      story:
+        'A vector is direction and magnitude unified. When an airplane flies into a crosswind, or a boat crosses a surging river, the real path over the ground is the geometric vector sum. By decomposing vectors into orthogonal basis directions, complex multi-dimensional physics resolves into elementary one-dimensional arithmetic.',
+      controlsGuide:
+        'Adjust the lengths of vectors A and B and slide the angle θ between them. Inspect the perpendicular normal vector spawned by the cross product and the scalar shadow projected by the dot product.',
+      variablesAndOutputs:
+        'The shaded parallelogram represents the magnitude of the cross product |A × B|. The glowing normal arrow shows the right-hand rule direction. The telemetry HUD displays numerical scalar dot products and vector cross magnitudes.',
+      modelAssumptions:
+        'Cartesian Euclidean 3D space with orthonormal basis î, ĵ, k̂.',
+      learningObjective:
+        'Understand why 5 + 5 can equal 0 (when vectors point in opposite directions), 10 (when aligned), or any intermediate number.'
+    },
     simulations: [
       {
         id: 'vec_cross_dot_product',
@@ -1258,6 +1319,7 @@ export const TOPICS_DATA: Record<string, TopicData> = {
  * and must NOT display a Play/Pause button.
  */
 export const ANIMATED_SIMULATION_IDS = new Set<string>([
+  'motion_two_motions',
   'trig_wave_unroll',
   'coord_circle',
   'func_machine',

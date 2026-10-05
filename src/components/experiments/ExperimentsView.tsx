@@ -146,10 +146,12 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
   const [telemetry, setTelemetry] = useState<Record<string, string>>({});
   const [trials, setTrials] = useState<LabTrialRecord[]>([]);
   const [showLogFeedback, setShowLogFeedback] = useState<boolean>(false);
+  const [showAllControls, setShowAllControls] = useState<boolean>(false);
 
   // Scroll to top immediately when an experiment studio loads
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
+    setShowAllControls(false);
   }, [experiment.id]);
 
   const handleParamChange = (id: string, value: number) => {
@@ -401,8 +403,8 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                     fontSize: '0.72rem',
                     padding: '2px 8px',
                     borderRadius: 'var(--radius-pill)',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: 'var(--bg-subtle)',
+                    border: '1px solid var(--border-subtle)',
                     color: 'var(--text-secondary)'
                   }}
                 >
@@ -482,18 +484,20 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
 
             {/* Sliders Grid */}
             <div
+              className="experiment-controls-grid"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                 gap: 16
               }}
             >
-              {experiment.controls.map(ctrl => {
+              {experiment.controls.map((ctrl, idx) => {
+                const isHiddenOnMobile = !showAllControls && idx >= 2;
                 const val = params[ctrl.id] ?? ctrl.defaultValue;
                 return (
                   <div
                     key={ctrl.id}
-                    className="control-card"
+                    className={`control-card ${isHiddenOnMobile ? 'hide-mobile' : ''}`}
                     style={{
                       padding: '14px',
                       borderRadius: 'var(--radius-md)',
@@ -570,6 +574,43 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                 );
               })}
             </div>
+
+            {/* Mobile Progressive Disclosure Toggle for Secondary Controls */}
+            {experiment.controls.length > 2 && (
+              <button
+                type="button"
+                onClick={() => setShowAllControls(!showAllControls)}
+                className="show-mobile-only mobile-toggle-more-controls-btn"
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6,
+                  padding: '9px 14px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid var(--border-subtle)',
+                  color: experiment.accentColor,
+                  fontSize: '0.80rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  marginTop: 12
+                }}
+              >
+                {showAllControls ? (
+                  <>
+                    <Sliders size={13} />
+                    <span>▲ Show Fewer Parameters</span>
+                  </>
+                ) : (
+                  <>
+                    <Sliders size={13} />
+                    <span>▼ More Parameters ({experiment.controls.length - 2})</span>
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {/* 3. DIGITAL LABORATORY NOTEBOOK: OBSERVATION TABLE & DATA LOGGER */}
@@ -705,7 +746,7 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                 <strong style={{ color: 'var(--electric-blue)' }}>"Record Trial Observation"</strong> to log data points for verification.
               </div>
             ) : (
-              <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <div className="experiment-table-responsive" style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                 <table
                   style={{
                     width: '100%',

@@ -264,8 +264,8 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const rawCtx = canvas.getContext('2d');
+    if (!rawCtx) return;
 
     let animId: number;
 
@@ -277,10 +277,36 @@ export const ExperimentCanvas: React.FC<ExperimentCanvasProps> = ({
       const { dpr, virtualW, virtualH, cssWidth } = dimsRef.current;
       const scale = (cssWidth / virtualW) * dpr;
 
-      ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.scale(scale, scale);
+      rawCtx.save();
+      rawCtx.setTransform(1, 0, 0, 1, 0, 0);
+      rawCtx.clearRect(0, 0, canvas.width, canvas.height);
+      rawCtx.scale(scale, scale);
+
+      // Mobile legibility enhancer: automatically scales fonts and vector line weights on narrow phone screens
+      const ctx: CanvasRenderingContext2D = (isMobileRef.current && cssWidth < 600)
+        ? new Proxy(rawCtx, {
+            set(target, prop, value) {
+              if (prop === 'font' && typeof value === 'string') {
+                const fontMultiplier = Math.min(1.45, 650 / Math.max(300, cssWidth));
+                const boosted = value.replace(/(\d+(?:\.\d+)?)\s*px/g, (_m, sz) => {
+                  return `${Math.round(parseFloat(sz) * fontMultiplier)}px`;
+                });
+                (target as any)[prop] = boosted;
+                return true;
+              }
+              if (prop === 'lineWidth' && typeof value === 'number') {
+                (target as any)[prop] = Math.max(1.2, value * 1.25);
+                return true;
+              }
+              (target as any)[prop] = value;
+              return true;
+            },
+            get(target, prop) {
+              const val = (target as any)[prop];
+              return typeof val === 'function' ? val.bind(target) : val;
+            }
+          })
+        : rawCtx;
 
       const w = virtualW;
       const h = virtualH;

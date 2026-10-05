@@ -146,7 +146,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       }
 
       // Ground line
-      ctx.strokeStyle = '#00E5FF';
+      ctx.strokeStyle = 'var(--brand-primary, #0A66C2)';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, originY);
@@ -154,7 +154,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       ctx.stroke();
 
       // Ground meters markers
-      ctx.fillStyle = 'rgba(148, 163, 184, 0.7)';
+      ctx.fillStyle = 'rgba(100, 116, 139, 0.85)';
       ctx.font = '10px JetBrains Mono';
       for (let m = 0; m <= 80; m += 10) {
         const markX = originX + m * scale;
@@ -168,7 +168,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
 
       // 2. Ideal Trajectory Path (Dotted Arc)
       ctx.setLineDash([4, 4]);
-      ctx.strokeStyle = 'rgba(0, 229, 255, 0.45)';
+      ctx.strokeStyle = 'rgba(10, 102, 194, 0.45)';
       ctx.lineWidth = 1.8;
       ctx.beginPath();
       const dtSample = 0.03;
@@ -185,7 +185,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       const barrelLen = 28;
       const barrelEndX = originX + Math.cos(theta) * barrelLen;
       const barrelEndY = originY - Math.sin(theta) * barrelLen;
-      ctx.strokeStyle = '#7C3AED';
+      ctx.strokeStyle = '#334155';
       ctx.lineWidth = 6;
       ctx.lineCap = 'round';
       ctx.beginPath();
@@ -209,15 +209,17 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       const vx = speed * Math.cos(theta);
       const vy = speed * Math.sin(theta) - g * curT;
 
-      // Projectile ball with glow
+      // Projectile ball with clean stroke
       ctx.save();
-      ctx.shadowColor = '#00E5FF';
-      ctx.shadowBlur = 14;
-      ctx.fillStyle = '#00E5FF';
+      ctx.fillStyle = '#0A66C2';
       ctx.beginPath();
-      ctx.arc(currX, currY, 7, 0, Math.PI * 2);
+      ctx.arc(currX, currY, 6.5, 0, Math.PI * 2);
       ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.stroke();
       ctx.restore();
+
 
       // Tangent Velocity Vector Arrow
       const vScale = 1.6;
@@ -278,7 +280,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
 
   return (
     <div
-      className="glass-card hero-sandbox-card"
+      className="scientific-card hero-sandbox-card"
       style={isFullWindow ? {
         position: 'fixed',
         top: 0,
@@ -286,7 +288,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
         width: '100vw',
         height: '100vh',
         zIndex: 99999,
-        background: '#070B14',
+        background: 'var(--bg-surface)',
         padding: '16px 24px',
         boxSizing: 'border-box',
         display: 'flex',
@@ -297,12 +299,14 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
         overflow: 'hidden'
       } : {
         width: '100%',
-        maxWidth: 720,
-        margin: '32px auto 0',
+        maxWidth: 780,
+        margin: '28px auto 0',
         padding: '20px 24px',
         textAlign: 'left',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        border: '1px solid var(--border-medium)',
+        boxShadow: 'var(--shadow-md)'
       }}
     >
       {/* Header Bar */}
@@ -318,51 +322,49 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 10px #10B981' }} />
-          <span className="hero-sandbox-title" style={{ fontSize: '0.86rem', fontWeight: 800, letterSpacing: '0.04em', color: 'var(--text-primary)' }}>
-            LIVE HERO SANDBOX • 2D VECTOR TRAJECTORY
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--brand-primary)' }} />
+          <span className="hero-sandbox-title" style={{ fontSize: '0.84rem', fontWeight: 750, letterSpacing: '0.03em', color: 'var(--text-primary)' }}>
+            INTERACTIVE LABORATORY MODEL • 2D TRAJECTORY
           </span>
           {isFullWindow && (
             <span
-              className="font-mono"
+              className="badge badge-primary font-mono"
               style={{
                 fontSize: '0.68rem',
-                fontWeight: 700,
-                color: 'var(--electric-blue)',
-                background: 'rgba(0, 240, 255, 0.12)',
-                border: '1px solid rgba(0, 240, 255, 0.3)',
-                padding: '2px 8px',
-                borderRadius: 'var(--radius-pill)',
-                letterSpacing: '0.04em'
+                padding: '2px 8px'
               }}
             >
-              FULL WINDOW STUDIO
+              FULL SCREEN
             </span>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Planet Presets */}
           <div className="hero-sandbox-presets" style={{ display: 'flex', gap: 6 }}>
             <button
               onClick={() => setPlanet('earth')}
-              className={`env-preset-pill ${planet === 'earth' ? 'active' : ''}`}
+              className={`btn btn-sm ${planet === 'earth' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '4px 10px', fontSize: '0.78rem' }}
             >
-              🌍 Earth (9.8 m/s²)
+              Earth (9.8 m/s²)
             </button>
             <button
               onClick={() => setPlanet('moon')}
-              className={`env-preset-pill ${planet === 'moon' ? 'active' : ''}`}
+              className={`btn btn-sm ${planet === 'moon' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '4px 10px', fontSize: '0.78rem' }}
             >
-              🌕 Moon (1.6 m/s²)
+              Moon (1.6 m/s²)
             </button>
             <button
               onClick={() => setPlanet('mars')}
-              className={`env-preset-pill ${planet === 'mars' ? 'active' : ''}`}
+              className={`btn btn-sm ${planet === 'mars' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '4px 10px', fontSize: '0.78rem' }}
             >
-              🔴 Mars (3.7 m/s²)
+              Mars (3.7 m/s²)
             </button>
           </div>
+
 
           {isFullWindow && (
             <button
@@ -658,20 +660,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
                   }
                   setIsPlaying(!isPlaying);
                 }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 14px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: isPlaying ? '1px solid var(--border-subtle)' : '1px solid rgba(0, 240, 255, 0.4)',
-                  background: isPlaying ? 'var(--bg-glass-card)' : 'rgba(0, 240, 255, 0.12)',
-                  color: isPlaying ? 'var(--text-primary)' : 'var(--electric-blue)',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
+                className="btn btn-secondary btn-sm"
                 id="heroSandboxPauseBtn"
                 aria-label={isPlaying ? 'Pause simulation' : 'Resume simulation'}
                 title={isPlaying ? 'Pause at exact position' : 'Resume trajectory'}
@@ -686,18 +675,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
                   setPlanet('earth');
                   simTimeRef.current = 0;
                 }}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 12px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: '1px solid var(--border-subtle)',
-                  background: 'var(--bg-glass-card)',
-                  color: 'var(--text-secondary)',
-                  fontSize: '0.78rem',
-                  cursor: 'pointer'
-                }}
+                className="btn btn-secondary btn-sm"
                 id="heroSandboxResetBtn"
               >
                 <RotateCcw size={12} />
@@ -705,50 +683,24 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
               </button>
               <button
                 onClick={() => setIsFullWindow(!isFullWindow)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 14px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: '1.5px solid rgba(0, 240, 255, 0.5)',
-                  background: 'rgba(0, 240, 255, 0.1)',
-                  color: '#00F0FF',
-                  fontSize: '0.78rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease',
-                  boxShadow: '0 0 12px rgba(0, 240, 255, 0.2)'
-                }}
+                className="btn btn-secondary btn-sm"
                 title={isFullWindow ? 'Exit Full View (Esc)' : 'Open full graph and settings covering whole window'}
               >
                 {isFullWindow ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
-                <span>{isFullWindow ? 'Exit Full View' : 'Full Graph & Settings'}</span>
+                <span>{isFullWindow ? 'Exit Full Screen' : 'Full Screen'}</span>
               </button>
             </div>
 
             <button
               onClick={onOpenFullLab}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 16px',
-                borderRadius: 'var(--radius-pill)',
-                border: 'none',
-                background: 'linear-gradient(135deg, #0062FF 0%, #7C3AED 100%)',
-                color: '#FFFFFF',
-                fontSize: '0.82rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                boxShadow: '0 2px 10px rgba(0, 98, 255, 0.3)'
-              }}
+              className="btn btn-primary btn-sm"
             >
               <Zap size={14} />
-              <span>Open Full 42-Sim Lab</span>
+              <span>Open 42-Sim Laboratory</span>
               <ArrowUpRight size={14} />
             </button>
           </div>
+
         </div>
       </div>
     </div>

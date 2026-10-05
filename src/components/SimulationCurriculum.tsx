@@ -26,33 +26,33 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({
       <div className="section-container">
         
         {/* Section Header */}
-        <div style={{ textAlign: 'center', maxWidth: 800, margin: '0 auto 50px' }}>
-          <div className="lab-pill-badge" style={{ marginBottom: 16 }}>
-            <span>⚛️ HIGH-YIELD JEE ADVANCED EXPERIMENTS</span>
+        <div style={{ textAlign: 'center', maxWidth: 800, margin: '0 auto 44px' }}>
+          <div style={{ display: 'inline-flex', marginBottom: 12 }}>
+            <span className="badge badge-primary">
+              <span>Interactive Laboratory Demonstrations</span>
+            </span>
           </div>
 
           <h2
+            className="text-h1"
             style={{
-              fontSize: 'clamp(2.3rem, 4vw, 3.4rem)',
-              fontWeight: 800,
-              letterSpacing: '-0.025em',
-              color: 'var(--text-primary)',
-              lineHeight: 1.15,
-              marginBottom: 16
+              marginBottom: 14,
+              color: 'var(--text-primary)'
             }}
           >
-            Precision Simulations for <span className="gradient-text">JEE Aspirants</span>
+            Featured Micro-Laboratories: <span style={{ color: 'var(--brand-primary)' }}>Live Mechanics &amp; Math</span>
           </h2>
 
           <p
+            className="text-body"
             style={{
-              fontSize: '1.08rem',
               color: 'var(--text-secondary)',
               lineHeight: 1.6,
-              marginBottom: 32
+              maxWidth: 680,
+              margin: '0 auto 28px'
             }}
           >
-            Built to deconstruct the most conceptually demanding problems in Mechanics, Electrodynamics, Calculus, and 3D Vectors.
+            Interact directly with classical mechanics, wave optics, electrodynamics, and calculus rate-of-change models.
           </p>
 
           {/* Filter Pills */}
@@ -60,67 +60,41 @@ export const SimulationCurriculum: React.FC<SimulationCurriculumProps> = ({
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 8,
-              background: 'rgba(15, 23, 42, 0.75)',
-              backdropFilter: 'blur(16px)',
-              padding: '6px',
+              gap: 6,
+              background: 'var(--bg-subtle)',
+              padding: '4px',
               borderRadius: 'var(--radius-pill)',
               border: '1px solid var(--border-subtle)'
             }}
           >
             <button
               onClick={() => setFilter('all')}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 'var(--radius-pill)',
-                border: filter === 'all' ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid transparent',
-                background: filter === 'all' ? 'rgba(0, 98, 255, 0.2)' : 'transparent',
-                color: filter === 'all' ? 'var(--electric-blue)' : 'var(--text-secondary)',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
+              className={`btn btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '6px 16px' }}
             >
-              All Simulations (6)
+              All Demonstrations (6)
             </button>
             <button
               onClick={() => setFilter('physics')}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 'var(--radius-pill)',
-                border: filter === 'physics' ? '1px solid rgba(0, 240, 255, 0.3)' : '1px solid transparent',
-                background: filter === 'physics' ? 'rgba(0, 98, 255, 0.2)' : 'transparent',
-                color: filter === 'physics' ? 'var(--electric-blue)' : 'var(--text-secondary)',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
+              className={`btn btn-sm ${filter === 'physics' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '6px 16px' }}
             >
               Physics Modules
             </button>
             <button
               onClick={() => setFilter('maths')}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 'var(--radius-pill)',
-                border: filter === 'maths' ? '1px solid rgba(168, 85, 247, 0.3)' : '1px solid transparent',
-                background: filter === 'maths' ? 'rgba(124, 58, 237, 0.2)' : 'transparent',
-                color: filter === 'maths' ? 'var(--electric-violet)' : 'var(--text-secondary)',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
+              className={`btn btn-sm ${filter === 'maths' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ padding: '6px 16px' }}
             >
-              Mathematics Lab
+              Mathematics Models
             </button>
           </div>
         </div>
 
+
         {/* 6 High-Fidelity Simulation Cards Grid */}
         <div
+          className="simulation-curriculum-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',

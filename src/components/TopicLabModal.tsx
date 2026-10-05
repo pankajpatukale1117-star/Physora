@@ -1,6 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { X, Play, Pause, RotateCcw, Lightbulb, BookOpen, CheckCircle2, ChevronRight, HelpCircle, Award, Maximize2, Minimize2 } from 'lucide-react';
-import { TOPICS_DATA, isSimulationAnimated } from '../data/topicsData';
+import {
+  X,
+  Play,
+  Pause,
+  RotateCcw,
+  Lightbulb,
+  BookOpen,
+  CheckCircle2,
+  ChevronRight,
+  ChevronLeft,
+  HelpCircle,
+  Award,
+  Maximize2,
+  Minimize2,
+  Sliders,
+  Activity,
+  Layers,
+  ArrowDown,
+  ArrowUp
+} from 'lucide-react';
+import { TOPICS_DATA, isSimulationAnimated, type EditorialTeaching } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
 import { CanvasSimulator } from './simulations/CanvasSimulators';
 import { MathView } from './MathView';
@@ -173,6 +192,9 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [sideTab, setSideTab] = useState<'intuition' | 'formulas' | 'quiz'>('intuition');
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
   const [isFullWindow, setIsFullWindow] = useState<boolean>(false);
+  const [leftDrawerOpen, setLeftDrawerOpen] = useState<boolean>(true);
+  const [rightDrawerOpen, setRightDrawerOpen] = useState<boolean>(true);
+  const [showAllControls, setShowAllControls] = useState<boolean>(false);
 
   const [prevTopicId, setPrevTopicId] = useState(topicId);
   const [prevSimId, setPrevSimId] = useState<string | null>(null);
@@ -185,6 +207,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   if (topicId !== prevTopicId) {
     setPrevTopicId(topicId);
     setActiveSimIndex(0);
+    setShowAllControls(false);
   }
 
   // Initialize parameters when simulation changes
@@ -196,6 +219,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
     });
     setParams(initialParams);
     setIsPlaying(true);
+    setShowAllControls(false);
   }
 
   // Close on Escape key (exits full window first if active, otherwise closes modal)
@@ -219,7 +243,25 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const correctCount = topicQuiz.filter(q => userAnswers[q.id] === q.correctIndex).length;
 
   const handleControlChange = (id: string, val: number) => {
-    setParams(prev => ({ ...prev, [id]: val }));
+    setParams(prev => {
+      const next = { ...prev, [id]: val };
+      // Linked Projectile Controls (Throughline style)
+      if (currentSim.id === 'motion_two_motions') {
+        if (id === 'u_x' || id === 'u_y') {
+          const ux = id === 'u_x' ? val : (prev.u_x ?? 30);
+          const uy = id === 'u_y' ? val : (prev.u_y ?? 40);
+          next.u = Math.round(Math.hypot(ux, uy) * 10) / 10;
+          next.theta = Math.round(Math.atan2(uy, ux) * (180 / Math.PI));
+        } else if (id === 'u' || id === 'theta') {
+          const u = id === 'u' ? val : (prev.u ?? 50);
+          const thetaDeg = id === 'theta' ? val : (prev.theta ?? 53);
+          const rad = (thetaDeg * Math.PI) / 180;
+          next.u_x = Math.round(u * Math.cos(rad));
+          next.u_y = Math.round(u * Math.sin(rad));
+        }
+      }
+      return next;
+    });
   };
 
   const handleReset = () => {
@@ -233,19 +275,958 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const isMath = topic.subject === 'maths';
   const accentColor = isMath ? 'var(--electric-violet)' : 'var(--electric-blue)';
 
+  if (isFullWindow) {
+    const editorial: EditorialTeaching = topic.editorialTeaching || {
+      headline: `Learn to understand ${topic.title}.`,
+      story: topic.conceptIntro,
+      controlsGuide: `Adjust the active simulation parameters in the left panel to test how dynamic forces and initial conditions govern system trajectories in real time.`,
+      variablesAndOutputs: `Key variables include: ${topic.keyFormulas.map(f => f.formula).join(', ')}. Observe the live telemetry values on the right panel as the physical state evolves.`,
+      modelAssumptions: `Standard physical idealizations apply: clean coordinate frame, negligible air friction unless configured, and uniform local fields.`,
+      learningObjective: `Connect the algebraic symbolism with direct visual and tactile physical intuition.`
+    };
+
+    return (
+      <div
+        className="throughline-stage-viewport"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 250,
+          background: '#070B14',
+          color: 'var(--text-primary)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          scrollBehavior: 'smooth'
+        }}
+      >
+        {/* VIEWPORT 1: Full-Bleed 100dvh Simulation Stage */}
+        <div
+          id="sim-stage"
+          style={{
+            width: '100vw',
+            height: '100vh',
+            minHeight: '100vh',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            background: '#060A12'
+          }}
+        >
+          {/* Top Floating Pill Navigation Bar */}
+          <header
+            style={{
+              position: 'absolute',
+              top: 16,
+              left: 20,
+              right: 20,
+              zIndex: 60,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              pointerEvents: 'none',
+              gap: 12
+            }}
+          >
+            {/* Left: Exit Stage & Breadcrumbs */}
+            <div
+              className="throughline-pill-nav"
+              style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}
+            >
+              <button
+                onClick={() => setIsFullWindow(false)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.80rem'
+                }}
+                title="Exit Stage View (Esc)"
+              >
+                <Minimize2 size={14} />
+                <span>Exit Stage</span>
+                <span
+                  style={{
+                    fontSize: '0.68rem',
+                    opacity: 0.5,
+                    padding: '1px 5px',
+                    borderRadius: 4,
+                    background: 'rgba(255,255,255,0.08)'
+                  }}
+                >
+                  Esc
+                </span>
+              </button>
+
+              <span style={{ opacity: 0.25 }}>|</span>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.80rem' }}>
+                <span style={{ opacity: 0.6 }}>Physora</span>
+                <span style={{ opacity: 0.3 }}>/</span>
+                <span style={{ color: accentColor, fontWeight: 700 }}>{topic.title}</span>
+              </div>
+            </div>
+
+            {/* Center: Simulation Switcher Tabs */}
+            <div
+              className="throughline-pill-nav"
+              style={{
+                pointerEvents: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                maxWidth: '45vw',
+                overflowX: 'auto'
+              }}
+            >
+              {topic.simulations.map((sim, idx) => {
+                const isActive = idx === activeSimIndex;
+                return (
+                  <button
+                    key={sim.id}
+                    onClick={() => setActiveSimIndex(idx)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '5px 12px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: isActive ? `1px solid ${accentColor}` : '1px solid transparent',
+                      background: isActive ? `${accentColor}18` : 'transparent',
+                      color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      fontSize: '0.76rem',
+                      fontWeight: isActive ? 750 : 500,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: isActive ? accentColor : 'var(--text-muted)'
+                      }}
+                    />
+                    <span>{sim.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Right: Learn to understand jump button & Close */}
+            <div
+              className="throughline-pill-nav"
+              style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}
+            >
+              <button
+                onClick={() => {
+                  document.getElementById('sim-teaching')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="btn btn-secondary btn-sm"
+                style={{
+                  padding: '4px 10px',
+                  fontSize: '0.76rem',
+                  gap: 4
+                }}
+              >
+                <span>Educational Guide</span>
+                <ArrowDown size={12} />
+              </button>
+
+              {/* Quick Topic Switcher */}
+              <select
+                value={topic.id}
+                onChange={(e) => onSelectTopic(e.target.value)}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: 'var(--radius-pill)',
+                  border: '1px solid var(--border-subtle)',
+                  fontSize: '0.74rem',
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-surface)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                <optgroup label="Mathematics">
+                  <option value="algebra">Algebra</option>
+                  <option value="trigonometry">Trigonometry</option>
+                  <option value="coordinate_geometry">Coordinate Geometry</option>
+                  <option value="functions">Functions</option>
+                  <option value="sequences">Sequences</option>
+                  <option value="basic_calculus">Basic Calculus</option>
+                </optgroup>
+                <optgroup label="Physics">
+                  <option value="units_dimensions">Units &amp; Dimensions</option>
+                  <option value="motion">Motion</option>
+                  <option value="newtons_laws">Newton's Laws</option>
+                  <option value="work_energy_power">Work, Energy &amp; Power</option>
+                  <option value="gravitation">Gravitation</option>
+                  <option value="waves">Waves</option>
+                  <option value="optics">Optics &amp; Light</option>
+                  <option value="thermodynamics">Thermodynamics</option>
+                </optgroup>
+              </select>
+
+              <button
+                onClick={onClose}
+                className="btn btn-secondary btn-sm"
+                style={{
+                  width: 30,
+                  height: 30,
+                  padding: 0,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+                title="Close (Esc)"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </header>
+
+
+          {/* Wall-to-Wall Simulation Stage */}
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              flex: 1,
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <CanvasSimulator
+              simId={currentSim.id}
+              params={params}
+              isPlaying={isPlaying}
+              onTelemetryUpdate={setTelemetry}
+              controls={currentSim.controls}
+              onParamChange={handleControlChange}
+              onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+              onReset={handleReset}
+            />
+          </div>
+
+          {/* Floating Collapsible Left Parameter Drawer */}
+          {leftDrawerOpen ? (
+            <div
+              className="throughline-hud-panel"
+              style={{
+                position: 'absolute',
+                top: 76,
+                left: 20,
+                bottom: 84,
+                width: 320,
+                zIndex: 50,
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              {/* Drawer Header */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  borderBottom: '1px solid rgba(255,255,255,0.08)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Sliders size={14} color={accentColor} />
+                  <span
+                    style={{
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      color: 'var(--text-secondary)'
+                    }}
+                  >
+                    Controls ({currentSim.controls.length})
+                  </span>
+                </div>
+                <button
+                  onClick={() => setLeftDrawerOpen(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    padding: 4
+                  }}
+                  title="Collapse Controls Panel"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+              </div>
+
+              {/* Drawer Sliders List */}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}
+              >
+                {currentSim.controls.map((ctrl) => (
+                  <NumericControlItem
+                    key={ctrl.id}
+                    control={ctrl}
+                    value={params[ctrl.id] ?? ctrl.defaultValue}
+                    onChange={(val) => handleControlChange(ctrl.id, val)}
+                    accentColor={accentColor}
+                  />
+                ))}
+              </div>
+
+              {/* Drawer Footer Actions */}
+              <div
+                style={{
+                  padding: '10px 16px',
+                  borderTop: '1px solid rgba(255,255,255,0.08)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <button
+                  onClick={handleReset}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-sm)',
+                    padding: '5px 10px',
+                    color: 'var(--text-secondary)',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <RotateCcw size={12} />
+                  <span>Reset Controls</span>
+                </button>
+                <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Throughline Engine</span>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setLeftDrawerOpen(true)}
+              className="throughline-pill-nav"
+              style={{
+                position: 'absolute',
+                top: 76,
+                left: 20,
+                zIndex: 50,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 14px',
+                cursor: 'pointer',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)'
+              }}
+              title="Expand Controls Panel"
+            >
+              <Sliders size={14} color={accentColor} />
+              <span>Controls ({currentSim.controls.length})</span>
+              <ChevronRight size={14} />
+            </button>
+          )}
+
+          {/* Floating Collapsible Right Telemetry Drawer */}
+          {rightDrawerOpen ? (
+            <div
+              className="throughline-hud-panel"
+              style={{
+                position: 'absolute',
+                top: 76,
+                right: 20,
+                bottom: 84,
+                width: 290,
+                zIndex: 50,
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              {/* Drawer Header */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  borderBottom: '1px solid rgba(255,255,255,0.08)'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Activity size={14} color="#38BDF8" />
+                  <span
+                    style={{
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      color: 'var(--text-secondary)'
+                    }}
+                  >
+                    Live Telemetry
+                  </span>
+                  <span
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: '#38BDF8',
+                      boxShadow: '0 0 8px #38BDF8'
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={() => setRightDrawerOpen(false)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    padding: 4
+                  }}
+                  title="Collapse Telemetry Panel"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+
+              {/* Drawer Telemetry Metrics */}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  padding: '14px 16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 10
+                }}
+              >
+                {currentSim.telemetryLabels.map((tLabel) => (
+                  <div
+                    key={tLabel.key}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(15, 23, 42, 0.7)',
+                      border: '1px solid rgba(56, 189, 248, 0.15)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.68rem',
+                        color: 'var(--text-muted)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em'
+                      }}
+                    >
+                      {tLabel.label}
+                    </div>
+                    <div
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '1rem',
+                        fontWeight: 700,
+                        color: '#38BDF8'
+                      }}
+                    >
+                      {telemetry[tLabel.key] || '—'}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Governing Formula Micro-Card */}
+                {topic.keyFormulas.length > 0 && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      padding: '10px 12px',
+                      borderRadius: 'var(--radius-sm)',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.06)'
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: '0.68rem',
+                        color: 'var(--text-tertiary)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                        marginBottom: 6
+                      }}
+                    >
+                      Governing Relation
+                    </div>
+                    <MathView math={topic.keyFormulas[0].formula} block={false} />
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                      {topic.keyFormulas[0].explanation}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setRightDrawerOpen(true)}
+              className="throughline-pill-nav"
+              style={{
+                position: 'absolute',
+                top: 76,
+                right: 20,
+                zIndex: 50,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 14px',
+                cursor: 'pointer',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                color: 'var(--text-primary)'
+              }}
+              title="Expand Telemetry Panel"
+            >
+              <ChevronLeft size={14} />
+              <Activity size={14} color="#38BDF8" />
+              <span>Metrics ({currentSim.telemetryLabels.length})</span>
+            </button>
+          )}
+
+          {/* Floating Bottom Timeline / Scrubber Pill */}
+          <div
+            className="throughline-timeline-bar"
+            style={{
+              position: 'absolute',
+              bottom: 20,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 60,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12
+            }}
+          >
+            {isAnimated && (
+              <button
+                onClick={() => setIsPlaying(!isPlaying)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  background: isPlaying ? 'rgba(239, 68, 68, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+                  border: isPlaying ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(56, 189, 248, 0.4)',
+                  color: isPlaying ? '#F87171' : '#38BDF8',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '6px 14px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  fontSize: '0.78rem'
+                }}
+              >
+                {isPlaying ? <Pause size={13} /> : <Play size={13} />}
+                <span>{isPlaying ? 'Pause' : 'Play'}</span>
+              </button>
+            )}
+
+            <button
+              onClick={handleReset}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-pill)',
+                padding: '6px 12px',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                fontSize: '0.78rem'
+              }}
+              title="Reset Simulation"
+            >
+              <RotateCcw size={13} />
+              <span>Reset</span>
+            </button>
+
+            <div style={{ height: 16, width: 1, background: 'rgba(255, 255, 255, 0.15)' }} />
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                fontSize: '0.72rem',
+                color: 'var(--text-tertiary)'
+              }}
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: isPlaying ? '#10B981' : '#F59E0B'
+                }}
+              />
+              <span>{isPlaying ? 'LIVE SIMULATION' : 'PAUSED'}</span>
+            </div>
+
+            <button
+              onClick={() => {
+                document.getElementById('sim-teaching')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                marginLeft: 6
+              }}
+            >
+              <span className="font-editorial" style={{ fontStyle: 'italic' }}>
+                Story &amp; Formulas
+              </span>
+              <ArrowDown size={12} />
+            </button>
+          </div>
+        </div>
+
+        {/* VIEWPORT 2: Editorial Teaching Deconstruction Section */}
+        <section
+          id="sim-teaching"
+          className="blueprint-grid"
+          style={{
+            position: 'relative',
+            minHeight: '100vh',
+            padding: '90px 24px 120px',
+            background: '#070B14',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+          }}
+        >
+          <div
+            style={{
+              maxWidth: 1040,
+              margin: '0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 36
+            }}
+          >
+            {/* Editorial Headline */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span
+                  className="font-mono"
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: accentColor,
+                    background: `${accentColor}18`,
+                    border: `1px solid ${accentColor}35`,
+                    padding: '3px 10px',
+                    borderRadius: 'var(--radius-pill)'
+                  }}
+                >
+                  Throughline Pedagogical Breakdown
+                </span>
+                <span style={{ color: 'var(--text-tertiary)', fontSize: '0.80rem' }}>
+                  • First Principles Deconstruction
+                </span>
+              </div>
+
+              <h1
+                className="font-editorial"
+                style={{
+                  fontSize: 'clamp(2.2rem, 5vw, 3.4rem)',
+                  fontWeight: 600,
+                  fontStyle: 'italic',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.15,
+                  color: '#F8FAFC',
+                  margin: 0
+                }}
+              >
+                {editorial.headline}
+              </h1>
+
+              <p
+                style={{
+                  fontSize: '1.08rem',
+                  lineHeight: 1.7,
+                  color: 'var(--text-secondary)',
+                  margin: 0,
+                  maxWidth: 860
+                }}
+              >
+                {editorial.story}
+              </p>
+            </div>
+
+            {/* 4 Feature Cards Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: 20
+              }}
+            >
+              {/* Card 1: Controls & Exploration */}
+              <div
+                style={{
+                  padding: '24px',
+                  borderRadius: '16px',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: accentColor }}>
+                  <Sliders size={18} />
+                  <h3
+                    style={{
+                      fontSize: '0.96rem',
+                      fontWeight: 700,
+                      margin: 0,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em'
+                    }}
+                  >
+                    Controls &amp; Exploration
+                  </h3>
+                </div>
+                <p style={{ fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
+                  {editorial.controlsGuide}
+                </p>
+              </div>
+
+              {/* Card 2: Variables & Telemetry */}
+              <div
+                style={{
+                  padding: '24px',
+                  borderRadius: '16px',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#38BDF8' }}>
+                  <Activity size={18} />
+                  <h3
+                    style={{
+                      fontSize: '0.96rem',
+                      fontWeight: 700,
+                      margin: 0,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em'
+                    }}
+                  >
+                    Variables &amp; Telemetry
+                  </h3>
+                </div>
+                <p style={{ fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
+                  {editorial.variablesAndOutputs}
+                </p>
+              </div>
+
+              {/* Card 3: Model Assumptions */}
+              <div
+                style={{
+                  padding: '24px',
+                  borderRadius: '16px',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#A855F7' }}>
+                  <Layers size={18} />
+                  <h3
+                    style={{
+                      fontSize: '0.96rem',
+                      fontWeight: 700,
+                      margin: 0,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em'
+                    }}
+                  >
+                    Model Assumptions
+                  </h3>
+                </div>
+                <p style={{ fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
+                  {editorial.modelAssumptions}
+                </p>
+              </div>
+
+              {/* Card 4: Learning Objective */}
+              <div
+                style={{
+                  padding: '24px',
+                  borderRadius: '16px',
+                  background: 'rgba(15, 23, 42, 0.7)',
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 12
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#10B981' }}>
+                  <Award size={18} />
+                  <h3
+                    style={{
+                      fontSize: '0.96rem',
+                      fontWeight: 700,
+                      margin: 0,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em'
+                    }}
+                  >
+                    Learning Objective
+                  </h3>
+                </div>
+                <p style={{ fontSize: '0.88rem', lineHeight: 1.6, color: 'var(--text-secondary)', margin: 0 }}>
+                  {editorial.learningObjective}
+                </p>
+              </div>
+            </div>
+
+            {/* Technical Blueprint Sticky Note */}
+            <div
+              className="blueprint-sticky-note"
+              style={{
+                margin: '12px auto 0',
+                maxWidth: 780,
+                width: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                  borderBottom: '1px solid rgba(245, 158, 11, 0.25)',
+                  paddingBottom: 8
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    color: '#D97706'
+                  }}
+                >
+                  📌 Mathematical First Principles
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    color: '#92400E',
+                    fontFamily: 'var(--font-mono)'
+                  }}
+                >
+                  {topic.id.toUpperCase()} • THEOREM NOTE
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {topic.keyFormulas.map((kf, i) => (
+                  <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div
+                      style={{
+                        background: 'rgba(255,255,255,0.6)',
+                        padding: '6px 12px',
+                        borderRadius: 6,
+                        display: 'inline-block'
+                      }}
+                    >
+                      <MathView math={kf.formula} block={true} />
+                    </div>
+                    <span style={{ fontSize: '0.84rem', color: '#78350F', lineHeight: 1.5 }}>
+                      {kf.explanation}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Return to Stage Action */}
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 20 }}>
+              <button
+                onClick={() => {
+                  document.getElementById('sim-stage')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="throughline-pill-nav"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '10px 22px',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)'
+                }}
+              >
+                <ArrowUp size={15} />
+                <span>Return to Simulation Stage</span>
+              </button>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div
       className="topic-modal-overlay"
-      style={isFullWindow ? {
-        position: 'fixed',
-        inset: 0,
-        zIndex: 200,
-        background: '#070B14',
-        display: 'flex',
-        flexDirection: 'column',
-        padding: 0,
-        overflow: 'hidden'
-      } : {
+      style={{
         position: 'fixed',
         inset: 0,
         zIndex: 200,
@@ -260,24 +1241,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
         animation: 'modalFadeIn 0.25s ease-out'
       }}
       onClick={(e) => {
-        if (!isFullWindow && e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
         className="glass-card topic-modal-window"
-        style={isFullWindow ? {
-          width: '100vw',
-          height: '100vh',
-          maxWidth: 'none',
-          maxHeight: 'none',
-          background: '#070B14',
-          borderRadius: 0,
-          border: 'none',
-          boxShadow: 'none',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden'
-        } : {
+        style={{
           width: '100%',
           maxWidth: 1140,
           maxHeight: '92vh',
@@ -323,67 +1292,10 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0 }}>
               {topic.title}
             </h2>
-            {isFullWindow ? (
-              <span
-                className="font-mono hide-mobile"
-                style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  color: accentColor,
-                  background: `${accentColor}15`,
-                  border: `1px solid ${accentColor}35`,
-                  padding: '2px 8px',
-                  borderRadius: 'var(--radius-pill)',
-                  letterSpacing: '0.04em'
-                }}
-              >
-                FULL GRAPH STUDIO
-              </span>
-            ) : (
-              <span className="hide-mobile" style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
-                &bull; Class 11 &amp; Below
-              </span>
-            )}
+            <span className="hide-mobile" style={{ color: 'var(--text-tertiary)', fontSize: '0.85rem' }}>
+              &bull; Class 11 &amp; Below
+            </span>
           </div>
-
-          {/* In Full Window, show Sim Tabs in the Header */}
-          {isFullWindow && (
-            <div
-              style={{
-                display: 'flex',
-                gap: 6,
-                padding: '3px 6px',
-                background: 'rgba(15, 23, 42, 0.85)',
-                borderRadius: 'var(--radius-pill)',
-                border: '1px solid var(--border-subtle)',
-                overflowX: 'auto'
-              }}
-            >
-              {topic.simulations.map((sim, idx) => {
-                const isActive = idx === activeSimIndex;
-                return (
-                  <button
-                    key={sim.id}
-                    onClick={() => setActiveSimIndex(idx)}
-                    style={{
-                      padding: '5px 14px',
-                      borderRadius: 'var(--radius-pill)',
-                      border: 'none',
-                      background: isActive ? accentColor : 'transparent',
-                      color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
-                      fontSize: '0.74rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    Sim {idx + 1}: {sim.name}
-                  </button>
-                );
-              })}
-            </div>
-          )}
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Quick Topic Switcher Dropdown */}
@@ -422,31 +1334,27 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               </optgroup>
             </select>
 
-            {isFullWindow && (
-              <button
-                onClick={() => setIsFullWindow(false)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '6px 14px',
-                  borderRadius: 'var(--radius-pill)',
-                  background: 'rgba(239, 68, 68, 0.15)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  color: '#F87171',
-                  fontSize: '0.78rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                title="Exit Full View (Esc)"
-                aria-label="Exit Full View"
-              >
-                <Minimize2 size={13} />
-                <span>Exit Full View</span>
-                <span style={{ opacity: 0.6, fontSize: '0.7rem' }}>Esc</span>
-              </button>
-            )}
+            <button
+              onClick={() => setIsFullWindow(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1.5px solid rgba(56, 189, 248, 0.4)',
+                background: 'rgba(56, 189, 248, 0.1)',
+                color: '#38BDF8',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              title="Launch Throughline Stage View & Narrative"
+            >
+              <Maximize2 size={13} />
+              <span>Stage Studio</span>
+            </button>
 
             <button
               onClick={onClose}
@@ -470,200 +1378,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Main Body: Split Full Window Studio vs Vertical Stack */}
-        {isFullWindow ? (
-          /* Full Window Studio Layout (Side-by-side on desktop, stacked on mobile) */
-          <div
-            style={{
-              display: 'flex',
-              flex: 1,
-              minHeight: 0,
-              overflow: 'hidden',
-              flexDirection: window.innerWidth < 900 ? 'column' : 'row'
-            }}
-          >
-            {/* Left / Main: The Full Simulation Graph */}
-            <div
-              style={{
-                flex: 1,
-                minWidth: 0,
-                height: '100%',
-                padding: '16px 20px',
-                display: 'flex',
-                flexDirection: 'column',
-                position: 'relative',
-                boxSizing: 'border-box'
-              }}
-            >
-              <div
-                className="modal-canvas-box full-window-canvas"
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  flex: 1,
-                  minHeight: 0,
-                  aspectRatio: 'auto',
-                  maxHeight: 'none',
-                  position: 'relative',
-                  background: 'var(--bg-tertiary)',
-                  borderRadius: 'var(--radius-lg)',
-                  border: '1px solid var(--border-subtle)',
-                  boxShadow: 'inset 0 0 40px rgba(0, 0, 0, 0.8), 0 4px 20px rgba(0, 0, 0, 0.3)',
-                  overflow: 'hidden',
-                  marginBottom: 0
-                }}
-              >
-                <button
-                  onClick={() => setIsFullWindow(false)}
-                  className="sim-full-view-btn"
-                  title="Exit Full View (Esc)"
-                  aria-label="Exit Full View"
-                >
-                  <Minimize2 size={13} />
-                  <span>Exit Full View</span>
-                </button>
-
-                <CanvasSimulator
-                  simId={currentSim.id}
-                  params={params}
-                  isPlaying={isPlaying}
-                  onTelemetryUpdate={setTelemetry}
-                  controls={currentSim.controls}
-                  onParamChange={handleControlChange}
-                  onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
-                  onReset={handleReset}
-                />
-              </div>
-            </div>
-
-            {/* Right: Real-time Settings & Telemetry Dock */}
-            <div
-              style={{
-                width: window.innerWidth < 900 ? '100%' : '370px',
-                minWidth: window.innerWidth < 900 ? '100%' : '340px',
-                maxWidth: window.innerWidth < 900 ? '100%' : '400px',
-                height: window.innerWidth < 900 ? '45vh' : '100%',
-                borderLeft: window.innerWidth < 900 ? 'none' : '1px solid var(--border-subtle)',
-                borderTop: window.innerWidth < 900 ? '1px solid var(--border-subtle)' : 'none',
-                background: 'var(--bg-secondary)',
-                padding: '20px 22px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 16,
-                overflowY: 'auto',
-                boxSizing: 'border-box'
-              }}
-            >
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                    {currentSim.name}
-                  </h4>
-                  <span style={{ fontSize: '0.70rem', color: accentColor, fontWeight: 700, background: `${accentColor}18`, padding: '2px 8px', borderRadius: 'var(--radius-pill)', border: `1px solid ${accentColor}30` }}>
-                    LIVE CONTROLS
-                  </span>
-                </div>
-                <p style={{ fontSize: '0.80rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
-                  {currentSim.tagline}
-                </p>
-              </div>
-
-              {/* Telemetry Chips */}
-              {currentSim.telemetryLabels.length > 0 && (
-                <div>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-                    Live Telemetry &amp; Metrics
-                  </div>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {currentSim.telemetryLabels.map(tLabel => (
-                      <div
-                        key={tLabel.key}
-                        style={{
-                          padding: '6px 12px',
-                          borderRadius: 'var(--radius-md)',
-                          background: 'rgba(15, 23, 42, 0.85)',
-                          border: '1px solid rgba(255, 255, 255, 0.12)',
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '0.80rem',
-                          flex: 1,
-                          minWidth: '120px'
-                        }}
-                      >
-                        <div style={{ color: 'var(--text-muted)', fontSize: '0.70rem' }}>{tLabel.label}</div>
-                        <strong style={{ color: '#38BDF8', fontWeight: 700, fontSize: '0.86rem' }}>
-                          {telemetry[tLabel.key] || '—'}
-                        </strong>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Sliders & Numeric Inputs */}
-              <div>
-                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-                  Parameters &amp; Variables
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {currentSim.controls.map(ctrl => (
-                    <NumericControlItem
-                      key={ctrl.id}
-                      control={ctrl}
-                      value={params[ctrl.id] ?? ctrl.defaultValue}
-                      onChange={(val) => handleControlChange(ctrl.id, val)}
-                      accentColor={accentColor}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {/* Simulation Actions */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 'auto', paddingTop: 14, borderTop: '1px solid var(--border-subtle)' }}>
-                {isAnimated && (
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      padding: '8px 18px',
-                      borderRadius: 'var(--radius-md)',
-                      border: 'none',
-                      background: accentColor,
-                      color: '#FFFFFF',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {isPlaying ? <Pause size={14} /> : <Play size={14} />}
-                    <span>{isPlaying ? 'Pause' : 'Play'}</span>
-                  </button>
-                )}
-
-                <button
-                  onClick={handleReset}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '8px 14px',
-                    borderRadius: 'var(--radius-md)',
-                    border: '1px solid var(--border-subtle)',
-                    background: 'var(--bg-glass-card)',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.82rem',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <RotateCcw size={14} />
-                  <span>Reset</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div
+        {/* Modal Main Body: Workbench and Theory */}
+        <div
             style={{
               display: 'flex',
               flexDirection: 'column',
@@ -828,16 +1544,57 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   marginBottom: 14
                 }}
               >
-                {currentSim.controls.map(ctrl => (
-                  <NumericControlItem
-                    key={ctrl.id}
-                    control={ctrl}
-                    value={params[ctrl.id] ?? ctrl.defaultValue}
-                    onChange={(val) => handleControlChange(ctrl.id, val)}
-                    accentColor={accentColor}
-                  />
-                ))}
+                {currentSim.controls.map((ctrl, idx) => {
+                  const isHiddenOnMobile = !showAllControls && idx >= 2;
+                  return (
+                    <div key={ctrl.id} className={isHiddenOnMobile ? 'hide-mobile' : ''}>
+                      <NumericControlItem
+                        control={ctrl}
+                        value={params[ctrl.id] ?? ctrl.defaultValue}
+                        onChange={(val) => handleControlChange(ctrl.id, val)}
+                        accentColor={accentColor}
+                      />
+                    </div>
+                  );
+                })}
               </div>
+
+              {/* Mobile Progressive Disclosure Toggle for Secondary Controls */}
+              {currentSim.controls.length > 2 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllControls(!showAllControls)}
+                  className="show-mobile-only mobile-toggle-more-controls-btn"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    padding: '9px 14px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border-subtle)',
+                    color: 'var(--electric-blue)',
+                    fontSize: '0.80rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    marginBottom: 12
+                  }}
+                >
+                  {showAllControls ? (
+                    <>
+                      <Minimize2 size={13} />
+                      <span>▲ Show Fewer Controls</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sliders size={13} />
+                      <span>▼ More Controls &amp; Parameters ({currentSim.controls.length - 2})</span>
+                    </>
+                  )}
+                </button>
+              )}
 
               {/* Simulation Controls Bar */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--border-subtle)' }}>
@@ -1283,7 +2040,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             </div>
           </div>
         </div>
-        )}
       </div>
     </div>
   );

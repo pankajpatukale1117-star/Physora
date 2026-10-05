@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, Atom, CheckCircle2 } from 'lucide-react';
 
 interface LabGatewayCTAProps {
   onEnterLabClick: () => void;
@@ -8,81 +8,68 @@ interface LabGatewayCTAProps {
 export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick }) => {
   return (
     <section
-      className="cta-section"
       style={{
-        position: 'relative',
-        zIndex: 5,
-        padding: '70px 24px 90px',
-        pointerEvents: 'auto'
+        padding: '60px 0 80px',
+        background: 'var(--bg-primary)'
       }}
     >
       <div className="section-container">
-        
         <div
-          className="cta-card"
+          className="scientific-card"
           style={{
-            position: 'relative',
-            background: 'linear-gradient(135deg, #0B1528 0%, #111E38 60%, #1E1B4B 100%)',
-            borderRadius: 'var(--radius-xl)',
-            padding: '70px 32px',
+            padding: '50px 32px',
             textAlign: 'center',
+            background: 'var(--brand-primary)',
             color: '#FFFFFF',
-            overflow: 'hidden',
-            boxShadow: '0 20px 50px -10px rgba(0, 98, 255, 0.25)'
+            border: 'none',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--shadow-lg)',
+            position: 'relative',
+            overflow: 'hidden'
           }}
         >
-          {/* Subtle Ambient Radial Lighting */}
-          <div
-            style={{
-              position: 'absolute',
-              top: -100,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: 480,
-              height: 480,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(0, 229, 255, 0.18) 0%, rgba(124, 58, 237, 0.12) 60%, transparent 80%)',
-              pointerEvents: 'none'
-            }}
-          />
-
           <div style={{ position: 'relative', zIndex: 2, maxWidth: 640, margin: '0 auto' }}>
             <div
-              className="lab-pill-badge"
               style={{
-                background: 'rgba(255, 255, 255, 0.12)',
-                borderColor: 'rgba(255, 255, 255, 0.2)',
-                color: '#E2E8F0',
-                marginBottom: 20
-              }}
-            >
-              <Sparkles size={14} color="#00E5FF" />
-              <span>FREE FOR ALL STUDENTS • INTERACTIVE SIMULATIONS</span>
-            </div>
-
-            <h2
-              className="cta-headline"
-              style={{
-                fontSize: 'clamp(2.2rem, 4vw, 3.2rem)',
-                fontWeight: 800,
-                letterSpacing: '-0.03em',
-                lineHeight: 1.15,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-pill)',
+                background: 'rgba(255, 255, 255, 0.18)',
+                color: '#FFFFFF',
+                fontSize: '0.78rem',
+                fontWeight: 600,
                 marginBottom: 16
               }}
             >
-              Ready to Understand Maths &amp; Physics Clearly?
+              <Atom size={14} />
+              <span>Free, Open &amp; Non-Commercial Educational Platform</span>
+            </div>
+
+            <h2
+              style={{
+                fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)',
+                fontWeight: 800,
+                letterSpacing: '-0.025em',
+                lineHeight: 1.2,
+                marginBottom: 14,
+                color: '#FFFFFF'
+              }}
+            >
+              Start Exploring the Physics &amp; Mathematics Lab
             </h2>
 
             <p
-              className="cta-subtitle"
               style={{
-                fontSize: '1.05rem',
-                color: '#94A3B8',
+                fontSize: '1rem',
+                color: 'rgba(255, 255, 255, 0.9)',
                 lineHeight: 1.6,
-                marginBottom: 32
+                marginBottom: 28
               }}
             >
-              Step into the lab and start exploring basic concepts through friendly, visual experiments.
+              Step into the interactive simulator. Adjust variables, run dynamic experiments, and
+              build genuine intuition across 42 curriculum simulations.
             </p>
 
             <div
@@ -90,30 +77,22 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginBottom: 28
+                marginBottom: 24
               }}
             >
               <button
                 onClick={onEnterLabClick}
-                className="cta-action-btn"
+                className="btn btn-secondary btn-lg"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '16px 38px',
                   background: '#FFFFFF',
-                  color: '#0B1528',
-                  fontSize: '1.05rem',
-                  fontWeight: 800,
-                  borderRadius: 'var(--radius-pill)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 8px 25px rgba(255, 255, 255, 0.35)',
-                  transition: 'all 0.25s ease'
+                  color: 'var(--brand-primary)',
+                  borderColor: '#FFFFFF',
+                  fontWeight: 750,
+                  boxShadow: 'var(--shadow-md)'
                 }}
               >
-                <span>Enter the Lab</span>
-                <ArrowRight size={18} color="#0062FF" />
+                <span>Launch Interactive Laboratory</span>
+                <ArrowRight size={16} />
               </button>
             </div>
 
@@ -122,28 +101,27 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 22,
-                fontSize: '0.82rem',
-                color: '#94A3B8',
+                gap: 20,
+                fontSize: '0.8rem',
+                color: 'rgba(255, 255, 255, 0.85)',
                 flexWrap: 'wrap'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <CheckCircle2 size={15} color="#10B981" />
-                <span>Basic &amp; Clear Lessons</span>
+                <CheckCircle2 size={14} />
+                <span>Zero Account Required</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <CheckCircle2 size={15} color="#10B981" />
-                <span>Runs Smoothly in Any Browser</span>
+                <CheckCircle2 size={14} />
+                <span>Works on All Devices</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <CheckCircle2 size={15} color="#10B981" />
-                <span>Class 11 &amp; Below Friendly</span>
+                <CheckCircle2 size={14} />
+                <span>Class 9–11 Aligned</span>
               </div>
             </div>
           </div>
         </div>
-
       </div>
     </section>
   );

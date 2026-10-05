@@ -102,6 +102,7 @@ export const TransformationShowcase: React.FC<TransformationShowcaseProps> = ({
 
         {/* 5 Stages Grid */}
         <div
+          className="transformation-stages-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
