@@ -44,7 +44,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 letterSpacing: '0.04em'
               }}
             >
-              <Atom size={16} />
+              <img
+                src="/logo-mark.png"
+                alt="Physora Emblem"
+                style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover' }}
+              />
               <span>RESEARCH-BASED STEM EDUCATION • 100% FREE &amp; ACCESSIBLE</span>
             </span>
           </div>

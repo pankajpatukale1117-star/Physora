@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass } from 'lucide-react';
+import { PhysoraLogo } from './PhysoraLogo';
 
 interface NavbarProps {
   onEnterLabClick: () => void;
@@ -75,7 +76,6 @@ export const Navbar: React.FC<NavbarProps> = ({
           height: 64
         }}
       >
-        {/* Brand */}
         <a
           href="#"
           onClick={(e) => {
@@ -86,49 +86,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
             textDecoration: 'none'
           }}
+          aria-label="Physora Home"
         >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 'var(--radius-sm)',
-              background: '#FFC72C',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#00274C',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-            }}
-          >
-            <Atom size={22} strokeWidth={2.4} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span
-              style={{
-                fontSize: '1.25rem',
-                fontWeight: 900,
-                letterSpacing: '-0.02em',
-                lineHeight: 1.1,
-                color: '#FFFFFF'
-              }}
-            >
-              Phys<span style={{ color: '#FFC72C' }}>ora</span>
-            </span>
-            <span
-              className="font-mono hide-mobile"
-              style={{
-                fontSize: '0.62rem',
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                color: 'rgba(255, 255, 255, 0.75)'
-              }}
-            >
-              INTERACTIVE SIMULATIONS
-            </span>
-          </div>
+          <PhysoraLogo variant="horizontal" size={38} />
         </a>
 
         {/* Desktop Primary Nav Links */}

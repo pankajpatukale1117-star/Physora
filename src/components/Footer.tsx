@@ -1,5 +1,5 @@
 import React from 'react';
-import { Atom } from 'lucide-react';
+import { PhysoraLogo } from './PhysoraLogo';
 
 export const Footer: React.FC = () => {
   return (
@@ -23,30 +23,28 @@ export const Footer: React.FC = () => {
           }}
         >
           {/* Brand Col */}
-          <div style={{ maxWidth: 300 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 'var(--radius-sm)',
-                  background: 'var(--brand-primary)',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: 'var(--shadow-xs)'
-                }}
-              >
-                <Atom size={18} />
-              </div>
-              <span style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Phys<span style={{ color: 'var(--brand-primary)' }}>ora</span>
-              </span>
+          <div style={{ maxWidth: 320 }}>
+            <div style={{ marginBottom: 14 }}>
+              <PhysoraLogo variant="horizontal" size={36} />
             </div>
-            <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+            <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 14 }}>
               A distraction-free, light-first interactive laboratory designed for Class 9–11 students to explore fundamental mathematics and physics concepts through inquiry.
             </p>
+            {/* 4 Official Disciplines from Logo */}
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', fontWeight: 700, color: '#0077C8', background: 'var(--phet-blue-soft)', padding: '3px 8px', borderRadius: 4 }}>
+                ⚛ Physics
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', fontWeight: 700, color: '#0284C7', background: 'rgba(2, 132, 199, 0.1)', padding: '3px 8px', borderRadius: 4 }}>
+                🧪 Chemistry
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', fontWeight: 700, color: '#7C3AED', background: 'rgba(124, 58, 237, 0.1)', padding: '3px 8px', borderRadius: 4 }}>
+                π Mathematics
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.72rem', fontWeight: 700, color: '#059669', background: 'rgba(5, 150, 105, 0.1)', padding: '3px 8px', borderRadius: 4 }}>
+                🌿 Biology
+              </span>
+            </div>
           </div>
 
           {/* Mathematics Links */}

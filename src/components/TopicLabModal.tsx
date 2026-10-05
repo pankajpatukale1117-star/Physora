@@ -420,8 +420,13 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
               <span style={{ opacity: 0.25 }}>|</span>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.80rem' }}>
-                <span style={{ opacity: 0.6 }}>Physora</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.80rem' }}>
+                <img
+                  src="/logo-mark.png"
+                  alt="Physora"
+                  style={{ width: 18, height: 18, borderRadius: 4, objectFit: 'cover' }}
+                />
+                <span style={{ opacity: 0.8, fontWeight: 700 }}>Physora</span>
                 <span style={{ opacity: 0.3 }}>/</span>
                 <span style={{ color: accentColor, fontWeight: 700 }}>{topic.title}</span>
               </div>
