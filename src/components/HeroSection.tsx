@@ -21,7 +21,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         position: 'relative',
         padding: '110px 0 50px',
         borderBottom: '1px solid var(--border-subtle)',
-        background: 'var(--bg-primary)'
+        background: 'transparent'
       }}
     >
       <div className="section-container" style={{ position: 'relative' }}>

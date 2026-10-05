@@ -34,7 +34,7 @@ export const WhyPhysora: React.FC = () => {
       id="why-physora"
       style={{
         padding: '70px 0',
-        background: 'var(--bg-subtle)',
+        background: 'transparent',
         borderBottom: '1px solid var(--border-subtle)'
       }}
     >

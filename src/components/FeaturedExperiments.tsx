@@ -14,7 +14,7 @@ export const FeaturedExperiments: React.FC<FeaturedExperimentsProps> = ({
       id="experiments-lab"
       style={{
         padding: '70px 0',
-        background: 'var(--bg-primary)',
+        background: 'transparent',
         borderBottom: '1px solid var(--border-subtle)'
       }}
     >

@@ -58,7 +58,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
       id="simulations-library"
       style={{
         padding: '70px 0',
-        background: 'var(--bg-primary)',
+        background: 'transparent',
         borderBottom: '1px solid var(--border-subtle)'
       }}
     >

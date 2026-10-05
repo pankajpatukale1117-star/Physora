@@ -42,7 +42,7 @@ export const HowVisualLearningWorks: React.FC = () => {
       id="how-it-works"
       style={{
         padding: '70px 0',
-        background: 'var(--bg-subtle)',
+        background: 'transparent',
         borderBottom: '1px solid var(--border-subtle)'
       }}
     >

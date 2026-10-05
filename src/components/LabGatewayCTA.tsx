@@ -10,7 +10,7 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
     <section
       style={{
         padding: '60px 0 80px',
-        background: 'var(--bg-primary)'
+        background: 'transparent'
       }}
     >
       <div className="section-container">
