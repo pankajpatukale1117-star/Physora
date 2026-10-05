@@ -822,7 +822,17 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
 
             <button
               onClick={onOpenFullLab}
-              className="btn btn-primary btn-sm"
+              className="btn btn-sm"
+              style={{
+                background: '#FF6600',
+                color: '#FFFFFF',
+                border: 'none',
+                fontWeight: 750,
+                padding: '8px 16px',
+                borderRadius: 'var(--radius-pill)',
+                boxShadow: '0 3px 10px rgba(255, 102, 0, 0.35)',
+                cursor: 'pointer'
+              }}
             >
               <Zap size={14} />
               <span>Open 42-Sim Laboratory</span>

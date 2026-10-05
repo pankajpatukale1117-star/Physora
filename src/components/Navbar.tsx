@@ -87,47 +87,46 @@ export const Navbar: React.FC<NavbarProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: 10,
-            textDecoration: 'none',
-            color: 'var(--text-primary)'
+            textDecoration: 'none'
           }}
         >
           <div
             style={{
-              width: 34,
-              height: 34,
+              width: 36,
+              height: 36,
               borderRadius: 'var(--radius-sm)',
-              background: 'var(--brand-primary)',
+              background: '#FFC72C',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#FFFFFF',
-              boxShadow: 'var(--shadow-sm)'
+              color: '#00274C',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
             }}
           >
-            <Atom size={20} strokeWidth={2.2} />
+            <Atom size={22} strokeWidth={2.4} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span
               style={{
-                fontSize: '1.2rem',
-                fontWeight: 800,
-                letterSpacing: '-0.025em',
+                fontSize: '1.25rem',
+                fontWeight: 900,
+                letterSpacing: '-0.02em',
                 lineHeight: 1.1,
-                color: 'var(--text-primary)'
+                color: '#FFFFFF'
               }}
             >
-              Phys<span style={{ color: 'var(--brand-primary)' }}>ora</span>
+              Phys<span style={{ color: '#FFC72C' }}>ora</span>
             </span>
             <span
               className="font-mono hide-mobile"
               style={{
                 fontSize: '0.62rem',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
-                color: 'var(--text-tertiary)'
+                fontWeight: 800,
+                letterSpacing: '0.06em',
+                color: 'rgba(255, 255, 255, 0.75)'
               }}
             >
-              INTERACTIVE MATHS &amp; PHYSICS
+              INTERACTIVE SIMULATIONS
             </span>
           </div>
         </a>
@@ -175,17 +174,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Quick Search Button */}
           <button
             onClick={onOpenSearch}
-            className="btn btn-secondary btn-sm"
+            className="btn btn-sm"
             style={{
               padding: '6px 12px',
               gap: 8,
               fontSize: '0.82rem',
-              color: 'var(--text-secondary)'
+              color: '#FFFFFF',
+              background: 'rgba(255, 255, 255, 0.12)',
+              border: '1px solid rgba(255, 255, 255, 0.25)',
+              borderRadius: 'var(--radius-sm)'
             }}
             title="Search simulations (Ctrl+K or /)"
             aria-label="Search simulations"
           >
-            <Search size={15} color="var(--text-tertiary)" />
+            <Search size={15} color="#FFC72C" />
             <span className="hide-mobile">Search</span>
             <kbd
               className="hide-mobile"
@@ -193,9 +195,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                 fontSize: '0.68rem',
                 padding: '1px 5px',
                 borderRadius: 'var(--radius-xs)',
-                background: 'var(--bg-subtle)',
-                border: '1px solid var(--border-medium)',
-                color: 'var(--text-tertiary)',
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#E2E8F0',
                 fontFamily: 'var(--font-mono)'
               }}
             >
@@ -211,16 +213,26 @@ export const Navbar: React.FC<NavbarProps> = ({
             aria-label="Toggle color theme"
           >
             {theme === 'dark' ? (
-              <Sun size={17} color="#FBBF24" />
+              <Sun size={17} color="#FFC72C" />
             ) : (
-              <Moon size={17} color="var(--text-secondary)" />
+              <Moon size={17} color="#FFFFFF" />
             )}
           </button>
 
-          {/* Primary Enter Lab CTA */}
+          {/* Primary Enter Lab CTA — PhET Play Orange */}
           <button
             onClick={onEnterLabClick}
-            className="btn btn-primary btn-sm hide-mobile"
+            className="btn btn-sm hide-mobile"
+            style={{
+              background: '#FF6600',
+              color: '#FFFFFF',
+              border: 'none',
+              fontWeight: 750,
+              padding: '8px 18px',
+              borderRadius: 'var(--radius-pill)',
+              boxShadow: '0 3px 10px rgba(255, 102, 0, 0.4)',
+              cursor: 'pointer'
+            }}
           >
             <span>Enter the Lab</span>
             <ArrowRight size={14} />
@@ -230,10 +242,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="show-mobile-only nav-hamburger-btn"
+            style={{ color: '#FFFFFF', background: 'transparent', border: 'none', cursor: 'pointer' }}
             aria-label={isMobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
             aria-expanded={isMobileMenuOpen}
           >
-            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            {isMobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
         </div>
       </div>

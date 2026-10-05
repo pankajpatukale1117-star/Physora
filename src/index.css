@@ -6,27 +6,39 @@
    ========================================================================== */
 
 :root {
-  /* Warm Laboratory Clean Base — Crisp, Modern, High-Legibility */
-  --bg-primary: #FAFBFD;
+  /* Pristine Light Educational Laboratory Canvas (No Grain, No Noise) */
+  --bg-primary: #FFFFFF;
   --bg-surface: #FFFFFF;
   --bg-surface-elevated: #FFFFFF;
-  --bg-subtle: #F1F5F9;
-  --bg-muted: #E2E8F0;
-  --bg-glass: rgba(255, 255, 255, 0.95);
+  --bg-subtle: #F8FAFC;
+  --bg-muted: #F1F5F9;
+  --bg-glass: rgba(255, 255, 255, 0.98);
   --bg-glass-card: #FFFFFF;
-  --bg-glass-heavy: rgba(255, 255, 255, 0.98);
-  --bg-glass-glow: rgba(29, 78, 216, 0.05);
+  --bg-glass-heavy: rgba(255, 255, 255, 0.99);
+  --bg-glass-glow: rgba(0, 119, 200, 0.04);
 
-  /* Primary Brand & Educational Accents (Vibrant Royal Sapphire & Warm Energetic Amber/Orange) */
-  --brand-primary: #1D4ED8;
-  --brand-primary-hover: #1E40AF;
-  --brand-primary-soft: #EFF6FF;
-  --brand-primary-border: #BFDBFE;
+  /* PhET Colorado Benchmark System */
+  --phet-navy: #00274C;
+  --phet-navy-dark: #001A33;
+  --phet-navy-light: #0B3056;
+  --phet-gold: #FFC72C;
+  --phet-gold-hover: #F59E0B;
+  --phet-orange: #FF6600;
+  --phet-orange-hover: #E65C00;
+  --phet-blue: #0077C8;
+  --phet-blue-hover: #005A9C;
+  --phet-blue-soft: #E0F2FE;
+
+  /* Primary Brand & Educational Accents */
+  --brand-primary: #0077C8;
+  --brand-primary-hover: #005A9C;
+  --brand-primary-soft: #E0F2FE;
+  --brand-primary-border: #BAE6FD;
 
   /* Scientific Accents */
-  --electric-blue: #1D4ED8;
-  --electric-blue-hover: #1E40AF;
-  --electric-blue-soft: #EFF6FF;
+  --electric-blue: #0077C8;
+  --electric-blue-hover: #005A9C;
+  --electric-blue-soft: #E0F2FE;
   --electric-cyan: #0284C7;
   --electric-cyan-dark: #0369A1;
   --electric-violet: #7C3AED;
@@ -36,14 +48,14 @@
   --accent-teal-soft: #F0FDFA;
   --accent-amber: #F59E0B;
   --accent-amber-soft: #FFFBEB;
-  --accent-success: #10B981;
+  --accent-success: #059669;
   --accent-success-soft: #ECFDF5;
-  --accent-error: #EF4444;
+  --accent-error: #DC2626;
   --accent-error-soft: #FEF2F2;
-  --accent-orange: #FF6A00;
+  --accent-orange: #FF6600;
   --accent-orange-soft: #FFF7ED;
 
-  /* Typography Colors (Dark Charcoal for High Legibility) */
+  /* Typography Colors (Ultra-Crisp Slate & Charcoal) */
   --text-primary: #0F172A;
   --text-secondary: #334155;
   --text-tertiary: #64748B;
@@ -55,18 +67,18 @@
   --border-medium: #CBD5E1;
   --border-strong: #94A3B8;
   --border-glass: #E2E8F0;
-  --border-electric: #BFDBFE;
+  --border-electric: #BAE6FD;
   --border-violet: #DDD6FE;
-  --border-focus: #0A66C2;
+  --border-focus: #0077C8;
 
-  /* Professional Soft Shadows (No neon glows) */
+  /* Clean Crisp Shadows */
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.06), 0 4px 6px -4px rgba(15, 23, 42, 0.03);
-  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
-  --shadow-glow: 0 0 0 3px rgba(10, 102, 194, 0.2);
-  --shadow-glow-violet: 0 0 0 3px rgba(79, 70, 229, 0.2);
+  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 12px -2px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 12px 24px -4px rgba(15, 23, 42, 0.1), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.12);
+  --shadow-glow: 0 0 0 3px rgba(0, 119, 200, 0.2);
+  --shadow-glow-violet: 0 0 0 3px rgba(124, 58, 237, 0.2);
 
   /* Fonts */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -165,18 +177,12 @@ html {
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
-  background-image: radial-gradient(circle, rgba(148, 163, 184, 0.22) 1.2px, transparent 1.2px);
-  background-size: 24px 24px;
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
   transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-[data-theme="dark"] body {
-  background-image: radial-gradient(circle, rgba(148, 163, 184, 0.12) 1.2px, transparent 1.2px);
 }
 
 /* Clean Technical Background Grid Texture (Subtle & Scientific) */
@@ -577,44 +583,47 @@ input[type="range"]::-moz-range-thumb {
    Header & Navigation
    ========================================================================== */
 
+/* ==========================================================================
+   Header & Navigation (PhET Deep Navy & Sunflower Gold)
+   ========================================================================== */
+
 .physora-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  background: var(--bg-glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-subtle);
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  background: var(--phet-navy);
+  border-bottom: 2px solid var(--phet-gold);
+  box-shadow: 0 4px 14px rgba(0, 39, 76, 0.2);
+  transition: all 0.2s ease;
 }
 
 .physora-header-scrolled {
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 6px 20px rgba(0, 39, 76, 0.35);
 }
 
 .nav-link {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: #F1F5F9;
   text-decoration: none;
-  padding: 8px 12px;
-  border-radius: var(--radius-md);
-  transition: color 0.15s ease, background-color 0.15s ease;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s ease;
   background: transparent;
   border: none;
   cursor: pointer;
 }
 
 .nav-link:hover {
-  color: var(--brand-primary);
-  background: var(--bg-subtle);
+  color: var(--phet-gold);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-link-active {
-  color: var(--brand-primary);
-  background: var(--brand-primary-soft);
+  color: var(--phet-gold);
+  background: rgba(255, 199, 44, 0.15);
 }
 
 /* Theme Toggle Button */
@@ -624,18 +633,18 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
-  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
   cursor: pointer;
   transition: all 0.18s ease;
 }
 
 .theme-toggle-btn:hover {
-  border-color: var(--border-medium);
-  background: var(--bg-subtle);
-  color: var(--text-primary);
+  border-color: var(--phet-gold);
+  background: rgba(255, 255, 255, 0.18);
+  color: var(--phet-gold);
 }
 
 /* Hamburger button */
@@ -1009,70 +1018,6 @@ input[type="range"]::-moz-range-thumb {
   transform: scale(0.95);
 }
 
-/* Floating Scientific Illustration Badges / Stickers for Hero */
-.science-floating-sticker {
-  position: absolute;
-  z-index: 4;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-pill);
-  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.1), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-  font-size: 0.82rem;
-  font-weight: 750;
-  color: var(--text-primary);
-  user-select: none;
-  pointer-events: auto;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.science-floating-sticker:hover {
-  transform: translateY(-4px) scale(1.04);
-  box-shadow: 0 14px 28px -4px rgba(29, 78, 216, 0.2);
-}
-
-@keyframes floatGentle {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-8px) rotate(1.2deg);
-  }
-}
-
-@keyframes floatGentleReverse {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(8px) rotate(-1.5deg);
-  }
-}
-
-.animate-float-1 {
-  animation: floatGentle 5s ease-in-out infinite;
-}
-
-.animate-float-2 {
-  animation: floatGentleReverse 6s ease-in-out infinite 0.5s;
-}
-
-.animate-float-3 {
-  animation: floatGentle 5.5s ease-in-out infinite 1s;
-}
-
-.animate-float-4 {
-  animation: floatGentleReverse 6.5s ease-in-out infinite 1.5s;
-}
-
-@media (max-width: 1024px) {
-  .science-floating-sticker {
-    display: none !important;
-  }
-}
 
 /* PhET Subject Category Tiles */
 .phet-category-card {

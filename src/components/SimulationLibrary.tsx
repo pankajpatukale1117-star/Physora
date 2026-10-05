@@ -9,7 +9,6 @@ import {
   Target
 } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
-import { MathView } from './MathView';
 import { SimulationPoster } from './SimulationPoster';
 
 interface SimulationLibraryProps {
@@ -467,7 +466,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                 {/* Card Content Body */}
                 <div
                   style={{
-                    padding: '18px 20px',
+                    padding: '16px 18px 18px',
                     display: 'flex',
                     flexDirection: 'column',
                     flex: 1,
@@ -494,100 +493,38 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                         fontSize: '0.85rem',
                         color: 'var(--text-secondary)',
                         lineHeight: 1.5,
-                        marginBottom: 14
+                        marginBottom: 14,
+                        minHeight: 38
                       }}
                     >
                       {topic.shortDesc}
                     </p>
 
-                    {/* Representative KaTeX Equation Box */}
-                    {topic.keyFormulas.length > 0 && (
-                      <div
-                        style={{
-                          background: 'var(--bg-subtle)',
-                          padding: '8px 12px',
-                          borderRadius: 'var(--radius-sm)',
-                          border: '1px solid var(--border-subtle)',
-                          marginBottom: 14,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}
-                      >
-                        <MathView math={topic.keyFormulas[0].formula} />
+                    {/* Sub-models Tags */}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+                      {topic.simulations.map((sim) => (
                         <span
+                          key={sim.id}
                           style={{
-                            fontSize: '0.68rem',
-                            color: 'var(--text-tertiary)',
-                            fontFamily: 'var(--font-mono)'
+                            fontSize: '0.72rem',
+                            fontWeight: 600,
+                            padding: '3px 8px',
+                            borderRadius: 'var(--radius-sm)',
+                            background: 'var(--bg-subtle)',
+                            color: 'var(--text-secondary)',
+                            border: '1px solid var(--border-subtle)'
                           }}
                         >
-                          Model Formula
+                          {sim.name}
                         </span>
-                      </div>
-                    )}
-
-                    {/* Sub-simulations Preview List */}
-                    <div style={{ marginBottom: 18 }}>
-                      <div
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.04em',
-                          color: 'var(--text-tertiary)',
-                          marginBottom: 6
-                        }}
-                      >
-                        Included Models:
-                      </div>
-                      <ul
-                        style={{
-                          listStyle: 'none',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 4
-                        }}
-                      >
-                        {topic.simulations.map((sim, i) => (
-                          <li
-                            key={sim.id}
-                            style={{
-                              fontSize: '0.78rem',
-                              color: 'var(--text-secondary)',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6
-                            }}
-                          >
-                            <span
-                              style={{
-                                width: 14,
-                                height: 14,
-                                borderRadius: '50%',
-                                background: 'var(--bg-subtle)',
-                                border: '1px solid var(--border-subtle)',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '0.65rem',
-                                fontFamily: 'var(--font-mono)',
-                                color: 'var(--text-tertiary)'
-                              }}
-                            >
-                              {i + 1}
-                            </span>
-                            <span>{sim.name}</span>
-                          </li>
-                        ))}
-                      </ul>
+                      ))}
                     </div>
                   </div>
 
                   {/* Bottom PhET Play Simulation Action */}
                   <div
                     style={{
-                      paddingTop: 14,
+                      paddingTop: 12,
                       borderTop: '1px solid var(--border-subtle)'
                     }}
                   >
@@ -597,18 +534,23 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                         e.stopPropagation();
                         onSelectTopic(topic.id);
                       }}
-                      className="btn btn-primary"
+                      className="btn"
                       style={{
                         width: '100%',
                         padding: '10px 16px',
                         borderRadius: 'var(--radius-pill)',
+                        background: '#FF6600',
+                        color: '#FFFFFF',
+                        border: 'none',
                         justifyContent: 'center',
                         gap: 8,
-                        fontWeight: 700,
-                        fontSize: '0.86rem'
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        boxShadow: '0 3px 10px rgba(255, 102, 0, 0.35)',
+                        cursor: 'pointer'
                       }}
                     >
-                      <Play size={15} fill="#FFFFFF" />
+                      <Play size={16} fill="#FFFFFF" />
                       <span>Play Simulation</span>
                     </button>
                   </div>

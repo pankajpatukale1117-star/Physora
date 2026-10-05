@@ -6,18 +6,5 @@ import React from 'react';
  * Zero CPU overhead, preserving 100% of performance for physics and math simulations.
  */
 export const InteractiveBackground: React.FC = () => {
-  return (
-    <div
-      className="scientific-bg-grid"
-      aria-hidden="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        pointerEvents: 'none',
-        zIndex: 0,
-        opacity: 0.5,
-        backgroundColor: 'var(--bg-primary)'
-      }}
-    />
-  );
+  return null;
 };
