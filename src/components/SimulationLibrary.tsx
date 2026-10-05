@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { MathView } from './MathView';
+import { SimulationPoster } from './SimulationPoster';
 
 interface SimulationLibraryProps {
   onSelectTopic: (topicId: string) => void;
@@ -388,186 +389,229 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                 className="scientific-card scientific-card-interactive"
                 onClick={() => onSelectTopic(topic.id)}
                 style={{
-                  padding: '22px 20px',
+                  padding: 0,
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
-                  background: 'var(--bg-surface)'
+                  background: 'var(--bg-surface)',
+                  borderRadius: 'var(--radius-lg)',
+                  overflow: 'hidden',
+                  border: '1px solid var(--border-subtle)',
+                  boxShadow: 'var(--shadow-sm)'
                 }}
               >
-                <div>
-                  {/* Top Meta row with PhET Play Badge */}
+                {/* Visual Simulation Poster at Top (PhET Vector Graphic) */}
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: 155,
+                    overflow: 'hidden',
+                    background: 'var(--bg-subtle)',
+                    borderBottom: '1px solid var(--border-subtle)'
+                  }}
+                >
+                  <SimulationPoster topicId={topic.id} subject={topic.subject} title={topic.title} />
+
+                  {/* Overlaid Subject Badge at top-left */}
                   <div
                     style={{
+                      position: 'absolute',
+                      top: 10,
+                      left: 12,
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      marginBottom: 12
+                      gap: 6
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span
-                        className={`badge ${
-                          topic.subject === 'physics' ? 'badge-physics' : 'badge-math'
-                        }`}
-                        style={{ fontSize: '0.72rem' }}
-                      >
-                        {topic.subject === 'physics' ? 'Physics' : 'Mathematics'}
-                      </span>
-                      <span
-                        className="badge font-mono"
-                        style={{
-                          fontSize: '0.68rem',
-                          background: 'var(--bg-subtle)',
-                          color: 'var(--text-secondary)',
-                          border: '1px solid var(--border-subtle)'
-                        }}
-                      >
-                        3 Models
-                      </span>
-                    </div>
-
-                    <div className="phet-play-badge" title={`Play ${topic.title}`}>
-                      <Play size={18} fill="#FFFFFF" style={{ marginLeft: 2 }} />
-                    </div>
-                  </div>
-
-                  {/* Title */}
-                  <h3
-                    style={{
-                      fontSize: '1.15rem',
-                      fontWeight: 750,
-                      color: 'var(--text-primary)',
-                      marginBottom: 6,
-                      lineHeight: 1.3
-                    }}
-                  >
-                    {topic.title}
-                  </h3>
-
-                  {/* One-line explanation */}
-                  <p
-                    style={{
-                      fontSize: '0.85rem',
-                      color: 'var(--text-secondary)',
-                      lineHeight: 1.5,
-                      marginBottom: 14
-                    }}
-                  >
-                    {topic.shortDesc}
-                  </p>
-
-                  {/* Representative KaTeX Equation Box */}
-                  {topic.keyFormulas.length > 0 && (
-                    <div
-                      style={{
-                        background: 'var(--bg-subtle)',
-                        padding: '8px 12px',
-                        borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--border-subtle)',
-                        marginBottom: 14,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between'
-                      }}
-                    >
-                      <MathView math={topic.keyFormulas[0].formula} />
-                      <span
-                        style={{
-                          fontSize: '0.68rem',
-                          color: 'var(--text-tertiary)',
-                          fontFamily: 'var(--font-mono)'
-                        }}
-                      >
-                        Model Formula
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Sub-simulations Preview List */}
-                  <div style={{ marginBottom: 18 }}>
-                    <div
+                    <span
+                      className={`badge ${
+                        topic.subject === 'physics' ? 'badge-physics' : 'badge-math'
+                      }`}
                       style={{
                         fontSize: '0.72rem',
                         fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                        color: 'var(--text-tertiary)',
-                        marginBottom: 6
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                       }}
                     >
-                      Included Models:
-                    </div>
-                    <ul
+                      {topic.subject === 'physics' ? 'Physics' : 'Mathematics'}
+                    </span>
+                    <span
+                      className="badge font-mono"
                       style={{
-                        listStyle: 'none',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 4
+                        fontSize: '0.68rem',
+                        background: 'rgba(255, 255, 255, 0.94)',
+                        color: 'var(--text-secondary)',
+                        border: '1px solid var(--border-subtle)',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
                       }}
                     >
-                      {topic.simulations.map((sim, i) => (
-                        <li
-                          key={sim.id}
-                          style={{
-                            fontSize: '0.78rem',
-                            color: 'var(--text-secondary)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 6
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 14,
-                              height: 14,
-                              borderRadius: '50%',
-                              background: 'var(--bg-subtle)',
-                              border: '1px solid var(--border-subtle)',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '0.65rem',
-                              fontFamily: 'var(--font-mono)',
-                              color: 'var(--text-tertiary)'
-                            }}
-                          >
-                            {i + 1}
-                          </span>
-                          <span>{sim.name}</span>
-                        </li>
-                      ))}
-                    </ul>
+                      3 Models
+                    </span>
+                  </div>
+
+                  {/* Iconic PhET Circular Orange Play Button at bottom-right */}
+                  <div
+                    className="phet-play-badge"
+                    title={`Launch ${topic.title}`}
+                    style={{
+                      position: 'absolute',
+                      bottom: 10,
+                      right: 12
+                    }}
+                  >
+                    <Play size={20} fill="#FFFFFF" style={{ marginLeft: 2 }} />
                   </div>
                 </div>
 
-                {/* Bottom PhET Play Simulation Action */}
+                {/* Card Content Body */}
                 <div
                   style={{
-                    paddingTop: 14,
-                    borderTop: '1px solid var(--border-subtle)'
+                    padding: '18px 20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    flex: 1,
+                    justifyContent: 'space-between'
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectTopic(topic.id);
-                    }}
-                    className="btn btn-primary"
+                  <div>
+                    {/* Title */}
+                    <h3
+                      style={{
+                        fontSize: '1.15rem',
+                        fontWeight: 800,
+                        color: 'var(--text-primary)',
+                        marginBottom: 6,
+                        lineHeight: 1.3
+                      }}
+                    >
+                      {topic.title}
+                    </h3>
+
+                    {/* One-line explanation */}
+                    <p
+                      style={{
+                        fontSize: '0.85rem',
+                        color: 'var(--text-secondary)',
+                        lineHeight: 1.5,
+                        marginBottom: 14
+                      }}
+                    >
+                      {topic.shortDesc}
+                    </p>
+
+                    {/* Representative KaTeX Equation Box */}
+                    {topic.keyFormulas.length > 0 && (
+                      <div
+                        style={{
+                          background: 'var(--bg-subtle)',
+                          padding: '8px 12px',
+                          borderRadius: 'var(--radius-sm)',
+                          border: '1px solid var(--border-subtle)',
+                          marginBottom: 14,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <MathView math={topic.keyFormulas[0].formula} />
+                        <span
+                          style={{
+                            fontSize: '0.68rem',
+                            color: 'var(--text-tertiary)',
+                            fontFamily: 'var(--font-mono)'
+                          }}
+                        >
+                          Model Formula
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Sub-simulations Preview List */}
+                    <div style={{ marginBottom: 18 }}>
+                      <div
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.04em',
+                          color: 'var(--text-tertiary)',
+                          marginBottom: 6
+                        }}
+                      >
+                        Included Models:
+                      </div>
+                      <ul
+                        style={{
+                          listStyle: 'none',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 4
+                        }}
+                      >
+                        {topic.simulations.map((sim, i) => (
+                          <li
+                            key={sim.id}
+                            style={{
+                              fontSize: '0.78rem',
+                              color: 'var(--text-secondary)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 14,
+                                height: 14,
+                                borderRadius: '50%',
+                                background: 'var(--bg-subtle)',
+                                border: '1px solid var(--border-subtle)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '0.65rem',
+                                fontFamily: 'var(--font-mono)',
+                                color: 'var(--text-tertiary)'
+                              }}
+                            >
+                              {i + 1}
+                            </span>
+                            <span>{sim.name}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Bottom PhET Play Simulation Action */}
+                  <div
                     style={{
-                      width: '100%',
-                      padding: '9px 16px',
-                      borderRadius: 'var(--radius-pill)',
-                      justifyContent: 'center',
-                      gap: 8,
-                      fontWeight: 700,
-                      fontSize: '0.84rem'
+                      paddingTop: 14,
+                      borderTop: '1px solid var(--border-subtle)'
                     }}
                   >
-                    <Play size={14} fill="#FFFFFF" />
-                    <span>Play Simulation</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectTopic(topic.id);
+                      }}
+                      className="btn btn-primary"
+                      style={{
+                        width: '100%',
+                        padding: '10px 16px',
+                        borderRadius: 'var(--radius-pill)',
+                        justifyContent: 'center',
+                        gap: 8,
+                        fontWeight: 700,
+                        fontSize: '0.86rem'
+                      }}
+                    >
+                      <Play size={15} fill="#FFFFFF" />
+                      <span>Play Simulation</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

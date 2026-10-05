@@ -24,21 +24,56 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         background: 'var(--bg-primary)'
       }}
     >
-      <div className="section-container">
+      <div className="section-container" style={{ position: 'relative' }}>
+        {/* Floating Science Illustration Stickers (Desktop Decorative Badges) */}
+        <div className="science-floating-sticker animate-float-1" style={{ top: 10, left: '1%' }}>
+          <span style={{ fontSize: '1.2rem' }}>⚛️</span>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--brand-primary)' }}>Atomic Theory</div>
+            <div className="font-mono" style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>E = mc²</div>
+          </div>
+        </div>
+
+        <div className="science-floating-sticker animate-float-2" style={{ top: 15, right: '1%' }}>
+          <span style={{ fontSize: '1.2rem' }}>📐</span>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--accent-teal)' }}>Refraction</div>
+            <div className="font-mono" style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>n₁sinθ₁ = n₂sinθ₂</div>
+          </div>
+        </div>
+
+        <div className="science-floating-sticker animate-float-3" style={{ top: 320, left: '-20px' }}>
+          <span style={{ fontSize: '1.2rem' }}>⚡</span>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#D97706' }}>Dynamics</div>
+            <div className="font-mono" style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>F = m · a</div>
+          </div>
+        </div>
+
+        <div className="science-floating-sticker animate-float-4" style={{ top: 320, right: '-20px' }}>
+          <span style={{ fontSize: '1.2rem' }}>∫</span>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--electric-violet)' }}>Calculus Rate</div>
+            <div className="font-mono" style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)' }}>dy/dx = f'(x)</div>
+          </div>
+        </div>
+
         {/* Top Educational Positioning Header */}
         <div style={{ maxWidth: 840, margin: '0 auto 36px', textAlign: 'center' }}>
           {/* Badge */}
-          <div style={{ display: 'inline-flex', marginBottom: 16 }}>
+          <div style={{ display: 'inline-flex', marginBottom: 18 }}>
             <span
               className="badge badge-primary"
               style={{
-                padding: '6px 14px',
-                fontSize: '0.8rem',
-                gap: 6
+                padding: '7px 16px',
+                fontSize: '0.82rem',
+                gap: 8,
+                borderRadius: 'var(--radius-pill)',
+                boxShadow: '0 2px 10px rgba(29, 78, 216, 0.12)'
               }}
             >
-              <Atom size={14} />
-              <span>Physora Science Laboratory • Class 9–11 Foundations</span>
+              <Atom size={16} />
+              <span>Physora Science &amp; Math Laboratory • Interactive Inquiry</span>
             </span>
           </div>
 

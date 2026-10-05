@@ -6,8 +6,8 @@
    ========================================================================== */
 
 :root {
-  /* Clean Light-First Laboratory Color Tokens */
-  --bg-primary: #F8FAFC;
+  /* Warm Laboratory Clean Base — Crisp, Modern, High-Legibility */
+  --bg-primary: #FAFBFD;
   --bg-surface: #FFFFFF;
   --bg-surface-elevated: #FFFFFF;
   --bg-subtle: #F1F5F9;
@@ -15,31 +15,33 @@
   --bg-glass: rgba(255, 255, 255, 0.95);
   --bg-glass-card: #FFFFFF;
   --bg-glass-heavy: rgba(255, 255, 255, 0.98);
-  --bg-glass-glow: rgba(10, 102, 194, 0.04);
+  --bg-glass-glow: rgba(29, 78, 216, 0.05);
 
-  /* Primary Brand & Educational Accents */
-  --brand-primary: #0A66C2;
-  --brand-primary-hover: #084E96;
+  /* Primary Brand & Educational Accents (Vibrant Royal Sapphire & Warm Energetic Amber/Orange) */
+  --brand-primary: #1D4ED8;
+  --brand-primary-hover: #1E40AF;
   --brand-primary-soft: #EFF6FF;
   --brand-primary-border: #BFDBFE;
 
   /* Scientific Accents */
-  --electric-blue: #0A66C2;
-  --electric-blue-hover: #084E96;
+  --electric-blue: #1D4ED8;
+  --electric-blue-hover: #1E40AF;
   --electric-blue-soft: #EFF6FF;
   --electric-cyan: #0284C7;
   --electric-cyan-dark: #0369A1;
-  --electric-violet: #4F46E5;
-  --electric-violet-soft: #EEF2FF;
-  --electric-indigo: #6366F1;
+  --electric-violet: #7C3AED;
+  --electric-violet-soft: #F5F3FF;
+  --electric-indigo: #4F46E5;
   --accent-teal: #0D9488;
   --accent-teal-soft: #F0FDFA;
-  --accent-amber: #D97706;
+  --accent-amber: #F59E0B;
   --accent-amber-soft: #FFFBEB;
-  --accent-success: #059669;
+  --accent-success: #10B981;
   --accent-success-soft: #ECFDF5;
-  --accent-error: #DC2626;
+  --accent-error: #EF4444;
   --accent-error-soft: #FEF2F2;
+  --accent-orange: #FF6A00;
+  --accent-orange-soft: #FFF7ED;
 
   /* Typography Colors (Dark Charcoal for High Legibility) */
   --text-primary: #0F172A;
@@ -163,12 +165,18 @@ html {
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-primary);
+  background-image: radial-gradient(circle, rgba(148, 163, 184, 0.22) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
   position: relative;
   min-height: 100vh;
   transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+[data-theme="dark"] body {
+  background-image: radial-gradient(circle, rgba(148, 163, 184, 0.12) 1.2px, transparent 1.2px);
 }
 
 /* Clean Technical Background Grid Texture (Subtle & Scientific) */
@@ -387,8 +395,8 @@ body {
 
 .scientific-card-interactive:hover {
   border-color: var(--brand-primary);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: 0 16px 32px -4px rgba(29, 78, 216, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-4px);
 }
 
 /* Badges & Tags */
@@ -973,23 +981,97 @@ input[type="range"]::-moz-range-thumb {
   flex-wrap: wrap;
 }
 
-/* PhET Simulation Card Play Badge */
+/* PhET Simulation Card Play Badge — Vibrant Action Button */
 .phet-play-badge {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--brand-primary);
+  background: linear-gradient(135deg, #FF7A1A 0%, #FF5500 100%);
   color: #FFFFFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(10, 102, 194, 0.35);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease;
+  box-shadow: 0 4px 14px rgba(255, 106, 0, 0.45);
+  border: 2px solid #FFFFFF;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, filter 0.2s ease;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
-.scientific-card-interactive:hover .phet-play-badge {
-  transform: scale(1.1);
-  background: var(--brand-primary-hover);
+.scientific-card-interactive:hover .phet-play-badge,
+.phet-play-badge:hover {
+  transform: scale(1.12);
+  box-shadow: 0 6px 20px rgba(255, 106, 0, 0.6);
+  filter: brightness(1.05);
+}
+
+.phet-play-badge:active {
+  transform: scale(0.95);
+}
+
+/* Floating Scientific Illustration Badges / Stickers for Hero */
+.science-floating-sticker {
+  position: absolute;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.1), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: var(--text-primary);
+  user-select: none;
+  pointer-events: auto;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.science-floating-sticker:hover {
+  transform: translateY(-4px) scale(1.04);
+  box-shadow: 0 14px 28px -4px rgba(29, 78, 216, 0.2);
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.2deg);
+  }
+}
+
+@keyframes floatGentleReverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(8px) rotate(-1.5deg);
+  }
+}
+
+.animate-float-1 {
+  animation: floatGentle 5s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: floatGentleReverse 6s ease-in-out infinite 0.5s;
+}
+
+.animate-float-3 {
+  animation: floatGentle 5.5s ease-in-out infinite 1s;
+}
+
+.animate-float-4 {
+  animation: floatGentleReverse 6.5s ease-in-out infinite 1.5s;
+}
+
+@media (max-width: 1024px) {
+  .science-floating-sticker {
+    display: none !important;
+  }
 }
 
 /* PhET Subject Category Tiles */

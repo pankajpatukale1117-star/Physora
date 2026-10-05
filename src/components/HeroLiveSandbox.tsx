@@ -146,8 +146,8 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       }
 
       // Ground line
-      ctx.strokeStyle = 'var(--brand-primary, #0A66C2)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#1D4ED8';
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.moveTo(0, originY);
       ctx.lineTo(canvas.width, originY);
@@ -165,6 +165,59 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
         ctx.stroke();
         ctx.fillText(`${m}m`, markX - 8, originY + 16);
       }
+
+      // Target Flag at 50m
+      const targetM = 50;
+      const targetX = originX + targetM * scale;
+      const isTargetHit = Math.abs(totalRange - 50) < 1.8;
+      if (targetX < canvas.width - 15) {
+        // Red flag pole
+        ctx.strokeStyle = isTargetHit ? '#059669' : '#DC2626';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(targetX, originY);
+        ctx.lineTo(targetX, originY - 34);
+        ctx.stroke();
+
+        // Flag triangle
+        ctx.fillStyle = isTargetHit ? '#10B981' : '#EF4444';
+        ctx.beginPath();
+        ctx.moveTo(targetX, originY - 34);
+        ctx.lineTo(targetX + 18, originY - 25);
+        ctx.lineTo(targetX, originY - 16);
+        ctx.closePath();
+        ctx.fill();
+
+        // Target base bullseye
+        ctx.fillStyle = isTargetHit ? '#10B981' : '#DC2626';
+        ctx.beginPath();
+        ctx.arc(targetX, originY, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (isTargetHit) {
+          // Celebratory hit rings
+          ctx.strokeStyle = 'rgba(16, 185, 129, 0.5)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(targetX, originY, 12, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        // Target label
+        ctx.fillStyle = isTargetHit ? '#059669' : '#DC2626';
+        ctx.font = 'bold 9px JetBrains Mono, monospace';
+        ctx.fillText(isTargetHit ? 'HIT! 50m' : 'TARGET 50m', targetX - 22, originY - 38);
+      }
+
+      // Protractor angle arc at cannon
+      ctx.strokeStyle = 'rgba(29, 78, 216, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(originX, originY, 22, 0, -theta, true);
+      ctx.stroke();
+      ctx.fillStyle = '#1D4ED8';
+      ctx.font = 'bold 9px JetBrains Mono, monospace';
+      ctx.fillText(`${angleDeg}°`, originX + 24, originY - 8);
 
       // 2. Ideal Trajectory Path (Dotted Arc)
       ctx.setLineDash([4, 4]);
@@ -209,11 +262,11 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
       const vx = speed * Math.cos(theta);
       const vy = speed * Math.sin(theta) - g * curT;
 
-      // Projectile ball with clean stroke
+      // Projectile ball with clean stroke (PhET Vibrant Orange)
       ctx.save();
-      ctx.fillStyle = '#0A66C2';
+      ctx.fillStyle = '#FF6A00';
       ctx.beginPath();
-      ctx.arc(currX, currY, 6.5, 0, Math.PI * 2);
+      ctx.arc(currX, currY, 7, 0, Math.PI * 2);
       ctx.fill();
       ctx.lineWidth = 2;
       ctx.strokeStyle = '#FFFFFF';
@@ -394,6 +447,42 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
         </div>
       </div>
 
+      {/* Target Challenge Banner */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: Math.abs(totalRange - 50) < 1.8 ? 'var(--accent-success-soft)' : 'var(--bg-subtle)',
+          border: `1px solid ${Math.abs(totalRange - 50) < 1.8 ? 'var(--accent-success)' : 'var(--border-subtle)'}`,
+          borderRadius: 'var(--radius-md)',
+          padding: '8px 14px',
+          marginBottom: 12,
+          flexWrap: 'wrap',
+          gap: 8,
+          transition: 'all 0.3s ease'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem' }}>
+          <span style={{ fontSize: '1.1rem' }}>🎯</span>
+          <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>
+            Target Challenge:
+          </span>
+          <span style={{ color: 'var(--text-secondary)' }}>
+            Hit the 50m red flag!
+          </span>
+        </div>
+        {Math.abs(totalRange - 50) < 1.8 ? (
+          <span className="badge" style={{ background: 'var(--accent-success)', color: '#FFFFFF', fontWeight: 800, fontSize: '0.75rem', padding: '4px 10px' }}>
+            🎯 BULLSEYE HIT! ({totalRange.toFixed(1)}m)
+          </span>
+        ) : (
+          <span className="font-mono" style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+            Current: {totalRange.toFixed(1)}m ({totalRange < 50 ? `${(50 - totalRange).toFixed(1)}m short` : `${(totalRange - 50).toFixed(1)}m past`})
+          </span>
+        )}
+      </div>
+
       {/* Main Studio Area (Row in full window, Column in card) */}
       <div
         style={isFullWindow ? {
@@ -531,7 +620,7 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
           >
             {/* Angle Slider */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 6 }}>
                 <span>Launch Angle (θ)</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <input
@@ -561,19 +650,39 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
                   <span style={{ fontSize: '0.8rem', color: 'var(--electric-blue)', fontWeight: 700 }}>°</span>
                 </div>
               </div>
-              <input
-                type="range"
-                min={15}
-                max={75}
-                value={angleDeg}
-                onChange={(e) => setAngleDeg(Number(e.target.value))}
-                style={{ width: '100%', accentColor: 'var(--electric-blue)', cursor: 'pointer' }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setAngleDeg(Math.max(15, angleDeg - 1))}
+                  className="phet-stepper-btn"
+                  title="Decrease angle 1°"
+                  aria-label="Decrease angle"
+                >
+                  -
+                </button>
+                <input
+                  type="range"
+                  min={15}
+                  max={75}
+                  value={angleDeg}
+                  onChange={(e) => setAngleDeg(Number(e.target.value))}
+                  style={{ width: '100%', accentColor: 'var(--electric-blue)', cursor: 'pointer' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setAngleDeg(Math.min(75, angleDeg + 1))}
+                  className="phet-stepper-btn"
+                  title="Increase angle 1°"
+                  aria-label="Increase angle"
+                >
+                  +
+                </button>
+              </div>
             </div>
 
             {/* Speed Slider */}
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 6 }}>
                 <span>Launch Speed (v₀)</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <input
@@ -603,14 +712,34 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
                   <span style={{ fontSize: '0.72rem', color: 'var(--electric-violet)', fontWeight: 600 }}>m/s</span>
                 </div>
               </div>
-              <input
-                type="range"
-                min={12}
-                max={36}
-                value={speed}
-                onChange={(e) => setSpeed(Number(e.target.value))}
-                style={{ width: '100%', accentColor: 'var(--electric-violet)', cursor: 'pointer' }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setSpeed(Math.max(12, speed - 1))}
+                  className="phet-stepper-btn"
+                  title="Decrease speed 1 m/s"
+                  aria-label="Decrease speed"
+                >
+                  -
+                </button>
+                <input
+                  type="range"
+                  min={12}
+                  max={36}
+                  value={speed}
+                  onChange={(e) => setSpeed(Number(e.target.value))}
+                  style={{ width: '100%', accentColor: 'var(--electric-violet)', cursor: 'pointer' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setSpeed(Math.min(36, speed + 1))}
+                  className="phet-stepper-btn"
+                  title="Increase speed 1 m/s"
+                  aria-label="Increase speed"
+                >
+                  +
+                </button>
+              </div>
             </div>
 
             {/* Live Telemetry Chips */}
