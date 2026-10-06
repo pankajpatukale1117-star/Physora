@@ -11,7 +11,8 @@ export type AnatomicalSystemId =
   | 'digestive'
   | 'nervous'
   | 'urinary'
-  | 'endocrine';
+  | 'endocrine'
+  | 'reproductive';
 
 export type DetailLevel = 'overview' | 'detailed' | 'advanced';
 
@@ -182,6 +183,16 @@ export const ANATOMICAL_SYSTEMS: Record<AnatomicalSystemId, SystemMetadata> = {
     softColor: 'rgba(236, 72, 153, 0.16)',
     iconName: 'Sparkles',
     organCount: 5
+  },
+  reproductive: {
+    id: 'reproductive',
+    name: 'Reproductive System',
+    latinName: 'Systema reproductionis',
+    description: 'Specialized internal and external organs coordinating gametogenesis, endocrine sex steroids, gestation, and lactation.',
+    color: '#F43F5E',
+    softColor: 'rgba(244, 63, 94, 0.16)',
+    iconName: 'HeartPulse',
+    organCount: 6
   }
 };
 
@@ -1129,8 +1140,113 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     ],
     relatedSystems: ['nervous', 'cardiovascular', 'muscular'],
     clinicalRelevance: 'Burns (Rule of Nines), melanoma and basal cell carcinomas, dermatitis/eczema, psoriasis, and transdermal medication delivery.'
+  },
+
+  // ==========================================================================
+  // REPRODUCTIVE SYSTEM (FEMALE & MALE)
+  // ==========================================================================
+  mammary_glands: {
+    id: 'mammary_glands',
+    name: 'Mammary Glands & Breast Tissue',
+    latinName: 'Glandula mammaria',
+    system: 'reproductive',
+    complexity: 'detailed',
+    color: '#FB7185',
+    accentColor: '#F43F5E',
+    center: [0, 2.05, 0.45],
+    boundsSize: [1.4, 0.9, 0.8],
+    cameraFocus: { target: [0, 2.05, 0.45], distance: 2.8 },
+    category: 'Secondary Sex Characteristic / Exocrine Gland',
+    primaryFunction: 'Specialized modified apocrine glands providing nutritional, immunological, and developmental support for infants through lactation (milk synthesis and ejection).',
+    anatomicalLocation: 'Overlies the deep pectoral fascia of pectoralis major and serratus anterior muscles along anterior ribs 2 through 6.',
+    educationalSummary: 'The breast is composed of 15–20 glandular lobes embedded within a protective matrix of subcutaneous and retro-mammary adipose tissue. Each lobe contains multiple secretory lobules with milk-synthesizing alveoli lined by cuboidal epithelium and contractile myoepithelial cells. Secretions drain via lactiferous ducts which dilate into lactiferous sinuses beneath the pigmented areola before opening at the nipple papilla. Crucial fibrous Cooper\'s suspensory ligaments extend from the deep pectoral fascia to the dermis, providing structural support and elevation.',
+    keyFacts: [
+      'Prolactin from the anterior pituitary gland stimulates milk synthesis within alveolar epithelial cells.',
+      'Oxytocin from the posterior pituitary stimulates contractile myoepithelial cells, triggering the milk let-down reflex in response to infant suckling.',
+      'Cooper\'s ligaments maintain upright breast architecture; ligament laxity occurs naturally with age or gravitational stress.',
+      'Roughly 75% of breast lymphatic drainage traverses the axillary lymph nodes, making these nodes paramount in oncological evaluation.',
+      'The pigmented areola contains specialized sebaceous Montgomery glands (glandulae areolares) that lubricate and protect the nipple during nursing.'
+    ],
+    subStructures: [
+      'Glandular Lobes & Secretory Alveoli',
+      'Lactiferous Ducts & Lactiferous Sinuses',
+      'Nipple Papilla (Papilla mammaria) & Areola',
+      'Cooper\'s Suspensory Ligaments (Ligamenta suspensoria)',
+      'Subcutaneous & Retromammary Adipose Tissue',
+      'Pectoral Fascia Anchor Plate'
+    ],
+    relatedSystems: ['endocrine', 'muscular', 'cardiovascular'],
+    clinicalRelevance: 'Breast carcinoma screening (mammography, self-examination), fibrocystic changes, mastitis during lactation, and gynecomastia.'
+  },
+
+  uterus_and_ovaries: {
+    id: 'uterus_and_ovaries',
+    name: 'Uterus, Fallopian Tubes & Ovaries',
+    latinName: 'Uterus, Tubae uterinae et Ovaria',
+    system: 'reproductive',
+    complexity: 'detailed',
+    color: '#F43F5E',
+    accentColor: '#E11D48',
+    center: [0, 0.28, 0.05],
+    boundsSize: [1.2, 0.8, 0.6],
+    cameraFocus: { target: [0, 0.28, 0.05], distance: 2.5 },
+    category: 'Internal Pelvic Reproductive Viscera',
+    primaryFunction: 'Coordinates oocyte development, cyclical sex hormone production (estrogen/progesterone), fertilization in the fallopian ampulla, and intrauterine embryonic/fetal gestation.',
+    anatomicalLocation: 'Situated within the female true pelvis, between the urinary bladder anteriorly and the rectum posteriorly.',
+    educationalSummary: 'The internal female reproductive tract features the pear-shaped Uterus (fundus, muscular corpus, isthmus, and fibromuscular cervix), bilateral Fallopian Tubes (oviducts with fringed fimbriae that catch ovulated secondary oocytes), and paired almond-shaped Ovaries. The uterine wall exhibits three distinct layers: the inner mucosal Endometrium (undergoing cyclical proliferation and shedding during menstruation), the thick smooth muscle Myometrium (generating rhythmic labor contractions during parturition), and the outer serous Perimetrium.',
+    keyFacts: [
+      'Fertilization typically occurs in the ampulla of the fallopian tube within 12–24 hours post-ovulation.',
+      'The ovarian cycle comprises the follicular phase (estrogen-dominated) and the luteal phase (progesterone-dominated from the corpus luteum).',
+      'Ciliated columnar epithelial cells lining the fallopian tube create gentle fluid currents propelling the ovum toward the uterine cavity.',
+      'The myometrium can expand over 500-fold in volume during pregnancy, orchestrated by hormonal hypertrophy and hyperplasia of smooth myocytes.'
+    ],
+    subStructures: [
+      'Uterine Fundus, Corpus & Cavity',
+      'Endometrium (Stratum Functionale & Basale)',
+      'Myometrium (Smooth Muscle Layer)',
+      'Fallopian Tubes (Fimbriae, Infundibulum, Ampulla, Isthmus)',
+      'Ovaries (Graafian Follicles & Corpus Luteum)',
+      'Uterine Cervix & External Os'
+    ],
+    relatedSystems: ['endocrine', 'urinary', 'cardiovascular'],
+    clinicalRelevance: 'Endometriosis, uterine leiomyomas (fibroids), ectopic pregnancy, cervical dysplasia (Pap smear screening / HPV), and polycystic ovary syndrome (PCOS).'
+  },
+
+  female_genitalia_external: {
+    id: 'female_genitalia_external',
+    name: 'Female External Genitalia (Vulva & Pudendum)',
+    latinName: 'Pudendum femininum / Vulva',
+    system: 'reproductive',
+    complexity: 'detailed',
+    color: '#FB7185',
+    accentColor: '#F43F5E',
+    center: [0, -0.60, 0.16],
+    boundsSize: [0.8, 0.6, 0.5],
+    cameraFocus: { target: [0, -0.60, 0.16], distance: 2.2 },
+    category: 'External Perineal Reproductive Organs',
+    primaryFunction: 'Protects the internal urogenital tract from mechanical injury and pathogen entry, facilitates copulation, and provides sensory tactile stimulation.',
+    anatomicalLocation: 'Occupies the anterior urogenital triangle of the female perineum between the pubic symphysis anteriorly and the perineal body posteriorly.',
+    educationalSummary: 'The female external genitalia (vulva) comprise the Mons Pubis (anterior adipose cushion over the pubic symphysis), Labia Majora (outer longitudinal cutaneous folds with subcutaneous fat and sebaceous glands, developmentally homologous to the male scrotum), Labia Minora (delicate inner mucosal folds bordering the vestibule), the Clitoris (highly innervated erectile organ with glans, prepuce, body, and bilateral crura homologous to the penis), the Vaginal Vestibule containing the external urethral orifice and vaginal introitus, and bilateral Greater Vestibular (Bartholin\'s) glands secreting lubricating mucus.',
+    keyFacts: [
+      'The clitoral glans contains over 8,000 sensory nerve endings, making it the most sensitive erogenous zone in human anatomy.',
+      'The labia majora meet anteriorly to form the anterior labial commissure over the clitoral hood and posteriorly at the posterior labial commissure.',
+      'The vestibular bulbs (paired erectile tissue masses) flank the vaginal opening, engorging with blood during arousal.',
+      'Bartholin\'s glands lie posterolateral to the vaginal orifice and drain via 2 cm ducts into the vaginal vestibule.'
+    ],
+    subStructures: [
+      'Mons Pubis (Adipose Mound)',
+      'Labia Majora (Outer Cutaneous Folds)',
+      'Labia Minora (Inner Mucosal Folds)',
+      'Clitoris (Glans, Prepuce & Erectile Crura)',
+      'Vaginal Vestibule & Introitus',
+      'External Urethral Meatus',
+      'Bartholin\'s (Greater Vestibular) Glands'
+    ],
+    relatedSystems: ['urinary', 'nervous', 'cardiovascular'],
+    clinicalRelevance: 'Bartholin\'s duct cysts/abscesses, vulvovaginitis, contact dermatitis, lichen sclerosus, and episiotomy during delivery.'
   }
 };
+
 
 // ----------------------------------------------------------------------------
 // STRUCTURE LOOKUP HELPERS & SEARCH INDEX

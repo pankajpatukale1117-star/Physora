@@ -58,7 +58,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     digestive: true,
     nervous: true,
     urinary: true,
-    endocrine: true
+    endocrine: true,
+    reproductive: true
   });
 
   const [systemOpacity, setSystemOpacity] = useState<Record<AnatomicalSystemId, number>>({
@@ -69,7 +70,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     digestive: 0.95,
     nervous: 1.0,
     urinary: 1.0,
-    endocrine: 1.0
+    endocrine: 1.0,
+    reproductive: 1.0
   });
 
   // Camera & View Settings
@@ -78,6 +80,9 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
 
   // Layer Separation / Exploded View
   const [layerSeparation, setLayerSeparation] = useState(0.0);
+
+  // Biological Sex Toggle (Female / Male Anatomy)
+  const [biologicalSex, setBiologicalSex] = useState<'female' | 'male'>('female');
 
   // Skin & Integumentary Controls
   const [skinOpacity, setSkinOpacity] = useState(0.45);
@@ -156,7 +161,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       digestive: false,
       nervous: false,
       urinary: false,
-      endocrine: false
+      endocrine: false,
+      reproductive: false
     };
     next[sysId] = true;
     setSystemVisibility(next);
@@ -171,7 +177,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       digestive: true,
       nervous: true,
       urinary: true,
-      endocrine: true
+      endocrine: true,
+      reproductive: true
     });
   };
 
@@ -508,6 +515,49 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               <option value="xray">Electric X-Ray</option>
             </select>
           </div>
+
+          {/* Biological Sex Toggle (Female / Male Anatomy) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6, paddingLeft: 8, borderLeft: '1px solid rgba(255, 255, 255, 0.12)' }}>
+            <span style={{ fontSize: '0.70rem', color: '#F43F5E', fontWeight: 700 }}>Sex:</span>
+            <div style={{ display: 'flex', gap: 2, background: 'rgba(0,0,0,0.35)', borderRadius: 16, padding: 2 }}>
+              <button
+                type="button"
+                onClick={() => setBiologicalSex('female')}
+                title="Female Reproductive & Superficial Anatomy (Bilateral mammary glands, vulva, pelvic organs)"
+                style={{
+                  background: biologicalSex === 'female' ? '#F43F5E' : 'transparent',
+                  color: biologicalSex === 'female' ? '#FFFFFF' : '#94A3B8',
+                  border: 'none',
+                  borderRadius: 12,
+                  padding: '2px 8px',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                ♀ Female
+              </button>
+              <button
+                type="button"
+                onClick={() => setBiologicalSex('male')}
+                title="Male Anatomy"
+                style={{
+                  background: biologicalSex === 'male' ? '#0284C7' : 'transparent',
+                  color: biologicalSex === 'male' ? '#FFFFFF' : '#94A3B8',
+                  border: 'none',
+                  borderRadius: 12,
+                  padding: '2px 8px',
+                  fontSize: '0.68rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                ♂ Male
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Right: Tools & Layers Toggle */}
@@ -575,7 +625,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             }}
           >
             <Layers size={15} />
-            <span>Systems ({Object.values(systemVisibility).filter(Boolean).length}/8)</span>
+            <span>Systems ({Object.values(systemVisibility).filter(Boolean).length}/9)</span>
           </button>
         </div>
       </header>
@@ -606,6 +656,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
           skinOpacity={skinOpacity}
           skinMode={skinMode}
           skinVisible={skinVisible}
+          biologicalSex={biologicalSex}
         />
 
         {/* Dynamic Process Player Bar (Floating Bottom-Center) */}
@@ -849,7 +900,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                   digestive: 0.95,
                   nervous: 1.0,
                   urinary: 1.0,
-                  endocrine: 1.0
+                  endocrine: 1.0,
+                  reproductive: 1.0
                 });
               }}
               style={{

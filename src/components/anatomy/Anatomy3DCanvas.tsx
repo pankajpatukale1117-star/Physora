@@ -31,6 +31,7 @@ export interface Anatomy3DCanvasProps {
   skinOpacity?: number;
   skinMode?: 'natural' | 'translucent' | 'xray';
   skinVisible?: boolean;
+  biologicalSex?: 'female' | 'male';
 }
 
 interface MeshUserData {
@@ -70,7 +71,8 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   onPresetViewHandled,
   skinOpacity = 0.45,
   skinMode = 'natural',
-  skinVisible = true
+  skinVisible = true,
+  biologicalSex = 'female'
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
@@ -481,6 +483,78 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         return;
       }
 
+      // Reproductive system & Biological Sex handling
+      const isFemaleReproductive = id === 'mammary_glands' || id === 'uterus_and_ovaries' || id === 'female_genitalia_external';
+      if (isFemaleReproductive && biologicalSex !== 'female') {
+        meshes.forEach((mesh) => {
+          mesh.visible = false;
+        });
+        return;
+      }
+
+      // If female reproductive, synchronize external skin components with skinOpacity & skinMode
+      if (isFemaleReproductive && biologicalSex === 'female') {
+        const effectiveOpacity = layerSeparation > 0
+          ? Math.max(0.0, skinOpacity * (1.0 - layerSeparation))
+          : skinOpacity;
+
+        meshes.forEach((mesh) => {
+          const isAreolaNipple = mesh.name.includes('Areola') || mesh.name.includes('Nipple');
+          const isOuterSkinPart = mesh.name.includes('Breast (Mammary Gland & Skin)') || mesh.name.includes('Mons Pubis') || mesh.name.includes('Labium') || isAreolaNipple;
+          const isGlandularPart = mesh.name.includes('Glandular Lobule') || mesh.name.includes('Uterus') || mesh.name.includes('Ovary') || mesh.name.includes('Tube');
+
+          let meshVisible = isSystemVisible && !isIsolated;
+          if (isIsolated) {
+            meshVisible = isSelected;
+          }
+
+          if (isOuterSkinPart) {
+            meshVisible = meshVisible && skinVisible && effectiveOpacity > 0.01;
+          }
+
+          mesh.visible = meshVisible;
+          if (!meshVisible) return;
+
+          const mat = mesh.material as THREE.MeshStandardMaterial;
+          if (!mat) return;
+
+          if (isSelected) {
+            mat.emissive.set(new THREE.Color(0xF43F5E));
+            mat.emissiveIntensity = 0.55;
+          } else if (isOuterSkinPart) {
+            if (skinMode === 'natural') {
+              mat.color.setHex(isAreolaNipple ? 0xC27A68 : 0xDE9F7E);
+              mat.roughness = isAreolaNipple ? 0.58 : 0.52;
+              mat.emissive.setHex(isAreolaNipple ? 0x2A0D07 : 0x1F0B05);
+              mat.emissiveIntensity = 0.06;
+              if (effectiveOpacity >= 0.95) {
+                mat.transparent = false;
+                mat.opacity = 1.0;
+                mat.depthWrite = true;
+              } else {
+                mat.transparent = true;
+                mat.opacity = effectiveOpacity;
+                mat.depthWrite = false;
+              }
+            } else if (skinMode === 'translucent') {
+              mat.color.setHex(0x38BDF8);
+              mat.transparent = true;
+              mat.opacity = effectiveOpacity;
+              mat.depthWrite = false;
+            } else if (skinMode === 'xray') {
+              mat.color.setHex(0x818CF8);
+              mat.transparent = true;
+              mat.opacity = effectiveOpacity * 0.85;
+              mat.depthWrite = false;
+            }
+          } else if (isGlandularPart) {
+            mat.opacity = systemAlpha;
+            mat.transparent = systemAlpha < 0.95;
+          }
+        });
+        return;
+      }
+
       meshes.forEach((mesh) => {
         mesh.visible = shouldBeVisible;
         if (!shouldBeVisible) return;
@@ -509,7 +583,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         }
       });
     });
-  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated, layerSeparation, skinOpacity, skinMode, skinVisible]);
+  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated, layerSeparation, skinOpacity, skinMode, skinVisible, biologicalSex]);
 
   // --------------------------------------------------------------------------
   // 7. MOUSE & TOUCH ORBIT / ZOOM / PAN INTERACTIONS
@@ -1055,6 +1129,193 @@ function buildDetailedMuscularSystem(
 }
 
 // ============================================================================
+// ANATOMICALLY CALIBRATED FEMALE REPRODUCTIVE & BREAST ANATOMY GENERATOR
+// ============================================================================
+
+function buildDetailedFemaleAnatomy(
+  masterGroup: THREE.Group,
+  registerMesh: (id: string, mesh: THREE.Mesh, system: AnatomicalSystemId, name: string) => void
+) {
+  const femaleGroup = new THREE.Group();
+  femaleGroup.name = 'FemaleReproductiveGroup';
+
+  // Materials
+  const skinMaterial = new THREE.MeshStandardMaterial({
+    color: 0xDE9F7E, // Natural skin tone
+    roughness: 0.52,
+    metalness: 0.02,
+    emissive: new THREE.Color(0x1F0B05),
+    emissiveIntensity: 0.06
+  });
+
+  const areolaMaterial = new THREE.MeshStandardMaterial({
+    color: 0xC27A68, // Pigmented areola rose-umber
+    roughness: 0.58,
+    metalness: 0.01
+  });
+
+  const glandularMaterial = new THREE.MeshStandardMaterial({
+    color: 0xFB7185, // Secretory glandular lobules
+    roughness: 0.40,
+    metalness: 0.02
+  });
+
+  const uterineMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0xF43F5E, // Uterine myometrium crimson-pink
+    roughness: 0.35,
+    metalness: 0.03,
+    clearcoat: 0.35
+  });
+
+  const ovarianMaterial = new THREE.MeshStandardMaterial({
+    color: 0xFECDD3, // Ovarian pearl pink
+    roughness: 0.32,
+    metalness: 0.02
+  });
+
+  const mucosalMaterial = new THREE.MeshStandardMaterial({
+    color: 0xE8798A, // Vestibular mucosal pink
+    roughness: 0.36,
+    metalness: 0.02
+  });
+
+  // A. BILATERAL MAMMARY GLANDS (BREASTS) Over Anterior Pectoralis Major
+  const breastOffsets: { side: 'Right' | 'Left'; x: number }[] = [
+    { side: 'Right', x: -0.44 },
+    { side: 'Left', x: 0.44 }
+  ];
+
+  breastOffsets.forEach(({ side, x }) => {
+    // 1. External Breast Surface & Adipose Body (Smooth anatomical hemisphere)
+    const breastGeom = new THREE.SphereGeometry(0.36, 24, 24);
+    const breastMesh = new THREE.Mesh(breastGeom, skinMaterial.clone());
+    breastMesh.position.set(x, 2.05, 0.46);
+    breastMesh.scale.set(1.08, 0.96, 1.25);
+    breastMesh.rotation.set(0.08, x > 0 ? -0.12 : 0.12, 0);
+    breastMesh.castShadow = true;
+    breastMesh.receiveShadow = true;
+    femaleGroup.add(breastMesh);
+    registerMesh('mammary_glands', breastMesh, 'reproductive', `${side} Breast (Mammary Gland & Skin)`);
+
+    // 2. Pigmented Areola Circle Disc
+    const areolaGeom = new THREE.CylinderGeometry(0.12, 0.12, 0.015, 24);
+    const areolaMesh = new THREE.Mesh(areolaGeom, areolaMaterial.clone());
+    areolaMesh.position.set(x, 2.05, 0.88);
+    areolaMesh.rotation.set(Math.PI / 2 + 0.08, 0, x > 0 ? -0.12 : 0.12);
+    femaleGroup.add(areolaMesh);
+    registerMesh('mammary_glands', areolaMesh, 'reproductive', `${side} Areola`);
+
+    // 3. Central Nipple Papilla
+    const nippleGeom = new THREE.CylinderGeometry(0.04, 0.045, 0.04, 16);
+    const nippleMesh = new THREE.Mesh(nippleGeom, areolaMaterial.clone());
+    nippleMesh.position.set(x, 2.05, 0.90);
+    nippleMesh.rotation.set(Math.PI / 2 + 0.08, 0, x > 0 ? -0.12 : 0.12);
+    femaleGroup.add(nippleMesh);
+    registerMesh('mammary_glands', nippleMesh, 'reproductive', `${side} Nipple (Papilla)`);
+
+    // 4. Internal Glandular Lobules (Radiating milk-secreting alveoli)
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const lobuleGeom = new THREE.SphereGeometry(0.08, 12, 12);
+      const lobuleMesh = new THREE.Mesh(lobuleGeom, glandularMaterial.clone());
+      const r = 0.16;
+      lobuleMesh.position.set(
+        x + Math.cos(angle) * r,
+        2.05 + Math.sin(angle) * r,
+        0.58
+      );
+      lobuleMesh.scale.set(1.2, 0.8, 0.8);
+      femaleGroup.add(lobuleMesh);
+      registerMesh('mammary_glands', lobuleMesh, 'reproductive', `${side} Glandular Lobule`);
+    }
+  });
+
+  // B. INTERNAL FEMALE PELVIC ORGANS: UTERUS, FALLOPIAN TUBES & OVARIES
+  // 1. Uterus (Pear-shaped muscular corpus and fundus)
+  const uterusGeom = new THREE.CylinderGeometry(0.14, 0.09, 0.28, 16);
+  const uterusMesh = new THREE.Mesh(uterusGeom, uterineMaterial.clone());
+  uterusMesh.position.set(0, 0.28, 0.06);
+  uterusMesh.rotation.set(0.15, 0, 0); // slight anatomical anteversion
+  uterusMesh.castShadow = true;
+  femaleGroup.add(uterusMesh);
+  registerMesh('uterus_and_ovaries', uterusMesh, 'reproductive', 'Uterus (Corpus & Cervix)');
+
+  // Uterine Fundus (Dome cap)
+  const fundusGeom = new THREE.SphereGeometry(0.14, 16, 12);
+  const fundusMesh = new THREE.Mesh(fundusGeom, uterineMaterial.clone());
+  fundusMesh.position.set(0, 0.42, 0.08);
+  fundusMesh.scale.set(1.0, 0.6, 0.9);
+  femaleGroup.add(fundusMesh);
+  registerMesh('uterus_and_ovaries', fundusMesh, 'reproductive', 'Uterine Fundus');
+
+  // 2. Bilateral Fallopian Tubes & Ovaries
+  [-1, 1].forEach((sgn) => {
+    const side = sgn > 0 ? 'Left' : 'Right';
+    // Fallopian Tube arch
+    const tubeGeom = new THREE.CapsuleGeometry(0.025, 0.32, 6, 12);
+    const tubeMesh = new THREE.Mesh(tubeGeom, uterineMaterial.clone());
+    tubeMesh.position.set(sgn * 0.26, 0.38, 0.05);
+    tubeMesh.rotation.set(0, 0, sgn * (Math.PI / 2.6));
+    femaleGroup.add(tubeMesh);
+    registerMesh('uterus_and_ovaries', tubeMesh, 'reproductive', `${side} Fallopian Tube (Oviduct)`);
+
+    // Ovary
+    const ovaryGeom = new THREE.SphereGeometry(0.08, 14, 14);
+    const ovaryMesh = new THREE.Mesh(ovaryGeom, ovarianMaterial.clone());
+    ovaryMesh.position.set(sgn * 0.42, 0.30, 0.02);
+    ovaryMesh.scale.set(1.3, 0.9, 0.8);
+    femaleGroup.add(ovaryMesh);
+    registerMesh('uterus_and_ovaries', ovaryMesh, 'reproductive', `${side} Ovary`);
+  });
+
+  // C. EXTERNAL FEMALE GENITALIA (VULVA & PUDENDUM)
+  // 1. Mons Pubis (Adipose cushion overlying pubic symphysis)
+  const monsGeom = new THREE.SphereGeometry(0.24, 16, 16);
+  const monsMesh = new THREE.Mesh(monsGeom, skinMaterial.clone());
+  monsMesh.position.set(0, -0.44, 0.26);
+  monsMesh.scale.set(1.05, 0.72, 0.85);
+  femaleGroup.add(monsMesh);
+  registerMesh('female_genitalia_external', monsMesh, 'reproductive', 'Mons Pubis (Adipose Cushion)');
+
+  // 2. Labia Majora (Bilateral longitudinal protective folds)
+  [-1, 1].forEach((sgn) => {
+    const side = sgn > 0 ? 'Left' : 'Right';
+    const foldGeom = new THREE.CapsuleGeometry(0.055, 0.24, 8, 16);
+    const foldMesh = new THREE.Mesh(foldGeom, skinMaterial.clone());
+    foldMesh.position.set(sgn * 0.065, -0.62, 0.16);
+    foldMesh.rotation.set(0.2, 0, sgn * 0.06);
+    femaleGroup.add(foldMesh);
+    registerMesh('female_genitalia_external', foldMesh, 'reproductive', `${side} Labium Majus`);
+
+    // Labia Minora (Inner mucosal folds)
+    const minoraGeom = new THREE.CapsuleGeometry(0.028, 0.20, 6, 12);
+    const minoraMesh = new THREE.Mesh(minoraGeom, mucosalMaterial.clone());
+    minoraMesh.position.set(sgn * 0.026, -0.62, 0.15);
+    minoraMesh.rotation.set(0.2, 0, sgn * 0.04);
+    femaleGroup.add(minoraMesh);
+    registerMesh('female_genitalia_external', minoraMesh, 'reproductive', `${side} Labium Minus`);
+  });
+
+  // 3. Clitoral Glans & Prepuce (Anterior commissure)
+  const clitorisGeom = new THREE.SphereGeometry(0.03, 10, 10);
+  const clitorisMesh = new THREE.Mesh(clitorisGeom, uterineMaterial.clone());
+  clitorisMesh.position.set(0, -0.52, 0.21);
+  clitorisMesh.scale.set(1.0, 1.2, 1.0);
+  femaleGroup.add(clitorisMesh);
+  registerMesh('female_genitalia_external', clitorisMesh, 'reproductive', 'Clitoris (Glans & Prepuce)');
+
+  // 4. Vaginal Vestibule & Introitus (Central urogenital cleft)
+  const vestibuleGeom = new THREE.CapsuleGeometry(0.022, 0.16, 6, 12);
+  const vestibuleMesh = new THREE.Mesh(vestibuleGeom, mucosalMaterial.clone());
+  vestibuleMesh.position.set(0, -0.64, 0.14);
+  vestibuleMesh.rotation.set(0.25, 0, 0);
+  femaleGroup.add(vestibuleMesh);
+  registerMesh('female_genitalia_external', vestibuleMesh, 'reproductive', 'Vaginal Vestibule & Introitus');
+
+  masterGroup.add(femaleGroup);
+}
+
+// ============================================================================
 // MODEL LOADER PIPELINE: ASSEMBLES REAL VISIBLE HUMAN & Z-ANATOMY MESHES
 // ============================================================================
 
@@ -1079,6 +1340,9 @@ function loadAllAnatomicalModels(
 
   // 1. Build Anatomically Calibrated Muscular System
   buildDetailedMuscularSystem(masterGroup, registerMesh);
+
+  // 2. Build Anatomically Calibrated Female Reproductive & Breast Anatomy
+  buildDetailedFemaleAnatomy(masterGroup, registerMesh);
 
   // 2. High-Resolution Visible Human & Z-Anatomy Models
   const modelSpecs: {
