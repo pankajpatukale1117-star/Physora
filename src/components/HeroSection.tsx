@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, FlaskConical, Atom, BookOpen, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, FlaskConical, Atom, BookOpen, CheckCircle2, Dna } from 'lucide-react';
 import { HeroLiveSandbox } from './HeroLiveSandbox';
 
 interface HeroSectionProps {
@@ -7,13 +7,15 @@ interface HeroSectionProps {
   onExploreSimulations: () => void;
   onExploreExperiments: () => void;
   onOpenFormulas: () => void;
+  onOpenAnatomy?: () => void;
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({
   onEnterLabClick,
   onExploreSimulations,
   onExploreExperiments,
-  onOpenFormulas
+  onOpenFormulas,
+  onOpenAnatomy
 }) => {
   return (
     <section
@@ -64,7 +66,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               lineHeight: 1.15
             }}
           >
-            Interactive <span style={{ color: 'var(--brand-primary)' }}>Science</span> &amp; <span style={{ color: '#D97706' }}>Maths</span> Simulations
+            Interactive <span style={{ color: 'var(--brand-primary)' }}>Physics</span>, <span style={{ color: '#059669' }}>3D Biology</span> &amp; <span style={{ color: '#D97706' }}>Maths</span>
           </h1>
 
           {/* Supporting Educational Message */}
@@ -78,8 +80,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               margin: '0 auto 28px'
             }}
           >
-            Engage students in physics and mathematics inquiry with 42 interactive, calibrated laboratory models.
-            Manipulate physical variables, visualize invisible vectors, and connect directly to formulas.
+            Engage in research-based science with 54 interactive simulations and a full-scale 3D Human Anatomy Explorer.
+            Manipulate physical variables, explore 8 anatomical systems, and connect directly to first principles.
           </p>
 
           {/* Primary Action Buttons */}
@@ -96,7 +98,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               onClick={onExploreSimulations}
               className="btn btn-lg"
               style={{
-                minWidth: 210,
+                minWidth: 200,
                 background: '#FF6600',
                 color: '#FFFFFF',
                 border: 'none',
@@ -107,14 +109,36 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               }}
             >
               <Atom size={18} />
-              <span>Explore All Simulations</span>
+              <span>Explore Simulations</span>
               <ArrowRight size={16} />
             </button>
+
+            {onOpenAnatomy && (
+              <button
+                onClick={onOpenAnatomy}
+                className="btn btn-lg"
+                style={{
+                  minWidth: 200,
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  color: '#059669',
+                  fontWeight: 800,
+                  borderRadius: 'var(--radius-pill)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
+                }}
+              >
+                <Dna size={18} />
+                <span>3D Human Anatomy</span>
+              </button>
+            )}
 
             <button
               onClick={onExploreExperiments}
               className="btn btn-secondary btn-lg"
-              style={{ minWidth: 200, borderRadius: 'var(--radius-pill)', fontWeight: 700 }}
+              style={{ minWidth: 190, borderRadius: 'var(--radius-pill)', fontWeight: 700 }}
             >
               <FlaskConical size={18} color="var(--accent-teal)" />
               <span>Virtual Experiments</span>

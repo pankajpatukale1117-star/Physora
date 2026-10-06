@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass } from 'lucide-react';
+import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass, Dna } from 'lucide-react';
 import { PhysoraLogo } from './PhysoraLogo';
 
 interface NavbarProps {
@@ -9,6 +9,7 @@ interface NavbarProps {
   onExperimentsClick: () => void;
   onOpenFormulas: () => void;
   onOpenSearch: () => void;
+  onOpenAnatomy: () => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
 }
@@ -20,6 +21,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onExperimentsClick,
   onOpenFormulas,
   onOpenSearch,
+  onOpenAnatomy,
   theme,
   onToggleTheme
 }) => {
@@ -120,6 +122,27 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <FlaskConical size={15} />
               <span>Experiments</span>
+            </div>
+          </button>
+
+          <button onClick={onOpenAnatomy} className="nav-link">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Dna size={15} color="#10B981" />
+              <span>3D Anatomy</span>
+              <span
+                style={{
+                  fontSize: '0.62rem',
+                  fontWeight: 800,
+                  padding: '1px 5px',
+                  borderRadius: 10,
+                  background: 'rgba(16, 185, 129, 0.2)',
+                  color: '#34D399',
+                  border: '1px solid rgba(52, 211, 153, 0.35)',
+                  letterSpacing: '0.04em'
+                }}
+              >
+                3D
+              </span>
             </div>
           </button>
 
@@ -316,7 +339,36 @@ export const Navbar: React.FC<NavbarProps> = ({
               <ArrowRight size={15} color="var(--text-tertiary)" />
             </button>
 
-            {/* 3. Experiments */}
+            {/* 3. 3D Anatomy */}
+            <button
+              onClick={() => handleMobileNavClick(onOpenAnatomy)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-md)',
+                background: 'rgba(16, 185, 129, 0.08)',
+                border: '1px solid rgba(16, 185, 129, 0.25)',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Dna size={18} color="#10B981" />
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '0.95rem' }}>
+                    3D Human Anatomy
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: '#34D399' }}>
+                    Interactive 3D Body &amp; 8 Systems
+                  </span>
+                </div>
+              </div>
+              <ArrowRight size={15} color="#10B981" />
+            </button>
+
+            {/* 4. Experiments */}
             <button
               onClick={() => handleMobileNavClick(onExperimentsClick)}
               style={{

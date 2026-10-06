@@ -20,6 +20,7 @@ interface SearchModalProps {
   onSelectTopic: (topicId: string) => void;
   onSelectExperiment: (experimentId: string) => void;
   onOpenFormulas: () => void;
+  onOpenAnatomy?: (organId?: string) => void;
 }
 
 export const SearchModal: React.FC<SearchModalProps> = ({
@@ -27,7 +28,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   onClose,
   onSelectTopic,
   onSelectExperiment,
-  onOpenFormulas
+  onOpenFormulas,
+  onOpenAnatomy
 }) => {
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -266,6 +268,30 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             <BookOpen size={12} />
             <span>Formulas</span>
           </button>
+
+          {onOpenAnatomy && (
+            <button
+              onClick={() => {
+                onClose();
+                onOpenAnatomy();
+              }}
+              className="btn btn-sm"
+              style={{
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                color: '#059669',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                padding: '3px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4
+              }}
+            >
+              <Dna size={12} />
+              <span>3D Anatomy</span>
+            </button>
+          )}
         </div>
 
         {/* Results List */}

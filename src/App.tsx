@@ -13,6 +13,7 @@ import { TopicLabModal } from './components/TopicLabModal';
 import { ExperimentsView } from './components/experiments/ExperimentsView';
 import { FormulaBankModal } from './components/FormulaBankModal';
 import { SearchModal } from './components/SearchModal';
+import { AnatomyExplorerView } from './components/anatomy/AnatomyExplorerView';
 import { X } from 'lucide-react';
 
 export function App() {
@@ -36,6 +37,20 @@ export function App() {
 
   const [isFormulaBankOpen, setIsFormulaBankOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAnatomyOpen, setIsAnatomyOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      return hash.startsWith('#anatomy') || hash.startsWith('#biology-3d');
+    }
+    return false;
+  });
+  const [initialAnatomyOrganId, setInitialAnatomyOrganId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash.startsWith('#anatomy/')) return hash.replace('#anatomy/', '');
+    }
+    return null;
+  });
 
   // Clean Light-First Scientific Laboratory Theme Default
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -72,7 +87,14 @@ export function App() {
         if (id) {
           setSelectedExperimentId(id);
           setSelectedTopicId(null);
+          setIsAnatomyOpen(false);
         }
+      } else if (hash.startsWith('#anatomy') || hash.startsWith('#biology-3d')) {
+        const organId = hash.startsWith('#anatomy/') ? hash.replace('#anatomy/', '') : null;
+        setIsAnatomyOpen(true);
+        setInitialAnatomyOrganId(organId);
+        setSelectedTopicId(null);
+        setSelectedExperimentId(null);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -112,7 +134,24 @@ export function App() {
   const handleSelectExperiment = (expId: string) => {
     setSelectedExperimentId(expId);
     setSelectedTopicId(null);
+    setIsAnatomyOpen(false);
     window.location.hash = `#exp/${expId}`;
+  };
+
+  const handleOpenAnatomy = (organId?: string) => {
+    setIsAnatomyOpen(true);
+    setInitialAnatomyOrganId(organId || null);
+    setSelectedTopicId(null);
+    setSelectedExperimentId(null);
+    window.location.hash = organId ? `#anatomy/${organId}` : '#anatomy';
+  };
+
+  const handleCloseAnatomy = () => {
+    setIsAnatomyOpen(false);
+    setInitialAnatomyOrganId(null);
+    if (window.location.hash.startsWith('#anatomy') || window.location.hash.startsWith('#biology-3d')) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
   };
 
   const handleCloseExperiment = () => {
@@ -135,6 +174,7 @@ export function App() {
         onExperimentsClick={scrollToExperiments}
         onOpenFormulas={() => setIsFormulaBankOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenAnatomy={() => handleOpenAnatomy()}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
@@ -147,12 +187,14 @@ export function App() {
           onExploreSimulations={scrollToSimulations}
           onExploreExperiments={scrollToExperiments}
           onOpenFormulas={() => setIsFormulaBankOpen(true)}
+          onOpenAnatomy={() => handleOpenAnatomy()}
         />
 
         {/* 14 Curriculum Topics & 42-Simulation Discovery Library */}
         <SimulationLibrary
           onSelectTopic={handleSelectTopic}
           onOpenFormulas={() => setIsFormulaBankOpen(true)}
+          onOpenAnatomy={() => handleOpenAnatomy()}
         />
 
         {/* 6 Featured Micro-Laboratories */}
@@ -248,7 +290,15 @@ export function App() {
         </div>
       )}
 
-      {/* 7. Formula Bank & Variable Index Explorer Modal */}
+      {/* 7. Interactive 3D Human Anatomy Explorer */}
+      {isAnatomyOpen && (
+        <AnatomyExplorerView
+          onClose={handleCloseAnatomy}
+          initialStructureId={initialAnatomyOrganId}
+        />
+      )}
+
+      {/* 8. Formula Bank & Variable Index Explorer Modal */}
       {isFormulaBankOpen && (
         <FormulaBankModal
           onClose={() => setIsFormulaBankOpen(false)}
@@ -259,13 +309,14 @@ export function App() {
         />
       )}
 
-      {/* 8. Global Instant Search Modal (Cmd+K or /) */}
+      {/* 9. Global Instant Search Modal (Cmd+K or /) */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         onSelectTopic={handleSelectTopic}
         onSelectExperiment={handleSelectExperiment}
         onOpenFormulas={() => setIsFormulaBankOpen(true)}
+        onOpenAnatomy={handleOpenAnatomy}
       />
     </div>
   );
