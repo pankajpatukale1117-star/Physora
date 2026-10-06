@@ -26,7 +26,7 @@ export interface EditorialTeaching {
 
 export interface TopicData {
   id: string;
-  subject: 'maths' | 'physics';
+  subject: 'maths' | 'physics' | 'biology';
   title: string;
   category: string;
   shortDesc: string;
@@ -1310,6 +1310,347 @@ export const TOPICS_DATA: Record<string, TopicData> = {
         ]
       }
     ]
+  },
+
+  // ==========================================
+  // BIOLOGY (PhET COLORADO BENCHMARK)
+  // ==========================================
+  natural_selection: {
+    id: 'natural_selection',
+    subject: 'biology',
+    title: 'Natural Selection',
+    category: 'BIOLOGY',
+    shortDesc: 'Explore genetic mutations, predator pressures, camouflage, and evolutionary fitness.',
+    conceptIntro:
+      'Natural selection is the differential survival and reproduction of individuals due to differences in phenotype. Organisms with traits suited to their environment survive longer and pass favorable alleles to offspring.',
+    realWorldExample:
+      'Peppered moths changing color during the Industrial Revolution, or Arctic hares maintaining white fur in snow versus brown hares in forest tundra.',
+    keyFormulas: [
+      { formula: 'p^2 + 2pq + q^2 = 1', explanation: 'Hardy-Weinberg equilibrium for allele and genotype frequencies in a population.' },
+      { formula: 'w = 1 - s', explanation: 'Relative Darwinian fitness w relates to selection coefficient s against a trait.' },
+      { formula: '\\frac{dN}{dt} = rN\\left(1 - \\frac{N}{K}\\right)', explanation: 'Logistic population growth bounded by carrying capacity K.' }
+    ],
+    keyTakeaways: [
+      'Mutations introduce novel genetic variation randomly; natural selection filters traits non-randomly.',
+      'Camouflage directly affects predation risk based on the background biome.',
+      'Carrying capacity limits total population size when food or resources become scarce.'
+    ],
+    editorialTeaching: {
+      headline: 'Darwinian Survival & Camouflage Equilibrium',
+      story: 'Witness how a single genetic mutation (fur color) transforms a bunny population over generations when hunted by wolves across snow and savannah biomes.',
+      controlsGuide: 'Toggle the biome (Arctic Snow vs Savannah Grass), adjust predator count, and mutate fur color to observe shifts in trait frequencies.',
+      variablesAndOutputs: 'Monitors total living population, white fur percentage, brown fur percentage, and carrying capacity.',
+      modelAssumptions: 'Random mating without sexual selection; constant predation efficiency governed by contrast ratio.',
+      learningObjective: 'Understand how environmental selection pressure dictates allele frequencies over successive generations.'
+    },
+    simulations: [
+      {
+        id: 'bio_natural_selection',
+        name: 'Natural Selection: Bunnies & Predators',
+        tagline: 'PhET-inspired interactive bunny population with wolves and camouflage',
+        description: 'Observe real-time predator-prey dynamics, genetic fur color mutations, and survival shifts between Arctic and Savannah habitats.',
+        controls: [
+          { id: 'environment', label: 'Habitat Biome (0: Arctic, 1: Savannah)', min: 0, max: 1, step: 1, defaultValue: 0 },
+          { id: 'wolves', label: 'Predator Wolves', min: 0, max: 6, step: 1, defaultValue: 2 },
+          { id: 'mutation', label: 'Brown Fur Mutation (0: Off, 1: On)', min: 0, max: 1, step: 1, defaultValue: 1 },
+          { id: 'food', label: 'Food Abundance (%)', min: 20, max: 100, step: 10, defaultValue: 70, unit: '%' }
+        ],
+        telemetryLabels: [
+          { key: 'total_population', label: 'Total Bunnies' },
+          { key: 'white_fur_pct', label: 'White Trait' },
+          { key: 'brown_fur_pct', label: 'Brown Trait' },
+          { key: 'predator_count', label: 'Wolves' },
+          { key: 'carrying_capacity', label: 'Carrying Cap' }
+        ]
+      },
+      {
+        id: 'bio_mutation_drift',
+        name: 'Genetic Drift & Biome Adaptation',
+        tagline: 'Allele frequency trajectories in small versus large isolated populations',
+        description: 'Simulate how random chance and environmental contrast alter trait dominance independent of selective advantage.',
+        controls: [
+          { id: 'environment', label: 'Habitat Biome (0: Arctic, 1: Savannah)', min: 0, max: 1, step: 1, defaultValue: 1 },
+          { id: 'wolves', label: 'Predator Wolves', min: 0, max: 6, step: 1, defaultValue: 3 },
+          { id: 'mutation', label: 'Brown Fur Mutation', min: 0, max: 1, step: 1, defaultValue: 1 },
+          { id: 'food', label: 'Food Abundance (%)', min: 20, max: 100, step: 10, defaultValue: 80, unit: '%' }
+        ],
+        telemetryLabels: [
+          { key: 'total_population', label: 'Population N' },
+          { key: 'white_fur_pct', label: 'White Allele' },
+          { key: 'brown_fur_pct', label: 'Brown Allele' },
+          { key: 'predator_count', label: 'Predator Load' }
+        ]
+      },
+      {
+        id: 'bio_hardy_weinberg',
+        name: 'Hardy-Weinberg Population Equilibrium',
+        tagline: 'Mathematical allele frequency stability: p² + 2pq + q² = 1',
+        description: 'Examine population genetics under ideal assumptions with zero selection vs predator-induced pressure.',
+        controls: [
+          { id: 'environment', label: 'Habitat Biome', min: 0, max: 1, step: 1, defaultValue: 0 },
+          { id: 'wolves', label: 'Selection Pressure (Wolves)', min: 0, max: 6, step: 1, defaultValue: 0 },
+          { id: 'mutation', label: 'Allele Mutation Rate', min: 0, max: 1, step: 1, defaultValue: 1 },
+          { id: 'food', label: 'Carrying Capacity Support', min: 20, max: 100, step: 10, defaultValue: 90, unit: '%' }
+        ],
+        telemetryLabels: [
+          { key: 'total_population', label: 'Equilibrium N' },
+          { key: 'white_fur_pct', label: 'Allele p Freq' },
+          { key: 'brown_fur_pct', label: 'Allele q Freq' }
+        ]
+      }
+    ]
+  },
+
+  gene_expression: {
+    id: 'gene_expression',
+    subject: 'biology',
+    title: 'Gene Expression Essentials',
+    category: 'BIOLOGY',
+    shortDesc: 'DNA transcription, mRNA synthesis, transcription factor regulation, and ribosome translation.',
+    conceptIntro:
+      'Gene expression is the molecular pathway by which DNA instructions are transcribed into messenger RNA (mRNA) and translated into functional protein polymers.',
+    realWorldExample:
+      'Insulin production in human pancreatic beta cells triggered by rising blood glucose, or mRNA vaccines directing ribosomal protein synthesis.',
+    keyFormulas: [
+      { formula: '\\text{DNA} \\xrightarrow{\\text{RNA Pol}} \\text{mRNA} \\xrightarrow{\\text{Ribosome}} \\text{Protein}', explanation: 'Central Dogma of Molecular Biology.' },
+      { formula: '\\frac{d[P]}{dt} = k_{tl}[\\text{mRNA}] - k_{deg}[P]', explanation: 'Differential rate equation for cellular protein synthesis and turnover.' },
+      { formula: '\\theta = \\frac{[TF]^n}{K_d + [TF]^n}', explanation: 'Hill equation modeling transcription factor binding occupancy at the promoter.' }
+    ],
+    keyTakeaways: [
+      'Transcription factors bind to promoter sequences to recruit or block RNA Polymerase.',
+      'Ribosomes read mRNA codons in 5\' to 3\' direction, stringing amino acids into peptide chains.',
+      'Protein degradation by proteases prevents toxic accumulation and enables rapid cellular signaling.'
+    ],
+    editorialTeaching: {
+      headline: 'The Central Dogma: From Double Helix to Active Enzyme',
+      story: 'Explore the nanoscale molecular machine inside cells as RNA Polymerase unzips DNA, transcribes mRNA, and ribosomes assemble proteins in real-time.',
+      controlsGuide: 'Adjust positive transcription factor concentration, RNA polymerase affinity, and ribosome density to maximize protein yield.',
+      variablesAndOutputs: 'Tracks promoter binding state, transcription velocity, mRNA abundance, and active protein output.',
+      modelAssumptions: 'Prokaryotic/eukaryotic consensus promoter kinetics with first-order protease degradation.',
+      learningObjective: 'Grasp how transcriptional regulation controls cellular phenotype and enzyme concentrations.'
+    },
+    simulations: [
+      {
+        id: 'bio_gene_transcription',
+        name: 'Transcription & Translation Engine',
+        tagline: 'PhET-style molecular transcription bubble with ribosome translation',
+        description: 'Manipulate transcription factors, observe RNA Polymerase unzipping DNA, and watch ribosomes translate mRNA codons into proteins.',
+        controls: [
+          { id: 'tf_conc', label: 'Transcription Factor Conc (%)', min: 0, max: 100, step: 5, defaultValue: 65, unit: '%' },
+          { id: 'affinity', label: 'Polymerase Affinity (1: Lo, 3: Hi)', min: 1, max: 3, step: 1, defaultValue: 2 },
+          { id: 'ribosomes', label: 'Ribosome Density', min: 1, max: 8, step: 1, defaultValue: 4 },
+          { id: 'degradation', label: 'Protease Degradation (%)', min: 0, max: 80, step: 10, defaultValue: 30, unit: '%' }
+        ],
+        telemetryLabels: [
+          { key: 'tf_binding_status', label: 'Promoter State' },
+          { key: 'transcription_rate', label: 'Tx Velocity' },
+          { key: 'mrna_abundance', label: 'mRNA Level' },
+          { key: 'functional_protein_conc', label: 'Protein Output' },
+          { key: 'ribosome_activity', label: 'Polysomes' }
+        ]
+      },
+      {
+        id: 'bio_lac_operon',
+        name: 'Lac Operon Gene Machine',
+        tagline: 'Inducible gene switch regulated by lactose repressor and CAP activator',
+        description: 'Examine bacterial negative feedback loops where lactose binds to the repressor to permit RNA Polymerase transcription.',
+        controls: [
+          { id: 'tf_conc', label: 'Inducer (Lactose) Conc', min: 0, max: 100, step: 5, defaultValue: 80, unit: '%' },
+          { id: 'affinity', label: 'Operator Affinity', min: 1, max: 3, step: 1, defaultValue: 3 },
+          { id: 'ribosomes', label: 'Ribosome Count', min: 1, max: 8, step: 1, defaultValue: 5 },
+          { id: 'degradation', label: 'Enzyme Degradation', min: 0, max: 80, step: 10, defaultValue: 25, unit: '%' }
+        ],
+        telemetryLabels: [
+          { key: 'tf_binding_status', label: 'Repressor State' },
+          { key: 'transcription_rate', label: 'LacZ Transcripts' },
+          { key: 'functional_protein_conc', label: 'Beta-Gal Enzyme' }
+        ]
+      },
+      {
+        id: 'bio_protein_folding',
+        name: 'Ribosome Translation & Protein Folding',
+        tagline: 'Polypeptide chain elongation and tertiary globular folding',
+        description: 'Watch nascent amino acid chains exit the ribosomal tunnel and spontaneously fold into bioactive conformations.',
+        controls: [
+          { id: 'tf_conc', label: 'Gene Activation', min: 10, max: 100, step: 10, defaultValue: 75, unit: '%' },
+          { id: 'affinity', label: 'Transcription Speed', min: 1, max: 3, step: 1, defaultValue: 2 },
+          { id: 'ribosomes', label: 'Active Ribosomes', min: 2, max: 8, step: 1, defaultValue: 6 },
+          { id: 'degradation', label: 'Cellular Turnover', min: 0, max: 70, step: 10, defaultValue: 20, unit: '%' }
+        ],
+        telemetryLabels: [
+          { key: 'transcription_rate', label: 'Translation Rate' },
+          { key: 'functional_protein_conc', label: 'Folded Proteins' },
+          { key: 'ribosome_activity', label: 'Active Sites' }
+        ]
+      }
+    ]
+  },
+
+  membrane_transport: {
+    id: 'membrane_transport',
+    subject: 'biology',
+    title: 'Membrane Transport & Channels',
+    category: 'BIOLOGY',
+    shortDesc: 'Cellular diffusion, gated ion channels, and ATP-driven active transport pumps across the lipid bilayer.',
+    conceptIntro:
+      'The plasma membrane is a semi-permeable phospholipid bilayer that separates intracellular cytoplasm from extracellular fluid. Molecules cross via simple diffusion, facilitated channels, or energy-consuming active pumps.',
+    realWorldExample:
+      'Kidney nephrons filtering water via aquaporins, oral rehydration therapy utilizing sodium-glucose cotransporters, or nerve cells charging membranes via Na+/K+ pumps.',
+    keyFormulas: [
+      { formula: 'J = -D \\frac{dC}{dx}', explanation: 'Fick\'s First Law of diffusion: flux J is proportional to concentration gradient.' },
+      { formula: '\\Pi = iCRT', explanation: 'Van \'t Hoff equation for osmotic pressure across a semipermeable membrane.' },
+      { formula: '\\Delta G = RT\\ln\\frac{C_{in}}{C_{out}} + zFV_m', explanation: 'Free energy change for transporting charged ions across membrane voltage Vm.' }
+    ],
+    keyTakeaways: [
+      'Small nonpolar molecules diffuse directly through hydrophobic fatty acid tails.',
+      'Facilitated diffusion through channel proteins requires no energy and flows down the concentration gradient.',
+      'Active transport pumps (Na+/K+ ATPase) consume cellular ATP to move ions against concentration gradients.'
+    ],
+    editorialTeaching: {
+      headline: 'The Lipid Bilayer: Molecular Gateways of Life',
+      story: 'Explore how living cells maintain steep concentration gradients across a 5-nanometer fluid membrane using pore channels and ATP-powered molecular engines.',
+      controlsGuide: 'Adjust inside/outside solute concentrations, toggle the passive pore channel gate, and modulate cellular ATP power to drive ion pumps.',
+      variablesAndOutputs: 'Monitors concentration gradient delta, net diffusion flux, ATP consumption, and pump operating state.',
+      modelAssumptions: 'Fluid mosaic bilayer with thermal Brownian diffusion and Michaelis-Menten pump kinetics.',
+      learningObjective: 'Contrast passive diffusion, facilitated transport, and active transport mechanisms in cellular homeostasis.'
+    },
+    simulations: [
+      {
+        id: 'bio_membrane_diffusion',
+        name: 'Lipid Bilayer & Diffusion Dynamics',
+        tagline: 'PhET-calibrated cellular membrane with passive pores and active pumps',
+        description: 'Observe molecules moving across a phospholipid bilayer with selectable channel gates and ATP active pumps.',
+        controls: [
+          { id: 'conc_out', label: 'Extracellular Solute (C_out)', min: 10, max: 100, step: 5, defaultValue: 75, unit: 'mM' },
+          { id: 'conc_in', label: 'Intracellular Solute (C_in)', min: 5, max: 100, step: 5, defaultValue: 20, unit: 'mM' },
+          { id: 'channels_open', label: 'Channel Pore Gate (0: Gated, 1: Open)', min: 0, max: 1, step: 1, defaultValue: 1 },
+          { id: 'atp', label: 'Cellular ATP Energy Supply (%)', min: 0, max: 100, step: 10, defaultValue: 80, unit: '%' }
+        ],
+        telemetryLabels: [
+          { key: 'extracellular_conc', label: 'Outside Conc' },
+          { key: 'intracellular_conc', label: 'Inside Conc' },
+          { key: 'gradient_delta', label: 'Gradient ΔC' },
+          { key: 'diffusion_flux', label: 'Net Flux J' },
+          { key: 'pump_state', label: 'Pump Status' }
+        ]
+      },
+      {
+        id: 'bio_facilitated_channel',
+        name: 'Facilitated Ion Channels & Aquaporins',
+        tagline: 'Selective protein pores and carrier-mediated transport kinetics',
+        description: 'Investigate how gated transmembrane proteins accelerate solute passage without metabolic ATP expenditure.',
+        controls: [
+          { id: 'conc_out', label: 'Outside Solute', min: 10, max: 100, step: 5, defaultValue: 85, unit: 'mM' },
+          { id: 'conc_in', label: 'Inside Solute', min: 5, max: 80, step: 5, defaultValue: 15, unit: 'mM' },
+          { id: 'channels_open', label: 'Channel Gate (0: Closed, 1: Open)', min: 0, max: 1, step: 1, defaultValue: 1 },
+          { id: 'atp', label: 'ATP Reserve (Inactive for channels)', min: 0, max: 100, step: 10, defaultValue: 0, unit: '%' }
+        ],
+        telemetryLabels: [
+          { key: 'gradient_delta', label: 'Driving Force ΔC' },
+          { key: 'diffusion_flux', label: 'Channel Flux' },
+          { key: 'pump_state', label: 'Transport Mode' }
+        ]
+      },
+      {
+        id: 'bio_atp_pump',
+        name: 'Active Sodium-Potassium ATP Pump',
+        tagline: '3 Na⁺ out, 2 K⁺ in: electrogenic pump fueling cellular life',
+        description: 'Examine how ATP hydrolysis forces ions against steep thermodynamic gradients to establish membrane voltage.',
+        controls: [
+          { id: 'conc_out', label: 'Extracellular Na⁺', min: 20, max: 100, step: 5, defaultValue: 90, unit: 'mM' },
+          { id: 'conc_in', label: 'Intracellular Na⁺', min: 5, max: 60, step: 5, defaultValue: 10, unit: 'mM' },
+          { id: 'channels_open', label: 'Leak Channels (0: Off, 1: On)', min: 0, max: 1, step: 1, defaultValue: 0 },
+          { id: 'atp', label: 'ATP Power Level (%)', min: 10, max: 100, step: 10, defaultValue: 90, unit: '%' }
+        ],
+        telemetryLabels: [
+          { key: 'gradient_delta', label: 'Maintained ΔC' },
+          { key: 'diffusion_flux', label: 'Active Transport Rate' },
+          { key: 'pump_state', label: 'ATPase Hydrolysis' }
+        ]
+      }
+    ]
+  },
+
+  neuron: {
+    id: 'neuron',
+    subject: 'biology',
+    title: 'Neuron & Action Potential',
+    category: 'BIOLOGY',
+    shortDesc: 'Axon electrophysiology, voltage-gated Na+/K+ channels, and Hodgkin-Huxley action potential nerve impulses.',
+    conceptIntro:
+      'Neurons transmit electrical signals along their axons using voltage-gated ion channels. When a stimulus raises membrane potential past the -55 mV threshold, rapid sodium influx sparks an action potential spike.',
+    realWorldExample:
+      'Reflex actions when touching a hot stove, cardiac muscle electrical pacing, or local anesthetics like lidocaine blocking sodium channels to stop pain.',
+    keyFormulas: [
+      { formula: 'E_{ion} = \\frac{RT}{zF}\\ln\\frac{[\\text{Ion}]_{out}}{[\\text{Ion}]_{in}}', explanation: 'Nernst equilibrium potential for a specific ion species across the membrane.' },
+      { formula: 'C_m\\frac{dV}{dt} = I_{stim} - I_{Na} - I_K - I_L', explanation: 'Hodgkin-Huxley total ionic membrane current equation.' },
+      { formula: 'V_{rest} \\approx -70\\text{ mV}, \\quad V_{peak} \\approx +30\\text{ mV}', explanation: 'Resting polarized state versus depolarized action potential peak.' }
+    ],
+    keyTakeaways: [
+      'Resting potential is maintained at approximately -70 mV by Na+/K+ pumps and potassium leak channels.',
+      'Depolarization: Voltage-gated Na+ channels snap open, driving membrane potential up to +30 mV.',
+      'Repolarization: Delayed-rectifier K+ channels open, allowing K+ efflux to restore negative polarization.'
+    ],
+    editorialTeaching: {
+      headline: 'The Spark of Thought: Action Potentials in Real Time',
+      story: 'Trigger electrical stimuli on an axon cylinder, watch voltage-gated sodium and potassium channels gate ions, and trace the iconic action potential curve on a live oscilloscope.',
+      controlsGuide: 'Adjust electrical stimulus current above the 25 µA threshold to fire action potentials, and manipulate sodium/potassium channel conductances.',
+      variablesAndOutputs: 'Monitors instantaneous membrane voltage Vm (mV), channel gating activation states, and firing frequency (Hz).',
+      modelAssumptions: 'Calibrated Hodgkin-Huxley model at mammalian physiological temperature.',
+      learningObjective: 'Master the all-or-none principle of nerve transmission and the ion channel kinetics underlying neurobiology.'
+    },
+    simulations: [
+      {
+        id: 'bio_action_potential',
+        name: 'Action Potential Oscilloscope',
+        tagline: 'PhET-calibrated axon membrane with live voltage oscilloscope trace',
+        description: 'Deliver threshold stimulus pulses and visualize the rapid depolarization, repolarization, and refractory period of nerve impulses.',
+        controls: [
+          { id: 'stimulus', label: 'Stimulus Current (Threshold: 25 µA)', min: 0, max: 80, step: 5, defaultValue: 40, unit: 'µA' },
+          { id: 'na_conductance', label: 'Na⁺ Channel Conductance (g_Na)', min: 40, max: 160, step: 10, defaultValue: 120, unit: 'mS/cm²' },
+          { id: 'k_conductance', label: 'K⁺ Channel Conductance (g_K)', min: 10, max: 70, step: 5, defaultValue: 36, unit: 'mS/cm²' }
+        ],
+        telemetryLabels: [
+          { key: 'membrane_potential', label: 'Membrane V_m' },
+          { key: 'na_state', label: 'Na⁺ Activation' },
+          { key: 'k_state', label: 'K⁺ Activation' },
+          { key: 'firing_frequency', label: 'Firing Rate' },
+          { key: 'conduction_status', label: 'State' }
+        ]
+      },
+      {
+        id: 'bio_ion_gating',
+        name: 'Voltage-Gated Channel Kinetics',
+        tagline: 'Microscopic opening and inactivation gates of Na⁺ and K⁺ channels',
+        description: 'Observe individual channel pore conformations during threshold depolarization and refractory states.',
+        controls: [
+          { id: 'stimulus', label: 'Membrane Depolarization Stimulus', min: 10, max: 80, step: 5, defaultValue: 50, unit: 'µA' },
+          { id: 'na_conductance', label: 'Peak Na⁺ Permeability', min: 40, max: 160, step: 10, defaultValue: 130, unit: 'mS/cm²' },
+          { id: 'k_conductance', label: 'Delayed Rectifier K⁺ Density', min: 10, max: 70, step: 5, defaultValue: 40, unit: 'mS/cm²' }
+        ],
+        telemetryLabels: [
+          { key: 'membrane_potential', label: 'Axon Voltage' },
+          { key: 'na_state', label: 'Sodium Gate' },
+          { key: 'k_state', label: 'Potassium Gate' }
+        ]
+      },
+      {
+        id: 'bio_synapse_transmission',
+        name: 'Myelinated Axon Conduction',
+        tagline: 'Saltatory conduction across Nodes of Ranvier and synaptic terminal release',
+        description: 'Examine high-speed electrical propagation along myelin-insulated nerve fibers.',
+        controls: [
+          { id: 'stimulus', label: 'Action Potential Trigger', min: 20, max: 80, step: 5, defaultValue: 45, unit: 'µA' },
+          { id: 'na_conductance', label: 'Nodal Na⁺ Channel Cluster', min: 60, max: 160, step: 10, defaultValue: 140, unit: 'mS/cm²' },
+          { id: 'k_conductance', label: 'Paranodal K⁺ Channels', min: 15, max: 60, step: 5, defaultValue: 35, unit: 'mS/cm²' }
+        ],
+        telemetryLabels: [
+          { key: 'membrane_potential', label: 'Nodal Potential' },
+          { key: 'firing_frequency', label: 'Impulse Speed' },
+          { key: 'conduction_status', label: 'Saltatory State' }
+        ]
+      }
+    ]
   }
 };
 
@@ -1342,7 +1683,19 @@ export const ANIMATED_SIMULATION_IDS = new Set<string>([
   'em_lorentz_cyclotron',
   'em_faraday_induction',
   'vec_river_boat',
-  'optics_ydse'
+  'optics_ydse',
+  'bio_natural_selection',
+  'bio_mutation_drift',
+  'bio_hardy_weinberg',
+  'bio_gene_transcription',
+  'bio_lac_operon',
+  'bio_protein_folding',
+  'bio_membrane_diffusion',
+  'bio_facilitated_channel',
+  'bio_atp_pump',
+  'bio_action_potential',
+  'bio_ion_gating',
+  'bio_synapse_transmission'
 ]);
 
 export const isSimulationAnimated = (simId?: string): boolean => {

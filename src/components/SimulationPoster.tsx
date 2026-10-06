@@ -2,7 +2,7 @@ import React from 'react';
 
 interface SimulationPosterProps {
   topicId: string;
-  subject: 'maths' | 'physics';
+  subject: 'maths' | 'physics' | 'biology';
   title: string;
 }
 
@@ -571,6 +571,208 @@ export const SimulationPoster: React.FC<SimulationPosterProps> = ({ topicId, sub
           <rect x="200" y="105" width="130" height="34" rx="6" fill="#EFF6FF" stroke="#3B82F6" strokeWidth="1" />
           <text x="265" y="120" fontSize="9" fontWeight="800" fill="#1D4ED8" textAnchor="middle">Least Count = 0.01 cm</text>
           <text x="265" y="132" fontSize="8" fontWeight="600" fill="#64748B" textAnchor="middle">Main + (Vernier × LC)</text>
+        </svg>
+      );
+
+    // ==========================================
+    // BIOLOGY POSTERS (PhET COLORADO BENCHMARK)
+    // ==========================================
+    case 'natural_selection':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <defs>
+            <linearGradient id="bio-meadow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#DCFCE7" />
+              <stop offset="60%" stopColor="#BBF7D0" />
+              <stop offset="100%" stopColor="#4ADE80" />
+            </linearGradient>
+          </defs>
+          <rect width="360" height="160" fill="url(#bio-meadow)" />
+
+          {/* Distant Hills */}
+          <ellipse cx="90" cy="120" rx="140" ry="45" fill="#86EFAC" />
+          <ellipse cx="280" cy="125" rx="160" ry="50" fill="#4ADE80" />
+
+          {/* Wolf Silhouette in Distance */}
+          <g transform="translate(260, 80) scale(0.7)">
+            <ellipse cx="0" cy="0" rx="14" ry="7" fill="#334155" />
+            <polygon points="10,-4 20,-1 12,5" fill="#334155" />
+            <polygon points="7,-6 10,-14 13,-5" fill="#334155" />
+            <rect x="-8" y="5" width="3" height="8" fill="#334155" />
+            <rect x="6" y="5" width="3" height="8" fill="#334155" />
+          </g>
+
+          {/* Foreground Grass Clumps */}
+          <line x1="40" y1="140" x2="35" y2="128" stroke="#15803D" strokeWidth="2" strokeLinecap="round" />
+          <line x1="40" y1="140" x2="42" y2="125" stroke="#15803D" strokeWidth="2" strokeLinecap="round" />
+          <line x1="40" y1="140" x2="47" y2="130" stroke="#15803D" strokeWidth="2" strokeLinecap="round" />
+
+          <line x1="200" y1="145" x2="195" y2="132" stroke="#15803D" strokeWidth="2" strokeLinecap="round" />
+          <line x1="200" y1="145" x2="204" y2="130" stroke="#15803D" strokeWidth="2" strokeLinecap="round" />
+
+          {/* White Bunny (Arctic Trait) */}
+          <g transform="translate(100, 115)">
+            <ellipse cx="0" cy="0" rx="14" ry="10" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1.5" />
+            <circle cx="10" cy="-6" r="8" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1.5" />
+            <ellipse cx="8" cy="-16" rx="3" ry="7" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1" />
+            <ellipse cx="8" cy="-16" rx="1.5" ry="5" fill="#FBCFE8" />
+            <circle cx="13" cy="-7" r="1.5" fill="#1E293B" />
+            <circle cx="-14" cy="-2" r="4" fill="#FFFFFF" stroke="#CBD5E1" strokeWidth="1" />
+            <text x="0" y="22" fontSize="9" fontWeight="700" fill="#166534" textAnchor="middle">White Fur</text>
+          </g>
+
+          {/* Brown Bunny (Savannah Mutation) */}
+          <g transform="translate(180, 115)">
+            <ellipse cx="0" cy="0" rx="14" ry="10" fill="#92400E" stroke="#78350F" strokeWidth="1.5" />
+            <circle cx="10" cy="-6" r="8" fill="#92400E" stroke="#78350F" strokeWidth="1.5" />
+            <ellipse cx="8" cy="-16" rx="3" ry="7" fill="#92400E" stroke="#78350F" strokeWidth="1" />
+            <ellipse cx="8" cy="-16" rx="1.5" ry="5" fill="#D97706" />
+            <circle cx="13" cy="-7" r="1.5" fill="#1E293B" />
+            <circle cx="-14" cy="-2" r="4" fill="#92400E" stroke="#78350F" strokeWidth="1" />
+            <text x="0" y="22" fontSize="9" fontWeight="700" fill="#78350F" textAnchor="middle">Brown Mutation</text>
+          </g>
+
+          {/* Mathematical Badge */}
+          <rect x="18" y="14" width="135" height="30" rx="6" fill="rgba(255, 255, 255, 0.9)" stroke="#16A34A" strokeWidth="1.2" />
+          <text x="85" y="28" fontSize="9" fontWeight="800" fill="#15803D" textAnchor="middle">p² + 2pq + q² = 1</text>
+          <text x="85" y="39" fontSize="8" fontWeight="600" fill="#64748B" textAnchor="middle">Allele Equilibrium</text>
+        </svg>
+      );
+
+    case 'gene_expression':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <defs>
+            <linearGradient id="cell-bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#0F172A" />
+              <stop offset="100%" stopColor="#1E293B" />
+            </linearGradient>
+          </defs>
+          <rect width="360" height="160" fill="url(#cell-bg)" />
+
+          {/* DNA Double Helix Strands */}
+          <path d="M 20 60 Q 60 40 100 60 T 180 60 T 260 60 T 340 60" fill="none" stroke="#38BDF8" strokeWidth="2.5" />
+          <path d="M 20 60 Q 60 80 100 60 T 180 60 T 260 60 T 340 60" fill="none" stroke="#818CF8" strokeWidth="2.5" />
+
+          {/* Base Pair Rungs */}
+          {[40, 70, 100, 130, 230, 260, 290, 320].map((bx, i) => (
+            <line key={i} x1={bx} y1={52} x2={bx} y2={68} stroke={['#EF4444', '#10B981', '#3B82F6', '#F59E0B'][i % 4]} strokeWidth="2" />
+          ))}
+
+          {/* RNA Polymerase Transcription Bubble */}
+          <ellipse cx="180" cy="60" rx="32" ry="24" fill="#2563EB" stroke="#60A5FA" strokeWidth="2" opacity="0.9" />
+          <text x="180" y="63" fontSize="9" fontWeight="800" fill="#FFFFFF" textAnchor="middle">RNA POL</text>
+
+          {/* Emerging mRNA Transcript */}
+          <path d="M 180 84 Q 160 110 120 115 T 40 120" fill="none" stroke="#F43F5E" strokeWidth="3" />
+          <text x="80" y="110" fontSize="8" fontWeight="700" fill="#FECDD3">mRNA (5\'→3\')</text>
+
+          {/* Ribosome Translating */}
+          <ellipse cx="230" cy="115" rx="16" ry="12" fill="#059669" stroke="#34D399" strokeWidth="1.5" />
+          <ellipse cx="230" cy="132" rx="12" ry="8" fill="#059669" stroke="#34D399" strokeWidth="1.5" />
+          <text x="230" y="118" fontSize="7" fontWeight="800" fill="#FFFFFF" textAnchor="middle">RIBO</text>
+
+          {/* Protein Peptide Chain */}
+          {[1, 2, 3, 4, 5].map((aa) => (
+            <circle key={aa} cx={250 + aa * 8} cy={110 - aa * 5} r="4" fill={['#F59E0B', '#3B82F6', '#EC4899', '#10B981'][aa % 4]} stroke="#FFFFFF" strokeWidth="1" />
+          ))}
+
+          {/* Central Dogma Pill */}
+          <rect x="20" y="12" width="170" height="26" rx="5" fill="rgba(30, 41, 59, 0.9)" stroke="#38BDF8" strokeWidth="1" />
+          <text x="105" y="28" fontSize="9" fontWeight="800" fill="#38BDF8" textAnchor="middle">DNA → mRNA → Protein</text>
+        </svg>
+      );
+
+    case 'membrane_transport':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          {/* Extracellular Fluid (Top) */}
+          <rect x="0" y="0" width="360" height="60" fill="#E0F2FE" />
+          <text x="20" y="22" fontSize="9" fontWeight="800" fill="#0369A1">EXTRACELLULAR FLUID [High Solute]</text>
+
+          {/* Intracellular Fluid (Bottom) */}
+          <rect x="0" y="100" width="360" height="60" fill="#F0FDF4" />
+          <text x="20" y="145" fontSize="9" fontWeight="800" fill="#15803D">CYTOPLASM [Low Solute]</text>
+
+          {/* Phospholipid Bilayer Membrane */}
+          <rect x="0" y="60" width="360" height="40" fill="#FEF3C7" />
+          
+          {/* Lipid Heads Top & Bottom */}
+          {[10, 25, 40, 55, 70, 85, 100, 175, 190, 205, 220, 285, 300, 315, 330, 345].map((lx) => (
+            <g key={lx}>
+              <circle cx={lx} cy="60" r="4.5" fill="#F59E0B" />
+              <line x1={lx} y1="64" x2={lx} y2="76" stroke="#D97706" strokeWidth="1.5" />
+              <circle cx={lx} cy="100" r="4.5" fill="#F59E0B" />
+              <line x1={lx} y1="96" x2={lx} y2="84" stroke="#D97706" strokeWidth="1.5" />
+            </g>
+          ))}
+
+          {/* Transmembrane Channel Protein (Pore) */}
+          <rect x="115" y="52" width="14" height="56" rx="4" fill="#3B82F6" stroke="#1D4ED8" strokeWidth="1.2" />
+          <rect x="145" y="52" width="14" height="56" rx="4" fill="#3B82F6" stroke="#1D4ED8" strokeWidth="1.2" />
+          <text x="137" y="44" fontSize="8" fontWeight="800" fill="#1D4ED8" textAnchor="middle">Ion Channel</text>
+
+          {/* Solute moving down channel */}
+          <circle cx="137" cy="80" r="4.5" fill="#FACC15" stroke="#CA8A04" strokeWidth="1" />
+          <path d="M 137 32 L 137 46 M 134 42 L 137 47 L 140 42" fill="none" stroke="#0284C7" strokeWidth="1.5" strokeLinecap="round" />
+
+          {/* Active ATP Pump */}
+          <rect x="235" y="50" width="38" height="60" rx="6" fill="#8B5CF6" stroke="#6D28D9" strokeWidth="1.5" />
+          <text x="254" y="44" fontSize="8" fontWeight="800" fill="#6D28D9" textAnchor="middle">Na⁺/K⁺ Pump</text>
+          <circle cx="254" cy="98" r="6" fill="#F59E0B" />
+          <text x="254" y="101" fontSize="7" fontWeight="800" fill="#000" textAnchor="middle">ATP</text>
+
+          {/* Floating Ions */}
+          <circle cx="50" cy="35" r="4.5" fill="#38BDF8" />
+          <circle cx="80" cy="25" r="4.5" fill="#38BDF8" />
+          <circle cx="200" cy="30" r="4.5" fill="#38BDF8" />
+          <circle cx="310" cy="38" r="4.5" fill="#38BDF8" />
+          <circle cx="70" cy="125" r="4.5" fill="#38BDF8" />
+        </svg>
+      );
+
+    case 'neuron':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <defs>
+            <linearGradient id="neuron-grad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#0B0F19" />
+              <stop offset="100%" stopColor="#1E1B4B" />
+            </linearGradient>
+          </defs>
+          <rect width="360" height="160" fill="url(#neuron-grad)" />
+
+          {/* Neuron Cell Body (Soma) */}
+          <circle cx="55" cy="80" r="22" fill="#F59E0B" opacity="0.85" stroke="#FDE68A" strokeWidth="2" />
+          <circle cx="55" cy="80" r="8" fill="#D97706" />
+
+          {/* Branching Dendrites */}
+          <line x1="40" y1="65" x2="15" y2="45" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
+          <line x1="45" y1="95" x2="20" y2="115" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
+          <line x1="33" y1="80" x2="10" y2="80" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" />
+
+          {/* Axon Cylinder */}
+          <rect x="75" y="74" width="270" height="12" rx="3" fill="#1E293B" stroke="#F59E0B" strokeWidth="1" />
+
+          {/* Myelin Sheaths */}
+          <rect x="90" y="68" width="45" height="24" rx="5" fill="#3B82F6" opacity="0.8" stroke="#93C5FD" strokeWidth="1.2" />
+          <rect x="150" y="68" width="45" height="24" rx="5" fill="#3B82F6" opacity="0.8" stroke="#93C5FD" strokeWidth="1.2" />
+          <rect x="210" y="68" width="45" height="24" rx="5" fill="#3B82F6" opacity="0.8" stroke="#93C5FD" strokeWidth="1.2" />
+          <rect x="270" y="68" width="45" height="24" rx="5" fill="#3B82F6" opacity="0.8" stroke="#93C5FD" strokeWidth="1.2" />
+
+          {/* Nodes of Ranvier Gaps (Action Potential Spark) */}
+          <circle cx="142" cy="80" r="5" fill="#FACC15" />
+          <line x1="142" y1="70" x2="142" y2="90" stroke="#FEF08A" strokeWidth="2" />
+
+          {/* Oscilloscope Inset Window */}
+          <rect x="200" y="102" width="145" height="50" rx="5" fill="#020617" stroke="#38BDF8" strokeWidth="1" />
+          <line x1="200" y1="135" x2="345" y2="135" stroke="#334155" strokeWidth="1" strokeDasharray="2 2" />
+          <text x="206" y="112" fontSize="7" fontWeight="700" fill="#38BDF8">V_m (mV) Trace</text>
+          
+          {/* Action Potential Spike Curve */}
+          <path d="M 205 135 L 240 135 Q 260 135 270 110 Q 275 106 280 138 Q 285 142 295 135 L 340 135" fill="none" stroke="#FACC15" strokeWidth="2" />
+          <circle cx="273" cy="108" r="2.5" fill="#EF4444" />
+          <text x="290" y="114" fontSize="7" fontWeight="800" fill="#EF4444">+30 mV</text>
         </svg>
       );
 

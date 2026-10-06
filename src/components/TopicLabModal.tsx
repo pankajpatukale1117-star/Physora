@@ -328,7 +328,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   };
 
   const isMath = topic.subject === 'maths';
-  const accentColor = isMath ? 'var(--electric-violet)' : 'var(--electric-blue)';
+  const isBiology = topic.subject === 'biology';
+  const accentColor = isBiology ? '#10B981' : isMath ? 'var(--electric-violet)' : 'var(--electric-blue)';
 
   if (isFullWindow) {
     const editorial: EditorialTeaching = topic.editorialTeaching || {
@@ -532,6 +533,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   <option value="waves">Waves</option>
                   <option value="optics">Optics &amp; Light</option>
                   <option value="thermodynamics">Thermodynamics</option>
+                </optgroup>
+                <optgroup label="Biology">
+                  <option value="natural_selection">Natural Selection</option>
+                  <option value="gene_expression">Gene Expression</option>
+                  <option value="membrane_transport">Membrane Transport</option>
+                  <option value="neuron">Neuron &amp; Action Potential</option>
                 </optgroup>
               </select>
 
@@ -1473,6 +1480,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 <option value="waves">Waves</option>
                 <option value="optics">Optics &amp; Light</option>
                 <option value="thermodynamics">Thermodynamics</option>
+              </optgroup>
+              <optgroup label="Biology">
+                <option value="natural_selection">Natural Selection</option>
+                <option value="gene_expression">Gene Expression</option>
+                <option value="membrane_transport">Membrane Transport</option>
+                <option value="neuron">Neuron &amp; Action Potential</option>
               </optgroup>
             </select>
 

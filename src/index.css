@@ -450,6 +450,18 @@ body {
   border-color: rgba(165, 180, 252, 0.3);
 }
 
+.badge-biology {
+  background: #ECFDF5;
+  color: #047857;
+  border-color: #A7F3D0;
+}
+
+[data-theme="dark"] .badge-biology {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34D399;
+  border-color: rgba(52, 211, 153, 0.3);
+}
+
 /* ==========================================================================
    KaTeX & Mathematical Typography
    ========================================================================== */

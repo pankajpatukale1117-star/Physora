@@ -5,8 +5,8 @@ import {
   Compass,
   BookOpen,
   Play,
-  FlaskConical,
-  Target
+  Target,
+  Dna
 } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { SimulationPoster } from './SimulationPoster';
@@ -21,7 +21,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
   onOpenFormulas
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState<'All' | 'Physics' | 'Mathematics'>('All');
+  const [selectedSubject, setSelectedSubject] = useState<'All' | 'Physics' | 'Mathematics' | 'Biology'>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   // Available topics
@@ -33,6 +33,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
       // Subject filter
       if (selectedSubject === 'Physics' && t.subject !== 'physics') return false;
       if (selectedSubject === 'Mathematics' && t.subject !== 'maths') return false;
+      if (selectedSubject === 'Biology' && t.subject !== 'biology') return false;
 
       // Category filter
       if (selectedCategory !== 'All' && t.category !== selectedCategory) return false;
@@ -68,11 +69,11 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
           <div style={{ display: 'inline-flex', marginBottom: 12 }}>
             <span className="badge badge-primary">
               <Atom size={13} />
-              <span>Simulations Catalog • 42 Interactive Models</span>
+              <span>Simulations Catalog • 54 Interactive Models</span>
             </span>
           </div>
           <h2 className="text-h1" style={{ marginBottom: 10 }}>
-            Interactive Simulations for <span style={{ color: 'var(--brand-primary)' }}>Physics &amp; Mathematics</span>
+            Interactive Simulations for <span style={{ color: 'var(--brand-primary)' }}>Physics, Math &amp; Biology</span>
           </h2>
           <p
             className="text-body"
@@ -158,12 +159,12 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
             </div>
           </div>
 
-          {/* Card 3: Discovery Experiments */}
+          {/* Card 3: Biology */}
           <div
-            className="phet-category-card"
+            className={`phet-category-card ${selectedSubject === 'Biology' ? 'active' : ''}`}
             onClick={() => {
-              const el = document.getElementById('experiments-lab');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
+              setSelectedSubject('Biology');
+              setSelectedCategory('All');
             }}
           >
             <div
@@ -171,22 +172,22 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                 width: 44,
                 height: 44,
                 borderRadius: 'var(--radius-md)',
-                background: 'var(--accent-teal-soft)',
-                color: 'var(--accent-teal)',
+                background: 'var(--accent-success-soft, #ECFDF5)',
+                color: 'var(--accent-success, #059669)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexShrink: 0
               }}
             >
-              <FlaskConical size={24} />
+              <Dna size={24} />
             </div>
             <div>
               <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                Discovery Labs
+                Biology
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                Predict → Experiment → Explain (8 Labs)
+                Natural Selection, Genetics, Neurons (12 Sims)
               </div>
             </div>
           </div>
@@ -219,7 +220,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                 Class 9–11 &amp; JEE
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                Full Standard &amp; Advanced Syllabus (42 Sims)
+                Full Standard &amp; Advanced Syllabus (54 Sims)
               </div>
             </div>
           </div>
@@ -249,12 +250,17 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
           >
             {/* Subject Tabs */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {(['All', 'Physics', 'Mathematics'] as const).map((sub) => {
+              {(['All', 'Physics', 'Mathematics', 'Biology'] as const).map((sub) => {
                 const count =
                   sub === 'All'
                     ? topics.length
-                    : topics.filter((t) => (sub === 'Physics' ? t.subject === 'physics' : t.subject === 'maths'))
-                        .length;
+                    : topics.filter((t) =>
+                        sub === 'Physics'
+                          ? t.subject === 'physics'
+                          : sub === 'Mathematics'
+                          ? t.subject === 'maths'
+                          : t.subject === 'biology'
+                      ).length;
                 const active = selectedSubject === sub;
                 return (
                   <button
@@ -425,7 +431,11 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                   >
                     <span
                       className={`badge ${
-                        topic.subject === 'physics' ? 'badge-physics' : 'badge-math'
+                        topic.subject === 'physics'
+                          ? 'badge-physics'
+                          : topic.subject === 'biology'
+                          ? 'badge-biology'
+                          : 'badge-math'
                       }`}
                       style={{
                         fontSize: '0.72rem',
@@ -433,7 +443,11 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                         boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
                       }}
                     >
-                      {topic.subject === 'physics' ? 'Physics' : 'Mathematics'}
+                      {topic.subject === 'physics'
+                        ? 'Physics'
+                        : topic.subject === 'biology'
+                        ? 'Biology'
+                        : 'Mathematics'}
                     </span>
                     <span
                       className="badge font-mono"

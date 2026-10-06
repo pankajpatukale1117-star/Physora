@@ -5,7 +5,7 @@ import { MathView } from './MathView';
 interface FormulaItem {
   id: string;
   name: string;
-  category: 'Physics' | 'Mathematics';
+  category: 'Physics' | 'Mathematics' | 'Biology';
   domain: string;
   latex: string;
   plainEnglish: string;
@@ -295,6 +295,69 @@ const FORMULAS_DATA: FormulaItem[] = [
       { sym: 'S_n', name: 'Cumulative Total', unit: 'Total sum' }
     ],
     targetTopicId: 'sequences'
+  },
+  {
+    id: 'f-hardy-weinberg',
+    name: 'Hardy-Weinberg Equilibrium',
+    category: 'Biology',
+    domain: 'Genetics & Evolution',
+    latex: 'p^2 + 2pq + q^2 = 1 \\quad \\text{and} \\quad p + q = 1',
+    plainEnglish: 'Homozygous Dominant + Heterozygous + Homozygous Recessive = 100% of Population',
+    description: 'Predicts genotype frequencies in a non-evolving diploid gene pool without natural selection, mutation, or migration.',
+    variables: [
+      { sym: 'p', name: 'Dominant Allele Frequency (A)', unit: 'ratio (0-1)' },
+      { sym: 'q', name: 'Recessive Allele Frequency (a)', unit: 'ratio (0-1)' },
+      { sym: '2pq', name: 'Heterozygote Frequency (Aa)', unit: 'ratio (0-1)' }
+    ],
+    targetTopicId: 'natural_selection'
+  },
+  {
+    id: 'f-gene-expression',
+    name: 'Transcription Kinetics & Hill Equation',
+    category: 'Biology',
+    domain: 'Molecular Genetics',
+    latex: '\\frac{d[\\text{mRNA}]}{dt} = V_{max} \\frac{[\\text{TF}]^n}{K_d^n + [\\text{TF}]^n} - k_{deg}[\\text{mRNA}]',
+    plainEnglish: 'mRNA Rate = (Max Synthesis × TF Affinity) − Degradation Rate',
+    description: 'Quantifies gene expression rate as RNA polymerase and transcription factor complexes bind DNA promoter sites.',
+    variables: [
+      { sym: '[\\text{mRNA}]', name: 'Messenger RNA Abundance', unit: 'nM' },
+      { sym: '[\\text{TF}]', name: 'Transcription Factor Concentration', unit: 'nM' },
+      { sym: 'K_d', name: 'Dissociation Constant', unit: 'nM' },
+      { sym: 'k_{deg}', name: 'mRNA Half-life Degradation Constant', unit: 's⁻¹' }
+    ],
+    targetTopicId: 'gene_expression'
+  },
+  {
+    id: 'f-ficks-law',
+    name: "Fick's First Law of Membrane Permeability",
+    category: 'Biology',
+    domain: 'Cell Physiology',
+    latex: 'J = -P \\cdot \\Delta C = -\\frac{D}{h}(C_{out} - C_{in})',
+    plainEnglish: 'Diffusion Flux = Permeability × Concentration Difference',
+    description: 'Determines the net rate of uncharged solute flux diffusing down its chemical gradient across a phospholipid bilayer.',
+    variables: [
+      { sym: 'J', name: 'Solute Flux Density', unit: 'mol/(m²·s)' },
+      { sym: 'P', name: 'Membrane Permeability Coefficient', unit: 'm/s' },
+      { sym: '\\Delta C', name: 'Concentration Gradient', unit: 'mol/m³' },
+      { sym: 'h', name: 'Membrane Thickness', unit: 'nm' }
+    ],
+    targetTopicId: 'membrane_transport'
+  },
+  {
+    id: 'f-nernst-equation',
+    name: 'Nernst Equilibrium Potential',
+    category: 'Biology',
+    domain: 'Neurophysiology',
+    latex: 'E_{ion} = \\frac{RT}{zF} \\ln \\left( \\frac{[\\text{Ion}]_{out}}{[\\text{Ion}]_{in}} \\right)',
+    plainEnglish: 'Equilibrium Voltage = (Gas Constant × Temp ÷ Charge) × ln(Outside ÷ Inside)',
+    description: 'Calculates the exact electrical membrane potential that balances the chemical concentration gradient for a specific ion across an axon membrane.',
+    variables: [
+      { sym: 'E_{ion}', name: 'Reversal Potential', unit: 'mV' },
+      { sym: 'z', name: 'Ion Valence Charge (+1 for Na⁺/K⁺, +2 for Ca²⁺)', unit: 'dimensionless' },
+      { sym: '[\\text{Ion}]_{out}', name: 'Extracellular Concentration', unit: 'mM' },
+      { sym: '[\\text{Ion}]_{in}', name: 'Intracellular Cytoplasm Concentration', unit: 'mM' }
+    ],
+    targetTopicId: 'neuron'
   }
 ];
 
@@ -305,7 +368,7 @@ interface FormulaBankModalProps {
 
 export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onSelectTopic }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<'All' | 'Physics' | 'Mathematics'>('All');
+  const [activeCategory, setActiveCategory] = useState<'All' | 'Physics' | 'Mathematics' | 'Biology'>('All');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCopyLatex = (id: string, latex: string) => {
@@ -433,7 +496,7 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
         >
           {/* Category Tabs */}
           <div style={{ display: 'flex', gap: 6 }}>
-            {(['All', 'Physics', 'Mathematics'] as const).map((cat) => (
+            {(['All', 'Physics', 'Mathematics', 'Biology'] as const).map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
@@ -480,6 +543,7 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
         <div style={{ padding: '24px 28px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {filteredFormulas.map((item) => {
             const isPhysics = item.category === 'Physics';
+            const isBiology = item.category === 'Biology';
 
             return (
               <div
@@ -500,7 +564,7 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span
-                      className={`badge ${isPhysics ? 'badge-physics' : 'badge-math'}`}
+                      className={`badge ${isPhysics ? 'badge-physics' : isBiology ? 'badge-biology' : 'badge-math'}`}
                       style={{
                         fontSize: '0.72rem',
                         fontWeight: 700

@@ -15,6 +15,12 @@ import {
   renderSingleSlitDiffraction,
   renderThinFilmInterference
 } from './renderers/waveOptics';
+import {
+  renderNaturalSelection,
+  renderGeneExpression,
+  renderMembraneTransport,
+  renderNeuron
+} from './renderers/biology';
 
 export interface SimControlDef {
   id: string;
@@ -591,6 +597,31 @@ export const CanvasSimulator: React.FC<CanvasSimulatorProps> = ({
           break;
         case 'optics_thin_film_interference':
           renderThinFilmInterference(ctx, w, h, params, onTelemetryUpdate);
+          break;
+
+        // --- BIOLOGY (PhET COLORADO BENCHMARK) ---
+        case 'bio_natural_selection':
+        case 'bio_mutation_drift':
+        case 'bio_hardy_weinberg':
+          renderNaturalSelection(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+
+        case 'bio_gene_transcription':
+        case 'bio_lac_operon':
+        case 'bio_protein_folding':
+          renderGeneExpression(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+
+        case 'bio_membrane_diffusion':
+        case 'bio_facilitated_channel':
+        case 'bio_atp_pump':
+          renderMembraneTransport(ctx, w, h, params, t, onTelemetryUpdate);
+          break;
+
+        case 'bio_action_potential':
+        case 'bio_ion_gating':
+        case 'bio_synapse_transmission':
+          renderNeuron(ctx, w, h, params, t, onTelemetryUpdate);
           break;
 
         default:

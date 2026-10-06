@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Atom, FlaskConical, ArrowRight, BookOpen } from 'lucide-react';
+import { Search, X, Atom, FlaskConical, ArrowRight, BookOpen, Dna } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { EXPERIMENTS_DATA } from '../data/experimentsData';
 
@@ -10,7 +10,7 @@ interface SearchResultItem {
   subtitle: string;
   topicId: string;
   category: string;
-  subject: 'Physics' | 'Mathematics';
+  subject: 'Physics' | 'Mathematics' | 'Biology';
   keywords: string[];
 }
 
@@ -46,7 +46,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         subtitle: topic.shortDesc,
         topicId: topic.id,
         category: topic.category,
-        subject: topic.subject === 'physics' ? 'Physics' : 'Mathematics',
+        subject: topic.subject === 'physics' ? 'Physics' : topic.subject === 'biology' ? 'Biology' : 'Mathematics',
         keywords: [
           topic.title.toLowerCase(),
           topic.category.toLowerCase(),
@@ -64,7 +64,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           subtitle: `${sim.tagline} • Part of ${topic.title}`,
           topicId: topic.id,
           category: topic.title,
-          subject: topic.subject === 'physics' ? 'Physics' : 'Mathematics',
+          subject: topic.subject === 'physics' ? 'Physics' : topic.subject === 'biology' ? 'Biology' : 'Mathematics',
           keywords: [
             sim.name.toLowerCase(),
             sim.tagline.toLowerCase(),
@@ -229,7 +229,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-tertiary)' }}>
             Quick:
           </span>
-          {['Projectile', 'Velocity', 'Force', 'Optics', 'Vectors', 'Hooke', 'Trigonometry'].map((tag) => (
+          {['Projectile', 'Velocity', 'Natural Selection', 'Genetics', 'Force', 'Optics', 'Vectors', 'Membrane', 'Trigonometry'].map((tag) => (
             <button
               key={tag}
               onClick={() => setQuery(tag)}
@@ -331,6 +331,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                           ? 'var(--accent-teal-soft)'
                           : item.subject === 'Physics'
                           ? 'var(--brand-primary-soft)'
+                          : item.subject === 'Biology'
+                          ? 'rgba(16, 185, 129, 0.16)'
                           : 'var(--electric-violet-soft)',
                       display: 'flex',
                       alignItems: 'center',
@@ -340,6 +342,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   >
                     {item.type === 'experiment' ? (
                       <FlaskConical size={18} color="var(--accent-teal)" />
+                    ) : item.subject === 'Biology' ? (
+                      <Dna size={18} color="#10B981" />
                     ) : (
                       <Atom
                         size={18}
@@ -371,6 +375,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                             ? 'badge-primary'
                             : item.subject === 'Physics'
                             ? 'badge-physics'
+                            : item.subject === 'Biology'
+                            ? 'badge-biology'
                             : 'badge-math'
                         }`}
                         style={{ fontSize: '0.68rem', padding: '2px 6px' }}
@@ -424,7 +430,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             color: 'var(--text-tertiary)'
           }}
         >
-          <span>42 Interactive Simulations • 8 Discovery Labs</span>
+          <span>54 Interactive Simulations • 8 Discovery Labs</span>
           <span className="font-mono">Physora Laboratory</span>
         </div>
       </div>
