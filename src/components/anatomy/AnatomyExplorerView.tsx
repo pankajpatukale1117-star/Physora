@@ -18,7 +18,10 @@ import {
   Pause,
   Info,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  SkipBack,
+  SkipForward,
+  Sliders
 } from 'lucide-react';
 import type {
   AnatomicalSystemId,
@@ -73,10 +76,14 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   const [presetView, setPresetView] = useState<'front' | 'back' | 'left' | 'right' | 'top' | 'reset' | null>(null);
   const [detailLevel, setDetailLevel] = useState<DetailLevel>('overview');
 
+  // Layer Separation / Exploded View
+  const [layerSeparation, setLayerSeparation] = useState(0.0);
+
   // Biological Process Animation
   const [isProcessPlaying, setIsProcessPlaying] = useState(false);
   const [processSpeed, setProcessSpeed] = useState(1.0);
   const [currentProcessStageIndex, setCurrentProcessStageIndex] = useState(0);
+  const [processStepTick, setProcessStepTick] = useState(0);
 
   // UI Panels
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
@@ -98,6 +105,30 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     }, 2800 / processSpeed);
     return () => clearInterval(interval);
   }, [isProcessPlaying, processSpeed, selectedStructure]);
+
+  // Step biological process forward
+  const handleStepForward = () => {
+    setProcessStepTick((prev) => prev + 1);
+    if (selectedStructure?.processConfig) {
+      setCurrentProcessStageIndex((prev) => (prev + 1) % (selectedStructure.processConfig?.stages.length || 1));
+    }
+  };
+
+  // Step biological process backward
+  const handleStepBackward = () => {
+    setProcessStepTick((prev) => prev - 1);
+    if (selectedStructure?.processConfig) {
+      const len = selectedStructure.processConfig?.stages.length || 1;
+      setCurrentProcessStageIndex((prev) => (prev - 1 + len) % len);
+    }
+  };
+
+  // Reset biological process
+  const handleResetProcess = () => {
+    setIsProcessPlaying(false);
+    setCurrentProcessStageIndex(0);
+    setProcessStepTick(0);
+  };
 
   // Handle Isolation mode toggle
   const toggleIsolate = () => {
@@ -337,6 +368,25 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               </button>
             ))}
           </div>
+
+          {/* Anatomical Layer Separation / Exploded View Slider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6, paddingLeft: 8, borderLeft: '1px solid rgba(255, 255, 255, 0.12)' }}>
+            <Sliders size={13} color="#38BDF8" />
+            <span style={{ fontSize: '0.70rem', color: '#CBD5E1', fontWeight: 600 }}>Explode:</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.02"
+              value={layerSeparation}
+              onChange={(e) => setLayerSeparation(parseFloat(e.target.value))}
+              style={{ width: 68, accentColor: '#38BDF8', cursor: 'pointer' }}
+              title="Anatomical Layer Separation / Exploded View"
+            />
+            <span style={{ fontSize: '0.68rem', color: '#38BDF8', fontFamily: 'monospace', minWidth: 26 }}>
+              {Math.round(layerSeparation * 100)}%
+            </span>
+          </div>
         </div>
 
         {/* Right: Tools & Layers Toggle */}
@@ -425,8 +475,10 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
           systemOpacity={systemOpacity}
           isIsolated={isIsolated}
           showInternal={showInternal}
+          layerSeparation={layerSeparation}
           isProcessPlaying={isProcessPlaying}
           processSpeed={processSpeed}
+          processStepTick={processStepTick}
           detailLevel={detailLevel}
           presetView={presetView}
           onPresetViewHandled={() => setPresetView(null)}
@@ -441,23 +493,45 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 50,
-              background: 'rgba(15, 23, 42, 0.92)',
-              backdropFilter: 'blur(12px)',
+              background: 'rgba(15, 23, 42, 0.94)',
+              backdropFilter: 'blur(14px)',
               border: '1px solid rgba(16, 185, 129, 0.35)',
-              padding: '10px 18px',
+              padding: '8px 18px',
               borderRadius: 30,
               display: 'flex',
               alignItems: 'center',
-              gap: 14,
-              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.6)',
-              maxWidth: '90vw'
+              gap: 10,
+              boxShadow: '0 12px 32px rgba(0, 0, 0, 0.65)',
+              maxWidth: '92vw'
             }}
           >
+            {/* Step Backward */}
+            <button
+              onClick={handleStepBackward}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#CBD5E1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+              title="Previous Step / Stage"
+            >
+              <SkipBack size={15} />
+            </button>
+
+            {/* Play / Pause */}
             <button
               onClick={() => setIsProcessPlaying((prev) => !prev)}
               style={{
-                width: 36,
-                height: 36,
+                width: 38,
+                height: 38,
                 borderRadius: '50%',
                 background: isProcessPlaying ? '#EF4444' : '#10B981',
                 border: 'none',
@@ -473,7 +547,49 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               {isProcessPlaying ? <Pause size={18} /> : <Play size={18} style={{ marginLeft: 2 }} />}
             </button>
 
-            <div>
+            {/* Step Forward */}
+            <button
+              onClick={handleStepForward}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#CBD5E1',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+              title="Next Step / Stage"
+            >
+              <SkipForward size={15} />
+            </button>
+
+            {/* Reset */}
+            <button
+              onClick={handleResetProcess}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#94A3B8',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+              title="Reset Animation"
+            >
+              <RotateCcw size={14} />
+            </button>
+
+            <div style={{ marginLeft: 4 }}>
               <div style={{ fontSize: '0.80rem', fontWeight: 800, color: '#FFFFFF', display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>{selectedStructure.processConfig?.name}</span>
                 <span style={{ fontSize: '0.68rem', color: '#10B981', fontFamily: 'monospace' }}>
@@ -891,6 +1007,28 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                   <span>{showInternal ? 'Hide Internal Cavities' : 'Show Internal Structures'}</span>
                 </button>
               )}
+
+              {/* EXPLODED LAYER SEPARATION QUICK TOGGLE */}
+              <button
+                onClick={() => setLayerSeparation((prev) => (prev > 0.1 ? 0 : 0.85))}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '8px 14px',
+                  borderRadius: 8,
+                  background: layerSeparation > 0.1 ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                  color: layerSeparation > 0.1 ? '#38BDF8' : '#E2E8F0',
+                  border: layerSeparation > 0.1 ? '1px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.12)',
+                  fontWeight: 650,
+                  fontSize: '0.80rem',
+                  cursor: 'pointer'
+                }}
+              >
+                <Sliders size={15} />
+                <span>{layerSeparation > 0.1 ? 'Collapse Anatomical Layers' : 'Explode Anatomical Layers'}</span>
+              </button>
 
               {/* BIOLOGICAL PROCESS ANIMATION TOGGLE */}
               {selectedStructure.hasProcessAnimation && (
