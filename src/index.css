@@ -1046,3 +1046,150 @@ input[type="range"]::-moz-range-thumb {
   box-shadow: 0 0 0 2px var(--brand-primary-border);
 }
 
+/* ==========================================================================
+   Simulation Stage Floating HUD & Playback Timeline Bar
+   ========================================================================== */
+
+.throughline-hud-panel {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.28), 0 4px 12px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.throughline-timeline-bar {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35), 0 3px 10px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 8px 18px;
+  z-index: 70;
+}
+
+/* ==========================================================================
+   MOBILE-ONLY SIMULATION CANVAS OVERLAYS
+   Hidden on desktop (>= 768px). Visible on mobile (< 768px).
+   Desktop uses sidebar/docked controls — no canvas overlays.
+   ========================================================================== */
+
+@media (min-width: 768px) {
+  .mobile-touch-hud-row,
+  .canvas-touch-badge,
+  .canvas-touch-actions,
+  .canvas-param-selector,
+  .canvas-nudge-group {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .mobile-touch-hud-row {
+    display: flex !important;
+    position: absolute;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 20;
+    gap: 8px;
+  }
+
+  .canvas-touch-badge {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+    pointer-events: auto;
+  }
+
+  .canvas-touch-actions {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    pointer-events: auto;
+  }
+
+  .canvas-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .canvas-param-selector {
+    display: flex !important;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    max-width: calc(100vw - 110px);
+    pointer-events: auto;
+    padding: 2px 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .canvas-param-selector::-webkit-scrollbar {
+    display: none;
+  }
+
+  .param-chip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: var(--shadow-xs);
+  }
+
+  .param-chip-btn.active {
+    background: var(--brand-primary-soft);
+    border-color: var(--brand-primary);
+    color: var(--brand-primary);
+    font-weight: 700;
+  }
+
+  .canvas-nudge-group {
+    display: flex !important;
+    align-items: center;
+    gap: 4px;
+    pointer-events: auto;
+  }
+
+  .canvas-nudge-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-pill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+}
+
+

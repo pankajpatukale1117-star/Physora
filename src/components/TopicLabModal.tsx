@@ -883,13 +883,22 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             className="throughline-timeline-bar"
             style={{
               position: 'absolute',
-              bottom: 20,
+              bottom: 24,
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 60,
+              zIndex: 70,
               display: 'flex',
               alignItems: 'center',
-              gap: 12
+              gap: 10,
+              background: 'var(--bg-surface-elevated)',
+              border: '1px solid var(--border-medium)',
+              borderRadius: 'var(--radius-pill)',
+              padding: '6px 14px',
+              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.35), 0 3px 10px rgba(0, 0, 0, 0.2)',
+              backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
+              maxWidth: 'calc(100vw - 32px)',
+              flexWrap: 'nowrap'
             }}
           >
             {isAnimated && (
@@ -897,21 +906,28 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 type="button"
                 onClick={() => setIsPlaying(!isPlaying)}
                 style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: 6,
-                  background: isPlaying ? 'rgba(239, 68, 68, 0.2)' : 'rgba(10, 102, 194, 0.2)',
-                  border: isPlaying ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(10, 102, 194, 0.4)',
-                  color: isPlaying ? '#F87171' : '#38BDF8',
+                  background: isPlaying ? '#DC2626' : '#059669',
+                  border: isPlaying ? '1px solid #EF4444' : '1px solid #10B981',
+                  color: '#FFFFFF',
                   borderRadius: 'var(--radius-pill)',
-                  padding: '6px 14px',
+                  padding: '7px 16px',
                   cursor: 'pointer',
-                  fontWeight: 700,
-                  fontSize: '0.78rem'
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  boxShadow: isPlaying ? '0 2px 8px rgba(220, 38, 38, 0.45)' : '0 2px 8px rgba(5, 150, 105, 0.45)',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap'
                 }}
               >
-                {isPlaying ? <Pause size={13} /> : <Play size={13} />}
-                <span>{isPlaying ? 'Pause' : 'Play'}</span>
+                {isPlaying ? (
+                  <Pause size={14} color="#FFFFFF" strokeWidth={2.6} />
+                ) : (
+                  <Play size={14} color="#FFFFFF" strokeWidth={2.6} fill="#FFFFFF" />
+                )}
+                <span style={{ color: '#FFFFFF', fontWeight: 800 }}>{isPlaying ? 'Pause' : 'Play'}</span>
               </button>
             )}
 
@@ -920,23 +936,25 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 type="button"
                 onClick={handleStepForward}
                 style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: 5,
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: '1px solid var(--border-subtle)',
+                  background: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-medium)',
                   borderRadius: 'var(--radius-pill)',
-                  padding: '6px 12px',
-                  color: 'var(--text-secondary)',
+                  padding: '7px 12px',
+                  color: 'var(--text-primary)',
                   cursor: 'pointer',
-                  fontSize: '0.78rem',
-                  fontWeight: 650
+                  fontSize: '0.80rem',
+                  fontWeight: 700,
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap'
                 }}
                 title="Step forward 1 frame"
                 aria-label="Step forward 1 frame"
               >
-                <StepForward size={13} />
-                <span>Step</span>
+                <StepForward size={14} color="currentColor" strokeWidth={2.2} />
+                <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>Step</span>
               </button>
             )}
 
@@ -945,22 +963,24 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 type="button"
                 onClick={() => setSpeed((prev) => (prev === 1 ? 0.25 : 1))}
                 style={{
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: 5,
-                  background: speed === 0.25 ? 'rgba(10, 102, 194, 0.2)' : 'rgba(255, 255, 255, 0.08)',
-                  border: speed === 0.25 ? '1px solid rgba(10, 102, 194, 0.4)' : '1px solid var(--border-subtle)',
+                  background: speed === 0.25 ? 'var(--brand-primary-soft)' : 'var(--bg-subtle)',
+                  border: speed === 0.25 ? '1px solid var(--brand-primary)' : '1px solid var(--border-medium)',
                   borderRadius: 'var(--radius-pill)',
-                  padding: '6px 12px',
-                  color: speed === 0.25 ? '#38BDF8' : 'var(--text-secondary)',
+                  padding: '7px 12px',
+                  color: speed === 0.25 ? 'var(--brand-primary)' : 'var(--text-primary)',
                   cursor: 'pointer',
-                  fontSize: '0.78rem',
-                  fontWeight: 700
+                  fontSize: '0.80rem',
+                  fontWeight: 800,
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap'
                 }}
-                title="Toggle speed"
+                title="Toggle speed (1x Normal vs 0.25x Slow Motion)"
               >
-                <Gauge size={13} />
-                <span>{speed === 1 ? '1x' : '0.25x'}</span>
+                <Gauge size={14} color="currentColor" strokeWidth={2.2} />
+                <span style={{ fontWeight: 800 }}>{speed === 1 ? '1x Normal' : '0.25x Slow'}</span>
               </button>
             )}
 
@@ -968,53 +988,73 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               type="button"
               onClick={handleReset}
               className="phet-reset-btn"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: '#FF6600',
+                border: '2px solid #FFFFFF',
+                color: '#FFFFFF',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(255, 102, 0, 0.45)',
+                flexShrink: 0
+              }}
               title="Reset simulation and clock"
               aria-label="Reset simulation"
             >
-              <RotateCcw size={15} strokeWidth={2.5} />
+              <RotateCcw size={15} strokeWidth={2.6} color="#FFFFFF" />
             </button>
 
-            <div style={{ height: 16, width: 1, background: 'rgba(255, 255, 255, 0.15)' }} />
+            <div style={{ height: 18, width: 1, background: 'var(--border-medium)' }} />
 
             <div
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: 6,
-                fontSize: '0.72rem',
-                color: 'var(--text-tertiary)'
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                color: isPlaying ? 'var(--accent-success)' : 'var(--accent-amber)',
+                letterSpacing: '0.04em',
+                whiteSpace: 'nowrap'
               }}
             >
               <span
                 style={{
-                  width: 6,
-                  height: 6,
+                  width: 7,
+                  height: 7,
                   borderRadius: '50%',
-                  background: isPlaying ? '#10B981' : '#F59E0B'
+                  background: isPlaying ? '#10B981' : '#F59E0B',
+                  boxShadow: isPlaying ? '0 0 8px #10B981' : '0 0 8px #F59E0B'
                 }}
               />
-              <span>{isPlaying ? 'LIVE SIMULATION' : 'PAUSED'}</span>
+              <span>{isPlaying ? 'LIVE' : 'PAUSED'}</span>
             </div>
 
             <button
+              type="button"
               onClick={() => {
                 document.getElementById('sim-teaching')?.scrollIntoView({ behavior: 'smooth' });
               }}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
                 gap: 4,
                 background: 'transparent',
                 border: 'none',
                 color: 'var(--text-secondary)',
-                fontSize: '0.75rem',
+                fontSize: '0.76rem',
+                fontWeight: 650,
                 cursor: 'pointer',
-                marginLeft: 6
+                padding: '4px 6px',
+                borderRadius: 'var(--radius-pill)',
+                whiteSpace: 'nowrap'
               }}
             >
-              <span className="font-editorial" style={{ fontStyle: 'italic' }}>
-                Story &amp; Formulas
-              </span>
+              <span style={{ fontStyle: 'italic' }}>Guide</span>
               <ArrowDown size={12} />
             </button>
           </div>
