@@ -10,7 +10,7 @@ interface SearchResultItem {
   subtitle: string;
   topicId: string;
   category: string;
-  subject: 'Physics' | 'Mathematics' | 'Biology';
+  subject: 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology';
   keywords: string[];
 }
 
@@ -48,7 +48,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         subtitle: topic.shortDesc,
         topicId: topic.id,
         category: topic.category,
-        subject: topic.subject === 'physics' ? 'Physics' : topic.subject === 'biology' ? 'Biology' : 'Mathematics',
+        subject: topic.subject === 'physics' ? 'Physics' : topic.subject === 'chemistry' ? 'Chemistry' : topic.subject === 'biology' ? 'Biology' : 'Mathematics',
         keywords: [
           topic.title.toLowerCase(),
           topic.category.toLowerCase(),
@@ -66,7 +66,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           subtitle: `${sim.tagline} • Part of ${topic.title}`,
           topicId: topic.id,
           category: topic.title,
-          subject: topic.subject === 'physics' ? 'Physics' : topic.subject === 'biology' ? 'Biology' : 'Mathematics',
+          subject: topic.subject === 'physics' ? 'Physics' : topic.subject === 'chemistry' ? 'Chemistry' : topic.subject === 'biology' ? 'Biology' : 'Mathematics',
           keywords: [
             sim.name.toLowerCase(),
             sim.tagline.toLowerCase(),

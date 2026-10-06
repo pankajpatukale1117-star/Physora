@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { TOPICS_DATA, isSimulationAnimated, type EditorialTeaching } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
-import { CanvasSimulator } from './simulations/CanvasSimulators';
+import { FlagshipSimulatorDispatcher } from './simulations/FlagshipSimulatorDispatcher';
 import { MathView } from './MathView';
 
 interface TopicLabModalProps {
@@ -329,7 +329,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
   const isMath = topic.subject === 'maths';
   const isBiology = topic.subject === 'biology';
-  const accentColor = isBiology ? '#10B981' : isMath ? 'var(--electric-violet)' : 'var(--electric-blue)';
+  const isChemistry = topic.subject === 'chemistry';
+  const accentColor = isChemistry ? '#F97316' : isBiology ? '#10B981' : isMath ? 'var(--electric-violet)' : 'var(--electric-blue)';
 
   if (isFullWindow) {
     const editorial: EditorialTeaching = topic.editorialTeaching || {
@@ -516,29 +517,39 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   outline: 'none'
                 }}
               >
-                <optgroup label="Mathematics">
-                  <option value="algebra">Algebra</option>
-                  <option value="trigonometry">Trigonometry</option>
-                  <option value="coordinate_geometry">Coordinate Geometry</option>
-                  <option value="functions">Functions</option>
-                  <option value="sequences">Sequences</option>
-                  <option value="basic_calculus">Basic Calculus</option>
-                </optgroup>
                 <optgroup label="Physics">
-                  <option value="units_dimensions">Units &amp; Dimensions</option>
-                  <option value="motion">Motion</option>
+                  <option value="projectile_motion_lab">★ Projectile Motion &amp; Ballistics</option>
+                  <option value="wave_interference_lab">★ Wave Interference &amp; Superposition</option>
+                  <option value="motion">Motion &amp; Kinematics</option>
                   <option value="newtons_laws">Newton's Laws</option>
                   <option value="work_energy_power">Work, Energy &amp; Power</option>
                   <option value="gravitation">Gravitation</option>
                   <option value="waves">Waves</option>
                   <option value="optics">Optics &amp; Light</option>
                   <option value="thermodynamics">Thermodynamics</option>
+                  <option value="units_dimensions">Units &amp; Dimensions</option>
+                </optgroup>
+                <optgroup label="Chemistry">
+                  <option value="molecular_geometry">★ 3D Molecular Geometry &amp; VSEPR</option>
+                  <option value="reaction_kinetics">★ Reaction Kinetics &amp; Equilibrium</option>
                 </optgroup>
                 <optgroup label="Biology">
+                  <option value="cardiac_hemodynamics">★ Cardiac Hemodynamics &amp; Circulation</option>
+                  <option value="cellular_osmosis">★ Cellular Osmosis &amp; Membrane</option>
                   <option value="natural_selection">Natural Selection</option>
                   <option value="gene_expression">Gene Expression</option>
                   <option value="membrane_transport">Membrane Transport</option>
                   <option value="neuron">Neuron &amp; Action Potential</option>
+                </optgroup>
+                <optgroup label="Mathematics">
+                  <option value="vector_3d_lab">★ 3D Vector &amp; Plane Geometry</option>
+                  <option value="calculus_riemann_lab">★ Calculus: Tangents &amp; Riemann Integrals</option>
+                  <option value="algebra">Algebra</option>
+                  <option value="trigonometry">Trigonometry</option>
+                  <option value="coordinate_geometry">Coordinate Geometry</option>
+                  <option value="functions">Functions</option>
+                  <option value="sequences">Sequences</option>
+                  <option value="basic_calculus">Basic Calculus</option>
                 </optgroup>
               </select>
 
@@ -572,7 +583,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               overflow: 'hidden'
             }}
           >
-            <CanvasSimulator
+            <FlagshipSimulatorDispatcher
               simId={currentSim.id}
               params={params}
               isPlaying={isPlaying}
@@ -1463,29 +1474,39 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 outline: 'none'
               }}
             >
-              <optgroup label="Mathematics">
-                <option value="algebra">Algebra</option>
-                <option value="trigonometry">Trigonometry</option>
-                <option value="coordinate_geometry">Coordinate Geometry</option>
-                <option value="functions">Functions</option>
-                <option value="sequences">Sequences</option>
-                <option value="basic_calculus">Basic Calculus</option>
-              </optgroup>
               <optgroup label="Physics">
-                <option value="units_dimensions">Units &amp; Dimensions</option>
-                <option value="motion">Motion</option>
+                <option value="projectile_motion_lab">★ Projectile Motion &amp; Ballistics</option>
+                <option value="wave_interference_lab">★ Wave Interference &amp; Superposition</option>
+                <option value="motion">Motion &amp; Kinematics</option>
                 <option value="newtons_laws">Newton's Laws</option>
                 <option value="work_energy_power">Work, Energy &amp; Power</option>
                 <option value="gravitation">Gravitation</option>
                 <option value="waves">Waves</option>
                 <option value="optics">Optics &amp; Light</option>
                 <option value="thermodynamics">Thermodynamics</option>
+                <option value="units_dimensions">Units &amp; Dimensions</option>
+              </optgroup>
+              <optgroup label="Chemistry">
+                <option value="molecular_geometry">★ 3D Molecular Geometry &amp; VSEPR</option>
+                <option value="reaction_kinetics">★ Reaction Kinetics &amp; Equilibrium</option>
               </optgroup>
               <optgroup label="Biology">
+                <option value="cardiac_hemodynamics">★ Cardiac Hemodynamics &amp; Circulation</option>
+                <option value="cellular_osmosis">★ Cellular Osmosis &amp; Membrane</option>
                 <option value="natural_selection">Natural Selection</option>
                 <option value="gene_expression">Gene Expression</option>
                 <option value="membrane_transport">Membrane Transport</option>
                 <option value="neuron">Neuron &amp; Action Potential</option>
+              </optgroup>
+              <optgroup label="Mathematics">
+                <option value="vector_3d_lab">★ 3D Vector &amp; Plane Geometry</option>
+                <option value="calculus_riemann_lab">★ Calculus: Tangents &amp; Riemann Integrals</option>
+                <option value="algebra">Algebra</option>
+                <option value="trigonometry">Trigonometry</option>
+                <option value="coordinate_geometry">Coordinate Geometry</option>
+                <option value="functions">Functions</option>
+                <option value="sequences">Sequences</option>
+                <option value="basic_calculus">Basic Calculus</option>
               </optgroup>
             </select>
 
@@ -1635,7 +1656,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   <span>Full Graph &amp; Settings</span>
                 </button>
 
-                <CanvasSimulator
+                <FlagshipSimulatorDispatcher
                   simId={currentSim.id}
                   params={params}
                   isPlaying={isPlaying}

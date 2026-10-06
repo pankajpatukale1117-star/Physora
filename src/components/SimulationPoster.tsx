@@ -2,7 +2,7 @@ import React from 'react';
 
 interface SimulationPosterProps {
   topicId: string;
-  subject: 'maths' | 'physics' | 'biology';
+  subject: 'maths' | 'physics' | 'biology' | 'chemistry';
   title: string;
 }
 

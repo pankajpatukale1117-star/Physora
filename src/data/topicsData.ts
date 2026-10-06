@@ -26,7 +26,7 @@ export interface EditorialTeaching {
 
 export interface TopicData {
   id: string;
-  subject: 'maths' | 'physics' | 'biology';
+  subject: 'maths' | 'physics' | 'biology' | 'chemistry';
   title: string;
   category: string;
   shortDesc: string;
@@ -1651,6 +1651,389 @@ export const TOPICS_DATA: Record<string, TopicData> = {
         ]
       }
     ]
+  },
+
+  // ==========================================
+  // CHEMISTRY FLAGSHIPS
+  // ==========================================
+  molecular_geometry: {
+    id: 'molecular_geometry',
+    subject: 'chemistry',
+    title: 'Molecular Geometry & VSEPR',
+    category: 'CHEMISTRY',
+    shortDesc: '3D VSEPR electron domain theory, molecular shapes, bond angles, and net dipole moments.',
+    conceptIntro:
+      'Valence Shell Electron Pair Repulsion (VSEPR) predicts 3D molecular shapes based on the electrostatic repulsion between bonding pairs and lone pairs of electrons around a central atom.',
+    realWorldExample:
+      'The 104.5° bent structure of water gives it high surface tension, universal solvent capability, and hydrogen bonding essential for life on Earth.',
+    keyFormulas: [
+      { formula: 'AXₘEₙ', explanation: 'VSEPR notation: A = central atom, X = bonded atoms, E = lone pairs.' },
+      { formula: 'μ = Σ q · d', explanation: 'Molecular dipole moment vector sum based on bond polarities.' }
+    ],
+    keyTakeaways: [
+      'Lone pairs occupy more volume than bonding pairs, compressing adjacent bond angles.',
+      'Symmetric molecules (like CO₂ and CH₄) have zero net dipole moment even if individual bonds are polar.',
+      'Water (H₂O) has AX₂E₂ bent geometry with a 104.5° bond angle and high net dipole polarity.'
+    ],
+    editorialTeaching: {
+      headline: 'Understand 3D Molecular Architecture and Polarity.',
+      story: 'Electrons are negatively charged clouds that repel each other. They arrange themselves in 3D space to maximize their separation distance.',
+      controlsGuide: 'Choose molecules from the left panel, toggle between Ball-and-Stick and Space-Filling views, and inspect real-time 3D bond angles and dipole vectors.',
+      variablesAndOutputs: 'Key quantities: Coordination number, electron geometry, molecular shape, bond angle, and net dipole moment vector.',
+      modelAssumptions: 'Pauling electronegativities, ideal gas phase geometries, and standard covalent radii are modeled.',
+      learningObjective: 'Master how valence electron pairs dictate the physical 3D structure and chemical polarity of molecules.'
+    },
+    simulations: [
+      {
+        id: 'chem_vsepr_lab',
+        name: '3D Molecular Geometry & VSEPR Lab',
+        tagline: 'Rotate and inspect 3D molecular structures, lone pair lobes, and net dipole moments.',
+        description: 'Manipulate molecules in full 3D WebGL space. Switch between ball-and-stick and space-filling representations and observe bond angles.',
+        controls: [
+          { id: 'mode', label: 'View Mode', min: 0, max: 1, step: 1, defaultValue: 0 }
+        ],
+        telemetryLabels: [
+          { key: 'geometry', label: 'Molecular Shape' },
+          { key: 'angle', label: 'Bond Angle' },
+          { key: 'polarity', label: 'Net Dipole' }
+        ]
+      }
+    ]
+  },
+
+  reaction_kinetics: {
+    id: 'reaction_kinetics',
+    subject: 'chemistry',
+    title: 'Reaction Kinetics & Equilibrium',
+    category: 'CHEMISTRY',
+    shortDesc: 'Collision theory, activation energy (Ea), Maxwell-Boltzmann distribution, and catalysts.',
+    conceptIntro:
+      'Chemical reactions occur when reactant molecules collide with sufficient kinetic energy (greater than or equal to the Activation Energy barrier Ea) and appropriate molecular orientation.',
+    realWorldExample:
+      'Catalytic converters in automobiles use platinum and rhodium meshes to lower the activation barrier for converting toxic carbon monoxide and hydrocarbons into carbon dioxide and water.',
+    keyFormulas: [
+      { formula: 'k = A · e^(-Ea / RT)', explanation: 'Arrhenius equation linking rate constant to temperature and activation energy.' },
+      { formula: 'Rate = -d[A]/dt = k[A][B]', explanation: 'Differential rate law for bimolecular collision reaction.' }
+    ],
+    keyTakeaways: [
+      'Higher temperature increases average particle velocity and drastically multiplies the fraction of collisions with energy exceeding Ea.',
+      'Catalysts accelerate reactions by providing an alternate transition state with lower activation energy without being consumed.',
+      'Reactions reach dynamic equilibrium when the rate of the forward reaction equals the rate of the reverse reaction.'
+    ],
+    editorialTeaching: {
+      headline: 'Experience Collision Theory in a Digital Reaction Vessel.',
+      story: 'Molecules are constantly in chaotic thermal motion. Only collisions exceeding the activation energy threshold succeed in breaking chemical bonds.',
+      controlsGuide: 'Adjust the vessel temperature and activation energy slider, introduce a platinum catalyst, and watch the live concentration graph update.',
+      variablesAndOutputs: 'Observe temperature T (K), activation barrier Ea (kJ/mol), collision efficiency %, and live [A], [B], [C] curves.',
+      modelAssumptions: 'Hard-sphere collision theory with Maxwell-Boltzmann thermal velocity distributions.',
+      learningObjective: 'Connect microscopic particle collisions with macroscopic chemical reaction rates and equilibrium concentrations.'
+    },
+    simulations: [
+      {
+        id: 'chem_kinetics_lab',
+        name: 'Reaction Kinetics & Collision Lab',
+        tagline: 'Simulate particle thermal collisions, activation barriers, and live [A], [B], [C] reaction graphs.',
+        description: 'Adjust temperature and activation barrier in real-time. Toggle catalyst to observe instantaneous acceleration of reaction rates.',
+        controls: [
+          { id: 'temperature', label: 'Temperature (K)', min: 250, max: 650, step: 10, defaultValue: 350, unit: 'K' },
+          { id: 'ea', label: 'Activation Barrier Ea', min: 15, max: 60, step: 5, defaultValue: 35, unit: 'kJ/mol' }
+        ],
+        telemetryLabels: [
+          { key: 'concs', label: 'Concentration [C]' },
+          { key: 'eff', label: 'Effective Collisions' },
+          { key: 'rate', label: 'Reaction Velocity' }
+        ]
+      }
+    ]
+  },
+
+  // ==========================================
+  // BIOLOGY PROCESS FLAGSHIPS
+  // ==========================================
+  cardiac_hemodynamics: {
+    id: 'cardiac_hemodynamics',
+    subject: 'biology',
+    title: 'Cardiac Cycle & Hemodynamics',
+    category: 'BIOLOGY',
+    shortDesc: 'Dynamic 4-chamber cardiac cycle, pressure-volume loop, valve mechanics, and Wiggers diagram.',
+    conceptIntro:
+      'The cardiac cycle is the sequence of alternating contraction (systole) and relaxation (diastole) of the atria and ventricles that powers continuous blood circulation through the pulmonary and systemic vascular beds.',
+    realWorldExample:
+      'Athletes have higher stroke volume and lower resting heart rate (bradycardia) because strong myocardial contractility maintains sufficient cardiac output with fewer beats.',
+    keyFormulas: [
+      { formula: 'CO = HR × SV', explanation: 'Cardiac Output equals Heart Rate times Stroke Volume.' },
+      { formula: 'ΔP = Flow × R', explanation: 'Pressure gradient driving blood flow against vascular resistance.' }
+    ],
+    keyTakeaways: [
+      'Valves open and snap shut passively in response to pressure gradients across them.',
+      'S₁ heart sound (Lub) marks AV valve closure at the onset of ventricular systole.',
+      'S₂ heart sound (Dub) marks aortic and pulmonary valve closure at the start of diastole.'
+    ],
+    editorialTeaching: {
+      headline: 'Master Heart Chamber Hemodynamics & Valve Mechanics.',
+      story: 'Blood flows strictly along pressure gradients. The coordinated contraction of cardiac muscle creates the pressure spikes necessary to circulate oxygenated blood.',
+      controlsGuide: 'Adjust Heart Rate (BPM), Stroke Volume, and Myocardial Contractility. Observe the 4 chambers contracting and valves snapping shut in sync with the Wiggers diagram.',
+      variablesAndOutputs: 'Monitor LV pressure (mmHg), Aortic pressure (mmHg), ECG waveform, and valve operational states.',
+      modelAssumptions: 'Normal sinus rhythm with standard systemic hemodynamic parameters.',
+      learningObjective: 'Understand how chamber pressures govern valve opening, cardiac phases, and blood ejection.'
+    },
+    simulations: [
+      {
+        id: 'bio_cardiac_lab',
+        name: 'Cardiac Hemodynamics Simulator',
+        tagline: 'Simulate the 4 heart chambers, valve opening/closure, and real-time Wiggers pressure graph.',
+        description: 'Explore the cardiac cycle step-by-step or in slow motion. Watch chamber volumes change and listen for S1 and S2 heart sounds.',
+        controls: [
+          { id: 'hr', label: 'Heart Rate', min: 40, max: 160, step: 2, defaultValue: 72, unit: 'BPM' },
+          { id: 'sv', label: 'Stroke Volume', min: 40, max: 110, step: 5, defaultValue: 70, unit: 'mL' }
+        ],
+        telemetryLabels: [
+          { key: 'phase', label: 'Current Phase' },
+          { key: 'co', label: 'Cardiac Output' },
+          { key: 'pressure', label: 'LV Pressure' }
+        ]
+      }
+    ]
+  },
+
+  cellular_osmosis: {
+    id: 'cellular_osmosis',
+    subject: 'biology',
+    title: 'Cellular Osmosis & Tonicity',
+    category: 'BIOLOGY',
+    shortDesc: 'Semipermeable phospholipid bilayers, aquaporin channels, water potential, and osmotic pressure.',
+    conceptIntro:
+      'Osmosis is the net diffusion of water molecules across a selectively permeable membrane from a region of higher water potential (lower solute concentration) to a region of lower water potential (higher solute concentration).',
+    realWorldExample:
+      'Plant roots absorb water from moist soil via osmosis, creating turgor pressure that keeps stems and leaves upright; saline IV fluids must be strictly isotonic (0.9% NaCl) to prevent red blood cell lysis.',
+    keyFormulas: [
+      { formula: 'Ψ = Ψs + Ψp', explanation: 'Water potential equals solute potential plus pressure potential.' },
+      { formula: 'Π = iCRT', explanation: 'Van ’t Hoff equation for osmotic pressure.' }
+    ],
+    keyTakeaways: [
+      'In a hypotonic solution, water rushes into the cell, causing swelling and possible lysis.',
+      'In a hypertonic solution, water leaves the cell, resulting in crenation or plasmolysis.',
+      'In an isotonic solution, water moves in and out at equal rates in dynamic equilibrium.'
+    ],
+    editorialTeaching: {
+      headline: 'Observe Water Diffusion Across Semipermeable Membranes.',
+      story: 'Water molecules pass freely through specialized aquaporin pores, while bulky solutes are blocked by the hydrophobic lipid bilayer.',
+      controlsGuide: 'Adjust intracellular and extracellular solute concentrations to create hypotonic, isotonic, or hypertonic environments and watch the cell respond.',
+      variablesAndOutputs: 'Track relative cell volume %, osmotic pressure (atm), and net water flux direction.',
+      modelAssumptions: 'Phospholipid bilayer with selective aquaporin channels at physiological temperature (25°C).',
+      learningObjective: 'Master the principles of osmosis, water potential, and cellular volume regulation.'
+    },
+    simulations: [
+      {
+        id: 'bio_osmosis_lab',
+        name: 'Cellular Osmosis & Membrane Lab',
+        tagline: 'Watch kinetic water particles diffuse through aquaporin channels down osmotic gradients.',
+        description: 'Observe swelling or crenation in real time with live osmotic pressure telemetry and cell volume graphs.',
+        controls: [
+          { id: 'solute_out', label: 'Extracellular Solute', min: 50, max: 600, step: 25, defaultValue: 150, unit: 'mM' },
+          { id: 'solute_in', label: 'Intracellular Solute', min: 100, max: 500, step: 25, defaultValue: 300, unit: 'mM' }
+        ],
+        telemetryLabels: [
+          { key: 'tonicity', label: 'Tonicity State' },
+          { key: 'volume', label: 'Cell Volume' },
+          { key: 'pi', label: 'Osmotic Pressure' }
+        ]
+      }
+    ]
+  },
+
+  // ==========================================
+  // MATHEMATICS FLAGSHIPS
+  // ==========================================
+  vector_3d_lab: {
+    id: 'vector_3d_lab',
+    subject: 'maths',
+    title: '3D Vectors & Geometry',
+    category: 'MATHEMATICS',
+    shortDesc: '3D coordinate systems, vector addition, scalar dot product, cross product, and spanned planes.',
+    conceptIntro:
+      'Vectors in 3D space represent quantities with magnitude and direction in three dimensions. The dot product measures directional alignment, while the cross product produces a normal vector orthogonal to both inputs.',
+    realWorldExample:
+      'Computer graphics and game engines calculate surface lighting using the dot product between the surface normal vector and the light ray vector (Lambertian shading).',
+    keyFormulas: [
+      { formula: 'u · v = |u||v| cos θ', explanation: 'Dot product: scalar product determining the angle between vectors.' },
+      { formula: 'u × v = n · |u||v| sin θ', explanation: 'Cross product: vector product producing an orthogonal normal vector.' },
+      { formula: 'Ax + By + Cz = D', explanation: 'Cartesian equation of the plane spanned by the vectors.' }
+    ],
+    keyTakeaways: [
+      'Two non-zero vectors are perpendicular if and only if their dot product u · v = 0.',
+      'The magnitude of the cross product |u × v| equals the area of the parallelogram spanned by u and v.',
+      'The cross product vector n defines the normal vector for the 3D plane equation.'
+    ],
+    editorialTeaching: {
+      headline: 'Explore 3D Vector Algebra and Spanned Planes Visually.',
+      story: 'Geometry and linear algebra meet in 3D coordinate space. Directly drag vector components to see how algebraic operations reflect in geometric space.',
+      controlsGuide: 'Manipulate components of vectors u and v on the left panel. Orbit the camera in 3D to inspect the angle arc, cross product normal, and spanned plane.',
+      variablesAndOutputs: 'Track vector magnitudes |u| and |v|, dot product, angle θ, cross product (u × v), and plane equation.',
+      modelAssumptions: 'Right-handed Cartesian 3D coordinate frame (X Red, Y Green, Z Blue).',
+      learningObjective: 'Master 3D vector algebra, orthogonality conditions, and geometric plane equations.'
+    },
+    simulations: [
+      {
+        id: 'math_vector3d_lab',
+        name: '3D Vector & Plane Geometry Lab',
+        tagline: 'Orbit in 3D space and inspect vector addition, dot products, cross products, and planes.',
+        description: 'Interactive 3D workspace with real-time vector math. See the normal vector and spanned plane update dynamically as you change coordinates.',
+        controls: [
+          { id: 'ux', label: 'Vector u (X)', min: -5, max: 5, step: 1, defaultValue: 3 },
+          { id: 'uy', label: 'Vector u (Y)', min: -5, max: 5, step: 1, defaultValue: 2 },
+          { id: 'vx', label: 'Vector v (X)', min: -5, max: 5, step: 1, defaultValue: 1 },
+          { id: 'vy', label: 'Vector v (Y)', min: -5, max: 5, step: 1, defaultValue: 3 }
+        ],
+        telemetryLabels: [
+          { key: 'dot', label: 'Dot Product' },
+          { key: 'theta', label: 'Angle θ' },
+          { key: 'cross', label: 'Cross Product' }
+        ]
+      }
+    ]
+  },
+
+  calculus_riemann_lab: {
+    id: 'calculus_riemann_lab',
+    subject: 'maths',
+    title: 'Calculus: Tangent & Integrals',
+    category: 'MATHEMATICS',
+    shortDesc: 'Instantaneous derivative slopes, secant limits, definite integrals, and Riemann sum partitions.',
+    conceptIntro:
+      'Calculus is the mathematics of change. Differential calculus studies instantaneous rates of change (tangent slopes), while integral calculus studies total accumulation (area under curves).',
+    realWorldExample:
+      'Vehicle cruise control systems calculate the derivative of wheel speed to adjust throttle acceleration, while odometer trip meters calculate the definite integral of velocity over time to find distance traveled.',
+    keyFormulas: [
+      { formula: 'f’(x) = lim(Δx→0) [f(x+Δx) - f(x)] / Δx', explanation: 'Fundamental limit definition of the derivative.' },
+      { formula: '∫ₐᵇ f(x) dx = lim(n→∞) Σ f(xᵢ) Δx', explanation: 'Definite integral defined as the limit of Riemann sums.' }
+    ],
+    keyTakeaways: [
+      'The derivative f’(x₀) represents the exact slope of the tangent line touching the curve at x₀.',
+      'As secant step Δx approaches zero, the secant slope converges precisely to the instantaneous derivative.',
+      'As the number of rectangles N increases, the Riemann sum converges onto the exact analytical definite integral.'
+    ],
+    editorialTeaching: {
+      headline: 'Visualize Derivatives as Tangents and Integrals as Area Accumulation.',
+      story: 'See the two fundamental pillars of calculus in action on real mathematical functions.',
+      controlsGuide: 'Toggle between Derivative Slope mode and Riemann Integral mode. Drag points along the curve and change the partition count N to see convergence.',
+      variablesAndOutputs: 'Observe instantaneous slope m, secant rate of change, Riemann sum approximation, exact definite integral, and error %.',
+      modelAssumptions: 'Continuous differentiable real functions over compact intervals.',
+      learningObjective: 'Gain deep visual and numerical intuition for limits, derivatives, and Riemann definite integrals.'
+    },
+    simulations: [
+      {
+        id: 'math_calculus_lab',
+        name: 'Calculus: Derivative & Riemann Lab',
+        tagline: 'Drag tangent points and adjust Riemann partition rectangles to watch sums converge to integrals.',
+        description: 'Explore functions like sin(x), parabolas, and cubics. Test Midpoint, Trapezoidal, Left, and Right Riemann summation rules.',
+        controls: [
+          { id: 'n', label: 'Partition Rectangles (N)', min: 1, max: 60, step: 1, defaultValue: 12 },
+          { id: 'x0', label: 'Tangent Point (x₀)', min: -3, max: 3, step: 0.1, defaultValue: 1.0 }
+        ],
+        telemetryLabels: [
+          { key: 'derivative', label: 'Slope f’(x₀)' },
+          { key: 'riemann', label: 'Riemann Sum' },
+          { key: 'integral', label: 'Exact Integral' }
+        ]
+      }
+    ]
+  },
+
+  // ==========================================
+  // PHYSICS FLAGSHIP TOPICS
+  // ==========================================
+  projectile_motion_lab: {
+    id: 'projectile_motion_lab',
+    subject: 'physics',
+    title: 'Advanced Projectile Dynamics',
+    category: 'PHYSICS',
+    shortDesc: 'Runge-Kutta ballistic integration, aerodynamic drag, planetary gravity, and target ballistics.',
+    conceptIntro:
+      'Projectile motion in the real world is governed by both downward gravitational acceleration and non-linear aerodynamic air resistance (drag) opposing the instantaneous velocity vector.',
+    realWorldExample:
+      'Artillery targeting, satellite launch trajectories, and sports ball flight (baseball, golf) must account for air density and aerodynamic drag coefficients to predict impact locations accurately.',
+    keyFormulas: [
+      { formula: 'F_drag = ½ ρ v² C_d A', explanation: 'Aerodynamic drag force opposing instantaneous velocity.' },
+      { formula: 'a = g + F_drag / m', explanation: 'Total instantaneous acceleration integrated via Runge-Kutta 4.' }
+    ],
+    keyTakeaways: [
+      'In a vacuum, the optimal launch angle for maximum range on flat ground is 45°.',
+      'With air resistance, the optimal launch angle drops below 45° and the trajectory becomes asymmetric.',
+      'Mass affects trajectory only in the presence of air drag: heavier objects resist deceleration better.'
+    ],
+    editorialTeaching: {
+      headline: 'Experience Authentic Real-World Ballistics & Aerodynamics.',
+      story: 'Launch projectiles under Earth, Moon, Mars, or Jupiter gravity. Adjust air drag from vacuum to heavy resistance.',
+      controlsGuide: 'Adjust launch speed v₀, launch angle θ, tower height h₀, mass, and drag coefficient Cd. Use the virtual ruler and protractor to measure flight metrics.',
+      variablesAndOutputs: 'Track range, apex height, flight time, velocity vectors, kinetic and potential energy bars, and live height graphs.',
+      modelAssumptions: 'Runge-Kutta 4 numerical integration with quadratic aerodynamic drag and uniform planetary gravitational fields.',
+      learningObjective: 'Master projectile kinematics, energy conservation, and the real-world impact of aerodynamic drag.'
+    },
+    simulations: [
+      {
+        id: 'physics_projectile_lab',
+        name: 'Advanced Projectile Motion Lab',
+        tagline: 'Realistic ballistics with RK4 numerical integration, aerodynamic drag, and live energy telemetry.',
+        description: 'Aim cannon, adjust velocity and angle, and hit targets across diverse planetary gravity fields.',
+        controls: [
+          { id: 'v0', label: 'Launch Speed', min: 5, max: 60, step: 1, defaultValue: 25, unit: 'm/s' },
+          { id: 'theta', label: 'Launch Angle', min: 0, max: 90, step: 1, defaultValue: 45, unit: '°' },
+          { id: 'h0', label: 'Tower Height', min: 0, max: 50, step: 2, defaultValue: 10, unit: 'm' }
+        ],
+        telemetryLabels: [
+          { key: 'range', label: 'Landing Range' },
+          { key: 'apex', label: 'Max Height' },
+          { key: 'time', label: 'Flight Time' }
+        ]
+      }
+    ]
+  },
+
+  wave_interference_lab: {
+    id: 'wave_interference_lab',
+    subject: 'physics',
+    title: 'Wave Superposition & Beats',
+    category: 'PHYSICS',
+    shortDesc: 'Wave interference, constructive/destructive superposition, standing wave nodes, and acoustic beats.',
+    conceptIntro:
+      'The principle of superposition states that when two or more waves overlap in space, the resultant displacement at any point is the vector sum of the individual wave displacements.',
+    realWorldExample:
+      'Active noise-canceling headphones use destructive interference by emitting an inverted wave (180° out of phase) to cancel background acoustic noise.',
+    keyFormulas: [
+      { formula: 'y(x,t) = y₁(x,t) + y₂(x,t)', explanation: 'Superposition principle for overlapping waves.' },
+      { formula: 'f_beat = |f₁ - f₂|', explanation: 'Beat frequency resulting from interference of slightly different frequencies.' }
+    ],
+    keyTakeaways: [
+      'Opposing waves of identical frequency and amplitude create a standing wave with stationary nodes and antinodes.',
+      'Waves differing slightly in frequency produce periodic amplitude modulations known as beats.',
+      'A 180° phase difference between identical waves produces complete destructive cancellation.'
+    ],
+    editorialTeaching: {
+      headline: 'Explore Wave Superposition, Standing Waves & Beat Envelopes.',
+      story: 'Witness waves interacting in real time. Place the virtual oscilloscope probe anywhere on the medium to analyze composite wave motion.',
+      controlsGuide: 'Adjust amplitudes, frequencies, wavelengths, and phase offsets. Switch between traveling and opposing wave directions.',
+      variablesAndOutputs: 'Inspect standing wave nodes, instantaneous displacement, and live probe oscilloscope traces.',
+      modelAssumptions: 'Linear wave medium supporting nondispersive harmonic traveling waves.',
+      learningObjective: 'Master wave superposition, standing wave node formation, and beat frequencies.'
+    },
+    simulations: [
+      {
+        id: 'physics_wave_lab',
+        name: 'Wave Superposition & Interference Lab',
+        tagline: 'Combine two waves to create standing waves, acoustic beats, and destructive cancellation.',
+        description: 'Drag the probe sensor along the wave to view real-time oscilloscope waveforms in the live graph.',
+        controls: [
+          { id: 'freq1', label: 'Frequency f₁', min: 0.5, max: 4, step: 0.1, defaultValue: 1.5, unit: 'Hz' },
+          { id: 'freq2', label: 'Frequency f₂', min: 0.5, max: 4, step: 0.1, defaultValue: 1.5, unit: 'Hz' }
+        ],
+        telemetryLabels: [
+          { key: 'superpos', label: 'Net Amplitude' },
+          { key: 'beat', label: 'Beat Frequency' },
+          { key: 'nodes', label: 'Node Status' }
+        ]
+      }
+    ]
   }
 };
 
@@ -1695,7 +2078,13 @@ export const ANIMATED_SIMULATION_IDS = new Set<string>([
   'bio_atp_pump',
   'bio_action_potential',
   'bio_ion_gating',
-  'bio_synapse_transmission'
+  'bio_synapse_transmission',
+  'physics_projectile_lab',
+  'physics_wave_lab',
+  'chem_vsepr_lab',
+  'chem_kinetics_lab',
+  'bio_cardiac_lab',
+  'bio_osmosis_lab'
 ]);
 
 export const isSimulationAnimated = (simId?: string): boolean => {

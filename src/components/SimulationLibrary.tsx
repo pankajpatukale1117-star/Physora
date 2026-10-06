@@ -6,7 +6,8 @@ import {
   BookOpen,
   Play,
   Target,
-  Dna
+  Dna,
+  FlaskConical
 } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { SimulationPoster } from './SimulationPoster';
@@ -23,7 +24,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
   onOpenAnatomy
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSubject, setSelectedSubject] = useState<'All' | 'Physics' | 'Mathematics' | 'Biology'>('All');
+  const [selectedSubject, setSelectedSubject] = useState<'All' | 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology'>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   // Available topics
@@ -34,6 +35,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
     return topics.filter((t) => {
       // Subject filter
       if (selectedSubject === 'Physics' && t.subject !== 'physics') return false;
+      if (selectedSubject === 'Chemistry' && t.subject !== 'chemistry') return false;
       if (selectedSubject === 'Mathematics' && t.subject !== 'maths') return false;
       if (selectedSubject === 'Biology' && t.subject !== 'biology') return false;
 
@@ -123,7 +125,55 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                 Physics
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                Motion, Waves, Energy, Optics, Thermo (24 Sims)
+                Motion, Waves, Energy, Optics, Thermo (26 Sims)
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Chemistry Digital Lab */}
+          <div
+            className={`phet-category-card ${selectedSubject === 'Chemistry' ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedSubject('Chemistry');
+              setSelectedCategory('All');
+            }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 'var(--radius-md)',
+                background: 'rgba(249, 115, 22, 0.15)',
+                color: '#f97316',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <FlaskConical size={24} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                  Chemistry Lab
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    padding: '1px 5px',
+                    borderRadius: 8,
+                    background: 'rgba(249, 115, 22, 0.2)',
+                    color: '#ea580c',
+                    border: '1px solid rgba(249, 115, 22, 0.35)'
+                  }}
+                >
+                  3D LAB
+                </span>
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                3D VSEPR, Kinetics &amp; Equilibrium
               </div>
             </div>
           </div>
@@ -267,13 +317,15 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
           >
             {/* Subject Tabs */}
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {(['All', 'Physics', 'Mathematics', 'Biology'] as const).map((sub) => {
+              {(['All', 'Physics', 'Chemistry', 'Mathematics', 'Biology'] as const).map((sub) => {
                 const count =
                   sub === 'All'
                     ? topics.length
                     : topics.filter((t) =>
                         sub === 'Physics'
                           ? t.subject === 'physics'
+                          : sub === 'Chemistry'
+                          ? t.subject === 'chemistry'
                           : sub === 'Mathematics'
                           ? t.subject === 'maths'
                           : t.subject === 'biology'

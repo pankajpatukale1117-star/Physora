@@ -5,7 +5,7 @@ import { MathView } from './MathView';
 interface FormulaItem {
   id: string;
   name: string;
-  category: 'Physics' | 'Mathematics' | 'Biology';
+  category: 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology';
   domain: string;
   latex: string;
   plainEnglish: string;
@@ -358,6 +358,100 @@ const FORMULAS_DATA: FormulaItem[] = [
       { sym: '[\\text{Ion}]_{in}', name: 'Intracellular Cytoplasm Concentration', unit: 'mM' }
     ],
     targetTopicId: 'neuron'
+  },
+  {
+    id: 'f-arrhenius-1',
+    name: 'Arrhenius Chemical Reaction Rate Law',
+    category: 'Chemistry',
+    domain: 'Kinetics',
+    latex: 'k = A \\cdot e^{-\\frac{E_a}{RT}}',
+    plainEnglish: 'Rate Constant = Frequency Factor × e^(-Activation Energy / (Gas Constant × Temp))',
+    description: 'Relates reaction velocity to temperature and the activation energy barrier for molecular collisions.',
+    variables: [
+      { sym: 'k', name: 'Reaction Rate Constant', unit: 's⁻¹ / M⁻¹s⁻¹' },
+      { sym: 'A', name: 'Pre-exponential Collision Frequency', unit: 's⁻¹' },
+      { sym: 'E_a', name: 'Activation Energy Barrier', unit: 'J/mol' },
+      { sym: 'T', name: 'Absolute Temperature', unit: 'K' },
+      { sym: 'R', name: 'Universal Gas Constant (8.314)', unit: 'J/(mol·K)' }
+    ],
+    targetTopicId: 'reaction_kinetics'
+  },
+  {
+    id: 'f-vsepr-1',
+    name: 'Molecular Dipole Moment Vector',
+    category: 'Chemistry',
+    domain: 'Molecular Structure',
+    latex: '\\vec{\\mu} = \\sum_{i} q_i \\vec{r}_i = \\sum \\Delta EN_i \\cdot \\hat{u}_i',
+    plainEnglish: 'Net Dipole = Vector sum of individual bond dipoles in 3D space',
+    description: 'Determines whether a 3D molecule is polar or nonpolar based on geometric cancellation of bond moments.',
+    variables: [
+      { sym: '\\vec{\\mu}', name: 'Net Molecular Dipole Moment', unit: 'Debye (D)' },
+      { sym: 'q_i', name: 'Partial Atomic Charge', unit: 'Coulombs (C)' },
+      { sym: '\\vec{r}_i', name: '3D Bond Position Vector', unit: 'm' }
+    ],
+    targetTopicId: 'molecular_geometry'
+  },
+  {
+    id: 'f-osmosis-1',
+    name: "Van 't Hoff Law of Osmotic Pressure",
+    category: 'Biology',
+    domain: 'Cellular Physiology',
+    latex: '\\Pi = i \\cdot M \\cdot R \\cdot T',
+    plainEnglish: 'Osmotic Pressure = Van ’t Hoff factor × Molar Concentration × R × Temperature',
+    description: 'Quantifies the hydrostatic pressure required to prevent net water influx across a semipermeable membrane.',
+    variables: [
+      { sym: '\\Pi', name: 'Osmotic Pressure', unit: 'atm' },
+      { sym: 'i', name: 'Van ’t Hoff Ion Factor', unit: 'dimensionless' },
+      { sym: 'M', name: 'Solute Molarity', unit: 'mol/L' },
+      { sym: 'T', name: 'Absolute Temperature', unit: 'K' }
+    ],
+    targetTopicId: 'cellular_osmosis'
+  },
+  {
+    id: 'f-cardiac-1',
+    name: 'Cardiac Output & Hemodynamic Stroke Volume',
+    category: 'Biology',
+    domain: 'Cardiovascular Dynamics',
+    latex: 'CO = HR \\times SV = \\frac{\\Delta P}{SVR}',
+    plainEnglish: 'Cardiac Output = Heart Rate × Stroke Volume = Mean Arterial Pressure / Resistance',
+    description: 'Relates ventricular pump volume to systemic blood flow and peripheral vascular resistance.',
+    variables: [
+      { sym: 'CO', name: 'Cardiac Output', unit: 'L/min' },
+      { sym: 'HR', name: 'Heart Rate', unit: 'BPM' },
+      { sym: 'SV', name: 'Ventricular Stroke Volume', unit: 'mL/beat' },
+      { sym: 'SVR', name: 'Systemic Vascular Resistance', unit: 'mmHg·min/L' }
+    ],
+    targetTopicId: 'cardiac_hemodynamics'
+  },
+  {
+    id: 'f-cross-prod-1',
+    name: '3D Vector Cross Product & Normal Vector',
+    category: 'Mathematics',
+    domain: '3D Vector Algebra',
+    latex: '\\vec{u} \\times \\vec{v} = \\begin{vmatrix} \\hat{i} & \\hat{j} & \\hat{k} \\\\ u_x & u_y & u_z \\\\ v_x & v_y & v_z \\end{vmatrix}',
+    plainEnglish: 'Cross Product produces an orthogonal normal vector perpendicular to both u and v',
+    description: 'Defines the normal vector to the 3D plane spanned by two non-parallel vectors.',
+    variables: [
+      { sym: '\\vec{u} \\times \\vec{v}', name: 'Normal Vector \\vec{n}', unit: 'vector' },
+      { sym: '|\\vec{u} \\times \\vec{v}|', name: 'Parallelogram Area', unit: 'scalar' },
+      { sym: '\\theta', name: 'Angle between vectors', unit: 'degrees' }
+    ],
+    targetTopicId: 'vector_3d_lab'
+  },
+  {
+    id: 'f-riemann-1',
+    name: 'Fundamental Limit Definition of the Definite Integral',
+    category: 'Mathematics',
+    domain: 'Calculus',
+    latex: '\\int_a^b f(x)\\,dx = \\lim_{n \\to \\infty} \\sum_{i=1}^n f(x_i^*)\\,\\Delta x',
+    plainEnglish: 'Integral = Limit of Riemann Sum as width Δx approaches zero',
+    description: 'Calculates the continuous area under any curve by summing infinitesimal rectangular partitions.',
+    variables: [
+      { sym: '\\Delta x', name: 'Partition Width (b - a)/n', unit: 'scalar' },
+      { sym: 'x_i^*', name: 'Sample Evaluation Point', unit: 'coordinate' },
+      { sym: 'n', name: 'Number of Rectangles', unit: 'integer' }
+    ],
+    targetTopicId: 'calculus_riemann_lab'
   }
 ];
 
@@ -368,7 +462,7 @@ interface FormulaBankModalProps {
 
 export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onSelectTopic }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<'All' | 'Physics' | 'Mathematics' | 'Biology'>('All');
+  const [activeCategory, setActiveCategory] = useState<'All' | 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology'>('All');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCopyLatex = (id: string, latex: string) => {
@@ -496,7 +590,7 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
         >
           {/* Category Tabs */}
           <div style={{ display: 'flex', gap: 6 }}>
-            {(['All', 'Physics', 'Mathematics', 'Biology'] as const).map((cat) => (
+            {(['All', 'Physics', 'Chemistry', 'Mathematics', 'Biology'] as const).map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
