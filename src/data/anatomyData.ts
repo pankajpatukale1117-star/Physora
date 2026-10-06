@@ -1093,6 +1093,42 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     ],
     relatedSystems: ['nervous', 'cardiovascular', 'urinary'],
     clinicalRelevance: 'Hypo/hyperthyroidism, Cushing\'s syndrome, Addison\'s disease, acromegaly, and diabetes insipidus.'
+  },
+
+  // ==========================================================================
+  // INTEGUMENTARY SYSTEM (SKIN & SURFACE)
+  // ==========================================================================
+  skin: {
+    id: 'skin',
+    name: 'Skin & Integumentary System',
+    latinName: 'Systema integumentarium',
+    system: 'muscular',
+    complexity: 'overview',
+    color: '#DE9F7E',
+    accentColor: '#F97316',
+    center: [0, 0.5, 0.1],
+    boundsSize: [2.5, 8.2, 1.2],
+    cameraFocus: { target: [0, 0.5, 0.1], distance: 6.0 },
+    category: 'Integumentary Organ / Cutaneous Protective Barrier',
+    primaryFunction: 'Forms the outer protective envelope of the human body, provides tactile sensation, prevents fluid loss, synthesizes Vitamin D3, and maintains thermoregulation via sweat evaporation and cutaneous vasodilation.',
+    anatomicalLocation: 'Envelopes the entire external human body (~1.8 m² surface area in adults).',
+    educationalSummary: 'The human skin is the body\'s largest organ, comprising three distinct layers: the stratified squamous Epidermis (with keratinocytes, melanocytes, and Langerhans immune cells), the dense fibrous Dermis (with collagen, elastin, hair follicles, sebaceous glands, and sensory Pacinian/Meissner corpuscles), and the adipose Hypodermis (subcutaneous fat for thermal insulation and mechanical cushioning).',
+    keyFacts: [
+      'The skin accounts for roughly 16% of total adult body mass and continuously sheds ~40,000 dead keratinocytes per minute.',
+      'Melanocytes in the stratum basale produce melanin pigment to protect cell nuclei from ultraviolet DNA mutagenic damage.',
+      'Thermoregulation: Dermal capillaries dilate to shed heat in hot environments and constrict to conserve core body warmth.',
+      'Sensory receptors detect touch (Meissner corpuscles), deep pressure (Pacinian corpuscles), temperature (Krause/Ruffini), and pain (nociceptors).'
+    ],
+    subStructures: [
+      'Epidermis (Stratum Corneum, Lucidum, Granulosum, Spinosum, Basale)',
+      'Dermis (Papillary and Reticular Layers)',
+      'Hypodermis (Subcutaneous Adipose Tissue)',
+      'Hair Follicles & Sebaceous Glands',
+      'Eccrine & Apocrine Sweat Glands',
+      'Cutaneous Sensory Mechanoreceptors'
+    ],
+    relatedSystems: ['nervous', 'cardiovascular', 'muscular'],
+    clinicalRelevance: 'Burns (Rule of Nines), melanoma and basal cell carcinomas, dermatitis/eczema, psoriasis, and transdermal medication delivery.'
   }
 };
 

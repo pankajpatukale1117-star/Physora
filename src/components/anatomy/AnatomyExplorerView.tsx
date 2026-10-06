@@ -79,6 +79,11 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   // Layer Separation / Exploded View
   const [layerSeparation, setLayerSeparation] = useState(0.0);
 
+  // Skin & Integumentary Controls
+  const [skinOpacity, setSkinOpacity] = useState(0.45);
+  const [skinMode, setSkinMode] = useState<'natural' | 'translucent' | 'xray'>('natural');
+  const [skinVisible, setSkinVisible] = useState(true);
+
   // Biological Process Animation
   const [isProcessPlaying, setIsProcessPlaying] = useState(false);
   const [processSpeed, setProcessSpeed] = useState(1.0);
@@ -387,6 +392,122 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               {Math.round(layerSeparation * 100)}%
             </span>
           </div>
+
+          {/* Dedicated Skin & Body Surface Layer Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6, paddingLeft: 8, borderLeft: '1px solid rgba(255, 255, 255, 0.12)' }}>
+            <span style={{ fontSize: '0.70rem', color: '#FDBA74', fontWeight: 700 }}>Skin:</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={skinVisible ? skinOpacity : 0}
+              onChange={(e) => {
+                const val = parseFloat(e.target.value);
+                setSkinOpacity(val);
+                setSkinVisible(val > 0.01);
+              }}
+              style={{ width: 64, accentColor: '#F97316', cursor: 'pointer' }}
+              title="Skin Opacity (0% Off to 100% Solid Body)"
+            />
+            <span style={{ fontSize: '0.68rem', color: '#FDBA74', fontFamily: 'monospace', minWidth: 26 }}>
+              {skinVisible ? `${Math.round(skinOpacity * 100)}%` : '0%'}
+            </span>
+
+            {/* Quick Skin Presets */}
+            <div style={{ display: 'flex', gap: 2, background: 'rgba(0,0,0,0.35)', borderRadius: 16, padding: 2 }}>
+              <button
+                type="button"
+                onClick={() => { setSkinOpacity(1.0); setSkinVisible(true); }}
+                title="Solid 100% (Complete Human Body Surface)"
+                style={{
+                  background: skinVisible && skinOpacity >= 0.95 ? '#EA580C' : 'transparent',
+                  color: skinVisible && skinOpacity >= 0.95 ? '#FFFFFF' : '#94A3B8',
+                  border: 'none',
+                  borderRadius: 12,
+                  padding: '2px 6px',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Solid
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSkinOpacity(0.45); setSkinVisible(true); }}
+                title="Translucent 45% (See body surface + internal organs)"
+                style={{
+                  background: skinVisible && skinOpacity > 0.25 && skinOpacity < 0.95 ? '#EA580C' : 'transparent',
+                  color: skinVisible && skinOpacity > 0.25 && skinOpacity < 0.95 ? '#FFFFFF' : '#94A3B8',
+                  border: 'none',
+                  borderRadius: 12,
+                  padding: '2px 6px',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                45%
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSkinOpacity(0.15); setSkinVisible(true); }}
+                title="X-Ray 15% (Subtle outer contour)"
+                style={{
+                  background: skinVisible && skinOpacity <= 0.25 && skinOpacity > 0 ? '#EA580C' : 'transparent',
+                  color: skinVisible && skinOpacity <= 0.25 && skinOpacity > 0 ? '#FFFFFF' : '#94A3B8',
+                  border: 'none',
+                  borderRadius: 12,
+                  padding: '2px 6px',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                X-Ray
+              </button>
+              <button
+                type="button"
+                onClick={() => { setSkinVisible(false); setSkinOpacity(0); }}
+                title="Peel / Off (Pure Internal Anatomy)"
+                style={{
+                  background: !skinVisible || skinOpacity === 0 ? '#475569' : 'transparent',
+                  color: !skinVisible || skinOpacity === 0 ? '#FFFFFF' : '#94A3B8',
+                  border: 'none',
+                  borderRadius: 12,
+                  padding: '2px 6px',
+                  fontSize: '0.65rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Off
+              </button>
+            </div>
+
+            {/* Skin Tone Selector */}
+            <select
+              value={skinMode}
+              onChange={(e) => setSkinMode(e.target.value as 'natural' | 'translucent' | 'xray')}
+              style={{
+                background: 'rgba(0,0,0,0.4)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: 12,
+                color: '#FDBA74',
+                fontSize: '0.65rem',
+                fontWeight: 600,
+                padding: '2px 5px',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+              title="Skin Shader Tone"
+            >
+              <option value="natural">Natural Flesh</option>
+              <option value="translucent">Cyan Glass</option>
+              <option value="xray">Electric X-Ray</option>
+            </select>
+          </div>
         </div>
 
         {/* Right: Tools & Layers Toggle */}
@@ -482,6 +603,9 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
           detailLevel={detailLevel}
           presetView={presetView}
           onPresetViewHandled={() => setPresetView(null)}
+          skinOpacity={skinOpacity}
+          skinMode={skinMode}
+          skinVisible={skinVisible}
         />
 
         {/* Dynamic Process Player Bar (Floating Bottom-Center) */}
@@ -1170,26 +1294,29 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             top: 72,
             right: 16,
             width: 320,
+            display: 'flex',
+            flexDirection: 'column',
+            boxSizing: 'border-box',
             zIndex: 65,
-            background: 'rgba(11, 17, 32, 0.88)',
-            backdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
+            background: 'rgba(11, 17, 32, 0.90)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.14)',
             borderRadius: 14,
             padding: '18px 20px',
             boxShadow: '0 16px 36px rgba(0,0,0,0.5)'
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, width: '100%' }}>
             <Sparkles size={18} color="#10B981" />
             <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#FFFFFF' }}>
               Interactive 3D Anatomy Explorer
             </span>
           </div>
-          <p style={{ fontSize: '0.80rem', color: '#94A3B8', lineHeight: 1.55, margin: '0 0 14px 0' }}>
+          <p style={{ fontSize: '0.80rem', color: '#94A3B8', lineHeight: 1.55, margin: '0 0 14px 0', width: '100%' }}>
             Click on any anatomical organ, bone, or muscle to inspect its physiological function, isolate its structure, or follow real-time biological processes.
           </p>
 
-          <div style={{ fontSize: '0.74rem', color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ fontSize: '0.74rem', color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
             <div>• <strong style={{ color: '#FFFFFF' }}>Rotate:</strong> Click &amp; drag anywhere on canvas</div>
             <div>• <strong style={{ color: '#FFFFFF' }}>Zoom:</strong> Mouse wheel scroll or mobile pinch</div>
             <div>• <strong style={{ color: '#FFFFFF' }}>Pan:</strong> Right-click drag or shift-drag</div>

@@ -28,6 +28,9 @@ export interface Anatomy3DCanvasProps {
   detailLevel: DetailLevel;
   presetView: 'front' | 'back' | 'left' | 'right' | 'top' | 'reset' | null;
   onPresetViewHandled: () => void;
+  skinOpacity?: number;
+  skinMode?: 'natural' | 'translucent' | 'xray';
+  skinVisible?: boolean;
 }
 
 interface MeshUserData {
@@ -64,7 +67,10 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   processStepTick = 0,
   detailLevel: _detailLevel,
   presetView,
-  onPresetViewHandled
+  onPresetViewHandled,
+  skinOpacity = 0.45,
+  skinMode = 'natural',
+  skinVisible = true
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
@@ -140,29 +146,29 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     // ------------------------------------------------------------------------
     // CLINICAL SCIENTIFIC PBR LIGHTING RIG
     // ------------------------------------------------------------------------
-    // 1. Ambient soft slate medical illumination
-    const ambientLight = new THREE.AmbientLight(0x94A3B8, 0.85);
+    // 1. Clean neutral medical ambient illumination
+    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.80);
     scene.add(ambientLight);
 
-    // 2. Key Directional Daylight Light
-    const keyLight = new THREE.DirectionalLight(0xFFFFFF, 1.5);
+    // 2. Key Directional Surgical Daylight Light (True warm white sunlight)
+    const keyLight = new THREE.DirectionalLight(0xFFFDF5, 1.8);
     keyLight.position.set(6, 9, 7);
     scene.add(keyLight);
 
-    // 3. Rim / Contour Light (Cool cyan contour for anatomical edge clarity)
-    const rimLight = new THREE.DirectionalLight(0x38BDF8, 1.4);
-    rimLight.position.set(-7, 7, -5);
+    // 3. Soft Front-Left Fill Light (Eliminates harsh shadows on bones and muscles)
+    const fillLight = new THREE.DirectionalLight(0xF1F5F9, 0.75);
+    fillLight.position.set(-6, 3, 6);
+    scene.add(fillLight);
+
+    // 4. Subtle Contour Rim Light (Crisp neutral anatomical edge definition)
+    const rimLight = new THREE.DirectionalLight(0xCBD5E1, 0.6);
+    rimLight.position.set(-6, 7, -6);
     scene.add(rimLight);
 
-    // 4. Secondary Violet Backlight (Adds depth and separation)
-    const secondaryRim = new THREE.DirectionalLight(0x818CF8, 0.6);
-    secondaryRim.position.set(6, -3, -5);
-    scene.add(secondaryRim);
-
-    // 5. Warm Underfill Light (Organic subsurface cavity bounce)
-    const fillLight = new THREE.DirectionalLight(0xF87171, 0.4);
-    fillLight.position.set(0, -6, 4);
-    scene.add(fillLight);
+    // 5. Warm Underfill Bounce Light (Organic tissue translucency)
+    const underfillLight = new THREE.DirectionalLight(0xFEE2E2, 0.35);
+    underfillLight.position.set(0, -6, 3);
+    scene.add(underfillLight);
 
     // Faded Circular Floor Pedestal
     const gridHelper = new THREE.GridHelper(16, 32, 0x1E293B, 0x0F172A);
@@ -289,19 +295,27 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       );
     });
 
-    // When exploded, subtly fade the translucent skin to reveal deep anatomy
+    // When exploded, dynamically fade skin to reveal deep anatomy
     const skinMeshes = meshMapRef.current.get('skin');
     if (skinMeshes) {
-      const skinAlpha = Math.max(0.0, 0.22 - factor * 0.22);
+      const skinAlpha = Math.max(0.0, skinOpacity * (1.0 - factor));
       skinMeshes.forEach((mesh) => {
         const mat = mesh.material as THREE.MeshStandardMaterial;
         if (mat) {
-          mat.opacity = skinAlpha;
-          mesh.visible = skinAlpha > 0.01;
+          if (skinAlpha >= 0.95 && skinMode === 'natural') {
+            mat.transparent = false;
+            mat.opacity = 1.0;
+            mat.depthWrite = true;
+          } else {
+            mat.transparent = true;
+            mat.opacity = skinAlpha;
+            mat.depthWrite = false;
+          }
+          mesh.visible = skinVisible && skinAlpha > 0.01 && !isIsolated;
         }
       });
     }
-  }, [layerSeparation]);
+  }, [layerSeparation, skinOpacity, skinMode, skinVisible, isIsolated]);
 
   // --------------------------------------------------------------------------
   // 3. STEP-BY-STEP PROGRESSION TRIGGER
@@ -407,9 +421,64 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         shouldBeVisible = isSelected;
       }
 
-      // Skin has special translucent visibility handling
+      // Skin has dedicated medical PBR controls (natural human skin tone, controllable opacity, glass, or off)
       if (id === 'skin') {
-        shouldBeVisible = !isIsolated && systemVisibility.muscular;
+        const effectiveOpacity = layerSeparation > 0
+          ? Math.max(0.0, skinOpacity * (1.0 - layerSeparation))
+          : skinOpacity;
+
+        const isVisible = skinVisible && effectiveOpacity > 0.01 && !isIsolated;
+
+        meshes.forEach((mesh) => {
+          mesh.visible = isVisible;
+          if (!isVisible) return;
+
+          const mat = mesh.material as THREE.MeshStandardMaterial;
+          if (!mat) return;
+
+          if (isSelected) {
+            mat.emissive.set(new THREE.Color(0xF97316));
+            mat.emissiveIntensity = 0.55;
+            mat.opacity = Math.max(0.7, effectiveOpacity);
+            mat.transparent = true;
+            mat.depthWrite = false;
+          } else if (skinMode === 'natural') {
+            mat.color.setHex(0xDE9F7E); // Warm natural human skin tone
+            mat.roughness = 0.52;
+            mat.metalness = 0.02;
+            mat.emissive.setHex(0x1F0B05); // Subsurface scattering warmth
+            mat.emissiveIntensity = 0.06;
+            if ('clearcoat' in mat) (mat as THREE.MeshPhysicalMaterial).clearcoat = 0.1;
+            if (effectiveOpacity >= 0.95) {
+              mat.transparent = false;
+              mat.opacity = 1.0;
+              mat.depthWrite = true;
+            } else {
+              mat.transparent = true;
+              mat.opacity = effectiveOpacity;
+              mat.depthWrite = false;
+            }
+          } else if (skinMode === 'translucent') {
+            mat.color.setHex(0x38BDF8); // Medical cyan frosted glass
+            mat.roughness = 0.22;
+            mat.metalness = 0.05;
+            mat.emissive.setHex(0x0284C7);
+            mat.emissiveIntensity = 0.15;
+            if ('clearcoat' in mat) (mat as THREE.MeshPhysicalMaterial).clearcoat = 1.0;
+            mat.transparent = true;
+            mat.opacity = effectiveOpacity;
+            mat.depthWrite = false;
+          } else if (skinMode === 'xray') {
+            mat.color.setHex(0x818CF8); // Bioluminescent electric scan
+            mat.roughness = 0.35;
+            mat.emissive.setHex(0x3730A3);
+            mat.emissiveIntensity = 0.45;
+            mat.transparent = true;
+            mat.opacity = effectiveOpacity * 0.85;
+            mat.depthWrite = false;
+          }
+        });
+        return;
       }
 
       meshes.forEach((mesh) => {
@@ -429,23 +498,18 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
           // Dim non-selected structures into subtle translucent depth silhouette
           mat.emissive.setHex(0x000000);
           mat.emissiveIntensity = 0;
-          mat.opacity = id === 'skin' ? 0.08 : Math.min(systemAlpha * 0.22, 0.25);
+          mat.opacity = Math.min(systemAlpha * 0.22, 0.25);
           mat.transparent = true;
         } else {
           // Normal state with system opacity
           mat.emissive.setHex(0x000000);
           mat.emissiveIntensity = 0;
-          if (id === 'skin') {
-            mat.opacity = 0.20;
-            mat.transparent = true;
-          } else {
-            mat.opacity = systemAlpha;
-            mat.transparent = systemAlpha < 0.95;
-          }
+          mat.opacity = systemAlpha;
+          mat.transparent = systemAlpha < 0.95;
         }
       });
     });
-  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated]);
+  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated, layerSeparation, skinOpacity, skinMode, skinVisible]);
 
   // --------------------------------------------------------------------------
   // 7. MOUSE & TOUCH ORBIT / ZOOM / PAN INTERACTIONS
@@ -539,10 +603,10 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     const intersects = raycaster.intersectObjects(anatomyMasterGroupRef.current.children, true);
     if (intersects.length > 0) {
       for (const hit of intersects) {
-        // Find closest hit that is visible and not transparent skin
+        // Find closest hit that is visible (or skin if opaque)
         if (hit.object.visible && hit.object.userData?.id) {
           const ud = hit.object.userData as MeshUserData;
-          if (ud.id !== 'skin') {
+          if (ud.id !== 'skin' || skinOpacity >= 0.85) {
             onSelectStructure(ud.id);
             return;
           }
@@ -570,16 +634,18 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     const intersects = raycaster.intersectObjects(anatomyMasterGroupRef.current.children, true);
     if (intersects.length > 0) {
       for (const hit of intersects) {
-        if (hit.object.visible && hit.object.userData?.id && hit.object.userData.id !== 'skin') {
+        if (hit.object.visible && hit.object.userData?.id) {
           const ud = hit.object.userData as MeshUserData;
-          setHoveredStructure({
-            id: ud.id,
-            name: ud.name,
-            system: ud.system,
-            x: clientX,
-            y: clientY
-          });
-          return;
+          if (ud.id !== 'skin' || skinOpacity >= 0.85) {
+            setHoveredStructure({
+              id: ud.id,
+              name: ud.name,
+              system: ud.system,
+              x: clientX,
+              y: clientY
+            });
+            return;
+          }
         }
       }
     }
@@ -695,6 +761,300 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
 };
 
 // ============================================================================
+// ANATOMICALLY CALIBRATED PROCEDURAL MUSCULAR SYSTEM GENERATOR
+// ============================================================================
+
+function buildDetailedMuscularSystem(
+  masterGroup: THREE.Group,
+  registerMesh: (id: string, mesh: THREE.Mesh, system: AnatomicalSystemId, name: string) => void
+) {
+  const muscleGroup = new THREE.Group();
+  muscleGroup.name = 'MuscularSystemGroup';
+
+  const muscleMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0xB91C1C, // Deep anatomical muscle ruby-crimson
+    roughness: 0.38,
+    metalness: 0.03,
+    clearcoat: 0.35,
+    clearcoatRoughness: 0.25
+  });
+
+  interface MuscleDef {
+    name: string;
+    geom: THREE.BufferGeometry;
+    pos: [number, number, number];
+    rot?: [number, number, number];
+    scale?: [number, number, number];
+  }
+
+  const muscles: MuscleDef[] = [];
+
+  // 1. CHEST: Pectoralis Major (Left & Right fan-shaped plates)
+  muscles.push(
+    {
+      name: 'Right Pectoralis Major',
+      geom: new THREE.CapsuleGeometry(0.24, 0.42, 8, 16),
+      pos: [-0.44, 2.05, 0.38],
+      rot: [0.15, 0.35, -0.45],
+      scale: [1.1, 1.0, 0.65]
+    },
+    {
+      name: 'Left Pectoralis Major',
+      geom: new THREE.CapsuleGeometry(0.24, 0.42, 8, 16),
+      pos: [0.44, 2.05, 0.38],
+      rot: [0.15, -0.35, 0.45],
+      scale: [1.1, 1.0, 0.65]
+    }
+  );
+
+  // 2. ABDOMEN: Rectus Abdominis (6-Pack segments with linea alba)
+  const absLevels = [
+    { y: 1.48, len: 0.20, name: 'Upper' },
+    { y: 1.15, len: 0.20, name: 'Middle' },
+    { y: 0.80, len: 0.22, name: 'Lower' }
+  ];
+  absLevels.forEach((lvl) => {
+    muscles.push(
+      {
+        name: `Right Rectus Abdominis (${lvl.name})`,
+        geom: new THREE.CapsuleGeometry(0.13, lvl.len, 6, 14),
+        pos: [-0.18, lvl.y, 0.38],
+        rot: [0.05, 0, 0],
+        scale: [1.0, 1.0, 0.6]
+      },
+      {
+        name: `Left Rectus Abdominis (${lvl.name})`,
+        geom: new THREE.CapsuleGeometry(0.13, lvl.len, 6, 14),
+        pos: [0.18, lvl.y, 0.38],
+        rot: [0.05, 0, 0],
+        scale: [1.0, 1.0, 0.6]
+      }
+    );
+  });
+
+  // 3. FLANKS: External Obliques (Left & Right flank musculature)
+  muscles.push(
+    {
+      name: 'Right External Oblique',
+      geom: new THREE.CapsuleGeometry(0.18, 0.68, 8, 16),
+      pos: [-0.62, 1.10, 0.16],
+      rot: [0, 0.2, 0.2],
+      scale: [1.1, 1.0, 0.7]
+    },
+    {
+      name: 'Left External Oblique',
+      geom: new THREE.CapsuleGeometry(0.18, 0.68, 8, 16),
+      pos: [0.62, 1.10, 0.16],
+      rot: [0, -0.2, -0.2],
+      scale: [1.1, 1.0, 0.7]
+    }
+  );
+
+  // 4. SHOULDERS: Deltoids (Left & Right 3-part shoulder caps)
+  muscles.push(
+    {
+      name: 'Right Deltoid (Shoulder Cap)',
+      geom: new THREE.SphereGeometry(0.32, 16, 16),
+      pos: [-1.15, 2.30, 0.04],
+      scale: [0.9, 1.3, 0.95]
+    },
+    {
+      name: 'Left Deltoid (Shoulder Cap)',
+      geom: new THREE.SphereGeometry(0.32, 16, 16),
+      pos: [1.15, 2.30, 0.04],
+      scale: [0.9, 1.3, 0.95]
+    }
+  );
+
+  // 5. UPPER ARMS: Biceps Brachii & Triceps Brachii
+  muscles.push(
+    {
+      name: 'Right Biceps Brachii',
+      geom: new THREE.CapsuleGeometry(0.15, 0.48, 8, 16),
+      pos: [-1.22, 1.62, 0.14],
+      rot: [0.1, 0, 0.1],
+      scale: [1.0, 1.0, 0.85]
+    },
+    {
+      name: 'Left Biceps Brachii',
+      geom: new THREE.CapsuleGeometry(0.15, 0.48, 8, 16),
+      pos: [1.22, 1.62, 0.14],
+      rot: [0.1, 0, -0.1],
+      scale: [1.0, 1.0, 0.85]
+    },
+    {
+      name: 'Right Triceps Brachii',
+      geom: new THREE.CapsuleGeometry(0.16, 0.52, 8, 16),
+      pos: [-1.22, 1.62, -0.14],
+      rot: [-0.1, 0, 0.1],
+      scale: [1.0, 1.0, 0.9]
+    },
+    {
+      name: 'Left Triceps Brachii',
+      geom: new THREE.CapsuleGeometry(0.16, 0.52, 8, 16),
+      pos: [1.22, 1.62, -0.14],
+      rot: [-0.1, 0, -0.1],
+      scale: [1.0, 1.0, 0.9]
+    }
+  );
+
+  // 6. FOREARMS: Brachioradialis & Forearm Flexors
+  muscles.push(
+    {
+      name: 'Right Forearm Flexors',
+      geom: new THREE.CylinderGeometry(0.16, 0.11, 0.80, 16),
+      pos: [-1.42, 0.65, 0.05],
+      rot: [0, 0, 0.12],
+      scale: [1.0, 1.0, 0.85]
+    },
+    {
+      name: 'Left Forearm Flexors',
+      geom: new THREE.CylinderGeometry(0.16, 0.11, 0.80, 16),
+      pos: [1.42, 0.65, 0.05],
+      rot: [0, 0, -0.12],
+      scale: [1.0, 1.0, 0.85]
+    }
+  );
+
+  // 7. BACK: Trapezius & Latissimus Dorsi
+  muscles.push(
+    {
+      name: 'Trapezius (Upper Back)',
+      geom: new THREE.CapsuleGeometry(0.24, 0.55, 8, 16),
+      pos: [0, 2.62, -0.22],
+      rot: [0, 0, Math.PI / 2],
+      scale: [0.75, 1.1, 0.75]
+    },
+    {
+      name: 'Right Latissimus Dorsi',
+      geom: new THREE.CapsuleGeometry(0.22, 0.72, 8, 16),
+      pos: [-0.52, 1.45, -0.26],
+      rot: [0, 0.25, -0.2],
+      scale: [1.1, 1.0, 0.7]
+    },
+    {
+      name: 'Left Latissimus Dorsi',
+      geom: new THREE.CapsuleGeometry(0.22, 0.72, 8, 16),
+      pos: [0.52, 1.45, -0.26],
+      rot: [0, -0.25, 0.2],
+      scale: [1.1, 1.0, 0.7]
+    }
+  );
+
+  // 8. HIPS & GLUTEALS: Gluteus Maximus
+  muscles.push(
+    {
+      name: 'Right Gluteus Maximus',
+      geom: new THREE.SphereGeometry(0.36, 16, 16),
+      pos: [-0.38, -0.25, -0.32],
+      scale: [1.1, 1.0, 1.15]
+    },
+    {
+      name: 'Left Gluteus Maximus',
+      geom: new THREE.SphereGeometry(0.36, 16, 16),
+      pos: [0.38, -0.25, -0.32],
+      scale: [1.1, 1.0, 1.15]
+    }
+  );
+
+  // 9. THIGHS: Quadriceps Femoris & Hamstrings
+  muscles.push(
+    {
+      name: 'Right Quadriceps Femoris',
+      geom: new THREE.CapsuleGeometry(0.22, 0.88, 8, 16),
+      pos: [-0.42, -1.25, 0.20],
+      rot: [-0.08, 0, 0.05],
+      scale: [1.1, 1.0, 0.85]
+    },
+    {
+      name: 'Left Quadriceps Femoris',
+      geom: new THREE.CapsuleGeometry(0.22, 0.88, 8, 16),
+      pos: [0.42, -1.25, 0.20],
+      rot: [-0.08, 0, -0.05],
+      scale: [1.1, 1.0, 0.85]
+    },
+    {
+      name: 'Right Hamstrings',
+      geom: new THREE.CapsuleGeometry(0.22, 0.88, 8, 16),
+      pos: [-0.42, -1.25, -0.18],
+      rot: [0.08, 0, 0.05],
+      scale: [1.1, 1.0, 0.9]
+    },
+    {
+      name: 'Left Hamstrings',
+      geom: new THREE.CapsuleGeometry(0.22, 0.88, 8, 16),
+      pos: [0.42, -1.25, -0.18],
+      rot: [0.08, 0, -0.05],
+      scale: [1.1, 1.0, 0.9]
+    }
+  );
+
+  // 10. LOWER LEGS: Gastrocnemius (Calf) & Tibialis Anterior (Shin)
+  muscles.push(
+    {
+      name: 'Right Gastrocnemius (Calf)',
+      geom: new THREE.CapsuleGeometry(0.20, 0.65, 8, 16),
+      pos: [-0.38, -2.75, -0.15],
+      rot: [0.05, 0, 0.04],
+      scale: [1.05, 1.0, 0.8]
+    },
+    {
+      name: 'Left Gastrocnemius (Calf)',
+      geom: new THREE.CapsuleGeometry(0.20, 0.65, 8, 16),
+      pos: [0.38, -2.75, -0.15],
+      rot: [0.05, 0, -0.04],
+      scale: [1.05, 1.0, 0.8]
+    },
+    {
+      name: 'Right Tibialis Anterior (Shin)',
+      geom: new THREE.CapsuleGeometry(0.12, 0.70, 8, 16),
+      pos: [-0.38, -2.75, 0.14],
+      rot: [-0.05, 0, 0.04],
+      scale: [1.0, 1.0, 0.75]
+    },
+    {
+      name: 'Left Tibialis Anterior (Shin)',
+      geom: new THREE.CapsuleGeometry(0.12, 0.70, 8, 16),
+      pos: [0.38, -2.75, 0.14],
+      rot: [-0.05, 0, -0.04],
+      scale: [1.0, 1.0, 0.75]
+    }
+  );
+
+  // 11. NECK: Sternocleidomastoid
+  muscles.push(
+    {
+      name: 'Right Sternocleidomastoid',
+      geom: new THREE.CapsuleGeometry(0.10, 0.42, 8, 16),
+      pos: [-0.22, 2.95, 0.12],
+      rot: [0.3, 0.25, -0.35],
+      scale: [0.9, 1.0, 0.7]
+    },
+    {
+      name: 'Left Sternocleidomastoid',
+      geom: new THREE.CapsuleGeometry(0.10, 0.42, 8, 16),
+      pos: [0.22, 2.95, 0.12],
+      rot: [0.3, -0.25, 0.35],
+      scale: [0.9, 1.0, 0.7]
+    }
+  );
+
+  // Instantiate and register each muscle mesh
+  muscles.forEach((m) => {
+    const mesh = new THREE.Mesh(m.geom, muscleMaterial.clone());
+    mesh.position.set(...m.pos);
+    if (m.rot) mesh.rotation.set(...m.rot);
+    if (m.scale) mesh.scale.set(...m.scale);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    muscleGroup.add(mesh);
+    registerMesh('muscles_core', mesh, 'muscular', m.name);
+  });
+
+  masterGroup.add(muscleGroup);
+}
+
+// ============================================================================
 // MODEL LOADER PIPELINE: ASSEMBLES REAL VISIBLE HUMAN & Z-ANATOMY MESHES
 // ============================================================================
 
@@ -717,6 +1077,10 @@ function loadAllAnatomicalModels(
     list.push(mesh);
   };
 
+  // 1. Build Anatomically Calibrated Muscular System
+  buildDetailedMuscularSystem(masterGroup, registerMesh);
+
+  // 2. High-Resolution Visible Human & Z-Anatomy Models
   const modelSpecs: {
     file: string;
     id: string;
@@ -734,14 +1098,14 @@ function loadAllAnatomicalModels(
     {
       file: 'skin.glb',
       id: 'skin',
-      name: 'Human Body Surface (Translucent)',
+      name: 'Human Body Surface (Skin & Involucre)',
       system: 'muscular',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0x38BDF8,
-      roughness: 0.25,
-      clearcoat: 1.0,
-      opacity: 0.20
+      materialColor: 0xDE9F7E, // Realistic natural skin tone
+      roughness: 0.52,
+      clearcoat: 0.1,
+      opacity: 0.45
     },
     {
       file: 'skeleton.glb',
@@ -750,9 +1114,9 @@ function loadAllAnatomicalModels(
       system: 'skeletal',
       scale: 0.045, // 175cm -> meters * 4.5
       position: [0, -3.80, 0],
-      materialColor: 0xF1EFE7, // Ivory bone
-      roughness: 0.44,
-      metalness: 0.05
+      materialColor: 0xFBF8F0, // Warm natural ivory bone
+      roughness: 0.38,
+      metalness: 0.02
     },
     {
       file: 'heart.glb',
@@ -761,9 +1125,9 @@ function loadAllAnatomicalModels(
       system: 'cardiovascular',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xEF4444, // Myocardium crimson
-      roughness: 0.35,
-      clearcoat: 0.3,
+      materialColor: 0xBE123C, // Myocardium crimson
+      roughness: 0.30,
+      clearcoat: 0.5,
       separatedOffset: [-0.4, 0, 1.5]
     },
     {
@@ -773,8 +1137,8 @@ function loadAllAnatomicalModels(
       system: 'respiratory',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0x0EA5E9, // Pulmonary azure
-      roughness: 0.46,
+      materialColor: 0xDC828F, // Pulmonary rose-pink
+      roughness: 0.44,
       separatedOffset: [0.8, 0, 0.6]
     },
     {
@@ -784,8 +1148,8 @@ function loadAllAnatomicalModels(
       system: 'nervous',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0x8B5CF6, // Cerebral purple
-      roughness: 0.42,
+      materialColor: 0xE2C7B8, // Cerebral ivory-pink
+      roughness: 0.40,
       separatedOffset: [0, 0.4, 0.6]
     },
     {
@@ -795,8 +1159,9 @@ function loadAllAnatomicalModels(
       system: 'digestive',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0x991B1B, // Hepatic burgundy
-      roughness: 0.42,
+      materialColor: 0x881337, // Hepatic burgundy
+      roughness: 0.35,
+      clearcoat: 0.3,
       separatedOffset: [-0.8, 0, 1.2]
     },
     {
@@ -806,8 +1171,9 @@ function loadAllAnatomicalModels(
       system: 'urinary',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0x10B981, // Renal emerald
-      roughness: 0.38,
+      materialColor: 0x831843, // Renal mahogany
+      roughness: 0.36,
+      clearcoat: 0.3,
       separatedOffset: [0.6, 0, 0.9]
     },
     {
@@ -817,8 +1183,9 @@ function loadAllAnatomicalModels(
       system: 'urinary',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0x10B981,
-      roughness: 0.38,
+      materialColor: 0x831843,
+      roughness: 0.36,
+      clearcoat: 0.3,
       separatedOffset: [-0.6, 0, 0.9]
     },
     {
@@ -829,7 +1196,7 @@ function loadAllAnatomicalModels(
       scale: 4.5,
       position: [0, 0, 0],
       materialColor: 0xB45309,
-      roughness: 0.48,
+      roughness: 0.44,
       separatedOffset: [0, -0.2, 1.4]
     },
     {
@@ -840,7 +1207,7 @@ function loadAllAnatomicalModels(
       scale: 4.5,
       position: [0, 0, 0],
       materialColor: 0xD97706,
-      roughness: 0.45,
+      roughness: 0.44,
       separatedOffset: [0, -0.2, 1.2]
     },
     {
@@ -850,7 +1217,7 @@ function loadAllAnatomicalModels(
       system: 'cardiovascular',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xDC2626,
+      materialColor: 0xEF4444, // Arterial ruby
       roughness: 0.35,
       metalness: 0.1
     }
