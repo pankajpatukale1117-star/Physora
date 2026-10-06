@@ -21,7 +21,10 @@ import {
   ArrowLeft,
   SkipBack,
   SkipForward,
-  Sliders
+  Sliders,
+  ChevronLeft,
+  ChevronRight,
+  Compass
 } from 'lucide-react';
 import type {
   AnatomicalSystemId,
@@ -29,7 +32,8 @@ import type {
 } from '../../data/anatomyData';
 import {
   ANATOMICAL_SYSTEMS,
-  ANATOMY_STRUCTURES
+  ANATOMY_STRUCTURES,
+  ANATOMICAL_LAYER_STACK
 } from '../../data/anatomyData';
 import { Anatomy3DCanvas } from './Anatomy3DCanvas';
 import { MultiLevelScaleModal } from './MultiLevelScaleModal';
@@ -45,9 +49,22 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   initialStructureId = null
 }) => {
   // Selected Structure & Isolation
-  const [selectedStructureId, setSelectedStructureId] = useState<string | null>(initialStructureId);
+  const [selectedStructureId, setSelectedStructureId] = useState<string | null>(() => {
+    if (initialStructureId && ANATOMY_STRUCTURES[initialStructureId]) {
+      return initialStructureId;
+    }
+    return null;
+  });
   const [isIsolated, setIsIsolated] = useState(false);
   const [showInternal, setShowInternal] = useState(false);
+
+  useEffect(() => {
+    if (initialStructureId && ANATOMY_STRUCTURES[initialStructureId]) {
+      setSelectedStructureId(initialStructureId);
+    } else {
+      setSelectedStructureId(null);
+    }
+  }, [initialStructureId]);
 
   // System Visibilities & Opacities
   const [systemVisibility, setSystemVisibility] = useState<Record<AnatomicalSystemId, boolean>>({
@@ -59,7 +76,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     nervous: true,
     urinary: true,
     endocrine: true,
-    reproductive: true
+    lymphatic: true
   });
 
   const [systemOpacity, setSystemOpacity] = useState<Record<AnatomicalSystemId, number>>({
@@ -71,7 +88,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     nervous: 1.0,
     urinary: 1.0,
     endocrine: 1.0,
-    reproductive: 1.0
+    lymphatic: 1.0
   });
 
   // Camera & View Settings
@@ -81,8 +98,12 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   // Layer Separation / Exploded View
   const [layerSeparation, setLayerSeparation] = useState(0.0);
 
-  // Biological Sex Toggle (Female / Male Anatomy)
-  const [biologicalSex, setBiologicalSex] = useState<'female' | 'male'>('female');
+  // Anatomical Body Morphology (Neutral Clinical Model)
+  const biologicalSex: 'female' | 'male' = 'female';
+
+  // 10-Step Interactive Anatomical Layer Stack State
+  const [activeLayerIndex, setActiveLayerIndex] = useState<number>(0);
+  const [isLayerStackExpanded, setIsLayerStackExpanded] = useState<boolean>(true);
 
   // Skin & Integumentary Controls
   const [skinOpacity, setSkinOpacity] = useState(0.45);
@@ -145,10 +166,39 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     setIsIsolated((prev) => !prev);
   };
 
+  // Step through 10-layer clinical anatomical stack
+  const handleSelectLayer = (index: number) => {
+    const clamped = Math.max(0, Math.min(ANATOMICAL_LAYER_STACK.length - 1, index));
+    setActiveLayerIndex(clamped);
+    const layer = ANATOMICAL_LAYER_STACK[clamped];
+    if (!layer) return;
+
+    setSkinOpacity(layer.skinOpacity);
+    setSkinVisible(layer.skinVisible);
+    setLayerSeparation(layer.layerSeparation);
+    setShowInternal(layer.showInternal);
+    setSystemVisibility({ ...layer.systemVisibility });
+
+    // When reaching Layer 10 (Microscopic scale), open deep-scale explorer if an organ is selected
+    if (clamped === 9 && selectedStructure) {
+      setIsScaleModalOpen(true);
+    }
+  };
+
+  const handleNextLayer = () => {
+    handleSelectLayer(activeLayerIndex + 1);
+  };
+
+  const handlePrevLayer = () => {
+    handleSelectLayer(activeLayerIndex - 1);
+  };
+
   const handleReturnToBody = () => {
     setIsIsolated(false);
     setShowInternal(false);
     setIsProcessPlaying(false);
+    setSelectedStructureId(null);
+    setPresetView('reset');
   };
 
   // Solo System helper
@@ -162,7 +212,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       nervous: false,
       urinary: false,
       endocrine: false,
-      reproductive: false
+      lymphatic: false
     };
     next[sysId] = true;
     setSystemVisibility(next);
@@ -178,7 +228,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       nervous: true,
       urinary: true,
       endocrine: true,
-      reproductive: true
+      lymphatic: true
     });
   };
 
@@ -271,6 +321,25 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                 <span style={{ color: '#10B981', fontWeight: 700 }}>
                   {selectedStructure.name}
                 </span>
+                <button
+                  type="button"
+                  onClick={handleReturnToBody}
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.12)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    color: '#38BDF8',
+                    borderRadius: 12,
+                    padding: '2px 8px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    marginLeft: 6,
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Return camera to full human body overview"
+                >
+                  Return to Body
+                </button>
               </>
             )}
 
@@ -515,49 +584,6 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               <option value="xray">Electric X-Ray</option>
             </select>
           </div>
-
-          {/* Biological Sex Toggle (Female / Male Anatomy) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6, paddingLeft: 8, borderLeft: '1px solid rgba(255, 255, 255, 0.12)' }}>
-            <span style={{ fontSize: '0.70rem', color: '#F43F5E', fontWeight: 700 }}>Sex:</span>
-            <div style={{ display: 'flex', gap: 2, background: 'rgba(0,0,0,0.35)', borderRadius: 16, padding: 2 }}>
-              <button
-                type="button"
-                onClick={() => setBiologicalSex('female')}
-                title="Female Reproductive & Superficial Anatomy (Bilateral mammary glands, vulva, pelvic organs)"
-                style={{
-                  background: biologicalSex === 'female' ? '#F43F5E' : 'transparent',
-                  color: biologicalSex === 'female' ? '#FFFFFF' : '#94A3B8',
-                  border: 'none',
-                  borderRadius: 12,
-                  padding: '2px 8px',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                ♀ Female
-              </button>
-              <button
-                type="button"
-                onClick={() => setBiologicalSex('male')}
-                title="Male Anatomy"
-                style={{
-                  background: biologicalSex === 'male' ? '#0284C7' : 'transparent',
-                  color: biologicalSex === 'male' ? '#FFFFFF' : '#94A3B8',
-                  border: 'none',
-                  borderRadius: 12,
-                  padding: '2px 8px',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                ♂ Male
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Right: Tools & Layers Toggle */}
@@ -625,7 +651,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             }}
           >
             <Layers size={15} />
-            <span>Systems ({Object.values(systemVisibility).filter(Boolean).length}/9)</span>
+            <span>Systems ({Object.values(systemVisibility).filter(Boolean).length}/{Object.keys(ANATOMICAL_SYSTEMS).length})</span>
           </button>
         </div>
       </header>
@@ -802,24 +828,169 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
           </div>
         )}
 
-        {/* 3D Viewport Controls Hint (Bottom Left) */}
+        {/* 10-STEP CLINICAL ANATOMICAL LAYER STACK NAVIGATOR */}
         <div
-          className="hide-mobile"
           style={{
             position: 'absolute',
             bottom: 20,
             left: 20,
-            zIndex: 40,
-            pointerEvents: 'none',
-            fontSize: '0.72rem',
-            color: 'rgba(255, 255, 255, 0.45)',
-            background: 'rgba(15, 23, 42, 0.6)',
-            padding: '4px 10px',
-            borderRadius: 6,
-            border: '1px solid rgba(255, 255, 255, 0.08)'
+            zIndex: 45,
+            background: 'rgba(11, 17, 32, 0.94)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.16)',
+            borderRadius: 16,
+            padding: isLayerStackExpanded ? '12px 16px' : '8px 14px',
+            boxShadow: '0 16px 36px rgba(0, 0, 0, 0.65)',
+            maxWidth: 'calc(100vw - 40px)',
+            width: isLayerStackExpanded ? 540 : 'auto',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >
-          Drag to rotate • Scroll to zoom • Right-drag to pan • Click structure to inspect
+          {/* Header & Controls */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  background: 'rgba(16, 185, 129, 0.2)',
+                  color: '#10B981',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}
+              >
+                <Layers size={16} />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.80rem', fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap' }}>
+                    {ANATOMICAL_LAYER_STACK[activeLayerIndex]?.name}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: '#64748B', fontStyle: 'italic', whiteSpace: 'nowrap' }}>
+                    ({ANATOMICAL_LAYER_STACK[activeLayerIndex]?.latinName})
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.68rem', color: '#94A3B8', marginTop: 1 }}>
+                  Layer {activeLayerIndex + 1} of {ANATOMICAL_LAYER_STACK.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Stepper Buttons (Prev / Next / Expand) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={handlePrevLayer}
+                disabled={activeLayerIndex === 0}
+                title="Previous Anatomical Layer"
+                style={{
+                  background: activeLayerIndex === 0 ? 'rgba(255, 255, 255, 0.04)' : 'rgba(255, 255, 255, 0.1)',
+                  color: activeLayerIndex === 0 ? '#475569' : '#FFFFFF',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 8,
+                  padding: '4px 8px',
+                  fontSize: '0.70rem',
+                  fontWeight: 700,
+                  cursor: activeLayerIndex === 0 ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3
+                }}
+              >
+                <ChevronLeft size={13} />
+                <span>Prev</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleNextLayer}
+                disabled={activeLayerIndex === ANATOMICAL_LAYER_STACK.length - 1}
+                title="Next Anatomical Layer"
+                style={{
+                  background: activeLayerIndex === ANATOMICAL_LAYER_STACK.length - 1 ? 'rgba(255, 255, 255, 0.04)' : '#10B981',
+                  color: activeLayerIndex === ANATOMICAL_LAYER_STACK.length - 1 ? '#475569' : '#000000',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '4px 10px',
+                  fontSize: '0.70rem',
+                  fontWeight: 800,
+                  cursor: activeLayerIndex === ANATOMICAL_LAYER_STACK.length - 1 ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3
+                }}
+              >
+                <span>Next</span>
+                <ChevronRight size={13} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsLayerStackExpanded(!isLayerStackExpanded)}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#94A3B8',
+                  cursor: 'pointer',
+                  padding: 4,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                title={isLayerStackExpanded ? 'Collapse Layer Navigator' : 'Expand Layer Navigator'}
+              >
+                {isLayerStackExpanded ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Expanded 10-Layer Pill Strip & Description */}
+          {isLayerStackExpanded && (
+            <div style={{ marginTop: 10 }}>
+              <p style={{ margin: '0 0 10px 0', fontSize: '0.73rem', color: '#CBD5E1', lineHeight: 1.45 }}>
+                {ANATOMICAL_LAYER_STACK[activeLayerIndex]?.description}
+              </p>
+
+              {/* 10 Layer Buttons */}
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 4,
+                  overflowX: 'auto',
+                  paddingBottom: 2,
+                  scrollbarWidth: 'none'
+                }}
+              >
+                {ANATOMICAL_LAYER_STACK.map((layer, idx) => {
+                  const isActive = activeLayerIndex === idx;
+                  return (
+                    <button
+                      key={layer.id}
+                      type="button"
+                      onClick={() => handleSelectLayer(idx)}
+                      style={{
+                        flexShrink: 0,
+                        padding: '4px 8px',
+                        borderRadius: 8,
+                        background: isActive ? '#10B981' : 'rgba(255, 255, 255, 0.06)',
+                        color: isActive ? '#000000' : '#CBD5E1',
+                        border: isActive ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.1)',
+                        fontSize: '0.67rem',
+                        fontWeight: isActive ? 800 : 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      title={`${layer.name} (${layer.latinName})`}
+                    >
+                      {idx + 1}. {layer.shortName}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -901,7 +1072,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                   nervous: 1.0,
                   urinary: 1.0,
                   endocrine: 1.0,
-                  reproductive: 1.0
+                  lymphatic: 1.0
                 });
               }}
               style={{
@@ -1306,6 +1477,134 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                 ))}
               </div>
             </div>
+
+            {/* Internal Cavities & Cross-Sections (When available) */}
+            {selectedStructure.internalStructures && selectedStructure.internalStructures.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Internal Cavities &amp; Chambers {showInternal && <span style={{ color: '#10B981', fontSize: '0.68rem', fontWeight: 600 }}>• Active Cutaway</span>}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {selectedStructure.internalStructures.map((intern) => {
+                    const isSelectableChamber = !!ANATOMY_STRUCTURES[intern.id];
+                    return (
+                      <div
+                        key={intern.id}
+                        onClick={() => {
+                          if (isSelectableChamber) {
+                            setSelectedStructureId(intern.id);
+                          }
+                        }}
+                        style={{
+                          padding: '8px 10px',
+                          borderRadius: 8,
+                          background: 'rgba(56, 189, 248, 0.08)',
+                          border: '1px solid rgba(56, 189, 248, 0.22)',
+                          cursor: isSelectableChamber ? 'pointer' : 'default',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                          <div
+                            style={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              background: intern.color || '#38BDF8',
+                              boxShadow: `0 0 6px ${intern.color || '#38BDF8'}`
+                            }}
+                          />
+                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFFFFF' }}>
+                            {intern.name}
+                          </span>
+                          {isSelectableChamber && (
+                            <span style={{ marginLeft: 'auto', fontSize: '0.64rem', color: '#38BDF8', textTransform: 'uppercase' }}>
+                              Focus →
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.72rem', color: '#CBD5E1', lineHeight: 1.45 }}>
+                          {intern.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Spatial Anatomical Relationships (Surrounding Structures) */}
+            {selectedStructure.spatialRelationships && selectedStructure.spatialRelationships.length > 0 && (
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                  <Compass size={15} color="#38BDF8" />
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#38BDF8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Spatial Anatomical Relationships
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {selectedStructure.spatialRelationships.map((rel, idx) => {
+                    const isFocusable = rel.neighborStructureId && !!ANATOMY_STRUCTURES[rel.neighborStructureId];
+                    return (
+                      <div
+                        key={idx}
+                        style={{
+                          padding: '8px 10px',
+                          borderRadius: 8,
+                          background: 'rgba(56, 189, 248, 0.06)',
+                          border: '1px solid rgba(56, 189, 248, 0.20)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span
+                              style={{
+                                fontSize: '0.62rem',
+                                fontWeight: 800,
+                                padding: '1px 6px',
+                                borderRadius: 4,
+                                background: 'rgba(56, 189, 248, 0.22)',
+                                color: '#7DD3FC',
+                                textTransform: 'uppercase'
+                              }}
+                            >
+                              {rel.direction}
+                            </span>
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#FFFFFF' }}>
+                              {rel.neighborName}
+                            </span>
+                          </div>
+                          {isFocusable && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (rel.neighborStructureId) setSelectedStructureId(rel.neighborStructureId);
+                              }}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#38BDF8',
+                                fontSize: '0.66rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                padding: '2px 4px'
+                              }}
+                            >
+                              Focus →
+                            </button>
+                          )}
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.72rem', color: '#CBD5E1', lineHeight: 1.45 }}>
+                          {rel.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Key Scientific Facts */}
             <div style={{ marginBottom: 16 }}>

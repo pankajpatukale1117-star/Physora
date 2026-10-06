@@ -12,7 +12,7 @@ export type AnatomicalSystemId =
   | 'nervous'
   | 'urinary'
   | 'endocrine'
-  | 'reproductive';
+  | 'lymphatic';
 
 export type DetailLevel = 'overview' | 'detailed' | 'advanced';
 
@@ -31,6 +31,13 @@ export interface InternalStructureDetail {
   name: string;
   description: string;
   color?: string;
+}
+
+export interface SpatialRelationship {
+  direction: 'Anterior' | 'Posterior' | 'Superior' | 'Inferior' | 'Lateral' | 'Medial' | 'Surrounding';
+  neighborName: string;
+  neighborStructureId?: string;
+  description: string;
 }
 
 export interface BiologicalProcessConfig {
@@ -81,6 +88,9 @@ export interface AnatomicalStructure {
   relatedSystems: AnatomicalSystemId[];
   clinicalRelevance: string;
 
+  // Spatial Anatomical Relationships
+  spatialRelationships?: SpatialRelationship[];
+
   // Advanced Interactive Capabilities
   hasInternalView?: boolean;
   internalStructures?: InternalStructureDetail[];
@@ -88,6 +98,278 @@ export interface AnatomicalStructure {
   processConfig?: BiologicalProcessConfig;
   multiLevelPathway?: MultiLevelScaleStep[];
 }
+
+// ----------------------------------------------------------------------------
+// 10-STEP CLINICAL ANATOMICAL LAYER STACK
+// ----------------------------------------------------------------------------
+export interface AnatomicalLayerStackItem {
+  id: string;
+  level: number;
+  name: string;
+  shortName: string;
+  latinName: string;
+  description: string;
+  icon: string;
+  skinOpacity: number;
+  skinVisible: boolean;
+  layerSeparation: number;
+  showInternal: boolean;
+  highlightedSystems: AnatomicalSystemId[];
+  systemVisibility: Record<AnatomicalSystemId, boolean>;
+}
+
+export const ANATOMICAL_LAYER_STACK: AnatomicalLayerStackItem[] = [
+  {
+    id: 'skin',
+    level: 1,
+    name: '1. Skin & Body Surface',
+    shortName: 'Skin',
+    latinName: 'Integumentum commune',
+    description: 'Complete outer dermal protective layer, surface landmarks, and skin contours.',
+    icon: 'User',
+    skinOpacity: 1.0,
+    skinVisible: true,
+    layerSeparation: 0.0,
+    showInternal: false,
+    highlightedSystems: ['muscular'],
+    systemVisibility: {
+      skeletal: false,
+      muscular: true,
+      cardiovascular: false,
+      respiratory: false,
+      digestive: false,
+      nervous: false,
+      urinary: false,
+      endocrine: false,
+      lymphatic: false
+    }
+  },
+  {
+    id: 'superficial',
+    level: 2,
+    name: '2. Superficial Anatomy & Fascia',
+    shortName: 'Superficial',
+    latinName: 'Fascia superficialis',
+    description: 'Subcutaneous fascia, body contours, bony landmarks, and superficial veins.',
+    icon: 'Layers',
+    skinOpacity: 0.35,
+    skinVisible: true,
+    layerSeparation: 0.05,
+    showInternal: false,
+    highlightedSystems: ['muscular', 'cardiovascular'],
+    systemVisibility: {
+      skeletal: true,
+      muscular: true,
+      cardiovascular: true,
+      respiratory: false,
+      digestive: false,
+      nervous: false,
+      urinary: false,
+      endocrine: false,
+      lymphatic: false
+    }
+  },
+  {
+    id: 'muscles',
+    level: 3,
+    name: '3. Skeletal Musculature',
+    shortName: 'Muscles',
+    latinName: 'Systema musculare',
+    description: 'Major somatic muscle groups: pectorals, deltoids, core, gluteals, and limbs.',
+    icon: 'Activity',
+    skinOpacity: 0.0,
+    skinVisible: false,
+    layerSeparation: 0.1,
+    showInternal: false,
+    highlightedSystems: ['muscular'],
+    systemVisibility: {
+      skeletal: true,
+      muscular: true,
+      cardiovascular: false,
+      respiratory: false,
+      digestive: false,
+      nervous: false,
+      urinary: false,
+      endocrine: false,
+      lymphatic: false
+    }
+  },
+  {
+    id: 'tendons',
+    level: 4,
+    name: '4. Tendons & Connective Structures',
+    shortName: 'Tendons & Fascia',
+    latinName: 'Tendines et Aponeuroses',
+    description: 'Achilles tendon, patellar ligament, rectus sheath, linea alba, and deep fasciae.',
+    icon: 'Link',
+    skinOpacity: 0.0,
+    skinVisible: false,
+    layerSeparation: 0.12,
+    showInternal: false,
+    highlightedSystems: ['muscular', 'skeletal'],
+    systemVisibility: {
+      skeletal: true,
+      muscular: true,
+      cardiovascular: false,
+      respiratory: false,
+      digestive: false,
+      nervous: false,
+      urinary: false,
+      endocrine: false,
+      lymphatic: false
+    }
+  },
+  {
+    id: 'skeleton',
+    level: 5,
+    name: '5. Skeletal System',
+    shortName: 'Skeleton',
+    latinName: 'Systema skeletale',
+    description: 'Axial and appendicular skeleton, sexually dimorphic pelvis, rib cage, and skull.',
+    icon: 'Bone',
+    skinOpacity: 0.0,
+    skinVisible: false,
+    layerSeparation: 0.0,
+    showInternal: false,
+    highlightedSystems: ['skeletal'],
+    systemVisibility: {
+      skeletal: true,
+      muscular: false,
+      cardiovascular: false,
+      respiratory: false,
+      digestive: false,
+      nervous: false,
+      urinary: false,
+      endocrine: false,
+      lymphatic: false
+    }
+  },
+  {
+    id: 'organs',
+    level: 6,
+    name: '6. Internal Visceral Organs',
+    shortName: 'Organs',
+    latinName: 'Organa visceralia',
+    description: 'Thoracic, abdominal, and pelvic viscera: heart, lungs, liver, stomach, and kidneys.',
+    icon: 'Heart',
+    skinOpacity: 0.0,
+    skinVisible: false,
+    layerSeparation: 0.15,
+    showInternal: false,
+    highlightedSystems: ['cardiovascular', 'respiratory', 'digestive', 'urinary', 'endocrine'],
+    systemVisibility: {
+      skeletal: true,
+      muscular: false,
+      cardiovascular: true,
+      respiratory: true,
+      digestive: true,
+      nervous: false,
+      urinary: true,
+      endocrine: true,
+      lymphatic: true
+    }
+  },
+  {
+    id: 'vessels',
+    level: 7,
+    name: '7. Blood Vessels & Circulation',
+    shortName: 'Blood Vessels',
+    latinName: 'Systema cardiovasculare',
+    description: 'Arterial tree, venous return, heart, and dual-circuit hemodynamics.',
+    icon: 'GitBranch',
+    skinOpacity: 0.0,
+    skinVisible: false,
+    layerSeparation: 0.0,
+    showInternal: false,
+    highlightedSystems: ['cardiovascular'],
+    systemVisibility: {
+      skeletal: true,
+      muscular: false,
+      cardiovascular: true,
+      respiratory: false,
+      digestive: false,
+      nervous: false,
+      urinary: false,
+      endocrine: false,
+      lymphatic: false
+    }
+  },
+  {
+    id: 'nerves',
+    level: 8,
+    name: '8. Nervous System',
+    shortName: 'Nervous System',
+    latinName: 'Systema nervosum',
+    description: 'Brain, spinal cord, cauda equina, brachial/lumbosacral plexuses, and peripheral trunks.',
+    icon: 'Zap',
+    skinOpacity: 0.0,
+    skinVisible: false,
+    layerSeparation: 0.0,
+    showInternal: false,
+    highlightedSystems: ['nervous'],
+    systemVisibility: {
+      skeletal: true,
+      muscular: false,
+      cardiovascular: false,
+      respiratory: false,
+      digestive: false,
+      nervous: true,
+      urinary: false,
+      endocrine: false,
+      lymphatic: false
+    }
+  },
+  {
+    id: 'internal_cavities',
+    level: 9,
+    name: '9. Internal Cavities & Cross-Sections',
+    shortName: 'Internal Cavities',
+    latinName: 'Cavitates viscerales',
+    description: 'Cutaway chambers: cardiac ventricles/valves, pulmonary bronchi/alveoli, and renal medulla.',
+    icon: 'Scan',
+    skinOpacity: 0.0,
+    skinVisible: false,
+    layerSeparation: 0.25,
+    showInternal: true,
+    highlightedSystems: ['cardiovascular', 'respiratory', 'urinary'],
+    systemVisibility: {
+      skeletal: false,
+      muscular: false,
+      cardiovascular: true,
+      respiratory: true,
+      digestive: true,
+      nervous: false,
+      urinary: true,
+      endocrine: false,
+      lymphatic: false
+    }
+  },
+  {
+    id: 'microscopic',
+    level: 10,
+    name: '10. Microscopic & Cellular Structures',
+    shortName: 'Microscopic',
+    latinName: 'Structurae microscopicae',
+    description: 'Cellular and molecular motors: nephron, alveolus, sarcomere, and neuron.',
+    icon: 'Eye',
+    skinOpacity: 0.0,
+    skinVisible: false,
+    layerSeparation: 0.0,
+    showInternal: true,
+    highlightedSystems: ['cardiovascular', 'respiratory', 'nervous', 'urinary'],
+    systemVisibility: {
+      skeletal: false,
+      muscular: true,
+      cardiovascular: true,
+      respiratory: true,
+      digestive: false,
+      nervous: true,
+      urinary: true,
+      endocrine: false,
+      lymphatic: false
+    }
+  }
+];
 
 // ----------------------------------------------------------------------------
 // SYSTEM METADATA & PALETTE
@@ -184,15 +466,15 @@ export const ANATOMICAL_SYSTEMS: Record<AnatomicalSystemId, SystemMetadata> = {
     iconName: 'Sparkles',
     organCount: 5
   },
-  reproductive: {
-    id: 'reproductive',
-    name: 'Reproductive System',
-    latinName: 'Systema reproductionis',
-    description: 'Specialized internal and external organs coordinating gametogenesis, endocrine sex steroids, gestation, and lactation.',
-    color: '#F43F5E',
-    softColor: 'rgba(244, 63, 94, 0.16)',
-    iconName: 'HeartPulse',
-    organCount: 6
+  lymphatic: {
+    id: 'lymphatic',
+    name: 'Lymphatic & Immune System',
+    latinName: 'Systema lymphaticum',
+    description: 'Specialized vascular network and lymphoid organs maintaining interstitial fluid balance, lipid absorption, and immune surveillance against pathogens.',
+    color: '#10B981',
+    softColor: 'rgba(16, 185, 129, 0.16)',
+    iconName: 'Shield',
+    organCount: 4
   }
 };
 
@@ -211,11 +493,11 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#EF4444',
     accentColor: '#B91C1C',
-    center: [-0.15, 2.7, 0.3],
-    boundsSize: [0.75, 0.85, 0.7],
+    center: [0.08, 2.02, 0.15],
+    boundsSize: [0.55, 0.50, 0.45],
     cameraFocus: {
-      target: [-0.15, 2.7, 0.3],
-      distance: 2.2,
+      target: [0.08, 2.02, 0.15],
+      distance: 1.6,
       elevation: 0.1
     },
     category: 'Muscular Pump / Thoracic Viscera',
@@ -242,6 +524,12 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     ],
     relatedSystems: ['respiratory', 'muscular', 'nervous', 'endocrine'],
     clinicalRelevance: 'Coronary artery disease, myocardial infarction, arrhythmias, valvular stenosis, and heart failure are major targets of modern cardiology and electrophysiology.',
+    spatialRelationships: [
+      { direction: 'Anterior', neighborName: 'Sternum & Costal Cartilages (Ribs 2–6)', neighborStructureId: 'ribcage', description: 'Sternocostal surface separated by pericardium and thin anterior lung margins.' },
+      { direction: 'Posterior', neighborName: 'Esophagus & Descending Thoracic Aorta', neighborStructureId: 'aorta', description: 'Directly abuts anterior esophageal wall; left atrial dilation can cause dysphagia.' },
+      { direction: 'Inferior', neighborName: 'Diaphragmatic Central Tendon', neighborStructureId: 'diaphragm', description: 'Fibrous pericardium fuses solidly to the central tendon of the respiratory diaphragm.' },
+      { direction: 'Lateral', neighborName: 'Bilateral Lungs & Phrenic Nerves', neighborStructureId: 'lungs', description: 'Flanked by mediastinal pleura with phrenic nerves descending along pericardium.' }
+    ],
     hasInternalView: true,
     internalStructures: [
       { id: 'right_atrium', name: 'Right Atrium', description: 'Thin-walled chamber collecting systemic venous blood via SVC and IVC.', color: '#3B82F6' },
@@ -338,6 +626,81 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     ]
   },
 
+  heart_left_ventricle: {
+    id: 'heart_left_ventricle',
+    name: 'Left Ventricle (Systemic Pump)',
+    latinName: 'Ventriculus sinister cordis',
+    system: 'cardiovascular',
+    complexity: 'detailed',
+    color: '#DC2626',
+    accentColor: '#B91C1C',
+    center: [0.10, 1.95, 0.18],
+    boundsSize: [0.35, 0.45, 0.35],
+    cameraFocus: { target: [0.10, 1.95, 0.18], distance: 1.4 },
+    category: 'Thick-Walled High-Pressure Myocardial Chamber',
+    primaryFunction: 'Pumps oxygenated blood through the aortic valve into the systemic arterial tree against 120 mmHg afterload resistance.',
+    anatomicalLocation: 'Forms the apex and left border of the heart, posteroinferior within the pericardial sac.',
+    educationalSummary: 'The left ventricle has a conical shape with a muscular wall three times thicker than the right ventricle (8–12 mm vs 3–5 mm). It features prominent trabeculae carneae and two large papillary muscles (anterior and posterior) tethering the mitral valve leaflets via chordae tendineae.',
+    keyFacts: [
+      'Generates normal peak systolic pressures of 100–140 mmHg.',
+      'Ejection fraction (EF) normally ranges from 55% to 70%.',
+      'Hypertrophy occurs compensatorily in systemic hypertension or aortic valve stenosis.'
+    ],
+    subStructures: ['Interventricular Septum', 'Anterior Papillary Muscle', 'Posterior Papillary Muscle', 'Trabeculae Carneae', 'Aortic Vestibule'],
+    relatedSystems: ['cardiovascular', 'respiratory'],
+    clinicalRelevance: 'Left ventricular hypertrophy (LVH), congestive heart failure, anterior wall myocardial infarction, and dilated cardiomyopathy.'
+  },
+
+  heart_right_ventricle: {
+    id: 'heart_right_ventricle',
+    name: 'Right Ventricle (Pulmonary Pump)',
+    latinName: 'Ventriculus dexter cordis',
+    system: 'cardiovascular',
+    complexity: 'detailed',
+    color: '#2563EB',
+    accentColor: '#1D4ED8',
+    center: [0.02, 1.98, 0.20],
+    boundsSize: [0.35, 0.45, 0.35],
+    cameraFocus: { target: [0.02, 1.98, 0.20], distance: 1.4 },
+    category: 'Low-Pressure Pulmonary Myocardial Chamber',
+    primaryFunction: 'Ejects deoxygenated blood through the pulmonary valve into the pulmonary arterial trunk for alveolar oxygenation.',
+    anatomicalLocation: 'Forms the anterior sternocostal surface of the heart, directly behind the lower sternum.',
+    educationalSummary: 'The right ventricle is crescent-shaped in cross section, wrapping around the convex interventricular septum. It generates lower pressures (20–25 mmHg) adequate for low-resistance pulmonary capillary perfusion without causing alveolar pulmonary edema.',
+    keyFacts: [
+      'Contains the moderator band (septomarginal trabecula) conducting electrical purkinje fibers to the anterior papillary muscle.',
+      'Thin wall (~3–5 mm) suited for high-capacitance volume ejection rather than high pressure.',
+      'Tricuspid valve anchors via chordae tendineae to anterior, posterior, and septal papillary muscles.'
+    ],
+    subStructures: ['Infundibulum / Conus Arteriosus', 'Moderator Band', 'Tricuspid Papillary Muscles', 'Trabeculae Carneae'],
+    relatedSystems: ['respiratory', 'cardiovascular'],
+    clinicalRelevance: 'Right heart failure (cor pulmonale), arrhythmogenic right ventricular cardiomyopathy (ARVC), and pulmonary hypertension.'
+  },
+
+  heart_valves: {
+    id: 'heart_valves',
+    name: 'Cardiac Heart Valves (Mitral, Tricuspid, Aortic, Pulmonary)',
+    latinName: 'Valvae cordis',
+    system: 'cardiovascular',
+    complexity: 'detailed',
+    color: '#FEF08A',
+    accentColor: '#FACC15',
+    center: [0.06, 2.10, 0.16],
+    boundsSize: [0.35, 0.35, 0.35],
+    cameraFocus: { target: [0.06, 2.10, 0.16], distance: 1.3 },
+    category: 'Unidirectional Fibrous Hemodynamic Gates',
+    primaryFunction: 'Ensures strictly unidirectional, non-regurgitant blood flow through the cardiac chambers and into the great outflow arteries.',
+    anatomicalLocation: 'Embedded in the fibrous cardiac skeleton (annuli fibrosi) at the atrioventricular junction and arterial roots.',
+    educationalSummary: 'The four cardiac valves operate entirely passively via hydrostatic pressure differentials across leaflets: two atrioventricular (AV) valves (Tricuspid on the right, Mitral/Bicuspid on the left) prevent systolic backflow into atria, and two semilunar valves (Aortic and Pulmonary) prevent diastolic backflow into ventricles.',
+    keyFacts: [
+      'Heart sounds S1 ("lub") and S2 ("dub") are caused by turbulent vibrations upon valve leaflet closure.',
+      'The mitral valve endures the highest mechanical pressure gradient in the body (~120 mmHg during systole).',
+      'Aortic semilunar leaflets feature the Nodules of Arantius ensuring complete central closure.'
+    ],
+    subStructures: ['Mitral (Bicuspid) Valve', 'Tricuspid Valve', 'Aortic Semilunar Valve', 'Pulmonary Semilunar Valve', 'Chordae Tendineae', 'Fibrous Annuli'],
+    relatedSystems: ['cardiovascular'],
+    clinicalRelevance: 'Mitral valve prolapse (MVP), aortic stenosis, rheumatic heart disease, infective endocarditis, and prosthetic valve replacement.'
+  },
+
   aorta: {
     id: 'aorta',
     name: 'Aorta & Major Arteries',
@@ -346,9 +709,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#DC2626',
     accentColor: '#EF4444',
-    center: [-0.05, 2.9, 0.1],
+    center: [0.03, 2.05, 0.05],
     boundsSize: [0.6, 2.8, 0.4],
-    cameraFocus: { target: [-0.05, 2.5, 0.1], distance: 3.5 },
+    cameraFocus: { target: [0.03, 2.05, 0.05], distance: 2.6 },
     category: 'Elastic High-Pressure Conduit',
     primaryFunction: 'Transports oxygen-saturated systemic arterial blood under high pulsatile pressure from the left ventricle to the systemic capillary beds.',
     anatomicalLocation: 'Originates at the aortic root, arches posteriorly and leftward, descends through the posterior mediastinum and retroperitoneum.',
@@ -379,9 +742,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#2563EB',
     accentColor: '#3B82F6',
-    center: [0.15, 2.7, 0.15],
+    center: [0.06, 2.00, 0.08],
     boundsSize: [0.55, 3.2, 0.35],
-    cameraFocus: { target: [0.15, 2.5, 0.15], distance: 3.5 },
+    cameraFocus: { target: [0.06, 2.00, 0.08], distance: 2.6 },
     category: 'Low-Pressure Venous Return',
     primaryFunction: 'Collects deoxygenated systemic venous return from the upper body (SVC) and lower body (IVC) and returns it to the right atrium.',
     anatomicalLocation: 'Ascends through the abdominal retroperitoneum on the right side of the abdominal aorta and traverses the vena caval foramen of the diaphragm.',
@@ -407,9 +770,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#06B6D4',
     accentColor: '#0891B2',
-    center: [0, 2.8, 0.2],
-    boundsSize: [1.8, 1.6, 1.1],
-    cameraFocus: { target: [0, 2.8, 0.2], distance: 3.0 },
+    center: [0.02, 1.77, 0.01],
+    boundsSize: [1.25, 1.65, 0.95],
+    cameraFocus: { target: [0.02, 1.77, 0.01], distance: 2.6 },
     category: 'Respiratory Gas Exchange Viscera',
     primaryFunction: 'Exchanges oxygen and carbon dioxide between ambient inspired air and pulmonary capillary blood via alveolar micro-diffusion.',
     anatomicalLocation: 'Bilateral pleural cavities within the thoracic cage, flanking the mediastinum and resting inferiorly upon the diaphragm.',
@@ -512,9 +875,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#0891B2',
     accentColor: '#06B6D4',
-    center: [0, 3.8, 0.15],
-    boundsSize: [0.35, 1.2, 0.35],
-    cameraFocus: { target: [0, 3.8, 0.15], distance: 2.2 },
+    center: [0.0, 2.35, 0.05],
+    boundsSize: [0.35, 1.0, 0.35],
+    cameraFocus: { target: [0.0, 2.35, 0.05], distance: 1.8 },
     category: 'Cartilaginous Conducting Conduit',
     primaryFunction: 'Provides an unobstructed, patent airway for laminar airflow while humidifying, warming, and filtering inhaled particulates.',
     anatomicalLocation: 'Anterior neck and superior mediastinum, extending from the cricoid cartilage (C6) to the tracheal bifurcation / carina (T4/T5).',
@@ -537,9 +900,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'detailed',
     color: '#BE123C',
     accentColor: '#E11D48',
-    center: [0, 1.9, 0.05],
-    boundsSize: [1.8, 0.6, 1.2],
-    cameraFocus: { target: [0, 1.9, 0.05], distance: 2.8 },
+    center: [0.0, 1.60, 0.02],
+    boundsSize: [1.6, 0.5, 1.0],
+    cameraFocus: { target: [0.0, 1.60, 0.02], distance: 2.2 },
     category: 'Primary Inspiratory Musculotendinous Septum',
     primaryFunction: 'Main muscle of respiration; contracts and flattens downward to increase thoracic volume during inspiration, and separates the thoracic and abdominal cavities.',
     anatomicalLocation: 'Floors the thoracic cavity and roofs the abdominal cavity, inserting into the central tendon (centrum tendineum).',
@@ -565,9 +928,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#F59E0B',
     accentColor: '#D97706',
-    center: [-0.25, 1.6, 0.25],
-    boundsSize: [0.75, 0.85, 0.65],
-    cameraFocus: { target: [-0.25, 1.6, 0.25], distance: 2.4 },
+    center: [-0.18, 1.55, 0.12],
+    boundsSize: [0.65, 0.70, 0.55],
+    cameraFocus: { target: [-0.18, 1.55, 0.12], distance: 1.8 },
     category: 'Gastrointestinal Chemical & Mechanical Reservoir',
     primaryFunction: 'Mixes ingested food with acidic gastric juice (pH 1.5–2.0) and pepsin to form chyme, and regulates delivery to the duodenum.',
     anatomicalLocation: 'Left upper quadrant (epigastric, umbilical, and left hypochondriac regions) beneath the left lobe of the liver and diaphragm.',
@@ -580,7 +943,14 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     ],
     subStructures: ['Cardia', 'Fundus', 'Body (Corpus)', 'Pyloric Antrum & Canal', 'Pyloric Sphincter', 'Greater and Lesser Curvatures', 'Rugae Mucosal Folds'],
     relatedSystems: ['nervous', 'endocrine', 'cardiovascular'],
-    clinicalRelevance: 'Peptic ulcer disease (Helicobacter pylori), gastroesophageal reflux (GERD), gastroparesis, and gastric adenocarcinoma.'
+    clinicalRelevance: 'Peptic ulcer disease (Helicobacter pylori), gastroesophageal reflux (GERD), gastroparesis, and gastric adenocarcinoma.',
+    hasInternalView: true,
+    internalStructures: [
+      { id: 'gastric_fundus', name: 'Gastric Fundus', description: 'Dome-shaped upper reservoir accommodating swallowed air and ingested boluses.', color: '#F59E0B' },
+      { id: 'gastric_corpus', name: 'Gastric Corpus (Body)', description: 'Central chamber featuring rugae folds and parietal cells secreting hydrochloric acid.', color: '#D97706' },
+      { id: 'gastric_antrum', name: 'Pyloric Antrum & Canal', description: 'Muscular churning chamber grinding food into fine liquid chyme.', color: '#B45309' },
+      { id: 'pyloric_sphincter', name: 'Pyloric Sphincter Valve', description: 'Powerful smooth muscle ring metering chyme into the duodenal bulb.', color: '#92400E' }
+    ]
   },
 
   liver: {
@@ -591,9 +961,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#991B1B',
     accentColor: '#7F1D1D',
-    center: [0.35, 1.7, 0.25],
-    boundsSize: [1.2, 0.9, 0.8],
-    cameraFocus: { target: [0.35, 1.7, 0.25], distance: 2.6 },
+    center: [-0.15, 1.40, 0.04],
+    boundsSize: [0.80, 0.80, 0.80],
+    cameraFocus: { target: [-0.15, 1.40, 0.04], distance: 2.0 },
     category: 'Metabolic & Exocrine Glandular Powerhouse',
     primaryFunction: 'Metabolizes macronutrients, synthesizes plasma albumin and clotting factors, detoxifies endogenous/exogenous compounds, and produces bile.',
     anatomicalLocation: 'Right upper quadrant of the abdominal cavity, protected under the right lower ribs (ribs 7–11) directly beneath the diaphragm.',
@@ -606,7 +976,14 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     ],
     subStructures: ['Right Lobe', 'Left Lobe', 'Caudate Lobe', 'Quadrate Lobe', 'Falciform Ligament', 'Porta Hepatis', 'Bile Ducts'],
     relatedSystems: ['cardiovascular', 'endocrine', 'urinary'],
-    clinicalRelevance: 'Cirrhosis, viral hepatitis (A, B, C), non-alcoholic fatty liver disease (NAFLD/MASH), portal hypertension, and acute liver failure.'
+    clinicalRelevance: 'Cirrhosis, viral hepatitis (A, B, C), non-alcoholic fatty liver disease (NAFLD/MASH), portal hypertension, and acute liver failure.',
+    hasInternalView: true,
+    internalStructures: [
+      { id: 'liver_right_lobe', name: 'Right Hepatic Lobe', description: 'Largest liver lobe comprising Couinaud segments V, VI, VII, and VIII.', color: '#991B1B' },
+      { id: 'liver_left_lobe', name: 'Left Hepatic Lobe', description: 'Flatter lobe comprising Couinaud segments II, III, and IV.', color: '#B91C1C' },
+      { id: 'caudate_lobe', name: 'Caudate Lobe', description: 'Autonomous posterior segment draining directly into the Inferior Vena Cava.', color: '#7F1D1D' },
+      { id: 'porta_hepatis', name: 'Porta Hepatis (Portal Triad)', description: 'Deep fissure transmitting the hepatic portal vein, hepatic artery proper, and common hepatic bile duct.', color: '#3B82F6' }
+    ]
   },
 
   pancreas: {
@@ -617,9 +994,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'detailed',
     color: '#FBBF24',
     accentColor: '#F59E0B',
-    center: [-0.05, 1.45, 0.05],
-    boundsSize: [0.75, 0.35, 0.3],
-    cameraFocus: { target: [-0.05, 1.45, 0.05], distance: 2.0 },
+    center: [-0.05, 1.35, 0.02],
+    boundsSize: [0.65, 0.30, 0.25],
+    cameraFocus: { target: [-0.05, 1.35, 0.02], distance: 1.6 },
     category: 'Dual Exocrine & Endocrine Gland',
     primaryFunction: 'Exocrine acinar cells secrete digestive enzymes and bicarbonate into the duodenum; endocrine Islets of Langerhans secrete insulin and glucagon.',
     anatomicalLocation: 'Retroperitoneal organ tucked horizontally across the posterior abdominal wall within the C-shaped duodenal loop.',
@@ -642,9 +1019,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#D97706',
     accentColor: '#B45309',
-    center: [0, 0.5, 0.2],
-    boundsSize: [1.3, 1.5, 0.9],
-    cameraFocus: { target: [0, 0.5, 0.2], distance: 3.2 },
+    center: [0.08, 0.49, 0.15],
+    boundsSize: [0.85, 1.65, 0.75],
+    cameraFocus: { target: [0.08, 0.49, 0.15], distance: 2.5 },
     category: 'Digestive Absorption & Elimination Tract',
     primaryFunction: 'Small intestine completes enzymatic digestion and absorbs 90% of nutrients; large intestine absorbs water and electrolytes, and forms feces.',
     anatomicalLocation: 'Occupies the middle and lower abdominal cavity, framed peripherally by the colon.',
@@ -671,9 +1048,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#8B5CF6',
     accentColor: '#7C3AED',
-    center: [0, 6.7, 0.1],
-    boundsSize: [0.8, 0.9, 1.0],
-    cameraFocus: { target: [0, 6.7, 0.1], distance: 2.2 },
+    center: [0.0, 3.73, -0.01],
+    boundsSize: [0.65, 0.70, 0.75],
+    cameraFocus: { target: [0.0, 3.73, -0.01], distance: 1.8 },
     category: 'Central Nervous System Control Center',
     primaryFunction: 'Processes sensory input, executes motor commands, coordinates autonomic homeostasis, and produces consciousness, cognition, and memory.',
     anatomicalLocation: 'Cranial cavity within the skull, protected by the three meningeal layers (dura, arachnoid, pia) and buoyant cerebrospinal fluid (CSF).',
@@ -777,9 +1154,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#A78BFA',
     accentColor: '#8B5CF6',
-    center: [0, 3.2, -0.1],
-    boundsSize: [0.35, 4.8, 0.3],
-    cameraFocus: { target: [0, 3.0, -0.1], distance: 3.8 },
+    center: [0.0, 1.85, -0.06],
+    boundsSize: [0.35, 2.7, 0.3],
+    cameraFocus: { target: [0.0, 1.85, -0.06], distance: 2.8 },
     category: 'Neural High-Speed Transmission Trunk',
     primaryFunction: 'Conducts bidirectional signals between brain and periphery, and hosts independent spinal reflex circuits.',
     anatomicalLocation: 'Runs through the vertebral canal of the spine from the foramen magnum to the conus medullaris (L1/L2 vertebrae).',
@@ -794,6 +1171,31 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     clinicalRelevance: 'Spinal cord injury (paraplegia/tetraplegia), herniated discs causing sciatica, epidural anesthesia, and spinal tap (lumbar puncture at L3/L4 or L4/L5).'
   },
 
+  peripheral_nerves: {
+    id: 'peripheral_nerves',
+    name: 'Peripheral Nervous System & Nerve Trunks',
+    latinName: 'Systema nervosum periphericum',
+    system: 'nervous',
+    complexity: 'detailed',
+    color: '#FEF08A',
+    accentColor: '#FACC15',
+    center: [0.0, 1.0, 0.0],
+    boundsSize: [2.2, 5.0, 0.6],
+    cameraFocus: { target: [0.0, 1.0, 0.0], distance: 3.5 },
+    category: 'Peripheral Somatosensory & Motor Conduction Network',
+    primaryFunction: 'Carries bidirectional electrical nerve impulses between the central nervous system (brain/spinal cord) and all peripheral muscles, skin, and viscera.',
+    anatomicalLocation: 'Branching plexuses radiating from the spinal cord through the neck, upper extremities, trunk, and lower extremities to the fingertips and toes.',
+    educationalSummary: 'The peripheral nervous system consists of 12 pairs of cranial nerves and 31 pairs of spinal nerves organized into somatic nerve plexuses: the Brachial Plexus (giving rise to the Musculocutaneous, Median, Ulnar, and Radial nerves of the arm) and the Lumbar/Sacral Plexus (giving rise to the Femoral nerve and the massive Sciatic nerve, which divides into the Tibial and Common Fibular nerves of the leg).',
+    keyFacts: [
+      'The sciatic nerve is the thickest and longest nerve in the human body, measuring ~2 cm in diameter at its pelvic origin.',
+      'Schwann cells wrap around peripheral axons to form the insulating myelin sheath, enabling rapid saltatory conduction at up to 120 m/s.',
+      'Unlike central CNS neurons, peripheral axons can regenerate after injury if their Schwann cell endoneurial tubes remain intact.'
+    ],
+    subStructures: ['Brachial Plexus (C5-T1)', 'Median & Ulnar Nerves', 'Radial Nerve', 'Lumbosacral Plexus', 'Sciatic Nerve (L4-S3)', 'Femoral & Tibial Nerves'],
+    relatedSystems: ['muscular', 'skeletal', 'cardiovascular'],
+    clinicalRelevance: 'Sciatica (compression from herniated lumbar disc), carpal tunnel syndrome (median nerve compression), peripheral neuropathy (diabetic), and Bell\'s palsy.'
+  },
+
   // ==========================================================================
   // URINARY
   // ==========================================================================
@@ -805,9 +1207,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#10B981',
     accentColor: '#059669',
-    center: [0, 1.8, -0.15],
-    boundsSize: [1.2, 0.7, 0.45],
-    cameraFocus: { target: [0, 1.8, -0.15], distance: 2.2 },
+    center: [0.02, 1.11, -0.08],
+    boundsSize: [0.80, 0.55, 0.35],
+    cameraFocus: { target: [0.02, 1.11, -0.08], distance: 1.8 },
     category: 'Retroperitoneal Hemofiltration & Homeostatic Organs',
     primaryFunction: 'Filters ~180 liters of blood daily to excrete urea, creatinine, and toxins while precisely regulating blood volume, pH, and electrolyte osmolarity.',
     anatomicalLocation: 'Retroperitoneal on posterior abdominal wall, spanning T12 to L3 vertebrae. The right kidney sits slightly lower due to the liver.',
@@ -863,9 +1265,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#059669',
     accentColor: '#10B981',
-    center: [0, -0.6, 0.2],
-    boundsSize: [0.6, 1.4, 0.45],
-    cameraFocus: { target: [0, -0.6, 0.2], distance: 2.2 },
+    center: [0.0, -0.15, 0.12],
+    boundsSize: [0.5, 0.5, 0.45],
+    cameraFocus: { target: [0.0, -0.15, 0.12], distance: 1.6 },
     category: 'Reservoir & Urinary Excretory Tract',
     primaryFunction: 'Ureters transport urine from renal pelvis via smooth muscle peristalsis; bladder expands to store urine prior to voluntary micturition.',
     anatomicalLocation: 'Lesser pelvis, resting on pelvic floor behind pubic symphysis; expands superiorly into abdominal cavity when distended.',
@@ -877,7 +1279,13 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     ],
     subStructures: ['Bilateral Ureters', 'Detrusor Muscle', 'Trigone', 'Internal Urethral Sphincter (Involuntary)', 'External Urethral Sphincter (Voluntary)'],
     relatedSystems: ['nervous', 'muscular'],
-    clinicalRelevance: 'Urinary tract infections (UTIs), kidney stones causing ureteral colic, urinary incontinence, benign prostatic hyperplasia (BPH), and bladder cancer.'
+    clinicalRelevance: 'Urinary tract infections (UTIs), kidney stones causing ureteral colic, urinary incontinence, benign prostatic hyperplasia (BPH), and bladder cancer.',
+    spatialRelationships: [
+      { direction: 'Anterior', neighborName: 'Pubic Symphysis (Space of Retzius)', neighborStructureId: 'pelvis', description: 'Cushioned by the retropubic prevesical fat pad behind the pubic bones.' },
+      { direction: 'Posterior', neighborName: 'Rectum & Pelvic Viscera', neighborStructureId: 'intestines', description: 'Bordered by peritoneal reflection and pelvic retroperitoneal fascia.' },
+      { direction: 'Inferior', neighborName: 'Pelvic Diaphragm (Levator Ani)', description: 'Bladder neck rests directly upon the muscular pelvic floor.' },
+      { direction: 'Superior', neighborName: 'Peritoneal Cavity & Loops of Small Intestine', neighborStructureId: 'intestines', description: 'Covered by parietal peritoneum reflecting off anterior abdominal wall.' }
+    ]
   },
 
   // ==========================================================================
@@ -891,9 +1299,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#E2E8F0',
     accentColor: '#CBD5E1',
-    center: [0, 6.7, 0.1],
-    boundsSize: [0.85, 1.1, 0.95],
-    cameraFocus: { target: [0, 6.7, 0.1], distance: 2.3 },
+    center: [0.0, 3.73, -0.01],
+    boundsSize: [0.65, 0.75, 0.80],
+    cameraFocus: { target: [0.0, 3.73, -0.01], distance: 2.0 },
     category: 'Axial Skeletal Protection',
     primaryFunction: 'Protects the encephalon, houses specialized sensory organs (vision, hearing, olfaction, taste), and anchors facial expression and mastication muscles.',
     anatomicalLocation: 'Superior terminus of the axial skeleton, articulating with the atlas (C1) vertebra at the atlanto-occipital joints.',
@@ -916,9 +1324,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#E2E8F0',
     accentColor: '#94A3B8',
-    center: [0, 2.8, -0.15],
-    boundsSize: [0.5, 4.8, 0.45],
-    cameraFocus: { target: [0, 2.8, -0.15], distance: 4.0 },
+    center: [0.0, 1.50, -0.10],
+    boundsSize: [0.45, 2.6, 0.40],
+    cameraFocus: { target: [0.0, 1.50, -0.10], distance: 2.8 },
     category: 'Axial Load-Bearing Column',
     primaryFunction: 'Supports head and trunk weight, enables multiaxial flexibility, and shields the spinal cord inside the vertebral canal.',
     anatomicalLocation: 'Mid-sagittal dorsal axis of the body from the skull base to the tailbone coccyx.',
@@ -941,9 +1349,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#E2E8F0',
     accentColor: '#CBD5E1',
-    center: [0, 2.7, 0.15],
-    boundsSize: [1.6, 2.0, 1.0],
-    cameraFocus: { target: [0, 2.7, 0.15], distance: 3.2 },
+    center: [0.0, 1.95, 0.02],
+    boundsSize: [1.25, 1.35, 0.85],
+    cameraFocus: { target: [0.0, 1.95, 0.02], distance: 2.6 },
     category: 'Visceral Shield & Ventilatory Bellows',
     primaryFunction: 'Protects thoracic heart and lungs, and moves dynamically during inspiration and expiration (bucket-handle and pump-handle mechanics).',
     anatomicalLocation: 'Thoracic region, articulating posteriorly with thoracic vertebrae T1-T12 and anteriorly with the sternum via costal cartilages.',
@@ -966,9 +1374,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#E2E8F0',
     accentColor: '#94A3B8',
-    center: [0, -0.2, 0.05],
-    boundsSize: [1.6, 1.1, 1.0],
-    cameraFocus: { target: [0, -0.2, 0.05], distance: 2.8 },
+    center: [0.0, -0.02, -0.02],
+    boundsSize: [1.2, 0.75, 0.80],
+    cameraFocus: { target: [0.0, -0.02, -0.02], distance: 2.0 },
     category: 'Locomotor Hub & Visceral Cradle',
     primaryFunction: 'Transfers trunk weight to lower limbs, provides deep socket acetabula for hip joints, and cradles pelvic viscera.',
     anatomicalLocation: 'Base of trunk, connecting the vertebral sacrum to bilateral femoral heads.',
@@ -991,9 +1399,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'detailed',
     color: '#E2E8F0',
     accentColor: '#CBD5E1',
-    center: [0, 2.2, 0.1],
-    boundsSize: [3.4, 3.2, 0.6],
-    cameraFocus: { target: [0, 2.2, 0.1], distance: 4.2 },
+    center: [0.0, 1.60, 0.0],
+    boundsSize: [2.8, 2.0, 0.5],
+    cameraFocus: { target: [0.0, 1.60, 0.0], distance: 3.0 },
     category: 'Appendicular Manipulation Skeletal Chains',
     primaryFunction: 'Enables high-precision prehension, tool manipulation, spatial reaching, and load bearing across multi-joint kinetic chains.',
     anatomicalLocation: 'Suspended from the pectoral girdle (clavicle and scapula) along lateral thoracic axes.',
@@ -1016,9 +1424,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'detailed',
     color: '#E2E8F0',
     accentColor: '#CBD5E1',
-    center: [0, -4.8, 0.05],
-    boundsSize: [1.5, 7.5, 0.9],
-    cameraFocus: { target: [0, -4.8, 0.05], distance: 5.5 },
+    center: [0.0, -2.10, 0.0],
+    boundsSize: [1.2, 4.0, 0.7],
+    cameraFocus: { target: [0.0, -2.10, 0.0], distance: 3.5 },
     category: 'Appendicular Weight-Bearing & Locomotion',
     primaryFunction: 'Carries total body mass, provides propulsive bipedal gait forces, and absorbs ground reaction impact shocks.',
     anatomicalLocation: 'Articulates with pelvic acetabula and extends inferiorly to plantar foot surfaces.',
@@ -1071,6 +1479,181 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     clinicalRelevance: 'Muscular dystrophies, compartment syndrome, rhabdomyolysis, tendon ruptures (Achilles tendon), and sarcopenia in aging.'
   },
 
+  deltoids: {
+    id: 'deltoids',
+    name: 'Deltoid Muscles (Shoulders)',
+    latinName: 'Musculus deltoideus',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, 2.30, 0.04],
+    boundsSize: [2.5, 0.6, 0.6],
+    cameraFocus: { target: [1.15, 2.30, 0.04], distance: 1.8 },
+    category: 'Appendicular Pectoral Girdle Muscle',
+    primaryFunction: 'Principal abductor of the arm (15° to 90°); anterior fibers flex and medially rotate; posterior fibers extend and laterally rotate the humerus.',
+    anatomicalLocation: 'Caps the glenohumeral shoulder joint, originating on the lateral clavicle, acromion, and spine of the scapula.',
+    educationalSummary: 'The deltoid is an inverted triangle (delta-shaped) multipennate muscle capable of generating powerful multi-axial torque on the humerus. Innervated by the axillary nerve (C5, C6).',
+    keyFacts: [
+      'Supraspinatus initiates the first 15° of arm abduction; deltoid takes over from 15° to 90°.',
+      'Multipennate middle fibers generate high contractile power for heavy overhead lifting.',
+      'Common site for intramuscular (IM) clinical vaccinations.'
+    ],
+    subStructures: ['Anterior (Clavicular) Head', 'Middle (Acromial) Head', 'Posterior (Spinal) Head', 'Deltoid Tuberosity Insertion'],
+    relatedSystems: ['skeletal', 'nervous'],
+    clinicalRelevance: 'Axillary nerve injury (anterior shoulder dislocation / humeral neck fracture), deltoid strain, and rotator cuff impingement.'
+  },
+
+  biceps_brachii: {
+    id: 'biceps_brachii',
+    name: 'Biceps Brachii (Arm Flexor)',
+    latinName: 'Musculus biceps brachii',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, 1.62, 0.14],
+    boundsSize: [2.6, 0.6, 0.5],
+    cameraFocus: { target: [1.22, 1.62, 0.14], distance: 1.8 },
+    category: 'Anterior Brachial Compartment',
+    primaryFunction: 'Powerful supinator of the forearm and flexor of the elbow joint; assists in shoulder flexion.',
+    anatomicalLocation: 'Anterior arm, originating via short head on the coracoid process and long head on the supraglenoid tubercle, inserting into the radial tuberosity.',
+    educationalSummary: 'The biceps brachii spans both the shoulder and elbow joints. It acts as the primary forearm supinator when the elbow is flexed (as in turning a screwdriver). Innervated by the musculocutaneous nerve (C5, C6).',
+    keyFacts: [
+      'The long head tendon courses through the bicipital groove of the humerus inside the shoulder capsule.',
+      'The bicipital aponeurosis radiates into deep forearm fascia, protecting the underlying brachial artery and median nerve.',
+      'Biceps tendon reflex tests C5/C6 spinal nerve root integrity.'
+    ],
+    subStructures: ['Short Head (Coracoid)', 'Long Head (Supraglenoid)', 'Bicipital Aponeurosis', 'Radial Tuberosity Tendon'],
+    relatedSystems: ['skeletal', 'nervous'],
+    clinicalRelevance: 'Proximal biceps tendon rupture ("Popeye deformity"), biceps tendinitis, and SLAP labral tears.'
+  },
+
+  pectoralis_major: {
+    id: 'pectoralis_major',
+    name: 'Pectoralis Major (Chest Muscle)',
+    latinName: 'Musculus pectoralis major',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, 2.15, 0.22],
+    boundsSize: [1.4, 0.6, 0.5],
+    cameraFocus: { target: [0, 2.15, 0.22], distance: 2.0 },
+    category: 'Anterior Thoracic Somatic Muscle',
+    primaryFunction: 'Adducts and medially rotates the humerus at the shoulder joint; clavicular head assists in shoulder flexion.',
+    anatomicalLocation: 'Covers the anterior thoracic cage overlying ribs 2–6 and deep pectoralis minor.',
+    educationalSummary: 'A thick, fan-shaped muscle featuring two heads: a clavicular head originating from the medial clavicle and a larger sternocostal head originating from the sternum and costal cartilages 1–6. Both converge into a flat tendon inserting into the lateral lip of the bicipital groove of the humerus.',
+    keyFacts: [
+      'Innervated by both lateral and medial pectoral nerves (C5–T1).',
+      'Primary engine in pushing movements, bench press, and swimming crawl strokes.',
+      'Deep to pectoralis major lies the clavipectoral fascia and pectoralis minor.'
+    ],
+    subStructures: ['Clavicular Head', 'Sternocostal Head', 'Pectoralis Fascia', 'Humeral Insertion Tendon'],
+    relatedSystems: ['skeletal', 'respiratory'],
+    clinicalRelevance: 'Pectoralis major tendon rupture (heavy bench press injuries), Poland syndrome (congenital absence), and mastectomy reconstructive flap surgery.'
+  },
+
+  rectus_abdominis: {
+    id: 'rectus_abdominis',
+    name: 'Rectus Abdominis & Core Musculature',
+    latinName: 'Musculus rectus abdominis',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, 1.35, 0.20],
+    boundsSize: [0.8, 1.1, 0.4],
+    cameraFocus: { target: [0, 1.35, 0.20], distance: 2.0 },
+    category: 'Anterior Abdominal Wall Core Flexor',
+    primaryFunction: 'Flexes the lumbar spine, compresses abdominal viscera for intra-abdominal pressure generation, and stabilizes the pelvis during gait.',
+    anatomicalLocation: 'Midline anterior abdomen inside the rectus sheath, between the pubic crest and costal cartilages 5–7 and xiphoid process.',
+    educationalSummary: 'Paired vertical strap muscles separated down the midline by the fibrous Linea Alba. Interspersed with 3–4 horizontal tendinous intersections (inscriptionestendineae), creating the anatomical "six-pack" appearance in lean individuals. Flanked laterally by external obliques, internal obliques, and transversus abdominis.',
+    keyFacts: [
+      'Maintains core intra-abdominal pressure crucial for lifting mechanics (Valsalva maneuver) and forced expiration.',
+      'Enclosed within the fibrous rectus sheath formed by the aponeuroses of the three lateral flat abdominal muscles.',
+      'Innervated by thoracoabdominal nerves (T7–T11) and the subcostal nerve (T12).'
+    ],
+    subStructures: ['Linea Alba', 'Tendinous Intersections', 'Rectus Sheath', 'Pyramidalis Muscle', 'Umbilical Ring'],
+    relatedSystems: ['skeletal', 'digestive'],
+    clinicalRelevance: 'Diastasis recti (separation after pregnancy), abdominal wall incisional hernias, and rectus sheath hematoma.'
+  },
+
+  quadriceps_femoris: {
+    id: 'quadriceps_femoris',
+    name: 'Quadriceps Femoris (Thigh Extensor)',
+    latinName: 'Musculus quadriceps femoris',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, -1.25, 0.22],
+    boundsSize: [1.3, 1.4, 0.6],
+    cameraFocus: { target: [0.42, -1.25, 0.22], distance: 2.2 },
+    category: 'Anterior Thigh Locomotor Group',
+    primaryFunction: 'Principal extensor of the knee joint; rectus femoris also assists in hip flexion.',
+    anatomicalLocation: 'Anterior compartment of the thigh, inserting into the patella and via the patellar ligament into the tibial tuberosity.',
+    educationalSummary: 'The quadriceps is the largest and most powerful somatic muscle mass in the human body, composed of four distinct muscles: Rectus femoris (superficial biarticular muscle), Vastus lateralis (massive lateral bulk), Vastus medialis (teardrop stabilizer of patella), and Vastus intermedius (deep central muscle). All four share the patellar tendon.',
+    keyFacts: [
+      'Innervated by the femoral nerve (L2, L3, L4).',
+      'The patella acts as a physiological anatomical pulley, increasing quadriceps mechanical extensor leverage by ~30%.',
+      'Essential for walking, running, stair climbing, and rising from a seated position.'
+    ],
+    subStructures: ['Rectus Femoris', 'Vastus Lateralis', 'Vastus Medialis', 'Vastus Intermedius', 'Patellar Tendon / Ligament'],
+    relatedSystems: ['skeletal', 'nervous'],
+    clinicalRelevance: 'Patellar tendinitis ("jumper\'s knee"), quadriceps tendon rupture, patellofemoral pain syndrome, and quadriceps contusions.'
+  },
+
+  gluteus_maximus: {
+    id: 'gluteus_maximus',
+    name: 'Gluteus Maximus (Hip Extensor)',
+    latinName: 'Musculus gluteus maximus',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, -0.25, -0.32],
+    boundsSize: [1.2, 0.7, 0.6],
+    cameraFocus: { target: [0, -0.25, -0.32], distance: 2.0 },
+    category: 'Posterior Pelvic Locomotor Muscle',
+    primaryFunction: 'Most powerful extensor and lateral rotator of the hip joint; crucial for ascending stairs, running, and rising from sitting.',
+    anatomicalLocation: 'Covers the posterior buttocks, originating from ilium and sacrum, inserting into gluteal tuberosity and iliotibial tract.',
+    educationalSummary: 'The gluteus maximus is the heaviest and coarsest-fibered muscle in the human body. As humans evolved upright bipedal posture, this muscle expanded to stabilize the pelvis on the femoral heads and prevent the trunk from pitching forward.',
+    keyFacts: [
+      'Innervated by the inferior gluteal nerve (L5, S1, S2).',
+      'Inactive during ordinary flat-ground standing or slow walking; powerfully recruited during running and stair climbing.',
+      'Inserts partly into the iliotibial tract (IT band) stabilizing the lateral knee.'
+    ],
+    subStructures: ['Superior Fibers', 'Inferior Fibers', 'Iliotibial Band Insertion', 'Gluteal Tuberosity Tendon'],
+    relatedSystems: ['skeletal', 'nervous'],
+    clinicalRelevance: 'Gluteal tendinopathy, trochanteric bursitis, piriformis syndrome entrapment, and intramuscular injection complications.'
+  },
+
+  gastrocnemius: {
+    id: 'gastrocnemius',
+    name: 'Gastrocnemius & Soleus (Calf Muscles)',
+    latinName: 'Musculus gastrocnemius et soleus',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, -2.75, -0.15],
+    boundsSize: [1.1, 0.9, 0.5],
+    cameraFocus: { target: [0.38, -2.75, -0.15], distance: 1.9 },
+    category: 'Posterior Crural Triceps Surae',
+    primaryFunction: 'Powerful plantarflexors of the ankle joint via the calcaneal (Achilles) tendon; propels body forward during gait, sprinting, and jumping.',
+    anatomicalLocation: 'Posterior compartment of the leg, originating from femoral condyles and tibia/fibula, inserting into the calcaneus heel bone.',
+    educationalSummary: 'Forming the two-headed superficial muscular prominence of the calf (medial and lateral heads), gastrocnemius combines with the deep soleus to form the Triceps Surae. Together they insert into the thickest and strongest tendon in the human body—the Achilles tendon.',
+    keyFacts: [
+      'Innervated by the tibial nerve (S1, S2).',
+      'The Achilles tendon withstands tensile forces up to 10 times body weight during explosive sprinting.',
+      'Soleus contains a high proportion of slow-twitch fibers that act as a "peripheral heart" pumping venous blood back to the vena cava.'
+    ],
+    subStructures: ['Medial Gastrocnemius Head', 'Lateral Gastrocnemius Head', 'Soleus Muscle', 'Achilles (Calcaneal) Tendon', 'Plantaris Muscle'],
+    relatedSystems: ['skeletal', 'cardiovascular'],
+    clinicalRelevance: 'Achilles tendon rupture, calf muscle strains ("tennis leg"), Achilles tendinopathy, and deep vein thrombosis (DVT) in soleal veins.'
+  },
+
   // ==========================================================================
   // ENDOCRINE
   // ==========================================================================
@@ -1086,9 +1669,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     boundsSize: [0.8, 4.5, 0.6],
     cameraFocus: { target: [0, 3.5, 0.1], distance: 3.5 },
     category: 'Systemic Chemical Signaling Hubs',
-    primaryFunction: 'Secretes circulating hormones that control metabolism, growth, stress response, electrolyte balance, and reproductive physiology.',
+    primaryFunction: 'Secretes circulating hormones that control metabolism, growth, stress response, and electrolyte balance.',
     anatomicalLocation: 'Distributed anatomically: Pituitary (sella turcica of skull), Thyroid (anterior trachea), Adrenal glands (superior poles of kidneys), Endocrine Pancreas (abdomen).',
-    educationalSummary: 'The endocrine system operates through classic negative feedback loops along hypothalamic-pituitary target axes. The pituitary gland is the "master gland" directing thyroid (T3/T4 for metabolic rate), adrenal cortex (cortisol for stress and aldosterone for blood pressure), and gonads.',
+    educationalSummary: 'The endocrine system operates through classic negative feedback loops along hypothalamic-pituitary target axes. The pituitary gland is the "master gland" directing thyroid (T3/T4 for metabolic rate), adrenal cortex (cortisol for stress and aldosterone for blood pressure), and somatic tissues.',
     keyFacts: [
       'The adrenal medulla secretes epinephrine (adrenaline) and norepinephrine for the rapid "fight-or-flight" sympathetic response.',
       'The thyroid gland requires dietary iodine to synthesize thyroid hormones thyroxine (T4) and triiodothyronine (T3).',
@@ -1117,9 +1700,9 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     complexity: 'overview',
     color: '#DE9F7E',
     accentColor: '#F97316',
-    center: [0, 0.5, 0.1],
-    boundsSize: [2.5, 8.2, 1.2],
-    cameraFocus: { target: [0, 0.5, 0.1], distance: 6.0 },
+    center: [0.0, 0.0, -0.05],
+    boundsSize: [2.5, 8.23, 1.3],
+    cameraFocus: { target: [0.0, 0.0, 0.0], distance: 10.5 },
     category: 'Integumentary Organ / Cutaneous Protective Barrier',
     primaryFunction: 'Forms the outer protective envelope of the human body, provides tactile sensation, prevents fluid loss, synthesizes Vitamin D3, and maintains thermoregulation via sweat evaporation and cutaneous vasodilation.',
     anatomicalLocation: 'Envelopes the entire external human body (~1.8 m² surface area in adults).',
@@ -1142,108 +1725,72 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     clinicalRelevance: 'Burns (Rule of Nines), melanoma and basal cell carcinomas, dermatitis/eczema, psoriasis, and transdermal medication delivery.'
   },
 
-  // ==========================================================================
-  // REPRODUCTIVE SYSTEM (FEMALE & MALE)
-  // ==========================================================================
-  mammary_glands: {
-    id: 'mammary_glands',
-    name: 'Mammary Glands & Breast Tissue',
-    latinName: 'Glandula mammaria',
-    system: 'reproductive',
+  lymphatic_system: {
+    id: 'lymphatic_system',
+    name: 'Lymphatic System (Spleen, Thymus & Lymph Nodes)',
+    latinName: 'Systema lymphaticum',
+    system: 'lymphatic',
     complexity: 'detailed',
-    color: '#FB7185',
-    accentColor: '#F43F5E',
-    center: [0, 2.05, 0.45],
-    boundsSize: [1.4, 0.9, 0.8],
-    cameraFocus: { target: [0, 2.05, 0.45], distance: 2.8 },
-    category: 'Secondary Sex Characteristic / Exocrine Gland',
-    primaryFunction: 'Specialized modified apocrine glands providing nutritional, immunological, and developmental support for infants through lactation (milk synthesis and ejection).',
-    anatomicalLocation: 'Overlies the deep pectoral fascia of pectoralis major and serratus anterior muscles along anterior ribs 2 through 6.',
-    educationalSummary: 'The breast is composed of 15–20 glandular lobes embedded within a protective matrix of subcutaneous and retro-mammary adipose tissue. Each lobe contains multiple secretory lobules with milk-synthesizing alveoli lined by cuboidal epithelium and contractile myoepithelial cells. Secretions drain via lactiferous ducts which dilate into lactiferous sinuses beneath the pigmented areola before opening at the nipple papilla. Crucial fibrous Cooper\'s suspensory ligaments extend from the deep pectoral fascia to the dermis, providing structural support and elevation.',
+    color: '#10B981',
+    accentColor: '#059669',
+    center: [-0.35, 1.6, 0.05],
+    boundsSize: [1.4, 3.2, 0.8],
+    cameraFocus: { target: [-0.2, 1.8, 0.1], distance: 3.2 },
+    category: 'Vascular Fluid Homeostasis & Immune Surveillance',
+    primaryFunction: 'Returns 3–4 liters of filtered interstitial fluid to circulation daily, absorbs dietary chylomicrons from lacteals, and mounts adaptive immune responses.',
+    anatomicalLocation: 'Pervades all vascularized tissues throughout the body, concentrating lymphoid organs in the left hypochondrium (spleen), mediastinum (thymus), and regional nodal basins.',
+    educationalSummary: 'The lymphatic system is a specialized one-way open drainage tree consisting of blind-ended lymphatic capillaries, collecting lymphatics with valves, regional lymph nodes, and lymphatic trunks that coalesce into the Thoracic Duct and Right Lymphatic Duct. The Spleen is the largest lymphoid organ (~150 g), filtering blood via red pulp (macrophage erythrocyte clearance) and white pulp (splenic B/T lymphocyte immunity). The Thymus in the superior mediastinum oversees T-lymphocyte maturation and central self-tolerance selection.',
     keyFacts: [
-      'Prolactin from the anterior pituitary gland stimulates milk synthesis within alveolar epithelial cells.',
-      'Oxytocin from the posterior pituitary stimulates contractile myoepithelial cells, triggering the milk let-down reflex in response to infant suckling.',
-      'Cooper\'s ligaments maintain upright breast architecture; ligament laxity occurs naturally with age or gravitational stress.',
-      'Roughly 75% of breast lymphatic drainage traverses the axillary lymph nodes, making these nodes paramount in oncological evaluation.',
-      'The pigmented areola contains specialized sebaceous Montgomery glands (glandulae areolares) that lubricate and protect the nipple during nursing.'
+      'The Thoracic Duct drains 75% of body lymph (all except right upper quadrant), terminating at the left venous angle (subclavian-internal jugular junction).',
+      'Lymph nodes contain B-cell follicles with germinal centers, T-cell paracortex, and medullary cords filtering foreign antigens.',
+      'Lymphatic vessels lack a central pump; lymph propulsion relies on skeletal muscle pumps, respiratory thoracic vacuum, and intrinsic smooth muscle peristalsis.',
+      'The spleen clears approximately 200 billion senescent erythrocytes daily through the splenic cords of Billroth.'
     ],
     subStructures: [
-      'Glandular Lobes & Secretory Alveoli',
-      'Lactiferous Ducts & Lactiferous Sinuses',
-      'Nipple Papilla (Papilla mammaria) & Areola',
-      'Cooper\'s Suspensory Ligaments (Ligamenta suspensoria)',
-      'Subcutaneous & Retromammary Adipose Tissue',
-      'Pectoral Fascia Anchor Plate'
+      'Spleen (Red Pulp & White Pulp)',
+      'Thymus Gland (Cortex & Medulla)',
+      'Thoracic Duct & Cisterna Chyli',
+      'Cervical Lymph Node Chain',
+      'Axillary Lymph Node Basin',
+      'Inguinal Lymph Node Basin',
+      'Mesenteric Lymph Nodes & Peyer\'s Patches'
     ],
-    relatedSystems: ['endocrine', 'muscular', 'cardiovascular'],
-    clinicalRelevance: 'Breast carcinoma screening (mammography, self-examination), fibrocystic changes, mastitis during lactation, and gynecomastia.'
+    relatedSystems: ['cardiovascular', 'digestive'],
+    clinicalRelevance: 'Lymphedema, Hodgkin and non-Hodgkin lymphomas, splenomegaly/splenic rupture (mononucleosis), lymphadenitis, and tumor sentinel node metastasis.'
   },
 
-  uterus_and_ovaries: {
-    id: 'uterus_and_ovaries',
-    name: 'Uterus, Fallopian Tubes & Ovaries',
-    latinName: 'Uterus, Tubae uterinae et Ovaria',
-    system: 'reproductive',
+  connective_tissue: {
+    id: 'connective_tissue',
+    name: 'Tendons, Ligaments & Deep Fasciae',
+    latinName: 'Tendines, Ligamenta et Fasciae',
+    system: 'muscular',
     complexity: 'detailed',
-    color: '#F43F5E',
-    accentColor: '#E11D48',
-    center: [0, 0.28, 0.05],
-    boundsSize: [1.2, 0.8, 0.6],
-    cameraFocus: { target: [0, 0.28, 0.05], distance: 2.5 },
-    category: 'Internal Pelvic Reproductive Viscera',
-    primaryFunction: 'Coordinates oocyte development, cyclical sex hormone production (estrogen/progesterone), fertilization in the fallopian ampulla, and intrauterine embryonic/fetal gestation.',
-    anatomicalLocation: 'Situated within the female true pelvis, between the urinary bladder anteriorly and the rectum posteriorly.',
-    educationalSummary: 'The internal female reproductive tract features the pear-shaped Uterus (fundus, muscular corpus, isthmus, and fibromuscular cervix), bilateral Fallopian Tubes (oviducts with fringed fimbriae that catch ovulated secondary oocytes), and paired almond-shaped Ovaries. The uterine wall exhibits three distinct layers: the inner mucosal Endometrium (undergoing cyclical proliferation and shedding during menstruation), the thick smooth muscle Myometrium (generating rhythmic labor contractions during parturition), and the outer serous Perimetrium.',
+    color: '#CBD5E1',
+    accentColor: '#94A3B8',
+    center: [0, 0.2, 0.08],
+    boundsSize: [1.6, 5.8, 0.8],
+    cameraFocus: { target: [0, 0.2, 0.08], distance: 4.2 },
+    category: 'Dense Fibrous Mechanical Connective Network',
+    primaryFunction: 'Transmits muscular contractile forces to bones across joints, stabilizes articular capsules, and stores elastic strain energy during movement.',
+    anatomicalLocation: 'Invests somatic musculature throughout the axial and appendicular body, bridging myotendinous junctions to osseous periosteum.',
+    educationalSummary: 'Dense regular connective tissue forms high-tensile tendons (parallel Type I collagen bundles) and joint-stabilizing ligaments. Crucial anatomical landmarks include the Linea Alba (midline fibrous decussation between bilateral rectus sheaths), the Patellar Ligament (transmitting quadriceps force to the tibial tuberosity), the Calcaneal (Achilles) Tendon (strongest tendon in the human body), the Inguinal Ligaments (defining the pelvic brim border), and broad aponeuroses.',
     keyFacts: [
-      'Fertilization typically occurs in the ampulla of the fallopian tube within 12–24 hours post-ovulation.',
-      'The ovarian cycle comprises the follicular phase (estrogen-dominated) and the luteal phase (progesterone-dominated from the corpus luteum).',
-      'Ciliated columnar epithelial cells lining the fallopian tube create gentle fluid currents propelling the ovum toward the uterine cavity.',
-      'The myometrium can expand over 500-fold in volume during pregnancy, orchestrated by hormonal hypertrophy and hyperplasia of smooth myocytes.'
+      'Type I collagen fibers in tendons withstand tensile stresses exceeding 50–100 MPa.',
+      'Tendons possess low metabolic vascularity, explaining prolonged healing times compared to vascular bone or muscle.',
+      'The Linea Alba is avascular, making it a classic surgical midline laparotomy incision site.',
+      'Ligaments contain slightly higher elastin fractions than tendons, granting joint capsules controlled flexibility.'
     ],
     subStructures: [
-      'Uterine Fundus, Corpus & Cavity',
-      'Endometrium (Stratum Functionale & Basale)',
-      'Myometrium (Smooth Muscle Layer)',
-      'Fallopian Tubes (Fimbriae, Infundibulum, Ampulla, Isthmus)',
-      'Ovaries (Graafian Follicles & Corpus Luteum)',
-      'Uterine Cervix & External Os'
+      'Achilles (Calcaneal) Tendon',
+      'Patellar Ligament / Tendon',
+      'Linea Alba & Rectus Sheath Aponeuroses',
+      'Inguinal Ligament (Poupart\'s Ligament)',
+      'Thoracolumbar Fascia Plate',
+      'Iliotibial Tract (IT Band)',
+      'Plantar Fascia (Aponeurosis)'
     ],
-    relatedSystems: ['endocrine', 'urinary', 'cardiovascular'],
-    clinicalRelevance: 'Endometriosis, uterine leiomyomas (fibroids), ectopic pregnancy, cervical dysplasia (Pap smear screening / HPV), and polycystic ovary syndrome (PCOS).'
-  },
-
-  female_genitalia_external: {
-    id: 'female_genitalia_external',
-    name: 'Female External Genitalia (Vulva & Pudendum)',
-    latinName: 'Pudendum femininum / Vulva',
-    system: 'reproductive',
-    complexity: 'detailed',
-    color: '#FB7185',
-    accentColor: '#F43F5E',
-    center: [0, -0.60, 0.16],
-    boundsSize: [0.8, 0.6, 0.5],
-    cameraFocus: { target: [0, -0.60, 0.16], distance: 2.2 },
-    category: 'External Perineal Reproductive Organs',
-    primaryFunction: 'Protects the internal urogenital tract from mechanical injury and pathogen entry, facilitates copulation, and provides sensory tactile stimulation.',
-    anatomicalLocation: 'Occupies the anterior urogenital triangle of the female perineum between the pubic symphysis anteriorly and the perineal body posteriorly.',
-    educationalSummary: 'The female external genitalia (vulva) comprise the Mons Pubis (anterior adipose cushion over the pubic symphysis), Labia Majora (outer longitudinal cutaneous folds with subcutaneous fat and sebaceous glands, developmentally homologous to the male scrotum), Labia Minora (delicate inner mucosal folds bordering the vestibule), the Clitoris (highly innervated erectile organ with glans, prepuce, body, and bilateral crura homologous to the penis), the Vaginal Vestibule containing the external urethral orifice and vaginal introitus, and bilateral Greater Vestibular (Bartholin\'s) glands secreting lubricating mucus.',
-    keyFacts: [
-      'The clitoral glans contains over 8,000 sensory nerve endings, making it the most sensitive erogenous zone in human anatomy.',
-      'The labia majora meet anteriorly to form the anterior labial commissure over the clitoral hood and posteriorly at the posterior labial commissure.',
-      'The vestibular bulbs (paired erectile tissue masses) flank the vaginal opening, engorging with blood during arousal.',
-      'Bartholin\'s glands lie posterolateral to the vaginal orifice and drain via 2 cm ducts into the vaginal vestibule.'
-    ],
-    subStructures: [
-      'Mons Pubis (Adipose Mound)',
-      'Labia Majora (Outer Cutaneous Folds)',
-      'Labia Minora (Inner Mucosal Folds)',
-      'Clitoris (Glans, Prepuce & Erectile Crura)',
-      'Vaginal Vestibule & Introitus',
-      'External Urethral Meatus',
-      'Bartholin\'s (Greater Vestibular) Glands'
-    ],
-    relatedSystems: ['urinary', 'nervous', 'cardiovascular'],
-    clinicalRelevance: 'Bartholin\'s duct cysts/abscesses, vulvovaginitis, contact dermatitis, lichen sclerosus, and episiotomy during delivery.'
+    relatedSystems: ['skeletal', 'muscular'],
+    clinicalRelevance: 'Achilles tendon rupture, patellar tendinitis, anterior cruciate ligament (ACL) tears, plantar fasciitis, and linea alba diastasis recti.'
   }
 };
 

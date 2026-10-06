@@ -14,6 +14,7 @@ import { ExperimentsView } from './components/experiments/ExperimentsView';
 import { FormulaBankModal } from './components/FormulaBankModal';
 import { SearchModal } from './components/SearchModal';
 import { AnatomyExplorerView } from './components/anatomy/AnatomyExplorerView';
+import { ANATOMY_STRUCTURES } from './data/anatomyData';
 import { X } from 'lucide-react';
 
 export function App() {
@@ -47,7 +48,11 @@ export function App() {
   const [initialAnatomyOrganId, setInitialAnatomyOrganId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
-      if (hash.startsWith('#anatomy/')) return hash.replace('#anatomy/', '');
+      if (hash.startsWith('#anatomy/')) {
+        const id = hash.replace('#anatomy/', '');
+        if (id in ANATOMY_STRUCTURES) return id;
+        window.history.replaceState(null, '', '#anatomy');
+      }
     }
     return null;
   });
@@ -90,7 +95,15 @@ export function App() {
           setIsAnatomyOpen(false);
         }
       } else if (hash.startsWith('#anatomy') || hash.startsWith('#biology-3d')) {
-        const organId = hash.startsWith('#anatomy/') ? hash.replace('#anatomy/', '') : null;
+        let organId: string | null = null;
+        if (hash.startsWith('#anatomy/')) {
+          const rawId = hash.replace('#anatomy/', '');
+          if (rawId in ANATOMY_STRUCTURES) {
+            organId = rawId;
+          } else {
+            window.history.replaceState(null, '', '#anatomy');
+          }
+        }
         setIsAnatomyOpen(true);
         setInitialAnatomyOrganId(organId);
         setSelectedTopicId(null);
