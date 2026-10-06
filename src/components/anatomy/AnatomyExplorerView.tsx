@@ -21,7 +21,6 @@ import {
   ArrowLeft,
   SkipBack,
   SkipForward,
-  Sliders,
   ChevronLeft,
   ChevronRight,
   Compass
@@ -93,7 +92,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
 
   // Camera & View Settings
   const [presetView, setPresetView] = useState<'front' | 'back' | 'left' | 'right' | 'top' | 'reset' | null>(null);
-  const [detailLevel, setDetailLevel] = useState<DetailLevel>('overview');
+  const [detailLevel] = useState<DetailLevel>('overview');
 
   // Layer Separation / Exploded View
   const [layerSeparation, setLayerSeparation] = useState(0.0);
@@ -101,14 +100,21 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   // Anatomical Body Morphology (Neutral Clinical Model)
   const biologicalSex: 'female' | 'male' = 'female';
 
-  // 10-Step Interactive Anatomical Layer Stack State
+  // 7-Step Interactive Anatomical Layer Stack State
   const [activeLayerIndex, setActiveLayerIndex] = useState<number>(0);
   const [isLayerStackExpanded, setIsLayerStackExpanded] = useState<boolean>(true);
 
-  // Skin & Integumentary Controls
-  const [skinOpacity, setSkinOpacity] = useState(0.45);
-  const [skinMode, setSkinMode] = useState<'natural' | 'translucent' | 'xray'>('natural');
+  // Outer Anatomical Mannequin Boundary
+  const [skinOpacity, setSkinOpacity] = useState(0.85); // Neutral matte alabaster mannequin by default
+  const [skinMode] = useState<'natural' | 'translucent' | 'xray'>('natural');
   const [skinVisible, setSkinVisible] = useState(true);
+
+  // First-use interaction hint state (auto-fades after interaction or 8s)
+  const [hasInteracted, setHasInteracted] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setHasInteracted(true), 8000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Biological Process Animation
   const [isProcessPlaying, setIsProcessPlaying] = useState(false);
@@ -362,228 +368,187 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
           </div>
         </div>
 
-        {/* Center: Anatomical View Presets (Desktop) */}
+        {/* Center: Minimal View Navigation or Contextual Structure Controls */}
         <div
           className="hide-mobile"
           style={{
             pointerEvents: 'auto',
             display: 'flex',
             alignItems: 'center',
-            gap: 4,
+            gap: 6,
             background: 'rgba(15, 23, 42, 0.85)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 255, 255, 0.15)',
-            padding: '4px 6px',
+            padding: '4px 8px',
             borderRadius: 30,
             boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
           }}
         >
-          {(['front', 'back', 'left', 'right', 'top'] as const).map((view) => (
-            <button
-              key={view}
-              onClick={() => setPresetView(view)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: '#CBD5E1',
-                fontSize: '0.74rem',
-                fontWeight: 600,
-                padding: '4px 10px',
-                borderRadius: 20,
-                cursor: 'pointer',
-                textTransform: 'capitalize',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                e.currentTarget.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = '#CBD5E1';
-              }}
-            >
-              {view}
-            </button>
-          ))}
-          <button
-            onClick={() => setPresetView('reset')}
-            style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: 'none',
-              color: '#38BDF8',
-              fontSize: '0.74rem',
-              fontWeight: 700,
-              padding: '4px 10px',
-              borderRadius: 20,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4
-            }}
-            title="Reset Camera Orientation"
-          >
-            <RotateCcw size={12} />
-            <span>Reset</span>
-          </button>
-
-          {/* Complexity Detail Switcher */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 2, background: 'rgba(0,0,0,0.3)', borderRadius: 20, padding: 2, marginLeft: 4 }}>
-            {(['overview', 'detailed', 'advanced'] as const).map((lvl) => (
-              <button
-                key={lvl}
-                onClick={() => setDetailLevel(lvl)}
+          {selectedStructure ? (
+            /* Contextual Controls for Selected Organ */
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div
                 style={{
-                  background: detailLevel === lvl ? 'rgba(16, 185, 129, 0.25)' : 'transparent',
-                  border: detailLevel === lvl ? '1px solid #10B981' : '1px solid transparent',
-                  color: detailLevel === lvl ? '#34D399' : '#94A3B8',
-                  fontSize: '0.68rem',
-                  fontWeight: detailLevel === lvl ? 800 : 500,
-                  padding: '3px 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '3px 10px',
                   borderRadius: 16,
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  color: selectedStructure.accentColor || '#10B981'
+                }}
+              >
+                <span>{selectedStructure.name}</span>
+              </div>
+
+              {/* In-Place Isolate Toggle */}
+              <button
+                type="button"
+                onClick={toggleIsolate}
+                style={{
+                  background: isIsolated ? '#10B981' : 'rgba(255, 255, 255, 0.06)',
+                  color: isIsolated ? '#000000' : '#CBD5E1',
+                  border: isIsolated ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 16,
+                  padding: '3px 10px',
+                  fontSize: '0.72rem',
+                  fontWeight: isIsolated ? 800 : 600,
                   cursor: 'pointer',
-                  textTransform: 'capitalize'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s ease'
                 }}
+                title={isIsolated ? 'Show full body context' : 'Isolate organ in place'}
               >
-                {lvl}
+                <Eye size={12} />
+                <span>{isIsolated ? 'Isolated' : 'Isolate'}</span>
               </button>
-            ))}
-          </div>
 
-          {/* Anatomical Layer Separation / Exploded View Slider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6, paddingLeft: 8, borderLeft: '1px solid rgba(255, 255, 255, 0.12)' }}>
-            <Sliders size={13} color="#38BDF8" />
-            <span style={{ fontSize: '0.70rem', color: '#CBD5E1', fontWeight: 600 }}>Explode:</span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.02"
-              value={layerSeparation}
-              onChange={(e) => setLayerSeparation(parseFloat(e.target.value))}
-              style={{ width: 68, accentColor: '#38BDF8', cursor: 'pointer' }}
-              title="Anatomical Layer Separation / Exploded View"
-            />
-            <span style={{ fontSize: '0.68rem', color: '#38BDF8', fontFamily: 'monospace', minWidth: 26 }}>
-              {Math.round(layerSeparation * 100)}%
-            </span>
-          </div>
+              {/* Internal Cavity Inspection */}
+              <button
+                type="button"
+                onClick={() => setShowInternal((prev) => !prev)}
+                style={{
+                  background: showInternal ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.06)',
+                  color: showInternal ? '#38BDF8' : '#CBD5E1',
+                  border: showInternal ? '1px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: 16,
+                  padding: '3px 10px',
+                  fontSize: '0.72rem',
+                  fontWeight: showInternal ? 800 : 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s ease'
+                }}
+                title="Inspect internal cavities & chambers"
+              >
+                <span>Cavity</span>
+              </button>
 
-          {/* Dedicated Skin & Body Surface Layer Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 6, paddingLeft: 8, borderLeft: '1px solid rgba(255, 255, 255, 0.12)' }}>
-            <span style={{ fontSize: '0.70rem', color: '#FDBA74', fontWeight: 700 }}>Skin:</span>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={skinVisible ? skinOpacity : 0}
-              onChange={(e) => {
-                const val = parseFloat(e.target.value);
-                setSkinOpacity(val);
-                setSkinVisible(val > 0.01);
-              }}
-              style={{ width: 64, accentColor: '#F97316', cursor: 'pointer' }}
-              title="Skin Opacity (0% Off to 100% Solid Body)"
-            />
-            <span style={{ fontSize: '0.68rem', color: '#FDBA74', fontFamily: 'monospace', minWidth: 26 }}>
-              {skinVisible ? `${Math.round(skinOpacity * 100)}%` : '0%'}
-            </span>
+              {/* Microscopic Scale Detail View */}
+              <button
+                type="button"
+                onClick={() => setIsScaleModalOpen(true)}
+                style={{
+                  background: 'rgba(16, 185, 129, 0.18)',
+                  color: '#34D399',
+                  border: '1px solid rgba(16, 185, 129, 0.35)',
+                  borderRadius: 16,
+                  padding: '3px 10px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  transition: 'all 0.15s ease'
+                }}
+                title="Explore deeper microscopic cellular anatomy"
+              >
+                <Sparkles size={12} />
+                <span>Deep View →</span>
+              </button>
 
-            {/* Quick Skin Presets */}
-            <div style={{ display: 'flex', gap: 2, background: 'rgba(0,0,0,0.35)', borderRadius: 16, padding: 2 }}>
+              {/* Reset to Full Body */}
               <button
                 type="button"
-                onClick={() => { setSkinOpacity(1.0); setSkinVisible(true); }}
-                title="Solid 100% (Complete Human Body Surface)"
+                onClick={handleReturnToBody}
                 style={{
-                  background: skinVisible && skinOpacity >= 0.95 ? '#EA580C' : 'transparent',
-                  color: skinVisible && skinOpacity >= 0.95 ? '#FFFFFF' : '#94A3B8',
+                  background: 'transparent',
                   border: 'none',
-                  borderRadius: 12,
-                  padding: '2px 6px',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  cursor: 'pointer'
+                  color: '#94A3B8',
+                  padding: '3px 6px',
+                  fontSize: '0.70rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 3
                 }}
+                title="Return to full body view"
               >
-                Solid
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSkinOpacity(0.45); setSkinVisible(true); }}
-                title="Translucent 45% (See body surface + internal organs)"
-                style={{
-                  background: skinVisible && skinOpacity > 0.25 && skinOpacity < 0.95 ? '#EA580C' : 'transparent',
-                  color: skinVisible && skinOpacity > 0.25 && skinOpacity < 0.95 ? '#FFFFFF' : '#94A3B8',
-                  border: 'none',
-                  borderRadius: 12,
-                  padding: '2px 6px',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}
-              >
-                45%
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSkinOpacity(0.15); setSkinVisible(true); }}
-                title="X-Ray 15% (Subtle outer contour)"
-                style={{
-                  background: skinVisible && skinOpacity <= 0.25 && skinOpacity > 0 ? '#EA580C' : 'transparent',
-                  color: skinVisible && skinOpacity <= 0.25 && skinOpacity > 0 ? '#FFFFFF' : '#94A3B8',
-                  border: 'none',
-                  borderRadius: 12,
-                  padding: '2px 6px',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}
-              >
-                X-Ray
-              </button>
-              <button
-                type="button"
-                onClick={() => { setSkinVisible(false); setSkinOpacity(0); }}
-                title="Peel / Off (Pure Internal Anatomy)"
-                style={{
-                  background: !skinVisible || skinOpacity === 0 ? '#475569' : 'transparent',
-                  color: !skinVisible || skinOpacity === 0 ? '#FFFFFF' : '#94A3B8',
-                  border: 'none',
-                  borderRadius: 12,
-                  padding: '2px 6px',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  cursor: 'pointer'
-                }}
-              >
-                Off
+                <RotateCcw size={11} />
+                <span>Overview</span>
               </button>
             </div>
-
-            {/* Skin Tone Selector */}
-            <select
-              value={skinMode}
-              onChange={(e) => setSkinMode(e.target.value as 'natural' | 'translucent' | 'xray')}
-              style={{
-                background: 'rgba(0,0,0,0.4)',
-                border: '1px solid rgba(255,255,255,0.15)',
-                borderRadius: 12,
-                color: '#FDBA74',
-                fontSize: '0.65rem',
-                fontWeight: 600,
-                padding: '2px 5px',
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-              title="Skin Shader Tone"
-            >
-              <option value="natural">Natural Flesh</option>
-              <option value="translucent">Cyan Glass</option>
-              <option value="xray">Electric X-Ray</option>
-            </select>
-          </div>
+          ) : (
+            /* Clean Camera Presets in Full Body Overview */
+            <>
+              {(['front', 'back', 'left', 'right'] as const).map((view) => (
+                <button
+                  key={view}
+                  onClick={() => setPresetView(view)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#CBD5E1',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    padding: '4px 10px',
+                    borderRadius: 20,
+                    cursor: 'pointer',
+                    textTransform: 'capitalize',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.color = '#FFFFFF';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = '#CBD5E1';
+                  }}
+                >
+                  {view}
+                </button>
+              ))}
+              <button
+                onClick={() => setPresetView('reset')}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  border: 'none',
+                  color: '#38BDF8',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  padding: '4px 10px',
+                  borderRadius: 20,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4
+                }}
+                title="Reset Camera Orientation"
+              >
+                <RotateCcw size={12} />
+                <span>Reset</span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Right: Tools & Layers Toggle */}
@@ -1355,27 +1320,6 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                 </button>
               )}
 
-              {/* EXPLODED LAYER SEPARATION QUICK TOGGLE */}
-              <button
-                onClick={() => setLayerSeparation((prev) => (prev > 0.1 ? 0 : 0.85))}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  padding: '8px 14px',
-                  borderRadius: 8,
-                  background: layerSeparation > 0.1 ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                  color: layerSeparation > 0.1 ? '#38BDF8' : '#E2E8F0',
-                  border: layerSeparation > 0.1 ? '1px solid #38BDF8' : '1px solid rgba(255, 255, 255, 0.12)',
-                  fontWeight: 650,
-                  fontSize: '0.80rem',
-                  cursor: 'pointer'
-                }}
-              >
-                <Sliders size={15} />
-                <span>{layerSeparation > 0.1 ? 'Collapse Anatomical Layers' : 'Explode Anatomical Layers'}</span>
-              </button>
 
               {/* BIOLOGICAL PROCESS ANIMATION TOGGLE */}
               {selectedStructure.hasProcessAnimation && (
@@ -1637,43 +1581,48 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
           </div>
         </aside>
       ) : (
-        /* Default Empty State Card */
-        <aside
-          className="hide-mobile"
-          style={{
-            position: 'absolute',
-            top: 72,
-            right: 16,
-            width: 320,
-            display: 'flex',
-            flexDirection: 'column',
-            boxSizing: 'border-box',
-            zIndex: 65,
-            background: 'rgba(11, 17, 32, 0.90)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.14)',
-            borderRadius: 14,
-            padding: '18px 20px',
-            boxShadow: '0 16px 36px rgba(0,0,0,0.5)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, width: '100%' }}>
-            <Sparkles size={18} color="#10B981" />
-            <span style={{ fontWeight: 800, fontSize: '0.92rem', color: '#FFFFFF' }}>
-              Interactive 3D Anatomy Explorer
-            </span>
+        /* Subtle First-Use Interaction Hint (auto-fades, non-intrusive) */
+        !hasInteracted ? (
+          <div
+            className="hide-mobile"
+            style={{
+              position: 'absolute',
+              bottom: 24,
+              right: 24,
+              zIndex: 50,
+              background: 'rgba(15, 23, 42, 0.88)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255, 255, 255, 0.14)',
+              borderRadius: 30,
+              padding: '8px 16px',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              fontSize: '0.76rem',
+              color: '#CBD5E1',
+              pointerEvents: 'auto',
+              transition: 'opacity 0.4s ease'
+            }}
+          >
+            <span>Drag to rotate · Scroll to zoom · Click any structure to inspect</span>
+            <button
+              onClick={() => setHasInteracted(true)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#64748B',
+                cursor: 'pointer',
+                padding: 0,
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="Dismiss hint"
+            >
+              <X size={13} />
+            </button>
           </div>
-          <p style={{ fontSize: '0.80rem', color: '#94A3B8', lineHeight: 1.55, margin: '0 0 14px 0', width: '100%' }}>
-            Click on any anatomical organ, bone, or muscle to inspect its physiological function, isolate its structure, or follow real-time biological processes.
-          </p>
-
-          <div style={{ fontSize: '0.74rem', color: '#CBD5E1', display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
-            <div>• <strong style={{ color: '#FFFFFF' }}>Rotate:</strong> Click &amp; drag anywhere on canvas</div>
-            <div>• <strong style={{ color: '#FFFFFF' }}>Zoom:</strong> Mouse wheel scroll or mobile pinch</div>
-            <div>• <strong style={{ color: '#FFFFFF' }}>Pan:</strong> Right-click drag or shift-drag</div>
-            <div>• <strong style={{ color: '#FFFFFF' }}>Search:</strong> Press ⌘K to fly to any organ</div>
-          </div>
-        </aside>
+        ) : null
       )}
 
       {/* 5. MULTI-LEVEL SCALE MODAL */}

@@ -133,18 +133,6 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   const heartMeshRef = useRef<THREE.Object3D | null>(null);
   const lungMeshesRef = useRef<THREE.Object3D[]>([]);
 
-  // Biological Sex & Somatic Skeletal Dimorphism Transformation Refs
-  const dimorphicSkeletalNodesRef = useRef<{
-    pelvis: THREE.Object3D[];
-    clavicles: THREE.Object3D[];
-    ribs: THREE.Object3D[];
-  }>({ pelvis: [], clavicles: [], ribs: [] });
-  const targetDimorphismRef = useRef<number>(biologicalSex === 'female' ? 1.0 : 0.0);
-  const currentDimorphismRef = useRef<number>(biologicalSex === 'female' ? 1.0 : 0.0);
-
-  useEffect(() => {
-    targetDimorphismRef.current = biologicalSex === 'female' ? 1.0 : 0.0;
-  }, [biologicalSex]);
 
   // --------------------------------------------------------------------------
   // 1. INITIALIZE THREE.JS SCENE, MEDICAL LIGHTING RIG & GLTF ASSET PIPELINE
@@ -157,12 +145,12 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
 
     // Scene
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x060913); // Deep space medical navy
+    scene.background = new THREE.Color(0x080D1A); // Clean neutral scientific deep slate
     sceneRef.current = scene;
 
-    // Camera
-    const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 100);
-    camera.position.set(0, 0.0, 10.5);
+    // Camera (Telephoto-style 34 deg FOV removes wide-angle game distortion)
+    const camera = new THREE.PerspectiveCamera(34, width / height, 0.1, 100);
+    camera.position.set(0, 0.0, 11.2);
     cameraRef.current = camera;
 
     // Renderer
@@ -182,79 +170,57 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     // CLINICAL SCIENTIFIC PBR LIGHTING RIG
     // ------------------------------------------------------------------------
     // 1. Clean neutral medical ambient illumination
-    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.80);
+    const ambientLight = new THREE.AmbientLight(0xFFFFFF, 0.85);
     scene.add(ambientLight);
 
-    // 2. Key Directional Surgical Daylight Light (True warm white sunlight)
-    const keyLight = new THREE.DirectionalLight(0xFFFDF5, 1.8);
+    // 2. Key Directional Daylight (Calm scientific neutral white)
+    const keyLight = new THREE.DirectionalLight(0xFFFDF8, 1.7);
     keyLight.position.set(6, 9, 7);
     scene.add(keyLight);
 
-    // 3. Soft Front-Left Fill Light (Eliminates harsh shadows on bones and muscles)
+    // 3. Soft Front-Left Fill Light (Eliminates harsh shadows)
     const fillLight = new THREE.DirectionalLight(0xF1F5F9, 0.75);
     fillLight.position.set(-6, 3, 6);
     scene.add(fillLight);
 
     // 4. Subtle Contour Rim Light (Crisp neutral anatomical edge definition)
-    const rimLight = new THREE.DirectionalLight(0xCBD5E1, 0.6);
+    const rimLight = new THREE.DirectionalLight(0xCBD5E1, 0.55);
     rimLight.position.set(-6, 7, -6);
     scene.add(rimLight);
 
-    // 5. Warm Underfill Bounce Light (Organic tissue translucency)
-    const underfillLight = new THREE.DirectionalLight(0xFEE2E2, 0.35);
+    // 5. Warm Underfill Bounce Light (Subtle depth)
+    const underfillLight = new THREE.DirectionalLight(0xF8FAFC, 0.25);
     underfillLight.position.set(0, -6, 3);
     scene.add(underfillLight);
+
     // ------------------------------------------------------------------------
-    // HIGH-END MEDICAL INSPECTION PEDESTAL (Grounding body soles at Y = -4.12)
+    // SUBTLE GROUNDING CONTACT SHADOW (Replaces game pedestal with soft grounding)
     // ------------------------------------------------------------------------
-    const pedestalGroup = new THREE.Group();
-    pedestalGroup.position.y = -4.18;
-
-    // 1. Sleek Carbon Pedestal Base Disc
-    const baseGeom = new THREE.CylinderGeometry(4.2, 4.4, 0.14, 64);
-    const baseMat = new THREE.MeshPhysicalMaterial({
-      color: 0x0A0F1D,
-      metalness: 0.85,
-      roughness: 0.32,
-      clearcoat: 0.5
-    });
-    const baseMesh = new THREE.Mesh(baseGeom, baseMat);
-    baseMesh.position.y = -0.07;
-    baseMesh.receiveShadow = true;
-    pedestalGroup.add(baseMesh);
-
-    // 2. Outer Luminescent Cyan Ring Accent
-    const outerRingGeom = new THREE.RingGeometry(3.95, 4.05, 64);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: 0x06B6D4,
-      side: THREE.DoubleSide,
+    const shadowCanvas = document.createElement('canvas');
+    shadowCanvas.width = 256;
+    shadowCanvas.height = 256;
+    const shadowCtx = shadowCanvas.getContext('2d');
+    if (shadowCtx) {
+      const gradient = shadowCtx.createRadialGradient(128, 128, 0, 128, 128, 128);
+      gradient.addColorStop(0, 'rgba(0, 0, 0, 0.38)');
+      gradient.addColorStop(0.35, 'rgba(0, 0, 0, 0.18)');
+      gradient.addColorStop(0.7, 'rgba(0, 0, 0, 0.05)');
+      gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      shadowCtx.fillStyle = gradient;
+      shadowCtx.fillRect(0, 0, 256, 256);
+    }
+    const shadowTexture = new THREE.CanvasTexture(shadowCanvas);
+    const shadowGeom = new THREE.PlaneGeometry(3.6, 2.6);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      map: shadowTexture,
       transparent: true,
-      opacity: 0.75
+      opacity: 0.65,
+      depthWrite: false
     });
-    const outerRing = new THREE.Mesh(outerRingGeom, ringMat);
-    outerRing.rotation.x = -Math.PI / 2;
-    outerRing.position.y = 0.002;
-    pedestalGroup.add(outerRing);
-
-    // 3. Inner Reticle Position Target Ring
-    const innerRingGeom = new THREE.RingGeometry(1.85, 1.90, 64);
-    const innerRingMat = new THREE.MeshBasicMaterial({
-      color: 0x10B981,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.55
-    });
-    const innerRing = new THREE.Mesh(innerRingGeom, innerRingMat);
-    innerRing.rotation.x = -Math.PI / 2;
-    innerRing.position.y = 0.003;
-    pedestalGroup.add(innerRing);
-
-    // 4. Subtle Radial Medical Alignment Lines
-    const gridHelper = new THREE.GridHelper(8, 16, 0x1E293B, 0x0F172A);
-    gridHelper.position.y = 0.004;
-    pedestalGroup.add(gridHelper);
-
-    scene.add(pedestalGroup);
+    const shadowMesh = new THREE.Mesh(shadowGeom, shadowMat);
+    shadowMesh.rotation.x = -Math.PI / 2;
+    shadowMesh.position.set(0, -4.118, -0.05);
+    scene.add(shadowMesh);
 
     // Master Group for All Anatomy
     const masterGroup = new THREE.Group();
@@ -284,7 +250,6 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       separableOrgansRef.current,
       heartMeshRef,
       lungMeshesRef,
-      dimorphicSkeletalNodesRef,
       (progress, text) => {
         setLoadingProgress(progress);
         setLoadingText(text);
@@ -310,36 +275,6 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       animationFrameIdRef.current = requestAnimationFrame(animate);
       const delta = Math.min((currentTime - previousTime) * 0.001, 0.1);
       previousTime = currentTime;
-
-      // 0. Smooth Biological Dimorphism Transition (Skeletal Morphology)
-      const targetDim = targetDimorphismRef.current;
-      const currentDim = currentDimorphismRef.current;
-      if (Math.abs(targetDim - currentDim) > 0.0005) {
-        const dimAlpha = 1.0 - Math.exp(-delta * 4.0);
-        currentDimorphismRef.current += (targetDim - currentDim) * dimAlpha;
-        const dim = currentDimorphismRef.current; // 1.0 = Female, 0.0 = Male
-
-        // Skeletal Girdle & Rib Dimorphic Morphing
-        // Female (Gynecoid pelvis): wider transverse diameter, wider subpubic angle, narrower shoulders
-        // Male (Android pelvis): narrower heart-shaped pelvis, broader clavicles & thorax
-        const pelvisScaleX = THREE.MathUtils.lerp(0.96, 1.15, dim);
-        const pelvisScaleY = THREE.MathUtils.lerp(1.02, 0.94, dim);
-        const pelvisScaleZ = THREE.MathUtils.lerp(0.98, 1.08, dim);
-        dimorphicSkeletalNodesRef.current.pelvis.forEach((node) => {
-          node.scale.set(pelvisScaleX, pelvisScaleY, pelvisScaleZ);
-        });
-
-        const shoulderScaleX = THREE.MathUtils.lerp(1.08, 0.92, dim);
-        dimorphicSkeletalNodesRef.current.clavicles.forEach((node) => {
-          node.scale.set(shoulderScaleX, 1.0, 1.0);
-        });
-
-        const ribScaleX = THREE.MathUtils.lerp(1.04, 0.94, dim);
-        const ribScaleZ = THREE.MathUtils.lerp(1.04, 0.94, dim);
-        dimorphicSkeletalNodesRef.current.ribs.forEach((node) => {
-          node.scale.set(ribScaleX, 1.0, ribScaleZ);
-        });
-      }
 
       // 1. Cinematic Non-Teleporting Camera Spring Interpolation
       const cam = cameraRef.current;
@@ -443,7 +378,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       skinMeshes.forEach((mesh) => {
         const mat = mesh.material as THREE.MeshStandardMaterial;
         if (mat) {
-          if (skinAlpha >= 0.95 && skinMode === 'natural') {
+          if (skinAlpha >= 0.95) {
             mat.transparent = false;
             mat.opacity = 1.0;
             mat.depthWrite = true;
@@ -563,33 +498,30 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       }
 
       // Skin has dedicated medical PBR controls (natural human skin tone, controllable opacity, glass, or off)
+      // Skin represents outer anatomical boundary (neutral matte scientific mannequin)
       if (id === 'skin') {
-        const effectiveOpacity = layerSeparation > 0
-          ? Math.max(0.0, skinOpacity * (1.0 - layerSeparation))
-          : skinOpacity;
-
+        const effectiveOpacity = skinOpacity;
         const isVisible = skinVisible && effectiveOpacity > 0.01 && !isIsolated;
 
         meshes.forEach((mesh) => {
           mesh.visible = isVisible;
           if (!isVisible) return;
 
-          const mat = mesh.material as THREE.MeshStandardMaterial;
+          const mat = mesh.material as THREE.MeshPhysicalMaterial;
           if (!mat) return;
 
           if (isSelected) {
-            mat.emissive.set(new THREE.Color(0xF97316));
-            mat.emissiveIntensity = 0.55;
-            mat.opacity = Math.max(0.7, effectiveOpacity);
+            mat.emissive.set(new THREE.Color(0x10B981));
+            mat.emissiveIntensity = 0.45;
+            mat.opacity = Math.max(0.65, effectiveOpacity);
             mat.transparent = true;
             mat.depthWrite = false;
-          } else if (skinMode === 'natural') {
-            mat.color.setHex(0xDE9F7E); // Warm natural human skin tone
-            mat.roughness = 0.52;
-            mat.metalness = 0.02;
-            mat.emissive.setHex(0x1F0B05); // Subsurface scattering warmth
-            mat.emissiveIntensity = 0.06;
-            if ('clearcoat' in mat) (mat as THREE.MeshPhysicalMaterial).clearcoat = 0.1;
+          } else {
+            mat.color.setHex(0xDCE1E6); // Neutral scientific matte alabaster mannequin
+            mat.roughness = 0.65;
+            mat.metalness = 0.0;
+            mat.emissive.setHex(0x0A0F1D);
+            mat.emissiveIntensity = 0.03;
             if (effectiveOpacity >= 0.95) {
               mat.transparent = false;
               mat.opacity = 1.0;
@@ -599,24 +531,6 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
               mat.opacity = effectiveOpacity;
               mat.depthWrite = false;
             }
-          } else if (skinMode === 'translucent') {
-            mat.color.setHex(0x38BDF8); // Medical cyan frosted glass
-            mat.roughness = 0.22;
-            mat.metalness = 0.05;
-            mat.emissive.setHex(0x0284C7);
-            mat.emissiveIntensity = 0.15;
-            if ('clearcoat' in mat) (mat as THREE.MeshPhysicalMaterial).clearcoat = 1.0;
-            mat.transparent = true;
-            mat.opacity = effectiveOpacity;
-            mat.depthWrite = false;
-          } else if (skinMode === 'xray') {
-            mat.color.setHex(0x818CF8); // Bioluminescent electric scan
-            mat.roughness = 0.35;
-            mat.emissive.setHex(0x3730A3);
-            mat.emissiveIntensity = 0.45;
-            mat.transparent = true;
-            mat.opacity = effectiveOpacity * 0.85;
-            mat.depthWrite = false;
           }
         });
         return;
@@ -644,17 +558,19 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
             mat.depthWrite = true;
           }
         } else if (selectedStructureId && ANATOMY_STRUCTURES[selectedStructureId] && !isIsolated) {
-          // Dim non-selected structures into subtle translucent depth silhouette
+          // Keep surrounding anatomy as spatial context: dim into subtle translucent silhouette
           mat.emissive.setHex(0x000000);
           mat.emissiveIntensity = 0;
-          mat.opacity = Math.min(systemAlpha * 0.22, 0.25);
+          mat.opacity = Math.min(systemAlpha * 0.18, 0.20);
           mat.transparent = true;
+          mat.depthWrite = false;
         } else {
           // Normal state with system opacity
           mat.emissive.setHex(0x000000);
           mat.emissiveIntensity = 0;
           mat.opacity = systemAlpha;
           mat.transparent = systemAlpha < 0.95;
+          mat.depthWrite = systemAlpha >= 0.95;
         }
       });
     });
@@ -988,50 +904,6 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
 };
 
 // ============================================================================
-// PROCEDURAL DERMAL PORE & MICRO-FURROW BUMP TEXTURE GENERATOR
-// ============================================================================
-
-function createDermalPoreTexture(): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 512;
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    ctx.fillStyle = '#808080';
-    ctx.fillRect(0, 0, 512, 512);
-
-    // High-frequency subtle dermal follicular micro-pore noise
-    const imgData = ctx.getImageData(0, 0, 512, 512);
-    const data = imgData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      const noise = (Math.random() - 0.5) * 30;
-      const v = Math.min(255, Math.max(0, 128 + noise));
-      data[i] = v;
-      data[i + 1] = v;
-      data[i + 2] = v;
-      data[i + 3] = 255;
-    }
-    ctx.putImageData(imgData, 0, 0);
-
-    // Anatomical tension micro-grooves (Langer's cleavages)
-    ctx.strokeStyle = 'rgba(110, 110, 110, 0.25)';
-    ctx.lineWidth = 1;
-    for (let y = 0; y < 512; y += 8) {
-      ctx.beginPath();
-      ctx.moveTo(0, y + Math.sin(y * 0.12) * 2.5);
-      ctx.lineTo(512, y + Math.sin(y * 0.12) * 2.5);
-      ctx.stroke();
-    }
-  }
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(16, 16);
-  return texture;
-}
-
-// ============================================================================
 // MODEL LOADER PIPELINE: ASSEMBLES REAL VISIBLE HUMAN & Z-ANATOMY MESHES
 // ============================================================================
 
@@ -1039,14 +911,9 @@ function loadAllAnatomicalModels(
   loader: GLTFLoader,
   masterGroup: THREE.Group,
   meshMap: Map<string, THREE.Mesh[]>,
-  separableOrgans: SeparableOrgan[],
+  _separableOrgans: SeparableOrgan[],
   heartMeshRef: React.MutableRefObject<THREE.Object3D | null>,
   lungMeshesRef: React.MutableRefObject<THREE.Object3D[]>,
-  dimorphicSkeletalNodesRef: React.MutableRefObject<{
-    pelvis: THREE.Object3D[];
-    clavicles: THREE.Object3D[];
-    ribs: THREE.Object3D[];
-  }>,
   onProgress: (percent: number, message: string) => void
 ) {
   const registerMesh = (id: string, mesh: THREE.Mesh, system: AnatomicalSystemId, name: string) => {
@@ -1060,6 +927,7 @@ function loadAllAnatomicalModels(
   };
 
   // High-Resolution Visible Human & Z-Anatomy Anatomical Models
+  // All internal structures calibrated to remain strictly INSIDE the anatomical mannequin envelope
   const modelSpecs: {
     file: string;
     id: string;
@@ -1072,31 +940,30 @@ function loadAllAnatomicalModels(
     metalness?: number;
     clearcoat?: number;
     opacity?: number;
-    separatedOffset?: [number, number, number];
   }[] = [
     {
       file: 'skin.glb',
       id: 'skin',
-      name: 'Human Body Surface (Skin & Involucre)',
+      name: 'Human Anatomical Mannequin (Surface)',
       system: 'muscular',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xDE9F7E, // Warm natural human skin tone
-      roughness: 0.52,
-      clearcoat: 0.12,
-      opacity: 0.45
+      materialColor: 0xDCE1E6, // Neutral scientific matte alabaster
+      roughness: 0.65,
+      clearcoat: 0.05,
+      opacity: 0.85
     },
     {
       file: 'skeleton.glb',
       id: 'skeleton',
       name: 'Human Skeletal System',
       system: 'skeletal',
-      scale: 0.0470, // 169.6cm -> calibrated anatomical scale
-      position: [0, -4.08, -0.06], // Calibrated vertically and in depth with visceral organs
-      materialColor: 0xFAF7EE, // Natural warm ivory bone
-      roughness: 0.38,
-      metalness: 0.02,
-      clearcoat: 0.15
+      scale: 0.0465, // Calibrated so ribcage, sternum, and skull stay strictly INSIDE the mannequin
+      position: [0, -4.08, -0.16], // Calibrated vertically and in depth with thoracic cavity
+      materialColor: 0xF5EFEB, // Clean medical ivory bone
+      roughness: 0.42,
+      metalness: 0.0,
+      clearcoat: 0.08
     },
     {
       file: 'heart.glb',
@@ -1107,8 +974,7 @@ function loadAllAnatomicalModels(
       position: [0, 0, 0],
       materialColor: 0xB91C1C, // Myocardium ruby crimson
       roughness: 0.28,
-      clearcoat: 0.65,
-      separatedOffset: [-0.4, 0, 1.5]
+      clearcoat: 0.65
     },
     {
       file: 'lung.glb',
@@ -1119,8 +985,7 @@ function loadAllAnatomicalModels(
       position: [0, 0, 0],
       materialColor: 0xE07A8B, // Pulmonary rose blush
       roughness: 0.46,
-      clearcoat: 0.25,
-      separatedOffset: [0.8, 0, 0.6]
+      clearcoat: 0.25
     },
     {
       file: 'brain.glb',
@@ -1131,8 +996,7 @@ function loadAllAnatomicalModels(
       position: [0, 0, 0],
       materialColor: 0xDEC5BA, // Cerebral ivory-pink
       roughness: 0.40,
-      clearcoat: 0.35,
-      separatedOffset: [0, 0.4, 0.6]
+      clearcoat: 0.35
     },
     {
       file: 'liver.glb',
@@ -1143,8 +1007,7 @@ function loadAllAnatomicalModels(
       position: [0, 0, 0],
       materialColor: 0x7F1D1D, // Hepatic burgundy
       roughness: 0.32,
-      clearcoat: 0.55,
-      separatedOffset: [-0.8, 0, 1.2]
+      clearcoat: 0.55
     },
     {
       file: 'kidney-l.glb',
@@ -1155,8 +1018,7 @@ function loadAllAnatomicalModels(
       position: [0, 0, 0],
       materialColor: 0x78350F, // Renal mahogany
       roughness: 0.34,
-      clearcoat: 0.50,
-      separatedOffset: [0.6, 0, 0.9]
+      clearcoat: 0.50
     },
     {
       file: 'kidney-r.glb',
@@ -1167,8 +1029,7 @@ function loadAllAnatomicalModels(
       position: [0, 0, 0],
       materialColor: 0x78350F,
       roughness: 0.34,
-      clearcoat: 0.50,
-      separatedOffset: [-0.6, 0, 0.9]
+      clearcoat: 0.50
     },
     {
       file: 'gut-large.glb',
@@ -1179,8 +1040,7 @@ function loadAllAnatomicalModels(
       position: [0, 0, 0],
       materialColor: 0xB45309, // Enteric terracotta tan
       roughness: 0.40,
-      clearcoat: 0.45,
-      separatedOffset: [0, -0.2, 1.4]
+      clearcoat: 0.45
     },
     {
       file: 'gut-small.glb',
@@ -1191,8 +1051,7 @@ function loadAllAnatomicalModels(
       position: [0, 0, 0],
       materialColor: 0xD97706, // Enteric golden amber
       roughness: 0.42,
-      clearcoat: 0.50,
-      separatedOffset: [0, -0.2, 1.2]
+      clearcoat: 0.50
     },
     {
       file: 'vasculature.glb',
@@ -1225,35 +1084,8 @@ function loadAllAnatomicalModels(
           lungMeshesRef.current.push(root);
         }
 
-        // Register separable organ for exploded view
-        if (spec.separatedOffset) {
-          separableOrgans.push({
-            object: root,
-            naturalPosition: root.position.clone(),
-            separatedOffset: new THREE.Vector3(...spec.separatedOffset)
-          });
-        }
-
         // Traverse meshes and assign medical PBR materials
         root.traverse((child) => {
-          // Detect dimorphic skeletal nodes (pelvis, clavicles, ribs)
-          if (spec.id === 'skeleton' && child.name) {
-            const nodeName = child.name.toLowerCase();
-            if (
-              nodeName.includes('pelvic') ||
-              nodeName.includes('sacrum') ||
-              nodeName.includes('ilium') ||
-              nodeName.includes('ischium') ||
-              nodeName.includes('pubis') ||
-              nodeName.includes('hip bone')
-            ) {
-              dimorphicSkeletalNodesRef.current.pelvis.push(child);
-            } else if (nodeName.includes('clavicle') || nodeName.includes('scapula')) {
-              dimorphicSkeletalNodesRef.current.clavicles.push(child);
-            } else if (nodeName.includes('rib') || nodeName.includes('costa') || nodeName.includes('sternum')) {
-              dimorphicSkeletalNodesRef.current.ribs.push(child);
-            }
-          }
 
           if ((child as THREE.Mesh).isMesh) {
             const mesh = child as THREE.Mesh;
@@ -1262,24 +1094,20 @@ function loadAllAnatomicalModels(
 
             const name = (mesh.name || spec.name).toLowerCase();
 
-            // 1. Specialized High-Fidelity Human Skin Material
+            // 1. Neutral Scientific Anatomical Mannequin Material (Skin boundary)
             if (spec.id === 'skin') {
               mesh.geometry.computeVertexNormals();
-              const dermalBump = createDermalPoreTexture();
               const skinMaterial = new THREE.MeshPhysicalMaterial({
-                color: 0xDE9F7E,
-                roughness: 0.58,
-                bumpMap: dermalBump,
-                bumpScale: 0.012,
-                clearcoat: 0.12,
-                clearcoatRoughness: 0.45,
-                emissive: new THREE.Color(0x1F0B05),
-                emissiveIntensity: 0.08,
-                sheen: 0.22,
-                sheenRoughness: 0.45,
+                color: 0xDCE1E6, // Clean matte alabaster scientific mannequin
+                roughness: 0.65,
+                metalness: 0.0,
+                clearcoat: 0.05,
+                clearcoatRoughness: 0.5,
+                emissive: new THREE.Color(0x0A0F1D),
+                emissiveIntensity: 0.03,
                 transparent: true,
-                opacity: spec.opacity ?? 0.45,
-                depthWrite: false
+                opacity: spec.opacity ?? 0.85,
+                depthWrite: (spec.opacity ?? 0.85) >= 0.95
               });
               mesh.material = skinMaterial;
               registerMesh('skin', mesh, spec.system, mesh.name || spec.name);
