@@ -80,7 +80,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   detailLevel: _detailLevel,
   presetView,
   onPresetViewHandled,
-  skinOpacity = 0.45,
+  skinOpacity = 1.0,
   skinMode = 'natural',
   skinVisible = true,
   biologicalSex = 'female'
@@ -88,6 +88,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
   const [loadingText, setLoadingText] = useState<string>('Initializing 3D Medical Laboratory...');
+  const [loadedVersion, setLoadedVersion] = useState<number>(0);
   const [hoveredStructure, setHoveredStructure] = useState<{
     id: string;
     name: string;
@@ -167,6 +168,8 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x080D1A); // Clean neutral scientific deep slate
     sceneRef.current = scene;
+    (window as unknown as { __PHYSORA_SCENE__: THREE.Scene; __PHYSORA_MESH_MAP__: Map<string, THREE.Mesh[]> }).__PHYSORA_SCENE__ = scene;
+    (window as unknown as { __PHYSORA_SCENE__: THREE.Scene; __PHYSORA_MESH_MAP__: Map<string, THREE.Mesh[]> }).__PHYSORA_MESH_MAP__ = meshMapRef.current;
 
     // Camera (Telephoto-style 34 deg FOV removes wide-angle game distortion)
     const camera = new THREE.PerspectiveCamera(34, width / height, 0.1, 100);
@@ -273,6 +276,9 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       (progress, text) => {
         setLoadingProgress(progress);
         setLoadingText(text);
+        if (progress >= 100) {
+          setLoadedVersion((v) => v + 1);
+        }
       }
     );
 
@@ -513,7 +519,8 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       const isSelected = selectedStructureId === id;
 
       // Determine system visibility
-      const systemId = struct?.system || 'skeletal';
+      const meshSystem = (meshes[0]?.userData as MeshUserData)?.system;
+      const systemId = meshSystem || struct?.system || 'skeletal';
       const isSystemVisible = systemVisibility[systemId] ?? true;
       const systemAlpha = systemOpacity[systemId] ?? 1.0;
 
@@ -612,7 +619,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         }
       });
     });
-  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated, showInternal, layerSeparation, skinOpacity, skinMode, skinVisible, biologicalSex]);
+  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated, showInternal, layerSeparation, skinOpacity, skinMode, skinVisible, biologicalSex, loadedVersion]);
 
   // --------------------------------------------------------------------------
   // 7. MOUSE & TOUCH ORBIT / ZOOM / PAN INTERACTIONS
@@ -1196,7 +1203,7 @@ function loadAllAnatomicalModels(
       materialColor: 0xDE9F7E, // Realistic natural skin tone
       roughness: 0.52,
       clearcoat: 0.1,
-      opacity: 0.45
+      opacity: 1.0
     },
     {
       file: 'skeleton.glb',
@@ -1353,6 +1360,9 @@ function loadAllAnatomicalModels(
         meshes.forEach((mesh) => {
           mesh.castShadow = true;
           mesh.receiveShadow = true;
+
+          // Neutral educational mannequin pelvis geometry is baked directly into skin.glb
+
 
           const name = (mesh.name || spec.name).toLowerCase();
 
