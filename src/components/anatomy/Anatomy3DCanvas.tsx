@@ -729,11 +729,11 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         shouldBeVisible = isSelected;
       }
 
-      // Update circulation particle system visibility: only active when cardiovascular system is enabled and not concealed by opaque skin
+      // Update circulation particle system visibility: active when Blood Vessels layer is active, or when heart/aorta/vasculature is inspected
       if (circulationGroupRef.current) {
-        const isCardioActive = systemVisibility.cardiovascular ?? true;
+        const isVesselsActive = activeLayerId === 'vessels' || selectedStructureId === 'aorta' || selectedStructureId === 'heart' || selectedStructureId === 'vasculature';
         const isConcealedBySkin = skinVisible && skinOpacity >= 0.90 && !showInternal && !isIsolated;
-        circulationGroupRef.current.visible = isCardioActive && (!isConcealedBySkin || selectedStructureId === 'aorta' || selectedStructureId === 'heart');
+        circulationGroupRef.current.visible = isVesselsActive && !isConcealedBySkin;
       }
 
       // Skin represents outer anatomical boundary (realistic medical anatomical skin) or somatic musculature
@@ -1857,11 +1857,31 @@ function setupDualCircuitCirculation(
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
+  // Circular soft radial glow texture for realistic blood cell particles (prevents square WebGL point artifacts)
+  const cellCanvas = document.createElement('canvas');
+  cellCanvas.width = 32;
+  cellCanvas.height = 32;
+  const cellCtx = cellCanvas.getContext('2d');
+  if (cellCtx) {
+    const radGrad = cellCtx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    radGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    radGrad.addColorStop(0.35, 'rgba(255, 255, 255, 0.9)');
+    radGrad.addColorStop(0.7, 'rgba(255, 255, 255, 0.35)');
+    radGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    cellCtx.fillStyle = radGrad;
+    cellCtx.beginPath();
+    cellCtx.arc(16, 16, 16, 0, Math.PI * 2);
+    cellCtx.fill();
+  }
+  const bloodCellTexture = new THREE.CanvasTexture(cellCanvas);
+
   const material = new THREE.PointsMaterial({
-    size: 0.12,
+    size: 0.07,
+    map: bloodCellTexture,
     vertexColors: true,
     transparent: true,
-    opacity: 0.92,
+    opacity: 0.88,
+    depthWrite: false,
     blending: THREE.AdditiveBlending
   });
 
