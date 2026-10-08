@@ -8,6 +8,58 @@ import type {
   SignUpFormData 
 } from '../types/auth';
 
+interface DevAccount {
+  id: string;
+  email: string;
+  username: string;
+  displayName: string;
+  passwordHash: string;
+  createdAt: string;
+  bio?: string;
+  avatarUrl?: string | null;
+}
+
+const DEV_ACCOUNTS_KEY = 'physora_dev_accounts_v1';
+const DEV_SESSION_KEY = 'physora_dev_session_v1';
+
+function getDevAccounts(): DevAccount[] {
+  try {
+    const raw = localStorage.getItem(DEV_ACCOUNTS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveDevAccounts(accounts: DevAccount[]) {
+  try {
+    localStorage.setItem(DEV_ACCOUNTS_KEY, JSON.stringify(accounts));
+  } catch {
+    // Ignore
+  }
+}
+
+function getDevActiveSession(): { user: User; session: Session; profile: PhysoraProfile } | null {
+  try {
+    const raw = localStorage.getItem(DEV_SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function saveDevActiveSession(data: { user: User; session: Session; profile: PhysoraProfile } | null) {
+  try {
+    if (data) {
+      localStorage.setItem(DEV_SESSION_KEY, JSON.stringify(data));
+    } else {
+      localStorage.removeItem(DEV_SESSION_KEY);
+    }
+  } catch {
+    // Ignore
+  }
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -16,7 +68,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [profile, setProfile] = useState<PhysoraProfile | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Fetch or create profile for authenticated user
+  // Fetch or create profile for authenticated user (Supabase mode)
   const fetchProfile = useCallback(async (userId: string, authUser?: User) => {
     if (!isSupabaseConfigured) return;
 
@@ -34,7 +86,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data) {
         setProfile(data as PhysoraProfile);
       } else if (authUser) {
-        // Fallback: If profile row doesn't exist yet, derive from user_metadata
         const meta = authUser.user_metadata || {};
         const fallbackProfile: PhysoraProfile = {
           id: userId,
@@ -47,7 +98,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
         setProfile(fallbackProfile);
 
-        // Attempt to create the initial row in profiles table
         try {
           await supabase.from('profiles').insert(fallbackProfile);
         } catch {
@@ -59,16 +109,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
-  // Initialize session on mount & subscribe to Supabase auth events
+  // Initialize session on mount
   useEffect(() => {
+    // Local dev mode fallback if Supabase keys not set yet
     if (!isSupabaseConfigured) {
+      const saved = getDevActiveSession();
+      if (saved) {
+        setUser(saved.user);
+        setSession(saved.session);
+        setProfile(saved.profile);
+      }
       setIsLoading(false);
       return;
     }
 
     let isMounted = true;
 
-    // 1. Initial active session recovery
+    // 1. Initial active session recovery from Supabase
     supabase.auth.getSession().then(({ data: { session: initialSession }, error }) => {
       if (!isMounted) return;
 
@@ -88,7 +145,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(false);
     });
 
-    // 2. Real-time auth state changes listener (cross-tab sync, token refresh, etc.)
+    // 2. Real-time auth state changes listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
 
@@ -102,7 +159,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
 
       if (event === 'PASSWORD_RECOVERY') {
-        // Broadcast or set hash to trigger reset view
         window.location.hash = '#reset-password';
       }
 
@@ -117,17 +173,60 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Sign In implementation
   const signIn = async ({ emailOrUsername, password }: LoginFormData) => {
+    // Local dev fallback if Supabase keys not configured in .env.local yet
     if (!isSupabaseConfigured) {
-      return {
-        success: false,
-        error: 'Supabase credentials are not configured in .env.local. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
+      const accounts = getDevAccounts();
+      const identifier = emailOrUsername.trim().toLowerCase();
+      const match = accounts.find(
+        (a) => a.email.toLowerCase() === identifier || a.username.toLowerCase() === identifier
+      );
+
+      if (!match || match.passwordHash !== password) {
+        return { success: false, error: 'Email/username or password is incorrect.' };
+      }
+
+      const mockUser: User = {
+        id: match.id,
+        app_metadata: {},
+        user_metadata: { display_name: match.displayName, username: match.username },
+        aud: 'authenticated',
+        created_at: match.createdAt,
+        email: match.email,
+        phone: '',
+        role: 'authenticated',
+        updated_at: new Date().toISOString()
       };
+
+      const mockSession: Session = {
+        access_token: 'local-dev-token-' + match.id,
+        token_type: 'bearer',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        refresh_token: 'local-dev-refresh-' + match.id,
+        user: mockUser
+      };
+
+      const devProfile: PhysoraProfile = {
+        id: match.id,
+        username: match.username,
+        display_name: match.displayName,
+        avatar_url: match.avatarUrl || null,
+        bio: match.bio || null,
+        created_at: match.createdAt,
+        updated_at: new Date().toISOString()
+      };
+
+      setUser(mockUser);
+      setSession(mockSession);
+      setProfile(devProfile);
+      saveDevActiveSession({ user: mockUser, session: mockSession, profile: devProfile });
+
+      return { success: true };
     }
 
     try {
       let emailToUse = emailOrUsername.trim();
 
-      // Check if user entered a username instead of an email address
       if (!emailToUse.includes('@')) {
         const { data: profileMatch } = await supabase
           .from('profiles')
@@ -136,9 +235,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .maybeSingle();
 
         if (profileMatch) {
-          // If we found a matching profile ID, we can query users or use standard identifier
-          // Note: In Supabase, standard signIn requires the user's email.
-          // If username lookup isn't paired with an email column in profiles, we query or inform user.
           const { data: profileWithEmail } = await supabase
             .from('profiles')
             .select('email')
@@ -175,22 +271,77 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Sign Up implementation
   const signUp = async ({ displayName, username, email, password, confirmPassword }: SignUpFormData) => {
-    if (!isSupabaseConfigured) {
-      return {
-        success: false,
-        error: 'Supabase credentials are not configured in .env.local. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.'
-      };
-    }
-
     if (password !== confirmPassword) {
       return { success: false, error: 'Passwords do not match.' };
     }
 
-    try {
-      const cleanUsername = username.trim().toLowerCase();
-      const cleanDisplayName = displayName.trim();
-      const cleanEmail = email.trim().toLowerCase();
+    const cleanUsername = username.trim().toLowerCase();
+    const cleanDisplayName = displayName.trim();
+    const cleanEmail = email.trim().toLowerCase();
 
+    // Local dev mode fallback if Supabase not configured in .env.local yet
+    if (!isSupabaseConfigured) {
+      const accounts = getDevAccounts();
+      if (accounts.some((a) => a.username.toLowerCase() === cleanUsername)) {
+        return { success: false, error: 'This username is already taken. Please choose another username.' };
+      }
+      if (accounts.some((a) => a.email.toLowerCase() === cleanEmail)) {
+        return { success: false, error: 'An account with this email already exists.' };
+      }
+
+      const newId = 'physora-user-' + Date.now();
+      const newAccount: DevAccount = {
+        id: newId,
+        email: cleanEmail,
+        username: cleanUsername,
+        displayName: cleanDisplayName,
+        passwordHash: password,
+        createdAt: new Date().toISOString()
+      };
+
+      accounts.push(newAccount);
+      saveDevAccounts(accounts);
+
+      const mockUser: User = {
+        id: newId,
+        app_metadata: {},
+        user_metadata: { display_name: cleanDisplayName, username: cleanUsername },
+        aud: 'authenticated',
+        created_at: newAccount.createdAt,
+        email: cleanEmail,
+        phone: '',
+        role: 'authenticated',
+        updated_at: new Date().toISOString()
+      };
+
+      const mockSession: Session = {
+        access_token: 'local-dev-token-' + newId,
+        token_type: 'bearer',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        refresh_token: 'local-dev-refresh-' + newId,
+        user: mockUser
+      };
+
+      const newProfile: PhysoraProfile = {
+        id: newId,
+        username: cleanUsername,
+        display_name: cleanDisplayName,
+        avatar_url: null,
+        bio: null,
+        created_at: newAccount.createdAt,
+        updated_at: newAccount.createdAt
+      };
+
+      setUser(mockUser);
+      setSession(mockSession);
+      setProfile(newProfile);
+      saveDevActiveSession({ user: mockUser, session: mockSession, profile: newProfile });
+
+      return { success: true, requiresVerification: false };
+    }
+
+    try {
       // 1. Verify username uniqueness in profiles table
       const { data: existingUser, error: checkError } = await supabase
         .from('profiles')
@@ -260,6 +411,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Sign Out implementation
   const signOut = async () => {
     if (!isSupabaseConfigured) {
+      saveDevActiveSession(null);
       setUser(null);
       setSession(null);
       setProfile(null);
@@ -280,10 +432,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Password Reset Request
   const resetPasswordForEmail = async (email: string) => {
     if (!isSupabaseConfigured) {
-      return {
-        success: false,
-        error: 'Supabase credentials are not configured in .env.local.'
-      };
+      return { success: true };
     }
 
     try {
@@ -302,13 +451,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Update Password (when arriving from recovery link or from profile)
+  // Update Password
   const updatePassword = async (newPassword: string) => {
     if (!isSupabaseConfigured) {
-      return {
-        success: false,
-        error: 'Supabase credentials are not configured in .env.local.'
-      };
+      if (user) {
+        const accounts = getDevAccounts();
+        const acc = accounts.find((a) => a.id === user.id);
+        if (acc) {
+          acc.passwordHash = newPassword;
+          saveDevAccounts(accounts);
+        }
+      }
+      return { success: true };
     }
 
     try {
@@ -328,8 +482,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Update Profile details
   const updateProfile = async (updates: Partial<Pick<PhysoraProfile, 'display_name' | 'username' | 'bio' | 'avatar_url'>>) => {
-    if (!isSupabaseConfigured || !user) {
+    if (!user) {
       return { success: false, error: 'Must be logged in to update profile.' };
+    }
+
+    if (!isSupabaseConfigured) {
+      if (profile) {
+        const updated = {
+          ...profile,
+          ...updates,
+          updated_at: new Date().toISOString()
+        };
+        setProfile(updated);
+        const accounts = getDevAccounts();
+        const acc = accounts.find((a) => a.id === user.id);
+        if (acc) {
+          if (updates.display_name) acc.displayName = updates.display_name;
+          if (updates.bio !== undefined) acc.bio = updates.bio || undefined;
+          saveDevAccounts(accounts);
+        }
+        if (session) {
+          saveDevActiveSession({ user, session, profile: updated });
+        }
+      }
+      return { success: true };
     }
 
     try {
@@ -358,7 +534,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Explicit profile refresh
   const refreshProfile = async () => {
-    if (user) {
+    if (user && isSupabaseConfigured) {
       await fetchProfile(user.id, user);
     }
   };

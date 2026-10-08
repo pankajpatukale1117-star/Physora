@@ -14,7 +14,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
   onSwitchToForgotPassword,
   onSuccess
 }) => {
-  const { signIn, isConfigured } = useAuth();
+  const { signIn } = useAuth();
   
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -67,33 +67,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
   return (
     <div style={{ width: '100%' }}>
-      {/* Configuration Advisory if Supabase is unconfigured in development */}
-      {!isConfigured && (
-        <div
-          role="alert"
-          style={{
-            marginBottom: 20,
-            padding: '12px 14px',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(245, 158, 11, 0.1)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            color: 'var(--accent-amber)',
-            fontSize: '0.82rem',
-            lineHeight: 1.5,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 10
-          }}
-        >
-          <AlertCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} />
-          <div>
-            <strong>Configuration Notice:</strong> Add your Supabase project keys to{' '}
-            <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>.env.local</code>{' '}
-            (<code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>VITE_SUPABASE_URL</code> &{' '}
-            <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>VITE_SUPABASE_ANON_KEY</code>) to connect live authentication.
-          </div>
-        </div>
-      )}
 
       {/* Main Error Banner */}
       {formError && (

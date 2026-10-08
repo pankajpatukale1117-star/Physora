@@ -31,7 +31,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
   onRequiresVerification,
   onSuccess
 }) => {
-  const { signUp, isConfigured } = useAuth();
+  const { signUp } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
@@ -139,31 +139,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({
 
   return (
     <div style={{ width: '100%' }}>
-      {/* Dev Advisory if Supabase is unconfigured */}
-      {!isConfigured && (
-        <div
-          role="alert"
-          style={{
-            marginBottom: 16,
-            padding: '10px 14px',
-            borderRadius: 'var(--radius-md)',
-            background: 'rgba(245, 158, 11, 0.1)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            color: 'var(--accent-amber)',
-            fontSize: '0.82rem',
-            lineHeight: 1.5,
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: 10
-          }}
-        >
-          <AlertCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} />
-          <div>
-            <strong>Configuration Notice:</strong> Real registration requires Supabase keys in{' '}
-            <code style={{ fontFamily: 'var(--font-mono)' }}>.env.local</code>.
-          </div>
-        </div>
-      )}
 
       {/* Server Error Alert */}
       {serverError && (
