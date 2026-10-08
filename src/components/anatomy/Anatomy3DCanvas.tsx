@@ -67,262 +67,31 @@ interface CirculationParticleSystem {
   isArterialList: boolean[];
 }
 
-// Procedural high-resolution striated skeletal muscle texture
-function createMuscularSystemTexture(): THREE.CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 1024;
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    // Rich anatomical deep muscle ground
-    ctx.fillStyle = '#7F1D1D';
-    ctx.fillRect(0, 0, 1024, 1024);
-
-    // Striated myofibrillar fascicle bundles (longitudinal fibers)
-    for (let y = 0; y < 1024; y += 3) {
-      const v = Math.sin(y * 0.08) * 0.5 + 0.5;
-      const shade = Math.floor(135 + v * 70);
-      ctx.fillStyle = `rgb(${shade}, 22, 38)`;
-      ctx.fillRect(0, y, 1024, 2.5);
-    }
-
-    // High-frequency muscle striation micro-fibrils
-    for (let i = 0; i < 400; i++) {
-      const y = Math.random() * 1024;
-      const h = 1 + Math.random() * 2;
-      const alpha = 0.25 + Math.random() * 0.45;
-      ctx.fillStyle = Math.random() > 0.35 
-        ? `rgba(185, 28, 28, ${alpha})` 
-        : `rgba(225, 29, 72, ${alpha * 0.8})`;
-      ctx.fillRect(0, y, 1024, h);
-    }
-
-    // Tendinous aponeuroses and fascia cross-bands
-    for (let i = 0; i < 30; i++) {
-      const x = Math.random() * 1024;
-      const w = 2 + Math.random() * 6;
-      ctx.fillStyle = 'rgba(254, 242, 242, 0.06)';
-      ctx.fillRect(x, 0, w, 1024);
-    }
-  }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(6, 12);
-  return texture;
-}
-
-// Anatomical spatial mapper resolving 3D coordinates on mannequin to discrete muscle groups
-function resolveMuscleStructureAtPoint(point: THREE.Vector3): string {
-  const { x, y, z } = point;
-  // Shoulders: Deltoid
-  if (y >= 1.95 && y <= 2.65 && Math.abs(x) >= 0.60) {
-    return 'deltoids';
-  }
-  // Chest: Pectoralis Major (anterior)
-  if (y >= 1.80 && y <= 2.45 && z >= 0.02 && Math.abs(x) < 0.60) {
-    return 'pectoralis_major';
-  }
-  // Upper Arms: Biceps Brachii
-  if (y >= 1.15 && y < 1.95 && Math.abs(x) >= 0.65) {
-    return 'biceps_brachii';
-  }
-  // Abdomen: Rectus Abdominis (anterior)
-  if (y >= 0.70 && y < 1.80 && z >= 0.02 && Math.abs(x) < 0.60) {
-    return 'rectus_abdominis';
-  }
-  // Posterior Pelvis / Buttocks: Gluteus Maximus
-  if (y >= -0.65 && y <= 0.35 && z < -0.02) {
-    return 'gluteus_maximus';
-  }
-  // Anterior / Lateral Thighs: Quadriceps Femoris
-  if (y >= -2.30 && y < -0.30 && z >= -0.10) {
-    return 'quadriceps_femoris';
-  }
-  // Head / Neck / Back / Lower Legs / Core
-  return 'muscles_core';
-}
-
-// Anatomical shader hook injecting authentic muscle & tendon aponeurosis rendering directly into WebGL pipeline
-function setupMuscularAnatomyShader(material: THREE.MeshPhysicalMaterial) {
-  material.userData.uMuscularMode = { value: 0.0 };
-
+// Microscopic myofibrillar sarcomere striation enhancement on real 3D anatomical muscle bellies
+function setupMuscularFiberShader(material: THREE.MeshPhysicalMaterial) {
   material.onBeforeCompile = (shader) => {
-    shader.uniforms.uMuscularMode = material.userData.uMuscularMode;
-
     shader.vertexShader = `
       varying vec3 vWorldPosCustom;
-      varying vec3 vWorldNormCustom;
       ${shader.vertexShader}
     `.replace(
       '#include <worldpos_vertex>',
       `
       #include <worldpos_vertex>
       vWorldPosCustom = (modelMatrix * vec4(transformed, 1.0)).xyz;
-      vWorldNormCustom = normalize((modelMatrix * vec4(objectNormal, 0.0)).xyz);
       `
     );
 
     shader.fragmentShader = `
       varying vec3 vWorldPosCustom;
-      varying vec3 vWorldNormCustom;
-      uniform float uMuscularMode;
-
-      // Organic Continuous Muscular System Height Evaluator (True Sculptural Anatomy)
-      float evaluateAnatomicalEcorche(vec3 p) {
-        float x = p.x;
-        float y = p.y;
-        float z = p.z;
-        float ax = abs(x);
-        float H = 0.0;
-
-        // 1. CHEST: Pectoralis Major (Broad convex muscular plates with natural sternal cleft)
-        if (y >= 1.70 && y <= 2.50 && z > -0.04) {
-          float pecX = smoothstep(0.04, 0.10, ax) * smoothstep(0.50, 0.38, ax);
-          float pecY = smoothstep(1.72, 1.88, y) * smoothstep(2.48, 2.32, y);
-          float pecZ = smoothstep(-0.03, 0.04, z);
-          float pecPlate = pecX * pecY * pecZ;
-          float pecPeak = smoothstep(0.40, 0.05, length(vec2((ax - 0.24) * 1.3, (y - 2.12) * 1.7)));
-          H += (pecPlate * 0.25 + pecPeak * 0.30);
-        }
-
-        // 2. ABDOMEN: Rectus Abdominis (Continuous abdominal column sculpted into 6-pack)
-        if (y >= 0.65 && y < 1.82 && ax < 0.32 && z > -0.04) {
-          float abX = smoothstep(0.035, 0.08, ax) * smoothstep(0.24, 0.17, ax);
-          float abY = smoothstep(0.68, 0.82, y) * smoothstep(1.80, 1.66, y);
-          float abZ = smoothstep(-0.03, 0.04, z);
-          float abStrap = abX * abY * abZ;
-
-          float c1 = smoothstep(0.18, 0.02, length(vec2((ax - 0.125) * 1.3, (y - 1.62) * 1.6)));
-          float c2 = smoothstep(0.18, 0.02, length(vec2((ax - 0.125) * 1.3, (y - 1.36) * 1.6)));
-          float c3 = smoothstep(0.18, 0.02, length(vec2((ax - 0.120) * 1.3, (y - 1.10) * 1.6)));
-          float c4 = smoothstep(0.19, 0.02, length(vec2((ax - 0.115) * 1.3, (y - 0.84) * 1.5)));
-          float cushions = max(c1, max(c2, max(c3, c4)));
-
-          H += (abStrap * 0.20 + cushions * 0.28);
-        }
-
-        // 3. FLANKS: Serratus Anterior & External Obliques
-        if (ax >= 0.22 && ax <= 0.54 && y >= 0.75 && y <= 1.85) {
-          float dFlank = length(vec2((ax - 0.36) * 1.5, (y - 0.98) * 1.7));
-          float flank = smoothstep(0.36, 0.04, dFlank) * 0.28;
-
-          float serratus = smoothstep(0.26, 0.44, ax) * smoothstep(1.15, 1.75, y) * (sin((y * 3.4 + ax * 1.5) * 6.28) * 0.5 + 0.5) * 0.16;
-          H += (flank + serratus);
-        }
-
-        // 4. SHOULDERS: Deltoids (Anatomical 3-headed muscular cap)
-        if (y >= 1.95 && y <= 2.65 && ax >= 0.44) {
-          float deltX = smoothstep(0.44, 0.52, ax) * smoothstep(0.76, 0.65, ax);
-          float deltY = smoothstep(1.95, 2.10, y) * smoothstep(2.62, 2.45, y);
-          float dDelt = length(vec2((ax - 0.64) * 1.4, (y - 2.30) * 1.5));
-          H += (deltX * deltY * 0.22 + smoothstep(0.42, 0.04, dDelt) * 0.28);
-        }
-
-        // 5. ARMS: Biceps Brachii, Triceps, and Forearms
-        if (y >= 1.15 && y < 1.95 && ax >= 0.54) {
-          if (z > 0.0) {
-            float dBicep = length(vec2((ax - 0.74) * 2.0, (y - 1.56) * 1.3));
-            H += smoothstep(0.38, 0.04, dBicep) * smoothstep(0.0, 0.04, z) * 0.45;
-          } else {
-            float dTricep = length(vec2((ax - 0.74) * 1.8, (y - 1.56) * 1.3));
-            H += smoothstep(0.42, 0.04, dTricep) * smoothstep(0.0, -0.04, z) * 0.42;
-          }
-        }
-
-        if (y >= 0.35 && y < 1.20 && ax >= 0.60) {
-          float dForearm = length(vec2((ax - 0.75) * 2.2, (y - 0.85) * 1.2));
-          H += smoothstep(0.42, 0.05, dForearm) * 0.32;
-        }
-
-        // 6. THIGHS: Quadriceps (Vastus Medialis, Rectus Femoris, Vastus Lateralis)
-        if (y >= -2.28 && y < -0.30) {
-          if (z > -0.04) {
-            // Teardrop Vastus Medialis above inner knee
-            float dVM = length(vec2((ax - 0.23) * 2.2, (y + 1.95) * 2.6));
-            float vm = smoothstep(0.32, 0.04, dVM) * smoothstep(-0.02, 0.04, z) * 0.52;
-
-            // Rectus Femoris central longitudinal column
-            float dRF = length(vec2((ax - 0.32) * 2.4, (y + 1.25) * 1.2));
-            float rf = smoothstep(0.38, 0.04, dRF) * smoothstep(-0.02, 0.04, z) * 0.38;
-
-            // Vastus Lateralis sweeping outer thigh
-            float dVL = length(vec2((ax - 0.42) * 2.0, (y + 1.45) * 1.5));
-            float vl = smoothstep(0.40, 0.04, dVL) * smoothstep(-0.02, 0.04, z) * 0.42;
-
-            H += (vm + rf + vl);
-          } else {
-            float dHam = abs(ax - 0.30);
-            H += smoothstep(0.25, 0.04, dHam) * smoothstep(-0.02, -0.06, z) * smoothstep(-2.25, -2.0, y) * smoothstep(-0.3, -0.5, y) * 0.38;
-          }
-        }
-
-        // 7. CALVES: Twin Gastrocnemius Bellies & Anterior Tibialis
-        if (y >= -3.85 && y < -2.30) {
-          if (z < -0.02) {
-            float dCalfMed = length(vec2((ax - 0.22) * 2.4, (y + 2.72) * 1.8));
-            float dCalfLat = length(vec2((ax - 0.32) * 2.4, (y + 2.68) * 1.8));
-            H += max(smoothstep(0.34, 0.04, dCalfMed), smoothstep(0.34, 0.04, dCalfLat)) * smoothstep(-0.02, -0.06, z) * 0.48;
-          } else {
-            float dShin = abs(ax - 0.29);
-            H += smoothstep(0.18, 0.04, dShin) * smoothstep(-0.02, 0.04, z) * smoothstep(-3.7, -3.4, y) * smoothstep(-2.4, -2.6, y) * 0.32;
-          }
-        }
-
-        // 8. GLUTEUS MAXIMUS (Posterior Pelvis)
-        if (y >= -0.55 && y <= 0.30 && z < -0.04) {
-          float dGlute = length(vec2((ax - 0.32) * 1.4, (y + 0.15) * 1.8));
-          H += smoothstep(0.50, 0.04, dGlute) * smoothstep(-0.02, -0.06, z) * 0.50;
-        }
-
-        return H;
-      }
-
       ${shader.fragmentShader}
     `.replace(
-      '#include <normal_fragment_maps>',
-      `
-      #include <normal_fragment_maps>
-
-      if (uMuscularMode > 0.5) {
-        // True 3D Volumetric Sculpted Relief via Screen-Space Normal Derivatives
-        float H = evaluateAnatomicalEcorche(vWorldPosCustom);
-        float bumpScale = 7.0;
-        vec2 dHdxy = vec2(dFdx(H), dFdy(H)) * bumpScale;
-        vec3 vSigmaX = normalize(dFdx(-vViewPosition));
-        vec3 vSigmaY = normalize(dFdy(-vViewPosition));
-        vec3 R1 = cross(vSigmaY, normal);
-        vec3 R2 = cross(normal, vSigmaX);
-        float fDet = dot(vSigmaX, R1) * faceDirection;
-        vec3 vGrad = sign(fDet) * (dHdxy.x * R1 + dHdxy.y * R2);
-        normal = normalize(abs(fDet) * normal - vGrad);
-      }
-      `
-    ).replace(
       '#include <color_fragment>',
       `
       #include <color_fragment>
-
-      if (uMuscularMode > 0.5) {
-        vec3 p = vWorldPosCustom;
-        float H = evaluateAnatomicalEcorche(p);
-
-        // Deep Somatic Écorché Palette
-        vec3 colSulcus     = vec3(0.12, 0.015, 0.022); // #1E0406 Deep shadowy intermuscular sulcus
-        vec3 colMuscleBase = vec3(0.24, 0.032, 0.045); // #3D080B Rich arterial muscular ground
-        vec3 colMuscleHigh = vec3(0.44, 0.068, 0.092); // #701117 Contractile myofibrils on rounded crests
-
-        // Subtle organic cellular micro-grain (multi-frequency speckle, NO zebra stripes!)
-        float f1 = sin(p.x * 90.0 + p.y * 35.0 + p.z * 80.0);
-        float f2 = sin(p.x * 40.0 - p.y * 70.0 + p.z * 50.0);
-        float microGrain = (f1 * f2) * 0.05;
-
-        // Volumetric shading: peaks catch vibrant hemoglobin tones, valleys deepen into dark sulci
-        vec3 muscleCol = mix(colMuscleBase, colMuscleHigh, clamp(H * 1.8 + microGrain, 0.0, 1.0));
-        muscleCol = mix(colSulcus, muscleCol, clamp(H * 2.2, 0.0, 1.0));
-
-        diffuseColor.rgb = muscleCol;
-      }
+      // Authentic sarcomere striations along longitudinal contractile fibers
+      float fiberWave = sin(vWorldPosCustom.y * 130.0 + sin(vWorldPosCustom.x * 40.0) * 0.4);
+      float microGrain = sin(vWorldPosCustom.x * 80.0 + vWorldPosCustom.z * 80.0) * 0.04;
+      diffuseColor.rgb *= (0.93 + 0.11 * fiberWave + microGrain);
       `
     );
   };
@@ -363,10 +132,6 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   const lastScreenPosRef = useRef<{ x: number; y: number } | null>(null);
 
   // Synchronized refs to avoid stale closures in Three.js animate() loop
-  const muscularTextureRef = useRef<THREE.CanvasTexture | null>(null);
-  if (!muscularTextureRef.current) {
-    muscularTextureRef.current = createMuscularSystemTexture();
-  }
 
   const selectedStructureIdRef = useRef<string | null>(selectedStructureId);
   useEffect(() => {
@@ -789,8 +554,13 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       // Determine system visibility
       const meshSystem = (meshes[0]?.userData as MeshUserData)?.system;
       const systemId = (meshSystem && meshSystem !== 'integumentary' ? meshSystem : (struct?.system || 'skeletal')) as AnatomicalSystemId;
-      const isSystemVisible = systemVisibility[systemId] ?? true;
+      let isSystemVisible = systemVisibility[systemId] ?? true;
       const systemAlpha = systemOpacity[systemId] ?? 1.0;
+
+      // When on Layer 1 (Surface), somatic muscles remain hidden beneath the anatomical skin envelope
+      if (activeLayerId === 'surface' && systemId === 'muscular') {
+        isSystemVisible = false;
+      }
 
       let shouldBeVisible = isSystemVisible;
       if (isIsolated) {
@@ -804,19 +574,10 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         circulationGroupRef.current.visible = isVesselsActive && !isConcealedBySkin;
       }
 
-      // Skin represents outer anatomical boundary (realistic medical anatomical skin) or somatic musculature
+      // Skin represents outer anatomical boundary (realistic medical anatomical skin)
       if (id === 'skin') {
-        const isMuscularMode = activeLayerId === 'muscles' || (!skinVisible && systemVisibility.muscular);
-        const effectiveOpacity = isMuscularMode ? (systemOpacity.muscular ?? 1.0) : skinOpacity;
-        const isVisible = (isMuscularMode ? systemVisibility.muscular : skinVisible) && effectiveOpacity > 0.01 && !isIsolated;
-
-        const isSelectedMuscle = selectedStructureId === 'muscles_core' || 
-          selectedStructureId === 'deltoids' || 
-          selectedStructureId === 'pectoralis_major' || 
-          selectedStructureId === 'rectus_abdominis' || 
-          selectedStructureId === 'biceps_brachii' || 
-          selectedStructureId === 'quadriceps_femoris' || 
-          selectedStructureId === 'gluteus_maximus';
+        const isMuscularLayer = activeLayerId === 'muscles';
+        const isVisible = skinVisible && !isMuscularLayer && skinOpacity > 0.01 && !isIsolated;
 
         meshes.forEach((mesh) => {
           mesh.visible = isVisible;
@@ -825,40 +586,17 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
           const mat = mesh.material as THREE.MeshPhysicalMaterial;
           if (!mat) return;
 
-          if (isSelected || (isMuscularMode && isSelectedMuscle)) {
+          if (isSelected) {
             mat.emissive.set(new THREE.Color(0x10B981));
             mat.emissiveIntensity = 0.55;
-            mat.opacity = Math.max(0.75, effectiveOpacity);
+            mat.opacity = Math.max(0.75, skinOpacity);
             mat.transparent = true;
-            mat.depthWrite = effectiveOpacity >= 0.95;
-            mat.needsUpdate = true;
-          } else if (isMuscularMode) {
-            // Authentic medical muscular system ecorché rendering via direct anatomical GLSL pipeline
-            if (mat.userData.uMuscularMode) {
-              mat.userData.uMuscularMode.value = 1.0;
-            }
-            mat.map = null;
-            mat.color.setHex(0x3D080B); // Deep rich oxblood ground
-            mat.roughness = 0.58; // Organic matte-satin anatomical specimen finish (not shiny plastic!)
-            mat.metalness = 0.0;
-            mat.clearcoat = 0.12; // Subtle biological hydration
-            mat.clearcoatRoughness = 0.50;
-            mat.sheen = 0.0; // Zero sheen to prevent pink wash-out
-            mat.sheenColor = new THREE.Color(0x000000);
-            mat.sheenRoughness = 0.50;
-            mat.emissive.setHex(0x000000);
-            mat.emissiveIntensity = 0.0;
-            mat.transparent = effectiveOpacity < 0.98;
-            mat.opacity = effectiveOpacity;
-            mat.depthWrite = effectiveOpacity >= 0.98;
+            mat.depthWrite = skinOpacity >= 0.95;
             mat.needsUpdate = true;
           } else {
             // Realistic medical PBR human skin rendering
-            if (mat.userData.uMuscularMode) {
-              mat.userData.uMuscularMode.value = 0.0;
-            }
             mat.map = null;
-            const skinColor = skinMode === 'natural' ? 0xE8C4B8 : (skinMode === 'xray' ? 0x38BDF8 : 0xDCE1E6);
+            const skinColor = skinMode === 'natural' ? 0xDE9F7E : (skinMode === 'xray' ? 0x38BDF8 : 0xDCE1E6);
             mat.color.setHex(skinColor);
             mat.roughness = 0.52;
             mat.metalness = 0.0;
@@ -869,13 +607,13 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
             mat.sheenRoughness = 0.45;
             mat.emissive.setHex(0x0A0F1D);
             mat.emissiveIntensity = 0.02;
-            if (effectiveOpacity >= 0.95) {
+            if (skinOpacity >= 0.95) {
               mat.transparent = false;
               mat.opacity = 1.0;
               mat.depthWrite = true;
             } else {
               mat.transparent = true;
-              mat.opacity = effectiveOpacity;
+              mat.opacity = skinOpacity;
               mat.depthWrite = false;
             }
             mat.needsUpdate = true;
@@ -1092,12 +830,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         if (hit.object.visible && hit.object.userData?.id) {
           const ud = hit.object.userData as MeshUserData;
           if (ud.id === 'skin') {
-            const isMuscularMode = activeLayerId === 'muscles' || (!skinVisible && systemVisibility.muscular);
-            if (isMuscularMode) {
-              const muscleId = resolveMuscleStructureAtPoint(hit.point);
-              onSelectStructure(muscleId);
-              return;
-            } else if (skinVisible && skinOpacity >= 0.85) {
+            if (skinVisible && skinOpacity >= 0.85 && activeLayerId !== 'muscles') {
               onSelectStructure('skin');
               return;
             }
@@ -1132,19 +865,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         if (hit.object.visible && hit.object.userData?.id) {
           const ud = hit.object.userData as MeshUserData;
           if (ud.id === 'skin') {
-            const isMuscularMode = activeLayerId === 'muscles' || (!skinVisible && systemVisibility.muscular);
-            if (isMuscularMode) {
-              const muscleId = resolveMuscleStructureAtPoint(hit.point);
-              const mStruct = ANATOMY_STRUCTURES[muscleId];
-              setHoveredStructure({
-                id: muscleId,
-                name: mStruct?.name || 'Muscular System',
-                system: 'muscular',
-                x: clientX,
-                y: clientY
-              });
-              return;
-            } else if (skinVisible && skinOpacity >= 0.85) {
+            if (skinVisible && skinOpacity >= 0.85 && activeLayerId !== 'muscles') {
               setHoveredStructure({
                 id: 'skin',
                 name: 'Human Body Surface (Skin & Involucre)',
@@ -1542,6 +1263,18 @@ function loadAllAnatomicalModels(
       opacity: 1.0
     },
     {
+      file: 'muscles.glb',
+      id: 'muscles',
+      name: 'Human Muscular System (Écorché)',
+      system: 'muscular',
+      scale: 0.045, // Exact match with skeleton.glb coordinate frame (Z-Anatomy)
+      position: [0, -3.80, 0],
+      materialColor: 0x8C1B24, // Authentic anatomical striated crimson
+      roughness: 0.46,
+      clearcoat: 0.28,
+      metalness: 0.02
+    },
+    {
       file: 'skeleton.glb',
       id: 'skeleton',
       name: 'Human Skeletal System',
@@ -1707,7 +1440,35 @@ function loadAllAnatomicalModels(
             // 2. High-precision anatomical structure mappings
             let color = spec.materialColor;
 
-            if (spec.id === 'skeleton') {
+            if (spec.id === 'muscles') {
+              // Map anatomical muscle groups to selectable clinical structures
+              if (name.includes('deltoid')) {
+                registerMesh('deltoids', mesh, 'muscular', mesh.name || 'Deltoid Muscle');
+              } else if (name.includes('pectoralis')) {
+                registerMesh('pectoralis_major', mesh, 'muscular', mesh.name || 'Pectoralis Major');
+              } else if (name.includes('rectus abdominis') || name.includes('oblique') || name.includes('transversus') || name.includes('quadratus lumborum')) {
+                registerMesh('rectus_abdominis', mesh, 'muscular', mesh.name || 'Abdominal Core Musculature');
+              } else if (name.includes('biceps brachii') || name.includes('brachialis') || name.includes('coracobrachialis')) {
+                registerMesh('biceps_brachii', mesh, 'muscular', mesh.name || 'Biceps Brachii');
+              } else if (name.includes('triceps')) {
+                registerMesh('triceps_brachii', mesh, 'muscular', mesh.name || 'Triceps Brachii');
+              } else if (name.includes('rectus femoris') || name.includes('vastus')) {
+                registerMesh('quadriceps_femoris', mesh, 'muscular', mesh.name || 'Quadriceps Femoris');
+              } else if (name.includes('biceps femoris') || name.includes('semimembranosus') || name.includes('semitendinosus')) {
+                registerMesh('hamstrings', mesh, 'muscular', mesh.name || 'Hamstring Complex');
+              } else if (name.includes('gluteus')) {
+                registerMesh('gluteus_maximus', mesh, 'muscular', mesh.name || 'Gluteus Maximus');
+              } else if (name.includes('gastrocnemius') || name.includes('soleus') || name.includes('plantaris')) {
+                registerMesh('gastrocnemius', mesh, 'muscular', mesh.name || 'Calf Muscle (Gastrocnemius)');
+              } else if (name.includes('trapezius')) {
+                registerMesh('trapezius', mesh, 'muscular', mesh.name || 'Trapezius Muscle');
+              } else if (name.includes('latissimus')) {
+                registerMesh('latissimus_dorsi', mesh, 'muscular', mesh.name || 'Latissimus Dorsi');
+              } else {
+                registerMesh('muscles_core', mesh, 'muscular', mesh.name || 'Skeletal Muscle');
+              }
+              registerMesh('muscles', mesh, 'muscular', mesh.name || 'Muscular System');
+            } else if (spec.id === 'skeleton') {
               // Map individual bones to their clinical regions
               if (
                 name.includes('cranium') ||
@@ -1821,21 +1582,22 @@ function loadAllAnatomicalModels(
 
             const isTranslucent = spec.id === 'skin' || (spec.opacity !== undefined && spec.opacity < 1.0);
             const pbrMaterial = new THREE.MeshPhysicalMaterial({
-              color,
-              roughness: spec.roughness ?? 0.35,
+              color: spec.id === 'muscles' ? 0x8C1B24 : color,
+              roughness: spec.id === 'muscles' ? 0.46 : (spec.roughness ?? 0.35),
               metalness: spec.metalness ?? 0.02,
-              clearcoat: spec.clearcoat ?? 0.35,
-              clearcoatRoughness: 0.22,
-              sheen: spec.id === 'heart' || spec.id === 'lungs' || spec.id === 'liver' || spec.id === 'skin' ? 0.35 : 0.0,
+              clearcoat: spec.id === 'muscles' ? 0.28 : (spec.clearcoat ?? 0.35),
+              clearcoatRoughness: 0.35,
+              sheen: spec.id === 'heart' || spec.id === 'lungs' || spec.id === 'liver' || spec.id === 'skin' ? 0.35 : (spec.id === 'muscles' ? 0.25 : 0.0),
               sheenRoughness: 0.3,
-              sheenColor: spec.id === 'heart' ? new THREE.Color(0xF87171) : new THREE.Color(0xFCA5A5),
+              sheenColor: spec.id === 'muscles' ? new THREE.Color(0x9E2A2B) : (spec.id === 'heart' ? new THREE.Color(0xF87171) : new THREE.Color(0xFCA5A5)),
+              side: spec.id === 'muscles' ? THREE.DoubleSide : THREE.FrontSide,
               transparent: isTranslucent,
               opacity: spec.opacity ?? 1.0,
               depthWrite: spec.id === 'skin' ? true : !isTranslucent
             });
 
-            if (spec.id === 'skin') {
-              setupMuscularAnatomyShader(pbrMaterial);
+            if (spec.id === 'muscles') {
+              setupMuscularFiberShader(pbrMaterial);
             }
 
             mesh.material = pbrMaterial;

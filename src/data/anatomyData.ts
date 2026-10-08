@@ -150,10 +150,10 @@ export const ANATOMICAL_LAYER_STACK: AnatomicalLayerStackItem[] = [
     name: '2. Muscular System',
     shortName: 'Muscles',
     latinName: 'Systema musculare',
-    description: 'Somatic muscle groups and superficial musculature wrapping the skeletal framework.',
+    description: 'Authentic 3D anatomical écorché model featuring individually sculpted muscle bellies and tendons.',
     icon: 'Activity',
-    skinOpacity: 1.0,
-    skinVisible: true,
+    skinOpacity: 0.0,
+    skinVisible: false,
     layerSeparation: 0.0,
     showInternal: false,
     highlightedSystems: ['muscular'],
@@ -1579,9 +1579,106 @@ export const ANATOMY_STRUCTURES: Record<string, AnatomicalStructure> = {
     clinicalRelevance: 'Achilles tendon rupture, calf muscle strains ("tennis leg"), Achilles tendinopathy, and deep vein thrombosis (DVT) in soleal veins.'
   },
 
-  // ==========================================================================
-  // ENDOCRINE
-  // ==========================================================================
+  trapezius: {
+    id: 'trapezius',
+    name: 'Trapezius Muscle (Cervicothoracic)',
+    latinName: 'Musculus trapezius',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, 2.35, -0.12],
+    boundsSize: [1.8, 1.2, 0.4],
+    cameraFocus: { target: [0, 2.35, -0.12], distance: 2.0 },
+    category: 'Posterior Cervicothoracic Girdle',
+    primaryFunction: 'Stabilizes, elevates, retracts, and rotates the scapula; superior fibers elevate the shoulder girdle and extend the neck.',
+    anatomicalLocation: 'Spans the posterior neck and upper thorax from external occipital protuberance to T12 spine, inserting into clavicle, acromion, and scapular spine.',
+    educationalSummary: 'A broad, flat superficial triangular muscle that pairs with the contralateral trapezius to form a diamond kite shape. Divided into descending (superior), transverse (middle), and ascending (inferior) functional parts. Innervated by the spinal accessory nerve (CN XI).',
+    keyFacts: [
+      'Innervated by the accessory cranial nerve (CN XI) alongside sensory proprioceptive branches from C3/C4.',
+      'Middle horizontal fibers strongly retract (adduct) the scapulae toward the thoracic spine.',
+      'Inferior ascending fibers depress the scapulae and lower the shoulder.'
+    ],
+    subStructures: ['Descending Part (Superior)', 'Transverse Part (Middle)', 'Ascending Part (Inferior)', 'Occipital Origin Aponeurosis'],
+    relatedSystems: ['skeletal', 'nervous'],
+    clinicalRelevance: 'Spinal accessory nerve palsy (shoulder shrug droop), myofascial trapezius trigger points, tension headaches, and whiplash injury.'
+  },
+
+  latissimus_dorsi: {
+    id: 'latissimus_dorsi',
+    name: 'Latissimus Dorsi (Broad Back Muscle)',
+    latinName: 'Musculus latissimus dorsi',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, 1.45, -0.18],
+    boundsSize: [1.9, 1.4, 0.5],
+    cameraFocus: { target: [0, 1.45, -0.18], distance: 2.2 },
+    category: 'Posterior Thoracic Locomotor Muscle',
+    primaryFunction: 'Extends, adducts, and medially rotates the humerus at the shoulder joint; pulls the trunk upward during pull-ups and rock climbing.',
+    anatomicalLocation: 'Covers the lower half of the posterior trunk, originating from spinous processes T7–L5, thoracolumbar fascia, and iliac crest, inserting into the bicipital groove of the humerus.',
+    educationalSummary: 'The widest and most expansive muscle in the human body. Frequently called the "swimmer\'s muscle," it generates massive adduction and extension power to pull the humerus down and back against resistance. Innervated by the thoracodorsal nerve (C6–C8).',
+    keyFacts: [
+      'Originates broadly from the tough aponeurotic thoracolumbar fascia before spiraling 180° around teres major.',
+      'Acts in synergy with pectoralis major to adduct the arms forcefully toward the midline.',
+      'Crucial respiratory accessory muscle aiding in forced coughing ("cough muscle").'
+    ],
+    subStructures: ['Vertebral Part', 'Iliac Part', 'Thoracolumbar Fascia', 'Humeral Insertion Tendon'],
+    relatedSystems: ['skeletal', 'respiratory'],
+    clinicalRelevance: 'Thoracodorsal nerve compression, latissimus dorsi muscle tears in pitchers and rock climbers, and pedicled flap reconstructive breast surgery.'
+  },
+
+  triceps_brachii: {
+    id: 'triceps_brachii',
+    name: 'Triceps Brachii (Arm Extensor)',
+    latinName: 'Musculus triceps brachii',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, 1.62, -0.14],
+    boundsSize: [2.6, 0.7, 0.5],
+    cameraFocus: { target: [1.22, 1.62, -0.14], distance: 1.8 },
+    category: 'Posterior Brachial Compartment',
+    primaryFunction: 'Principal extensor of the forearm at the elbow joint; long head stabilizes the shoulder and adducts the humerus.',
+    anatomicalLocation: 'Posterior compartment of the arm, consisting of lateral, long, and medial heads converging into the olecranon process of the ulna.',
+    educationalSummary: 'The antagonist to biceps brachii, the triceps brachii comprises three heads: long head (infraglenoid tubercle of scapula), lateral head (posterior humerus above radial groove), and medial head (deep humerus below radial groove). Innervated by the radial nerve (C6–C8).',
+    keyFacts: [
+      'The medial head is active in all forms of elbow extension regardless of resistance or speed.',
+      'The long head crosses both shoulder and elbow joints (biarticular).',
+      'The olecranon bursa cushions the distal triceps tendon against external impact.'
+    ],
+    subStructures: ['Long Head', 'Lateral Head', 'Medial Head', 'Common Olecranon Tendon'],
+    relatedSystems: ['skeletal', 'nervous'],
+    clinicalRelevance: 'Radial nerve palsy ("Saturday night palsy" / crutch palsy), triceps tendinitis, and olecranon bursitis ("student\'s elbow").'
+  },
+
+  hamstrings: {
+    id: 'hamstrings',
+    name: 'Hamstring Complex (Posterior Thigh)',
+    latinName: 'Musculi ischiocrurales',
+    system: 'muscular',
+    complexity: 'detailed',
+    color: '#B91C1C',
+    accentColor: '#DC2626',
+    center: [0, -1.25, -0.22],
+    boundsSize: [1.3, 1.4, 0.6],
+    cameraFocus: { target: [0.42, -1.25, -0.22], distance: 2.2 },
+    category: 'Posterior Femoral Flexor Group',
+    primaryFunction: 'Flexes the knee joint and extends the hip; decelerates tibial forward swing during high-speed sprinting.',
+    anatomicalLocation: 'Posterior compartment of the thigh, originating on the ischial tuberosity and inserting onto the fibula and tibia.',
+    educationalSummary: 'Composed of three prominent muscles: Biceps femoris (lateral, with long and short heads), Semitendinosus (superficial medial with long cord-like tendon), and Semimembranosus (deep medial flat membranous belly). All except the short head of biceps femoris cross both the hip and knee joints. Innervated by the tibial division of the sciatic nerve (L5–S2).',
+    keyFacts: [
+      'High incidence of acute avulsion and strain injuries during high-speed deceleration or kicking.',
+      'Semitendinosus and semimembranosus form the medial superior boundary of the popliteal fossa.',
+      'Semitendinosus tendon is frequently harvested for ACL reconstructive autografts.'
+    ],
+    subStructures: ['Biceps Femoris (Long & Short Heads)', 'Semitendinosus', 'Semimembranosus', 'Ischial Tuberosity Origin'],
+    relatedSystems: ['skeletal', 'nervous'],
+    clinicalRelevance: 'Hamstring muscle tears, proximal hamstring tendinopathy ("weaver\'s bottom"), and sciatic nerve entrapment.'
+  },
+
   endocrine_glands: {
     id: 'endocrine_glands',
     name: 'Endocrine Glands (Pituitary, Thyroid, Adrenals)',

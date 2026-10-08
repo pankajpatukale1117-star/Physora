@@ -68,7 +68,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   // System Visibilities & Opacities (Default to Layer 1: Surface & Form)
   const [systemVisibility, setSystemVisibility] = useState<Record<AnatomicalSystemId, boolean>>({
     skeletal: false,
-    muscular: true,
+    muscular: false,
     cardiovascular: false,
     respiratory: false,
     digestive: false,
