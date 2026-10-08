@@ -158,7 +158,7 @@ export const ANATOMICAL_LAYER_STACK: AnatomicalLayerStackItem[] = [
     showInternal: false,
     highlightedSystems: ['muscular'],
     systemVisibility: {
-      skeletal: true,
+      skeletal: false,
       muscular: true,
       cardiovascular: false,
       respiratory: false,

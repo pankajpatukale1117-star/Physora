@@ -143,6 +143,123 @@ function resolveMuscleStructureAtPoint(point: THREE.Vector3): string {
   return 'muscles_core';
 }
 
+// Anatomical shader hook injecting authentic muscle & tendon aponeurosis rendering directly into WebGL pipeline
+function setupMuscularAnatomyShader(material: THREE.MeshPhysicalMaterial) {
+  material.userData.uMuscularMode = { value: 0.0 };
+
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uMuscularMode = material.userData.uMuscularMode;
+
+    shader.vertexShader = `
+      varying vec3 vWorldPosCustom;
+      varying vec3 vWorldNormCustom;
+      ${shader.vertexShader}
+    `.replace(
+      '#include <worldpos_vertex>',
+      `
+      #include <worldpos_vertex>
+      vWorldPosCustom = (modelMatrix * vec4(transformed, 1.0)).xyz;
+      vWorldNormCustom = normalize((modelMatrix * vec4(objectNormal, 0.0)).xyz);
+      `
+    );
+
+    shader.fragmentShader = `
+      varying vec3 vWorldPosCustom;
+      varying vec3 vWorldNormCustom;
+      uniform float uMuscularMode;
+      ${shader.fragmentShader}
+    `.replace(
+      '#include <color_fragment>',
+      `
+      #include <color_fragment>
+
+      if (uMuscularMode > 0.5) {
+        vec3 p = vWorldPosCustom;
+        float x = p.x;
+        float y = p.y;
+        float z = p.z;
+        float ax = abs(x);
+
+        // Authentic anatomical ecorché palette (deep crimson muscle, dark natural sulci, soft tendon)
+        vec3 colDeepFlesh    = vec3(0.18, 0.02, 0.03); // Deep shadow crevice
+        vec3 colRichMuscle   = vec3(0.34, 0.05, 0.08); // Rich arterial muscle tissue
+        vec3 colMuscleLight  = vec3(0.48, 0.09, 0.12); // Superficial fascicle highlight
+        vec3 colTendonFascia = vec3(0.66, 0.60, 0.52); // Subtle warm fibrous tendon
+
+        // Fast, smooth procedural 3D muscle grain (organic micro-fascicles)
+        vec3 grainPos = p * vec3(120.0, 45.0, 120.0);
+        float grain1 = sin(grainPos.y + sin(grainPos.x * 0.7 + grainPos.z * 0.5) * 2.5);
+        float grain2 = sin(grainPos.x * 0.8 + grainPos.y * 1.5 + grainPos.z * 0.8);
+        float microFibers = (grain1 * 0.5 + grain2 * 0.5) * 0.5 + 0.5;
+
+        // Base muscle tissue with organic fiber variations
+        vec3 muscleColor = mix(colRichMuscle, colMuscleLight, microFibers * 0.35);
+
+        // Anatomical Furrows & Tendons (Soft natural shading, no harsh white lines)
+        float tendonStrength = 0.0;
+        float creviceDepth = 0.0;
+
+        // 1. Sternal furrow (Natural groove between pectoralis major bellies)
+        if (y >= 1.80 && y <= 2.45 && z > 0.0) {
+          if (ax < 0.030) {
+            creviceDepth = max(creviceDepth, smoothstep(0.030, 0.005, ax) * 0.40);
+          }
+        }
+
+        // 2. Abdominal wall: Linea Alba & Tendinous Inscriptions (Rectus Abdominis)
+        if (y >= 0.75 && y < 1.80 && z > 0.0 && ax < 0.35) {
+          // Linea Alba: subtle central vertical furrow
+          if (ax < 0.024) {
+            creviceDepth = max(creviceDepth, smoothstep(0.024, 0.004, ax) * 0.45);
+          }
+
+          // Transverse tendinous intersections (natural 6-pack furrow seams)
+          if (ax > 0.015 && ax < 0.22) {
+            float dT1 = abs(y - 1.45);
+            float dT2 = abs(y - 1.20);
+            float dT3 = abs(y - 0.95);
+            float minT = min(dT1, min(dT2, dT3));
+            if (minT < 0.024) {
+              creviceDepth = max(creviceDepth, smoothstep(0.024, 0.004, minT) * 0.45);
+            }
+          }
+
+          // Linea Semilunaris: lateral border groove
+          float dLat = abs(ax - 0.23);
+          if (dLat < 0.025) {
+            creviceDepth = max(creviceDepth, smoothstep(0.025, 0.005, dLat) * 0.35);
+          }
+        }
+
+        // 3. Patellar Tendon (Vertical ligament capping the knee)
+        if (y >= -2.35 && y <= -2.10 && z > 0.0) {
+          float dKnee = abs(ax - 0.30);
+          if (dKnee < 0.028) {
+            tendonStrength = max(tendonStrength, smoothstep(0.028, 0.004, dKnee) * 0.35);
+          }
+        }
+
+        // 4. Achilles Tendon (Vertical fibrous band running down to the heel)
+        if (y >= -3.85 && y <= -3.10 && z < -0.02) {
+          float dAch = abs(ax - 0.25);
+          if (dAch < 0.022) {
+            tendonStrength = max(tendonStrength, smoothstep(0.022, 0.003, dAch) * 0.60);
+          }
+        }
+
+        // Deepen intermuscular sulci naturally (subtle shadowing, no harsh black lines)
+        muscleColor = mix(muscleColor, colDeepFlesh, creviceDepth);
+
+        // Blend pearlescent fibrous fascia & tendons smoothly
+        vec3 finalColor = mix(muscleColor, colTendonFascia, tendonStrength);
+
+        diffuseColor.rgb = finalColor;
+      }
+      `
+    );
+  };
+}
+
 export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   selectedStructureId,
   onSelectStructure,
@@ -648,24 +765,30 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
             mat.depthWrite = effectiveOpacity >= 0.95;
             mat.needsUpdate = true;
           } else if (isMuscularMode) {
-            // Authentic medical muscular system ecorché rendering
-            mat.map = muscularTextureRef.current;
-            mat.color.setHex(0x9E242B); // Rich anatomical muscle crimson
-            mat.roughness = 0.40;
-            mat.metalness = 0.02;
-            mat.clearcoat = 0.35;
-            mat.clearcoatRoughness = 0.28;
-            mat.sheen = 0.75;
-            mat.sheenColor = new THREE.Color(0xFB7185); // Vibrant myofibril sheen
-            mat.sheenRoughness = 0.32;
-            mat.emissive.setHex(0x450A0A);
-            mat.emissiveIntensity = 0.12;
+            // Authentic medical muscular system ecorché rendering via direct anatomical GLSL pipeline
+            if (mat.userData.uMuscularMode) {
+              mat.userData.uMuscularMode.value = 1.0;
+            }
+            mat.map = null;
+            mat.color.setHex(0x66141F); // Organic deep muscle ground
+            mat.roughness = 0.58;
+            mat.metalness = 0.0;
+            mat.clearcoat = 0.04;
+            mat.clearcoatRoughness = 0.50;
+            mat.sheen = 0.35;
+            mat.sheenColor = new THREE.Color(0x9E2A2B); // Organic biological muscle sheen
+            mat.sheenRoughness = 0.45;
+            mat.emissive.setHex(0x100204);
+            mat.emissiveIntensity = 0.03;
             mat.transparent = effectiveOpacity < 0.98;
             mat.opacity = effectiveOpacity;
             mat.depthWrite = effectiveOpacity >= 0.98;
             mat.needsUpdate = true;
           } else {
             // Realistic medical PBR human skin rendering
+            if (mat.userData.uMuscularMode) {
+              mat.userData.uMuscularMode.value = 0.0;
+            }
             mat.map = null;
             const skinColor = skinMode === 'natural' ? 0xE8C4B8 : (skinMode === 'xray' ? 0x38BDF8 : 0xDCE1E6);
             mat.color.setHex(skinColor);
@@ -1642,6 +1765,10 @@ function loadAllAnatomicalModels(
               opacity: spec.opacity ?? 1.0,
               depthWrite: spec.id === 'skin' ? true : !isTranslucent
             });
+
+            if (spec.id === 'skin') {
+              setupMuscularAnatomyShader(pbrMaterial);
+            }
 
             mesh.material = pbrMaterial;
         });
