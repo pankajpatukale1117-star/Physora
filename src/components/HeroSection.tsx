@@ -80,8 +80,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               margin: '0 auto 28px'
             }}
           >
-            Engage in research-based science with 54 interactive simulations and a full-scale 3D Human Anatomy Explorer.
-            Manipulate physical variables, explore 8 anatomical systems, and connect directly to first principles.
+            Engage in research-based science with 76 interactive models across 34 curriculum topics and a full-scale 3D Human Anatomy Explorer.
+            Manipulate physical variables, explore 8 anatomical systems with 36+ structures, and connect directly to first principles.
           </p>
 
           {/* Primary Action Buttons */}
@@ -173,7 +173,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <CheckCircle2 size={15} color="var(--accent-success)" />
-              <span style={{ fontWeight: 600 }}>42 Simulations</span>
+              <span style={{ fontWeight: 600 }}>76 Interactive Models</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <CheckCircle2 size={15} color="var(--accent-success)" />
+              <span style={{ fontWeight: 600 }}>34 Curriculum Topics</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <CheckCircle2 size={15} color="var(--accent-success)" />
@@ -181,11 +185,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <CheckCircle2 size={15} color="var(--accent-success)" />
-              <span style={{ fontWeight: 600 }}>KaTeX Rigorous Formulations</span>
+              <span style={{ fontWeight: 600 }}>36+ 3D Organs</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <CheckCircle2 size={15} color="var(--accent-success)" />
-              <span style={{ fontWeight: 600 }}>Zero Ads / Open Source</span>
+              <span style={{ fontWeight: 600 }}>KaTeX Rigorous Formulations</span>
             </div>
           </div>
         </div>

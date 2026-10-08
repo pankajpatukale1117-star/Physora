@@ -57,7 +57,7 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
                 color: '#FFFFFF'
               }}
             >
-              Start Exploring the Physics &amp; Mathematics Lab
+              Start Exploring the STEM Virtual Laboratory
             </h2>
 
             <p
@@ -69,7 +69,7 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
               }}
             >
               Step into the interactive simulator. Adjust variables, run dynamic experiments, and
-              build genuine intuition across 42 curriculum simulations.
+              build genuine intuition across 76 precision simulations and 3D human anatomy.
             </p>
 
             <div

@@ -73,11 +73,11 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
           <div style={{ display: 'inline-flex', marginBottom: 12 }}>
             <span className="badge badge-primary">
               <Atom size={13} />
-              <span>Simulations Catalog • 54 Interactive Models</span>
+              <span>Simulations Catalog • 76 Interactive Models • 34 Topics</span>
             </span>
           </div>
           <h2 className="text-h1" style={{ marginBottom: 10 }}>
-            Interactive Simulations for <span style={{ color: 'var(--brand-primary)' }}>Physics, Math &amp; Biology</span>
+            Interactive Simulations for <span style={{ color: 'var(--brand-primary)' }}>Physics, Math, Chemistry &amp; Biology</span>
           </h2>
           <p
             className="text-body"

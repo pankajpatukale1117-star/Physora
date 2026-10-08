@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, X, Atom, FlaskConical, ArrowRight, BookOpen, Dna } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { EXPERIMENTS_DATA } from '../data/experimentsData';
+import { FORMULAS_DATA } from './FormulaBankModal';
+import { ANATOMY_STRUCTURES } from '../data/anatomyData';
 
 interface SearchResultItem {
   id: string;
-  type: 'simulation' | 'experiment' | 'formula';
+  type: 'simulation' | 'experiment' | 'formula' | 'anatomy';
   title: string;
   subtitle: string;
   topicId: string;
@@ -94,6 +96,54 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           'experiment',
           'inquiry',
           'lab'
+        ]
+      });
+    });
+
+    // 3. Formula Bank Formulas
+    FORMULAS_DATA.forEach((formula) => {
+      items.push({
+        id: formula.id,
+        type: 'formula',
+        title: formula.name,
+        subtitle: `${formula.plainEnglish} • ${formula.domain}`,
+        topicId: formula.targetTopicId,
+        category: formula.domain,
+        subject: formula.category as 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology',
+        keywords: [
+          formula.name.toLowerCase(),
+          formula.domain.toLowerCase(),
+          formula.plainEnglish.toLowerCase(),
+          formula.latex.toLowerCase(),
+          ...formula.variables.map((v) => `${v.name} ${v.sym}`.toLowerCase()),
+          'formula',
+          'equation'
+        ]
+      });
+    });
+
+    // 4. 3D Human Anatomy Structures
+    Object.values(ANATOMY_STRUCTURES).forEach((organ) => {
+      items.push({
+        id: `anatomy_${organ.id}`,
+        type: 'anatomy',
+        title: organ.name,
+        subtitle: `${organ.latinName ? `${organ.latinName} • ` : ''}${organ.category} • ${organ.system.toUpperCase()} SYSTEM`,
+        topicId: organ.id,
+        category: organ.category,
+        subject: 'Biology',
+        keywords: [
+          organ.name.toLowerCase(),
+          organ.latinName.toLowerCase(),
+          organ.category.toLowerCase(),
+          organ.system.toLowerCase(),
+          organ.primaryFunction.toLowerCase(),
+          organ.clinicalRelevance.toLowerCase(),
+          ...organ.subStructures.map((s) => s.toLowerCase()),
+          'anatomy',
+          'organ',
+          '3d',
+          'biology'
         ]
       });
     });
@@ -329,6 +379,12 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   onClose();
                   if (item.type === 'experiment') {
                     onSelectExperiment(item.topicId);
+                  } else if (item.type === 'anatomy') {
+                    if (onOpenAnatomy) {
+                      onOpenAnatomy(item.topicId);
+                    }
+                  } else if (item.type === 'formula') {
+                    onSelectTopic(item.topicId);
                   } else {
                     onSelectTopic(item.topicId);
                   }
@@ -355,6 +411,10 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                       background:
                         item.type === 'experiment'
                           ? 'var(--accent-teal-soft)'
+                          : item.type === 'anatomy'
+                          ? 'rgba(16, 185, 129, 0.16)'
+                          : item.type === 'formula'
+                          ? 'var(--accent-amber-soft)'
                           : item.subject === 'Physics'
                           ? 'var(--brand-primary-soft)'
                           : item.subject === 'Biology'
@@ -368,6 +428,10 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   >
                     {item.type === 'experiment' ? (
                       <FlaskConical size={18} color="var(--accent-teal)" />
+                    ) : item.type === 'anatomy' ? (
+                      <Dna size={18} color="#10B981" />
+                    ) : item.type === 'formula' ? (
+                      <BookOpen size={18} color="#D97706" />
                     ) : item.subject === 'Biology' ? (
                       <Dna size={18} color="#10B981" />
                     ) : (
@@ -399,6 +463,10 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                         className={`badge ${
                           item.type === 'experiment'
                             ? 'badge-primary'
+                            : item.type === 'anatomy'
+                            ? 'badge-biology'
+                            : item.type === 'formula'
+                            ? 'badge-math'
                             : item.subject === 'Physics'
                             ? 'badge-physics'
                             : item.subject === 'Biology'
@@ -407,7 +475,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                         }`}
                         style={{ fontSize: '0.68rem', padding: '2px 6px' }}
                       >
-                        {item.type === 'experiment' ? 'Experiment' : item.subject}
+                        {item.type === 'experiment'
+                          ? 'Experiment'
+                          : item.type === 'anatomy'
+                          ? '3D Anatomy'
+                          : item.type === 'formula'
+                          ? 'Formula'
+                          : item.subject}
                       </span>
                     </div>
                     <span
@@ -456,7 +530,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             color: 'var(--text-tertiary)'
           }}
         >
-          <span>54 Interactive Simulations • 8 Discovery Labs</span>
+          <span>76 Interactive Models • 34 Topics • 34 Formulas • 36+ Organs</span>
           <span className="font-mono">Physora Laboratory</span>
         </div>
       </div>

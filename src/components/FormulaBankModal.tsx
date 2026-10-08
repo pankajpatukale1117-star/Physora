@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Search, BookOpen, ArrowRight, Copy, Check, Sparkles } from 'lucide-react';
 import { MathView } from './MathView';
 
-interface FormulaItem {
+export interface FormulaItem {
   id: string;
   name: string;
   category: 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology';
@@ -14,7 +14,7 @@ interface FormulaItem {
   targetTopicId: string;
 }
 
-const FORMULAS_DATA: FormulaItem[] = [
+export const FORMULAS_DATA: FormulaItem[] = [
   {
     id: 'f-kinematics-1',
     name: 'First Equation of Motion',
@@ -452,6 +452,160 @@ const FORMULAS_DATA: FormulaItem[] = [
       { sym: 'n', name: 'Number of Rectangles', unit: 'integer' }
     ],
     targetTopicId: 'calculus_riemann_lab'
+  },
+  {
+    id: 'f-kepler-3',
+    name: "Kepler's Third Law of Planetary Motion",
+    category: 'Physics',
+    domain: 'Gravitation & Astronomy',
+    latex: 'T^2 = \\frac{4\\pi^2}{GM} a^3',
+    plainEnglish: 'Orbital Period Squared = Constant × Semi-Major Axis Cubed',
+    description: 'Relates the orbital period of any planet or satellite directly to the cube of its mean orbital radius.',
+    variables: [
+      { sym: 'T', name: 'Orbital Period', unit: 's (or Earth years)' },
+      { sym: 'a', name: 'Semi-Major Axis', unit: 'm (or AU)' },
+      { sym: 'M', name: 'Central Body Mass (Sun)', unit: 'kg' },
+      { sym: 'G', name: 'Gravitational Constant', unit: 'N·m²/kg²' }
+    ],
+    targetTopicId: 'orbital_mechanics_3d'
+  },
+  {
+    id: 'f-visviva-1',
+    name: 'Vis-Viva Orbital Speed Equation',
+    category: 'Physics',
+    domain: 'Gravitation & Astronomy',
+    latex: 'v = \\sqrt{GM\\left(\\frac{2}{r} - \\frac{1}{a}\\right)}',
+    plainEnglish: 'Instant Speed = Sqrt(GM × (2/Distance - 1/SemiMajorAxis))',
+    description: 'Calculates instantaneous velocity anywhere along an eccentric Keplerian elliptical orbit.',
+    variables: [
+      { sym: 'v', name: 'Orbital Velocity', unit: 'm/s (or km/s)' },
+      { sym: 'r', name: 'Current Radial Distance', unit: 'm (or AU)' },
+      { sym: 'a', name: 'Semi-Major Axis', unit: 'm (or AU)' }
+    ],
+    targetTopicId: 'orbital_mechanics_3d'
+  },
+  {
+    id: 'f-bohr-energy',
+    name: 'Hydrogenic Quantized Energy Level',
+    category: 'Physics',
+    domain: 'Quantum & Modern Physics',
+    latex: 'E_n = -\\frac{13.6\\text{ eV}}{n^2}',
+    plainEnglish: 'Energy of Level n = -13.6 eV divided by n²',
+    description: 'Determines the bound electronic energy levels of hydrogen and the frequencies of emitted spectral lines.',
+    variables: [
+      { sym: 'E_n', name: 'Energy Level', unit: 'eV' },
+      { sym: 'n', name: 'Principal Quantum Number', unit: '1, 2, 3, 4...' }
+    ],
+    targetTopicId: 'atomic_orbitals_3d'
+  },
+  {
+    id: 'f-malus-1',
+    name: "Malus's Law of Polarized Light Transmission",
+    category: 'Physics',
+    domain: 'Wave Optics',
+    latex: 'I = I_0 \\cos^2(\\theta_2 - \\theta_1)',
+    plainEnglish: 'Transmitted Intensity = Incident Intensity × cos²(Angle Difference)',
+    description: 'Calculates light intensity emerging from a linear polarizer and tilted analyzer optical filter.',
+    variables: [
+      { sym: 'I', name: 'Transmitted Intensity', unit: 'W/m²' },
+      { sym: 'I_0', name: 'Incident Polarized Intensity', unit: 'W/m²' },
+      { sym: '\\theta_2 - \\theta_1', name: 'Relative Angle Offset', unit: 'degrees / radians' }
+    ],
+    targetTopicId: 'em_wave_3d'
+  },
+  {
+    id: 'f-poynting-1',
+    name: 'Poynting Energy Flux Vector',
+    category: 'Physics',
+    domain: 'Electrodynamics & Optics',
+    latex: '\\vec{S} = \\frac{1}{\\mu_0} (\\vec{E} \\times \\vec{B})',
+    plainEnglish: 'Power Flow Vector = (1 / μ₀) × (Electric Field × Magnetic Field)',
+    description: 'Represents the directional energy flux density (watts per square meter) of an electromagnetic wave.',
+    variables: [
+      { sym: '\\vec{S}', name: 'Poynting Vector', unit: 'W/m²' },
+      { sym: '\\vec{E}', name: 'Electric Field Vector', unit: 'V/m' },
+      { sym: '\\vec{B}', name: 'Magnetic Field Vector', unit: 'Tesla (T)' },
+      { sym: '\\mu_0', name: 'Vacuum Permeability', unit: 'H/m' }
+    ],
+    targetTopicId: 'em_wave_3d'
+  },
+  {
+    id: 'f-dna-tm-1',
+    name: 'DNA Thermal Melting Temperature (Marmur-Doty)',
+    category: 'Biology',
+    domain: 'Molecular Genetics',
+    latex: 'T_m = 64.9 + 41 \\times \\frac{G+C - 16.4}{N_{\\text{bp}}}',
+    plainEnglish: 'Melting Temp Tm = Base constant + Factor × (GC ratio)',
+    description: 'Calculates the thermal denaturation temperature at which 50% of the DNA double helix duplex unwinds into single strands.',
+    variables: [
+      { sym: 'T_m', name: 'Melting Temperature', unit: '°C' },
+      { sym: 'G+C', name: 'Guanine + Cytosine Count', unit: 'integer' },
+      { sym: 'N_{\\text{bp}}', name: 'Total Base Pairs', unit: 'integer' }
+    ],
+    targetTopicId: 'dna_helix_3d'
+  },
+  {
+    id: 'f-schwarzschild',
+    name: 'Schwarzschild Radius & Event Horizon',
+    category: 'Physics',
+    domain: 'General Relativity & Astrophysics',
+    latex: 'R_s = \\frac{2GM}{c^2}',
+    plainEnglish: 'Horizon Radius = 2 × Gravity Constant × Mass ÷ Light Speed²',
+    description: 'Calculates the radius of the sphere from which nothing—not even light—can escape.',
+    variables: [
+      { sym: 'R_s', name: 'Schwarzschild Horizon Radius', unit: 'm / km' },
+      { sym: 'G', name: 'Gravitational Constant', unit: '6.674×10⁻¹¹ N·m²/kg²' },
+      { sym: 'M', name: 'Black Hole Mass', unit: 'kg / M☉' },
+      { sym: 'c', name: 'Speed of Light', unit: '3.0×10⁸ m/s' }
+    ],
+    targetTopicId: 'black_hole_relativity_3d'
+  },
+  {
+    id: 'f-bragg-xrd',
+    name: "Bragg's Law of X-Ray Diffraction",
+    category: 'Chemistry',
+    domain: 'Crystallography & Materials Science',
+    latex: '\\lambda = 2 d_{hkl} \\sin\\theta',
+    plainEnglish: 'X-Ray Wavelength = 2 × Interplanar Distance × sin(Bragg Angle)',
+    description: 'Determines the constructive interference condition when incident X-rays scatter from parallel crystal lattice planes (hkl).',
+    variables: [
+      { sym: '\\lambda', name: 'X-Ray Wavelength', unit: 'Å / nm' },
+      { sym: 'd_{hkl}', name: 'Interplanar Lattice Spacing', unit: 'Å' },
+      { sym: '\\theta', name: 'Bragg Diffraction Angle', unit: 'Degrees (°)' }
+    ],
+    targetTopicId: 'crystallography_3d'
+  },
+  {
+    id: 'f-nernst-neuron',
+    name: 'Nernst Equation for Membrane Potential',
+    category: 'Biology',
+    domain: 'Neurobiology & Electrophysiology',
+    latex: 'E_{ion} = \\frac{RT}{zF} \\ln \\frac{[\\text{Ion}]_{out}}{[\\text{Ion}]_{in}}',
+    plainEnglish: 'Equilibrium Potential = Gas Constant × Temp ÷ (Valence × Faraday) × ln(Concentration Ratio)',
+    description: 'Calculates the electrical voltage across a cell membrane that precisely balances the concentration gradient for a specific ion.',
+    variables: [
+      { sym: 'E_{ion}', name: 'Nernst Equilibrium Potential', unit: 'mV' },
+      { sym: 'R, F', name: 'Universal Gas & Faraday Constants', unit: 'J/(mol·K), C/mol' },
+      { sym: 'z', name: 'Ion Charge Valence (+1 for Na⁺/K⁺, +2 for Ca²⁺)', unit: 'integer' },
+      { sym: '[\\text{Ion}]', name: 'Extracellular vs Intracellular Concentration', unit: 'mM' }
+    ],
+    targetTopicId: 'neuron_synapse_3d'
+  },
+  {
+    id: 'f-quantum-double-slit',
+    name: 'de Broglie Wavelength & Double-Slit Fringe Spacing',
+    category: 'Physics',
+    domain: 'Quantum Mechanics',
+    latex: '\\lambda = \\frac{h}{p} \\quad \\bullet \\quad \\Delta y = \\frac{\\lambda L}{d}',
+    plainEnglish: 'Matter Wavelength = Planck Constant ÷ Momentum; Fringe Spacing = Wavelength × Screen Distance ÷ Slit Gap',
+    description: 'Connects the matter wave nature of electrons to the observable spacing between quantum interference fringes.',
+    variables: [
+      { sym: '\\lambda', name: 'de Broglie Matter Wavelength', unit: 'nm' },
+      { sym: 'p', name: 'Particle Momentum', unit: 'kg·m/s' },
+      { sym: '\\Delta y', name: 'Fringe Spacing on Screen', unit: 'mm' },
+      { sym: 'd, L', name: 'Slit Gap & Screen Distance', unit: 'µm, m' }
+    ],
+    targetTopicId: 'quantum_double_slit_3d'
   }
 ];
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Play,
@@ -21,12 +21,15 @@ import {
   Minus,
   Plus,
   StepForward,
-  Gauge
+  Gauge,
+  Sparkles
 } from 'lucide-react';
 import { TOPICS_DATA, isSimulationAnimated, type EditorialTeaching } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
 import { FlagshipSimulatorDispatcher } from './simulations/FlagshipSimulatorDispatcher';
 import { MathView } from './MathView';
+import { ChallengeModalWidget } from './challenges/ChallengeModalWidget';
+import { getTopicChallenges } from '../data/challengesData';
 
 interface TopicLabModalProps {
   topicId: string | null;
@@ -47,13 +50,17 @@ interface NumericControlItemProps {
   value: number;
   onChange: (val: number) => void;
   accentColor: string;
+  isHighlighted?: boolean;
+  highlightLabel?: string;
 }
 
 const NumericControlItem: React.FC<NumericControlItemProps> = ({
   control,
   value,
   onChange,
-  accentColor
+  accentColor,
+  isHighlighted = false,
+  highlightLabel
 }) => {
   const [prevValue, setPrevValue] = useState(value);
   const [textValue, setTextValue] = useState(String(value));
@@ -124,14 +131,33 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
         gap: 8,
         padding: '12px 14px',
         borderRadius: 'var(--radius-md)',
-        background: 'var(--bg-glass-card)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-xs)',
-        transition: 'border-color 0.2s ease'
+        background: isHighlighted ? 'rgba(0, 240, 255, 0.08)' : 'var(--bg-glass-card)',
+        border: isHighlighted ? '1.5px solid var(--electric-blue)' : '1px solid var(--border-subtle)',
+        boxShadow: isHighlighted ? '0 0 16px rgba(0, 240, 255, 0.35)' : 'var(--shadow-xs)',
+        transition: 'all 0.25s ease'
       }}
     >
+      {isHighlighted && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-pill)',
+            background: 'rgba(0, 240, 255, 0.18)',
+            color: 'var(--electric-blue)',
+            fontSize: '0.68rem',
+            fontWeight: 800,
+            letterSpacing: '0.04em'
+          }}
+        >
+          <span>✨ {highlightLabel ? `Governs ${highlightLabel}` : 'Governs Equation'}</span>
+        </div>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.80rem', fontWeight: 650, color: 'var(--text-secondary)' }}>
+        <span style={{ fontSize: '0.80rem', fontWeight: 650, color: isHighlighted ? 'var(--electric-blue)' : 'var(--text-secondary)' }}>
           {control.label}
         </span>
 
@@ -242,6 +268,16 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [rightDrawerOpen, setRightDrawerOpen] = useState<boolean>(true);
   const [showAllControls, setShowAllControls] = useState<boolean>(false);
 
+  // Upgrade 2: Interactive Formula-to-Simulation Highlighting ("Simulate This Formula")
+  const [highlightedParamId, setHighlightedParamId] = useState<string | null>(null);
+  const [highlightedFormulaLatex, setHighlightedFormulaLatex] = useState<string | null>(null);
+
+  // Upgrade 3: Split-Screen Dual Compare Mode ("Compare Lab A vs Lab B")
+  const [isDualCompare, setIsDualCompare] = useState<boolean>(false);
+  const [paramsB, setParamsB] = useState<Record<string, number>>({});
+  const [telemetryB, setTelemetryB] = useState<Record<string, string>>({});
+  const [activeCompareTab, setActiveCompareTab] = useState<'A' | 'B'>('B');
+
   const [prevTopicId, setPrevTopicId] = useState(topicId);
   const [prevSimId, setPrevSimId] = useState<string | null>(null);
 
@@ -267,28 +303,113 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   if (currentSim && currentSim.id !== prevSimId) {
     setPrevSimId(currentSim.id);
     const initialParams: Record<string, number> = {};
+    const initialParamsB: Record<string, number> = {};
     currentSim.controls.forEach(ctrl => {
       initialParams[ctrl.id] = ctrl.defaultValue;
+      initialParamsB[ctrl.id] = ctrl.defaultValue;
     });
     setParams(initialParams);
+    setParamsB(initialParamsB);
     setIsPlaying(true);
     setShowAllControls(false);
   }
 
-  // Close on Escape key (exits full window first if active, otherwise closes modal)
+  const handleReset = React.useCallback(() => {
+    if (!currentSim) return;
+    const initialParams: Record<string, number> = {};
+    const initialParamsB: Record<string, number> = {};
+    currentSim.controls.forEach(ctrl => {
+      initialParams[ctrl.id] = ctrl.defaultValue;
+      initialParamsB[ctrl.id] = ctrl.defaultValue;
+    });
+    setParams(initialParams);
+    setParamsB(initialParamsB);
+    setSpeed(1);
+    setStepTrigger(0);
+  }, [currentSim]);
+
+  const handleSimulateFormula = (formulaLatex: string, hintParamKey?: string) => {
+    let targetParam = hintParamKey;
+    if (!targetParam && currentSim) {
+      const lower = formulaLatex.toLowerCase();
+      const match = currentSim.controls.find(c =>
+        lower.includes(c.id.toLowerCase()) ||
+        lower.includes(c.label.toLowerCase().slice(0, 3))
+      );
+      targetParam = match ? match.id : currentSim.controls[0]?.id;
+    }
+    setHighlightedParamId(targetParam || null);
+    setHighlightedFormulaLatex(formulaLatex);
+    setLeftDrawerOpen(true);
+    document.getElementById('sim-stage')?.scrollIntoView({ behavior: 'smooth' });
+
+    setTimeout(() => {
+      setHighlightedParamId(null);
+      setHighlightedFormulaLatex(null);
+    }, 7000);
+  };
+
+  const handleControlChangeB = (id: string, val: number) => {
+    setParamsB(prev => ({ ...prev, [id]: val }));
+  };
+
+  const handleApplyComparePreset = (preset: 'sync' | 'boost' | 'extremes') => {
+    if (!currentSim) return;
+    if (preset === 'sync') {
+      setParamsB({ ...params });
+    } else if (preset === 'boost') {
+      const primaryCtrl = currentSim.controls[0];
+      if (primaryCtrl) {
+        const cur = params[primaryCtrl.id] ?? primaryCtrl.defaultValue;
+        const boosted = Math.min(primaryCtrl.max, parseFloat((cur * 1.5).toFixed(2)));
+        setParamsB({ ...params, [primaryCtrl.id]: boosted });
+      }
+    } else if (preset === 'extremes') {
+      const primaryCtrl = currentSim.controls[0];
+      if (primaryCtrl) {
+        setParams(prev => ({ ...prev, [primaryCtrl.id]: primaryCtrl.min }));
+        setParamsB(prev => ({ ...prev, [primaryCtrl.id]: primaryCtrl.max }));
+      }
+    }
+  };
+
+  // Global laboratory keyboard shortcuts (Space, R, F, Esc, [, ])
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const targetTag = (e.target as HTMLElement)?.tagName;
+      const isInputFocused = targetTag === 'INPUT' || targetTag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
+
       if (e.key === 'Escape') {
         if (isFullWindow) {
           setIsFullWindow(false);
         } else {
           onClose();
         }
+      } else if (!isInputFocused) {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          if (isAnimated) {
+            setIsPlaying(prev => !prev);
+          }
+        } else if (e.key === 'r' || e.key === 'R') {
+          e.preventDefault();
+          handleReset();
+        } else if (e.key === 'f' || e.key === 'F') {
+          e.preventDefault();
+          setIsFullWindow(prev => !prev);
+        } else if (e.key === ']' || e.key === '.') {
+          e.preventDefault();
+          setStepTrigger(prev => prev + 1);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFullWindow, onClose]);
+  }, [isFullWindow, isAnimated, onClose, handleReset]);
+
+  const topicChallenges = useMemo(() => {
+    return topic ? getTopicChallenges(topic.id, currentSim?.id) : [];
+  }, [topic, currentSim]);
 
   if (!topic || !currentSim) return null;
 
@@ -317,20 +438,14 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
     });
   };
 
-  const handleReset = () => {
-    const initialParams: Record<string, number> = {};
-    currentSim.controls.forEach(ctrl => {
-      initialParams[ctrl.id] = ctrl.defaultValue;
-    });
-    setParams(initialParams);
-    setSpeed(1);
-    setStepTrigger(0);
-  };
-
   const isMath = topic.subject === 'maths';
   const isBiology = topic.subject === 'biology';
   const isChemistry = topic.subject === 'chemistry';
   const accentColor = isChemistry ? '#F97316' : isBiology ? '#10B981' : isMath ? 'var(--electric-violet)' : 'var(--electric-blue)';
+
+  const handleApplyChallengeParams = (initParams: Record<string, number>) => {
+    setParams(prev => ({ ...prev, ...initParams }));
+  };
 
   if (isFullWindow) {
     const editorial: EditorialTeaching = topic.editorialTeaching || {
@@ -487,6 +602,33 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               className="throughline-pill-nav"
               style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}
             >
+              <ChallengeModalWidget
+                challenges={topicChallenges}
+                currentParams={params}
+                onApplyInitialParams={handleApplyChallengeParams}
+                accentColor={accentColor}
+              />
+
+              <button
+                onClick={() => setIsDualCompare(prev => !prev)}
+                className={`btn btn-sm ${isDualCompare ? 'btn-primary' : 'btn-secondary'}`}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: '0.76rem',
+                  gap: 5,
+                  background: isDualCompare ? 'rgba(0, 240, 255, 0.22)' : undefined,
+                  borderColor: isDualCompare ? 'var(--electric-blue)' : undefined,
+                  color: isDualCompare ? '#00f0ff' : undefined
+                }}
+                title="Toggle Split-Screen Dual Compare Mode (Side-by-Side Reference vs Hypothesis)"
+              >
+                <Layers size={13} />
+                <span>Dual Compare</span>
+                {isDualCompare && (
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00f0ff' }} />
+                )}
+              </button>
+
               <button
                 onClick={() => {
                   document.getElementById('sim-teaching')?.scrollIntoView({ behavior: 'smooth' });
@@ -575,6 +717,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
           {/* Wall-to-Wall Simulation Stage */}
           <div
+            id="sim-stage"
             style={{
               width: '100%',
               height: '100%',
@@ -583,18 +726,108 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               overflow: 'hidden'
             }}
           >
-            <FlagshipSimulatorDispatcher
-              simId={currentSim.id}
-              params={params}
-              isPlaying={isPlaying}
-              speed={speed}
-              stepTrigger={stepTrigger}
-              onTelemetryUpdate={setTelemetry}
-              controls={currentSim.controls}
-              onParamChange={handleControlChange}
-              onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
-              onReset={handleReset}
-            />
+            {isDualCompare ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  width: '100%',
+                  height: '100%',
+                  gap: 2,
+                  background: 'rgba(0,0,0,0.7)'
+                }}
+              >
+                {/* Viewport A (Reference) */}
+                <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', borderRight: '1px solid rgba(0, 240, 255, 0.3)' }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 76,
+                      left: leftDrawerOpen ? 346 : 24,
+                      zIndex: 35,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius-pill)',
+                      background: 'rgba(15, 23, 42, 0.88)',
+                      border: '1px solid var(--electric-blue)',
+                      color: 'var(--electric-blue)',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      backdropFilter: 'blur(8px)',
+                      transition: 'left 0.2s ease'
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--electric-blue)' }} />
+                    <span>LAB A (REFERENCE)</span>
+                  </div>
+                  <FlagshipSimulatorDispatcher
+                    simId={currentSim.id}
+                    params={params}
+                    isPlaying={isPlaying}
+                    speed={speed}
+                    stepTrigger={stepTrigger}
+                    onTelemetryUpdate={setTelemetry}
+                    controls={currentSim.controls}
+                    onParamChange={handleControlChange}
+                    onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                    onReset={handleReset}
+                  />
+                </div>
+
+                {/* Viewport B (Hypothesis) */}
+                <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 76,
+                      left: 24,
+                      zIndex: 35,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '4px 10px',
+                      borderRadius: 'var(--radius-pill)',
+                      background: 'rgba(15, 23, 42, 0.88)',
+                      border: '1px solid #f59e0b',
+                      color: '#f59e0b',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      backdropFilter: 'blur(8px)'
+                    }}
+                  >
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
+                    <span>LAB B (HYPOTHESIS)</span>
+                  </div>
+                  <FlagshipSimulatorDispatcher
+                    simId={currentSim.id}
+                    params={paramsB}
+                    isPlaying={isPlaying}
+                    speed={speed}
+                    stepTrigger={stepTrigger}
+                    onTelemetryUpdate={setTelemetryB}
+                    controls={currentSim.controls}
+                    onParamChange={handleControlChangeB}
+                    onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                    onReset={handleReset}
+                  />
+                </div>
+              </div>
+            ) : (
+              <FlagshipSimulatorDispatcher
+                simId={currentSim.id}
+                params={params}
+                isPlaying={isPlaying}
+                speed={speed}
+                stepTrigger={stepTrigger}
+                onTelemetryUpdate={setTelemetry}
+                controls={currentSim.controls}
+                onParamChange={handleControlChange}
+                onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                onReset={handleReset}
+              />
+            )}
           </div>
 
           {/* Floating Collapsible Left Parameter Drawer */}
@@ -662,15 +895,93 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   gap: 12
                 }}
               >
-                {currentSim.controls.map((ctrl) => (
-                  <NumericControlItem
-                    key={ctrl.id}
-                    control={ctrl}
-                    value={params[ctrl.id] ?? ctrl.defaultValue}
-                    onChange={(val) => handleControlChange(ctrl.id, val)}
-                    accentColor={accentColor}
-                  />
-                ))}
+                {isDualCompare && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 6 }}>
+                    <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.06)', padding: 3, borderRadius: 'var(--radius-sm)' }}>
+                      <button
+                        onClick={() => setActiveCompareTab('A')}
+                        style={{
+                          flex: 1,
+                          padding: '5px 8px',
+                          borderRadius: 'var(--radius-xs)',
+                          border: 'none',
+                          background: activeCompareTab === 'A' ? 'var(--electric-blue)' : 'transparent',
+                          color: activeCompareTab === 'A' ? '#000000' : 'var(--text-secondary)',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Lab A (Ref)
+                      </button>
+                      <button
+                        onClick={() => setActiveCompareTab('B')}
+                        style={{
+                          flex: 1,
+                          padding: '5px 8px',
+                          borderRadius: 'var(--radius-xs)',
+                          border: 'none',
+                          background: activeCompareTab === 'B' ? '#f59e0b' : 'transparent',
+                          color: activeCompareTab === 'B' ? '#000000' : 'var(--text-secondary)',
+                          fontSize: '0.72rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        Lab B (Hyp)
+                      </button>
+                    </div>
+
+                    {/* Presets pill bar */}
+                    <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 2 }}>
+                      <button
+                        onClick={() => handleApplyComparePreset('sync')}
+                        className="btn btn-secondary btn-xs"
+                        style={{ fontSize: '0.68rem', padding: '3px 8px', whiteSpace: 'nowrap' }}
+                        title="Copy all parameters from Lab A to Lab B"
+                      >
+                        Sync A → B
+                      </button>
+                      <button
+                        onClick={() => handleApplyComparePreset('boost')}
+                        className="btn btn-secondary btn-xs"
+                        style={{ fontSize: '0.68rem', padding: '3px 8px', whiteSpace: 'nowrap' }}
+                        title="Increase primary parameter of Lab B by +50%"
+                      >
+                        +50% Primary
+                      </button>
+                      <button
+                        onClick={() => handleApplyComparePreset('extremes')}
+                        className="btn btn-secondary btn-xs"
+                        style={{ fontSize: '0.68rem', padding: '3px 8px', whiteSpace: 'nowrap' }}
+                        title="Set Lab A to minimum and Lab B to maximum"
+                      >
+                        Min vs Max
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {currentSim.controls.map((ctrl) => {
+                  const isTabB = isDualCompare && activeCompareTab === 'B';
+                  const val = isTabB ? (paramsB[ctrl.id] ?? ctrl.defaultValue) : (params[ctrl.id] ?? ctrl.defaultValue);
+                  const onValChange = isTabB ? (v: number) => handleControlChangeB(ctrl.id, v) : (v: number) => handleControlChange(ctrl.id, v);
+                  const activeAccent = isTabB ? '#f59e0b' : accentColor;
+
+                  return (
+                    <NumericControlItem
+                      key={ctrl.id}
+                      control={ctrl}
+                      value={val}
+                      onChange={onValChange}
+                      accentColor={activeAccent}
+                      isHighlighted={highlightedParamId === ctrl.id}
+                      highlightLabel={highlightedFormulaLatex ? `Governs: ${highlightedFormulaLatex}` : undefined}
+                    />
+                  );
+                })}
               </div>
 
               {/* Drawer Footer Actions */}
@@ -814,7 +1125,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                       border: '1px solid rgba(56, 189, 248, 0.15)',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: 2
+                      gap: 3
                     }}
                   >
                     <div
@@ -827,16 +1138,30 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     >
                       {tLabel.label}
                     </div>
-                    <div
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '1rem',
-                        fontWeight: 700,
-                        color: '#38BDF8'
-                      }}
-                    >
-                      {telemetry[tLabel.key] || '—'}
-                    </div>
+
+                    {isDualCompare ? (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontSize: '0.84rem', fontFamily: 'var(--font-mono)' }}>
+                        <div>
+                          <span style={{ fontSize: '0.62rem', color: 'var(--electric-blue)', display: 'block', fontWeight: 800 }}>LAB A</span>
+                          <span style={{ fontWeight: 700, color: '#38BDF8' }}>{telemetry[tLabel.key] || '—'}</span>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.62rem', color: '#f59e0b', display: 'block', fontWeight: 800 }}>LAB B</span>
+                          <span style={{ fontWeight: 700, color: '#fbbf24' }}>{telemetryB[tLabel.key] || '—'}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '1rem',
+                          fontWeight: 700,
+                          color: '#38BDF8'
+                        }}
+                      >
+                        {telemetry[tLabel.key] || '—'}
+                      </div>
+                    )}
                   </div>
                 ))}
 
@@ -866,6 +1191,19 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
                       {topic.keyFormulas[0].explanation}
                     </div>
+                    <button
+                      onClick={() => handleSimulateFormula(topic.keyFormulas[0].formula)}
+                      className="btn btn-primary btn-xs"
+                      style={{
+                        marginTop: 8,
+                        width: '100%',
+                        fontSize: '0.72rem',
+                        gap: 5
+                      }}
+                    >
+                      <Sparkles size={11} />
+                      <span>Highlight in Controls</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -1619,13 +1957,43 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   })}
                 </div>
 
-                <div style={{ marginTop: 10 }}>
-                  <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
-                    {currentSim.name}
-                  </h4>
-                  <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    {currentSim.tagline}
-                  </p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginTop: 10 }}>
+                  <div>
+                    <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
+                      {currentSim.name}
+                    </h4>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                      {currentSim.tagline}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <ChallengeModalWidget
+                      challenges={topicChallenges}
+                      currentParams={params}
+                      onApplyInitialParams={handleApplyChallengeParams}
+                      accentColor={accentColor}
+                    />
+
+                    <button
+                      onClick={() => setIsDualCompare(prev => !prev)}
+                      className={`btn btn-sm ${isDualCompare ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '0.76rem',
+                        gap: 5,
+                        background: isDualCompare ? 'rgba(0, 240, 255, 0.22)' : undefined,
+                        borderColor: isDualCompare ? 'var(--electric-blue)' : undefined,
+                        color: isDualCompare ? '#00f0ff' : undefined
+                      }}
+                      title="Toggle Split-Screen Dual Compare Mode"
+                    >
+                      <Layers size={13} />
+                      <span>Dual Compare</span>
+                      {isDualCompare && (
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#00f0ff' }} />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -1656,18 +2024,105 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   <span>Full Graph &amp; Settings</span>
                 </button>
 
-                <FlagshipSimulatorDispatcher
-                  simId={currentSim.id}
-                  params={params}
-                  isPlaying={isPlaying}
-                  speed={speed}
-                  stepTrigger={stepTrigger}
-                  onTelemetryUpdate={setTelemetry}
-                  controls={currentSim.controls}
-                  onParamChange={handleControlChange}
-                  onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
-                  onReset={handleReset}
-                />
+                {isDualCompare ? (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      width: '100%',
+                      height: '100%',
+                      gap: 2,
+                      background: 'rgba(0,0,0,0.7)'
+                    }}
+                  >
+                    {/* Viewport A */}
+                    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', borderRight: '1px solid rgba(0, 240, 255, 0.3)' }}>
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 10,
+                          left: 10,
+                          zIndex: 25,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          padding: '3px 8px',
+                          borderRadius: 'var(--radius-pill)',
+                          background: 'rgba(15, 23, 42, 0.88)',
+                          border: '1px solid var(--electric-blue)',
+                          color: 'var(--electric-blue)',
+                          fontSize: '0.70rem',
+                          fontWeight: 800
+                        }}
+                      >
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--electric-blue)' }} />
+                        <span>LAB A (REF)</span>
+                      </div>
+                      <FlagshipSimulatorDispatcher
+                        simId={currentSim.id}
+                        params={params}
+                        isPlaying={isPlaying}
+                        speed={speed}
+                        stepTrigger={stepTrigger}
+                        onTelemetryUpdate={setTelemetry}
+                        controls={currentSim.controls}
+                        onParamChange={handleControlChange}
+                        onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                        onReset={handleReset}
+                      />
+                    </div>
+
+                    {/* Viewport B */}
+                    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 10,
+                          left: 10,
+                          zIndex: 25,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          padding: '3px 8px',
+                          borderRadius: 'var(--radius-pill)',
+                          background: 'rgba(15, 23, 42, 0.88)',
+                          border: '1px solid #f59e0b',
+                          color: '#f59e0b',
+                          fontSize: '0.70rem',
+                          fontWeight: 800
+                        }}
+                      >
+                        <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#f59e0b' }} />
+                        <span>LAB B (HYP)</span>
+                      </div>
+                      <FlagshipSimulatorDispatcher
+                        simId={currentSim.id}
+                        params={paramsB}
+                        isPlaying={isPlaying}
+                        speed={speed}
+                        stepTrigger={stepTrigger}
+                        onTelemetryUpdate={setTelemetryB}
+                        controls={currentSim.controls}
+                        onParamChange={handleControlChangeB}
+                        onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                        onReset={handleReset}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <FlagshipSimulatorDispatcher
+                    simId={currentSim.id}
+                    params={params}
+                    isPlaying={isPlaying}
+                    speed={speed}
+                    stepTrigger={stepTrigger}
+                    onTelemetryUpdate={setTelemetry}
+                    controls={currentSim.controls}
+                    onParamChange={handleControlChange}
+                    onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                    onReset={handleReset}
+                  />
+                )}
               </div>
 
               {/* Live Telemetry Chips */}
@@ -1713,6 +2168,74 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 marginTop: 'auto'
               }}
             >
+              {isDualCompare && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                  <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.06)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
+                    <button
+                      onClick={() => setActiveCompareTab('A')}
+                      style={{
+                        flex: 1,
+                        padding: '6px 12px',
+                        borderRadius: 'var(--radius-xs)',
+                        border: 'none',
+                        background: activeCompareTab === 'A' ? 'var(--electric-blue)' : 'transparent',
+                        color: activeCompareTab === 'A' ? '#000000' : 'var(--text-secondary)',
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      Lab A Controls (Reference)
+                    </button>
+                    <button
+                      onClick={() => setActiveCompareTab('B')}
+                      style={{
+                        flex: 1,
+                        padding: '6px 12px',
+                        borderRadius: 'var(--radius-xs)',
+                        border: 'none',
+                        background: activeCompareTab === 'B' ? '#f59e0b' : 'transparent',
+                        color: activeCompareTab === 'B' ? '#000000' : 'var(--text-secondary)',
+                        fontSize: '0.78rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      Lab B Controls (Hypothesis)
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+                    <button
+                      onClick={() => handleApplyComparePreset('sync')}
+                      className="btn btn-secondary btn-xs"
+                      style={{ fontSize: '0.70rem', padding: '4px 10px', whiteSpace: 'nowrap' }}
+                      title="Copy all parameters from Lab A to Lab B"
+                    >
+                      Sync A → B
+                    </button>
+                    <button
+                      onClick={() => handleApplyComparePreset('boost')}
+                      className="btn btn-secondary btn-xs"
+                      style={{ fontSize: '0.70rem', padding: '4px 10px', whiteSpace: 'nowrap' }}
+                      title="Increase primary parameter of Lab B by +50%"
+                    >
+                      +50% Primary
+                    </button>
+                    <button
+                      onClick={() => handleApplyComparePreset('extremes')}
+                      className="btn btn-secondary btn-xs"
+                      style={{ fontSize: '0.70rem', padding: '4px 10px', whiteSpace: 'nowrap' }}
+                      title="Set Lab A to minimum and Lab B to maximum"
+                    >
+                      Min vs Max
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div
                 className="modal-controls-grid"
                 style={{
@@ -1724,13 +2247,20 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               >
                 {currentSim.controls.map((ctrl, idx) => {
                   const isHiddenOnMobile = !showAllControls && idx >= 2;
+                  const isTabB = isDualCompare && activeCompareTab === 'B';
+                  const val = isTabB ? (paramsB[ctrl.id] ?? ctrl.defaultValue) : (params[ctrl.id] ?? ctrl.defaultValue);
+                  const onValChange = isTabB ? (v: number) => handleControlChangeB(ctrl.id, v) : (v: number) => handleControlChange(ctrl.id, v);
+                  const activeAccent = isTabB ? '#f59e0b' : accentColor;
+
                   return (
                     <div key={ctrl.id} className={isHiddenOnMobile ? 'hide-mobile' : ''}>
                       <NumericControlItem
                         control={ctrl}
-                        value={params[ctrl.id] ?? ctrl.defaultValue}
-                        onChange={(val) => handleControlChange(ctrl.id, val)}
-                        accentColor={accentColor}
+                        value={val}
+                        onChange={onValChange}
+                        accentColor={activeAccent}
+                        isHighlighted={highlightedParamId === ctrl.id}
+                        highlightLabel={highlightedFormulaLatex ? `Governs: ${highlightedFormulaLatex}` : undefined}
                       />
                     </div>
                   );
@@ -2089,14 +2619,14 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     <div
                       key={i}
                       className="formula-card"
-                      style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column' }}
+                      style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 6 }}
                     >
                       <div
                         style={{
                           fontSize: '1.08rem',
                           fontWeight: 700,
                           color: 'var(--text-primary)',
-                          marginBottom: 8,
+                          marginBottom: 4,
                           textAlign: 'center',
                           padding: '10px 14px',
                           background: 'var(--bg-tertiary)',
@@ -2110,6 +2640,20 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                       <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.45 }}>
                         {f.explanation}
                       </div>
+                      <button
+                        onClick={() => handleSimulateFormula(f.formula)}
+                        className="btn btn-primary btn-sm"
+                        style={{
+                          marginTop: 8,
+                          alignSelf: 'flex-start',
+                          padding: '5px 12px',
+                          fontSize: '0.76rem',
+                          gap: 6
+                        }}
+                      >
+                        <Activity size={13} />
+                        <span>Simulate This Formula</span>
+                      </button>
                     </div>
                   ))}
                 </div>

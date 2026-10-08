@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass, Dna } from 'lucide-react';
+import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass, Dna, User } from 'lucide-react';
 import { PhysoraLogo } from './PhysoraLogo';
+import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
   onEnterLabClick: () => void;
@@ -10,6 +11,8 @@ interface NavbarProps {
   onOpenFormulas: () => void;
   onOpenSearch: () => void;
   onOpenAnatomy: () => void;
+  onOpenAuth: (view?: 'login' | 'signup') => void;
+  onOpenProfile: () => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
 }
@@ -22,9 +25,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenFormulas,
   onOpenSearch,
   onOpenAnatomy,
+  onOpenAuth,
+  onOpenProfile,
   theme,
   onToggleTheme
 }) => {
+  const { user, profile, isAuthenticated } = useAuth();
+
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -204,6 +211,72 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
 
+          {/* User Account / Profile Button (Desktop) */}
+          {isAuthenticated ? (
+            <button
+              onClick={onOpenProfile}
+              className="btn btn-sm hide-mobile"
+              style={{
+                padding: '4px 12px 4px 6px',
+                gap: 8,
+                fontSize: '0.82rem',
+                fontWeight: 650,
+                color: '#FFFFFF',
+                background: 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                borderRadius: 'var(--radius-pill)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center'
+              }}
+              title="View Researcher Profile"
+              aria-label="View Researcher Profile"
+            >
+              <div
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--brand-primary)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.72rem',
+                  fontWeight: 800
+                }}
+              >
+                {(profile?.display_name || user?.email || 'P').charAt(0).toUpperCase()}
+              </div>
+              <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile?.display_name?.split(' ')[0] || profile?.username || 'Researcher'}
+              </span>
+            </button>
+          ) : (
+            <button
+              onClick={() => onOpenAuth('login')}
+              className="btn btn-sm hide-mobile"
+              style={{
+                padding: '6px 14px',
+                fontSize: '0.82rem',
+                fontWeight: 650,
+                color: '#FFFFFF',
+                background: 'rgba(255, 255, 255, 0.12)',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                borderRadius: 'var(--radius-sm)',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+              title="Sign In to Physora"
+              aria-label="Sign In to Physora"
+            >
+              <User size={15} color="#38BDF8" />
+              <span>Sign In</span>
+            </button>
+          )}
+
           {/* Primary Enter Lab CTA — PhET Play Orange */}
           <button
             onClick={onEnterLabClick}
@@ -332,7 +405,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     Simulations
                   </span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                    42 Interactive Models (Class 9–11)
+                    76 Interactive Models (34 Topics)
                   </span>
                 </div>
               </div>
@@ -421,6 +494,94 @@ export const Navbar: React.FC<NavbarProps> = ({
               <ArrowRight size={15} color="var(--text-tertiary)" />
             </button>
           </div>
+
+          {/* Mobile Authentication / Account Profile */}
+          {isAuthenticated ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--bg-subtle)',
+                border: '1px solid var(--border-subtle)',
+                marginTop: 14,
+                marginBottom: 12
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div
+                  style={{
+                    width: 34,
+                    height: 34,
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--phet-navy)',
+                    color: '#FFFFFF',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: '0.88rem'
+                  }}
+                >
+                  {(profile?.display_name || user?.email || 'P').charAt(0).toUpperCase()}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                    {profile?.display_name || 'Physora Scientist'}
+                  </span>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                    @{profile?.username || 'user'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => handleMobileNavClick(onOpenProfile)}
+                className="btn btn-secondary btn-sm"
+                style={{ fontSize: '0.78rem', padding: '5px 10px' }}
+              >
+                Profile
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14, marginBottom: 12 }}>
+              <button
+                onClick={() => handleMobileNavClick(() => onOpenAuth('login'))}
+                className="btn btn-secondary"
+                style={{
+                  padding: '9px 12px',
+                  fontSize: '0.85rem',
+                  fontWeight: 650,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 6
+                }}
+              >
+                <User size={15} />
+                <span>Sign In</span>
+              </button>
+              <button
+                onClick={() => handleMobileNavClick(() => onOpenAuth('signup'))}
+                className="btn btn-sm"
+                style={{
+                  padding: '9px 12px',
+                  fontSize: '0.85rem',
+                  fontWeight: 650,
+                  backgroundColor: 'var(--brand-primary)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: 'var(--radius-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <span>Sign Up</span>
+              </button>
+            </div>
+          )}
 
           {/* Full-Width Mobile CTA */}
           <button

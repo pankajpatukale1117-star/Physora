@@ -1,6 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Sparkles } from 'lucide-react';
+import {
+  Sparkles,
+  ZoomIn,
+  ZoomOut,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Compass,
+  Play,
+  Pause
+} from 'lucide-react';
 
 interface AtomDef {
   element: string;
@@ -179,12 +190,36 @@ const MOLECULES: MoleculeData[] = [
   }
 ];
 
-export const MolecularVSEPRLab: React.FC = () => {
+export interface MolecularVSEPRLabProps {
+  params?: Record<string, number>;
+  isPlaying?: boolean;
+  speed?: number;
+  onParamChange?: (id: string, value: number) => void;
+  onTelemetryUpdate?: (telemetry: Record<string, string>) => void;
+}
+
+export const MolecularVSEPRLab: React.FC<MolecularVSEPRLabProps> = ({
+  params,
+  isPlaying: externalIsPlaying,
+  speed: externalSpeed,
+  onParamChange,
+  onTelemetryUpdate
+}) => {
   const [selectedMoleculeId, setSelectedMoleculeId] = useState('h2o');
   const [renderMode, setRenderMode] = useState<'ball_stick' | 'space_fill'>('ball_stick');
   const [showLonePairs, setShowLonePairs] = useState(true);
   const [showDipole, setShowDipole] = useState(true);
   const [isRotating, setIsRotating] = useState(true);
+  const isRotatingRef = useRef(isRotating);
+  useEffect(() => {
+    isRotatingRef.current = isRotating;
+  }, [isRotating]);
+
+  const [rotationSpeed, setRotationSpeed] = useState(1.0);
+  const rotationSpeedRef = useRef(rotationSpeed);
+  useEffect(() => {
+    rotationSpeedRef.current = rotationSpeed;
+  }, [rotationSpeed]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -193,6 +228,44 @@ export const MolecularVSEPRLab: React.FC = () => {
   const moleculeGroupRef = useRef<THREE.Group | null>(null);
 
   const mol = MOLECULES.find(m => m.id === selectedMoleculeId) || MOLECULES[0];
+
+  // Synchronize state with incoming external params from the control settings drawer
+  useEffect(() => {
+    if (!params) return;
+    if (params.mode !== undefined) {
+      setRenderMode(params.mode >= 1 ? 'space_fill' : 'ball_stick');
+    }
+    if (params.molecule !== undefined) {
+      const idx = Math.min(MOLECULES.length - 1, Math.max(0, Math.round(params.molecule)));
+      if (MOLECULES[idx].id !== selectedMoleculeId) {
+        setSelectedMoleculeId(MOLECULES[idx].id);
+      }
+    }
+    if (params.speed !== undefined && Math.abs(params.speed - rotationSpeed) > 0.05) {
+      setRotationSpeed(params.speed);
+    }
+  }, [params]);
+
+  useEffect(() => {
+    if (externalIsPlaying !== undefined) {
+      setIsRotating(externalIsPlaying);
+    }
+  }, [externalIsPlaying]);
+
+  useEffect(() => {
+    if (externalSpeed !== undefined && externalSpeed > 0) {
+      setRotationSpeed(externalSpeed);
+    }
+  }, [externalSpeed]);
+
+  // Telemetry reporting to parent modal
+  useEffect(() => {
+    onTelemetryUpdate?.({
+      geometry: mol.geometryName,
+      angle: mol.idealAngle.split(' ')[0],
+      polarity: mol.isPolar ? 'Polar (Dipole ≠ 0)' : 'Nonpolar (Symmetric)'
+    });
+  }, [mol, onTelemetryUpdate]);
 
   // Initialize Three.js scene
   useEffect(() => {
@@ -254,15 +327,22 @@ export const MolecularVSEPRLab: React.FC = () => {
 
     const onPointerUp = () => { isPointerDown = false; };
 
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (!cameraRef.current) return;
+      cameraRef.current.position.z = Math.max(2.5, Math.min(15, cameraRef.current.position.z + e.deltaY * 0.008));
+    };
+
     renderer.domElement.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
+    renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
 
     // Animation Loop
     let animId: number;
     const animate = () => {
-      if (moleculeGroupRef.current && isRotating && !isPointerDown) {
-        moleculeGroupRef.current.rotation.y += 0.006;
+      if (moleculeGroupRef.current && isRotatingRef.current && !isPointerDown) {
+        moleculeGroupRef.current.rotation.y += 0.006 * rotationSpeedRef.current;
       }
       renderer.render(scene, camera);
       animId = requestAnimationFrame(animate);
@@ -285,6 +365,7 @@ export const MolecularVSEPRLab: React.FC = () => {
       renderer.domElement.removeEventListener('pointerdown', onPointerDown);
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
+      renderer.domElement.removeEventListener('wheel', onWheel);
       renderer.dispose();
     };
   }, []);
@@ -403,6 +484,21 @@ export const MolecularVSEPRLab: React.FC = () => {
     }
   }, [mol, renderMode, showLonePairs, showDipole]);
 
+  const handleRotateLeft = () => { if (moleculeGroupRef.current) moleculeGroupRef.current.rotation.y += 0.35; };
+  const handleRotateRight = () => { if (moleculeGroupRef.current) moleculeGroupRef.current.rotation.y -= 0.35; };
+  const handleTiltUp = () => { if (moleculeGroupRef.current) moleculeGroupRef.current.rotation.x -= 0.25; };
+  const handleTiltDown = () => { if (moleculeGroupRef.current) moleculeGroupRef.current.rotation.x += 0.25; };
+  const handleZoomIn = () => {
+    if (cameraRef.current) cameraRef.current.position.z = Math.max(2.5, cameraRef.current.position.z - 0.8);
+  };
+  const handleZoomOut = () => {
+    if (cameraRef.current) cameraRef.current.position.z = Math.min(15, cameraRef.current.position.z + 0.8);
+  };
+  const handleResetCamera = () => {
+    if (cameraRef.current) cameraRef.current.position.set(0, 0, 6);
+    if (moleculeGroupRef.current) moleculeGroupRef.current.rotation.set(0, 0, 0);
+  };
+
   return (
     <div
       style={{
@@ -454,7 +550,11 @@ export const MolecularVSEPRLab: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             type="button"
-            onClick={() => setRenderMode(m => m === 'ball_stick' ? 'space_fill' : 'ball_stick')}
+            onClick={() => {
+              const next = renderMode === 'ball_stick' ? 'space_fill' : 'ball_stick';
+              setRenderMode(next);
+              onParamChange?.('mode', next === 'space_fill' ? 1 : 0);
+            }}
             style={{
               padding: '4px 8px',
               borderRadius: 5,
@@ -550,11 +650,14 @@ export const MolecularVSEPRLab: React.FC = () => {
           </span>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-            {MOLECULES.map((m) => (
+            {MOLECULES.map((m, idx) => (
               <button
                 key={m.id}
                 type="button"
-                onClick={() => setSelectedMoleculeId(m.id)}
+                onClick={() => {
+                  setSelectedMoleculeId(m.id);
+                  onParamChange?.('molecule', idx);
+                }}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -625,6 +728,214 @@ export const MolecularVSEPRLab: React.FC = () => {
           style={{ width: '100%', height: '100%', cursor: 'grab' }}
           title="Drag to rotate molecule in 3D"
         />
+
+        {/* On-screen 3D Camera Controls Widget */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 14,
+            right: 14,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            background: 'rgba(15, 23, 42, 0.90)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: 10,
+            padding: '8px 10px',
+            zIndex: 40,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.45)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+              3D VIEW
+            </span>
+            <button
+              type="button"
+              onClick={handleResetCamera}
+              title="Reset View"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: 'none',
+                borderRadius: 4,
+                padding: '2px 5px',
+                color: '#38bdf8',
+                cursor: 'pointer',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3
+              }}
+            >
+              <Compass size={11} />
+              Reset
+            </button>
+          </div>
+
+          {/* D-Pad Orbit Controls */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 26px)', gap: 3, justifyContent: 'center' }}>
+            <div />
+            <button
+              type="button"
+              onClick={handleTiltUp}
+              title="Tilt Up"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+            >
+              <ChevronUp size={14} />
+            </button>
+            <div />
+
+            <button
+              type="button"
+              onClick={handleRotateLeft}
+              title="Rotate Left"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+            >
+              <ChevronLeft size={14} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsRotating(!isRotating)}
+              title={isRotating ? 'Pause Spin' : 'Start Auto Spin'}
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 5,
+                background: isRotating ? 'rgba(34, 197, 94, 0.25)' : 'rgba(255,255,255,0.06)',
+                border: `1px solid ${isRotating ? '#22c55e' : 'rgba(255,255,255,0.12)'}`,
+                color: isRotating ? '#4ade80' : '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+            >
+              {isRotating ? <Pause size={12} /> : <Play size={12} />}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleRotateRight}
+              title="Rotate Right"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+            >
+              <ChevronRight size={14} />
+            </button>
+
+            <div />
+            <button
+              type="button"
+              onClick={handleTiltDown}
+              title="Tilt Down"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+            >
+              <ChevronDown size={14} />
+            </button>
+            <div />
+          </div>
+
+          {/* Zoom Buttons */}
+          <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              title="Zoom In"
+              style={{
+                flex: 1,
+                padding: '4px 6px',
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                fontSize: '0.68rem',
+                fontWeight: 600
+              }}
+            >
+              <ZoomIn size={12} />
+              In
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              title="Zoom Out"
+              style={{
+                flex: 1,
+                padding: '4px 6px',
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                fontSize: '0.68rem',
+                fontWeight: 600
+              }}
+            >
+              <ZoomOut size={12} />
+              Out
+            </button>
+          </div>
+        </div>
 
         {/* 3D Interaction Tip HUD */}
         <div

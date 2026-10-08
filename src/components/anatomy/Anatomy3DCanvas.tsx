@@ -8,6 +8,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import {
+  ZoomIn,
+  ZoomOut,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Compass,
+  Play,
+  Pause
+} from 'lucide-react';
 import type {
   AnatomicalSystemId,
   DetailLevel
@@ -122,6 +133,15 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   const isPanningRef = useRef(false);
   const previousMousePositionRef = useRef({ x: 0, y: 0 });
   const touchStartDistRef = useRef<number | null>(null);
+
+  const [isAutoRotating, setIsAutoRotating] = useState(false);
+  const isAutoRotatingRef = useRef(false);
+  useEffect(() => {
+    isAutoRotatingRef.current = isAutoRotating;
+  }, [isAutoRotating]);
+
+  const dragStartPosRef = useRef({ x: 0, y: 0 });
+  const hasDraggedFarRef = useRef(false);
 
   // Animation frame loop refs
   const animationFrameIdRef = useRef<number | null>(null);
@@ -283,6 +303,11 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         const currentTarget = cameraTargetRef.current;
         const desiredSpherical = cameraDesiredSphericalRef.current;
         const currentSpherical = cameraSphericalRef.current;
+
+        // Smooth 360° Auto-Rotation when enabled and user is not actively dragging
+        if (isAutoRotatingRef.current && !isDraggingRef.current) {
+          desiredSpherical.theta += delta * 0.45;
+        }
 
         // Critically-damped exponential easing
         const smoothFactor = 1.0 - Math.exp(-delta * 5.0);
@@ -497,8 +522,14 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         shouldBeVisible = isSelected;
       }
 
-      // Skin has dedicated medical PBR controls (natural human skin tone, controllable opacity, glass, or off)
-      // Skin represents outer anatomical boundary (neutral matte scientific mannequin)
+      // Update circulation particle system visibility: only active when cardiovascular system is enabled and not concealed by opaque skin
+      if (circulationGroupRef.current) {
+        const isCardioActive = systemVisibility.cardiovascular ?? true;
+        const isConcealedBySkin = skinVisible && skinOpacity >= 0.90 && !showInternal && !isIsolated;
+        circulationGroupRef.current.visible = isCardioActive && (!isConcealedBySkin || selectedStructureId === 'aorta' || selectedStructureId === 'heart');
+      }
+
+      // Skin represents outer anatomical boundary (realistic medical anatomical skin)
       if (id === 'skin') {
         const effectiveOpacity = skinOpacity;
         const isVisible = skinVisible && effectiveOpacity > 0.01 && !isIsolated;
@@ -517,11 +548,18 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
             mat.transparent = true;
             mat.depthWrite = false;
           } else {
-            mat.color.setHex(0xDCE1E6); // Neutral scientific matte alabaster mannequin
-            mat.roughness = 0.65;
+            // Realistic medical PBR human skin rendering
+            const skinColor = skinMode === 'natural' ? 0xE8C4B8 : (skinMode === 'xray' ? 0x38BDF8 : 0xDCE1E6);
+            mat.color.setHex(skinColor);
+            mat.roughness = 0.52;
             mat.metalness = 0.0;
+            mat.clearcoat = 0.12;
+            mat.clearcoatRoughness = 0.35;
+            mat.sheen = 0.35;
+            mat.sheenColor = new THREE.Color(0xFCA5A5);
+            mat.sheenRoughness = 0.45;
             mat.emissive.setHex(0x0A0F1D);
-            mat.emissiveIntensity = 0.03;
+            mat.emissiveIntensity = 0.02;
             if (effectiveOpacity >= 0.95) {
               mat.transparent = false;
               mat.opacity = 1.0;
@@ -587,12 +625,21 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       isDraggingRef.current = true;
     }
     previousMousePositionRef.current = { x: e.clientX, y: e.clientY };
+    dragStartPosRef.current = { x: e.clientX, y: e.clientY };
+    hasDraggedFarRef.current = false;
+    try {
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {}
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
     const deltaX = e.clientX - previousMousePositionRef.current.x;
     const deltaY = e.clientY - previousMousePositionRef.current.y;
     previousMousePositionRef.current = { x: e.clientX, y: e.clientY };
+
+    if (Math.hypot(e.clientX - dragStartPosRef.current.x, e.clientY - dragStartPosRef.current.y) > 6) {
+      hasDraggedFarRef.current = true;
+    }
 
     if (isDraggingRef.current) {
       cameraDesiredSphericalRef.current.theta -= deltaX * 0.0075;
@@ -611,9 +658,12 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     }
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent) => {
     isDraggingRef.current = false;
     isPanningRef.current = false;
+    try {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {}
   };
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -653,8 +703,68 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     touchStartDistRef.current = null;
   };
 
-  // Click Raycasting
+  // Direct Button Camera Controls
+  const handleRotateLeft = () => {
+    cameraDesiredSphericalRef.current.theta += 0.35;
+  };
+  const handleRotateRight = () => {
+    cameraDesiredSphericalRef.current.theta -= 0.35;
+  };
+  const handleTiltUp = () => {
+    cameraDesiredSphericalRef.current.phi = THREE.MathUtils.clamp(
+      cameraDesiredSphericalRef.current.phi - 0.25,
+      0.08,
+      Math.PI - 0.08
+    );
+  };
+  const handleTiltDown = () => {
+    cameraDesiredSphericalRef.current.phi = THREE.MathUtils.clamp(
+      cameraDesiredSphericalRef.current.phi + 0.25,
+      0.08,
+      Math.PI - 0.08
+    );
+  };
+  const handleZoomIn = () => {
+    cameraDesiredSphericalRef.current.radius = THREE.MathUtils.clamp(
+      cameraDesiredSphericalRef.current.radius - 1.8,
+      1.2,
+      25.0
+    );
+  };
+  const handleZoomOut = () => {
+    cameraDesiredSphericalRef.current.radius = THREE.MathUtils.clamp(
+      cameraDesiredSphericalRef.current.radius + 1.8,
+      1.2,
+      25.0
+    );
+  };
+  const handleResetCamera = () => {
+    cameraDesiredSphericalRef.current = { radius: 10.5, theta: 0, phi: Math.PI / 2 };
+    cameraDesiredTargetRef.current.set(0, 0, 0);
+  };
+  const handlePreset = (view: 'front' | 'back' | 'left' | 'right' | 'top') => {
+    if (view === 'front') {
+      cameraDesiredSphericalRef.current.theta = 0;
+      cameraDesiredSphericalRef.current.phi = Math.PI / 2;
+    } else if (view === 'back') {
+      cameraDesiredSphericalRef.current.theta = Math.PI;
+      cameraDesiredSphericalRef.current.phi = Math.PI / 2;
+    } else if (view === 'left') {
+      cameraDesiredSphericalRef.current.theta = Math.PI / 2;
+      cameraDesiredSphericalRef.current.phi = Math.PI / 2;
+    } else if (view === 'right') {
+      cameraDesiredSphericalRef.current.theta = -Math.PI / 2;
+      cameraDesiredSphericalRef.current.phi = Math.PI / 2;
+    } else if (view === 'top') {
+      cameraDesiredSphericalRef.current.phi = 0.08;
+    }
+  };
+
+  // Click Raycasting (Protected against accidental trigger after rotation drag)
   const handleClick = (e: React.MouseEvent) => {
+    if (hasDraggedFarRef.current) {
+      return;
+    }
     if (!containerRef.current || !cameraRef.current || !anatomyMasterGroupRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const mouse = new THREE.Vector2(
@@ -899,6 +1009,139 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
           </div>
         </div>
       )}
+
+      {/* Floating 3D Medical Camera Controls Widget */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          zIndex: 45,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 6,
+          background: 'rgba(11, 17, 32, 0.88)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.16)',
+          borderRadius: 14,
+          padding: '8px 10px',
+          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.65)',
+          userSelect: 'none'
+        }}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <div style={{ fontSize: '0.66rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          3D View Controls
+        </div>
+
+        {/* Orbit D-Pad */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 28px)', gridTemplateRows: 'repeat(3, 28px)', gap: 3, alignItems: 'center', justifyItems: 'center' }}>
+          <div />
+          <button
+            type="button"
+            onClick={handleTiltUp}
+            title="Tilt Camera Up"
+            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <ChevronUp size={15} />
+          </button>
+          <div />
+
+          <button
+            type="button"
+            onClick={handleRotateLeft}
+            title="Rotate Left"
+            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <ChevronLeft size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={handleResetCamera}
+            title="Reset to Neutral Front View"
+            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <Compass size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={handleRotateRight}
+            title="Rotate Right"
+            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <ChevronRight size={15} />
+          </button>
+
+          <div />
+          <button
+            type="button"
+            onClick={handleTiltDown}
+            title="Tilt Camera Down"
+            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+          >
+            <ChevronDown size={15} />
+          </button>
+          <div />
+        </div>
+
+        {/* Zoom & Auto-Spin Action Strip */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, width: '100%', justifyContent: 'center' }}>
+          <button
+            type="button"
+            onClick={handleZoomIn}
+            title="Zoom In (+)"
+            style={{ flex: 1, height: 26, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2, fontSize: '0.68rem', fontWeight: 700 }}
+          >
+            <ZoomIn size={12} />
+            <span>+</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleZoomOut}
+            title="Zoom Out (−)"
+            style={{ flex: 1, height: 26, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2, fontSize: '0.68rem', fontWeight: 700 }}
+          >
+            <ZoomOut size={12} />
+            <span>−</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAutoRotating(!isAutoRotating)}
+            title={isAutoRotating ? 'Pause 360° Auto-Spin' : 'Start 360° Auto-Spin'}
+            style={{ height: 26, padding: '0 8px', borderRadius: 6, background: isAutoRotating ? '#10B981' : 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: isAutoRotating ? '#000000' : '#CBD5E1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 4, fontSize: '0.68rem', fontWeight: 800 }}
+          >
+            {isAutoRotating ? <Pause size={11} /> : <Play size={11} />}
+            <span>Spin</span>
+          </button>
+        </div>
+
+        {/* Quick Orientation Presets */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 3, marginTop: 2, width: '100%' }}>
+          {(['front', 'back', 'left', 'right', 'top'] as const).map((view) => (
+            <button
+              key={view}
+              type="button"
+              onClick={() => handlePreset(view)}
+              style={{
+                padding: '3px 0',
+                borderRadius: 4,
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: '#CBD5E1',
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                textTransform: 'capitalize',
+                cursor: 'pointer'
+              }}
+              title={`Preset view: ${view}`}
+            >
+              {view[0].toUpperCase() + view.slice(1, 3)}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };
@@ -907,11 +1150,12 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
 // MODEL LOADER PIPELINE: ASSEMBLES REAL VISIBLE HUMAN & Z-ANATOMY MESHES
 // ============================================================================
 
+
 function loadAllAnatomicalModels(
   loader: GLTFLoader,
   masterGroup: THREE.Group,
   meshMap: Map<string, THREE.Mesh[]>,
-  _separableOrgans: SeparableOrgan[],
+  separableOrgans: SeparableOrgan[],
   heartMeshRef: React.MutableRefObject<THREE.Object3D | null>,
   lungMeshesRef: React.MutableRefObject<THREE.Object3D[]>,
   onProgress: (percent: number, message: string) => void
@@ -940,30 +1184,30 @@ function loadAllAnatomicalModels(
     metalness?: number;
     clearcoat?: number;
     opacity?: number;
+    separatedOffset?: [number, number, number];
   }[] = [
     {
       file: 'skin.glb',
       id: 'skin',
-      name: 'Human Anatomical Mannequin (Surface)',
+      name: 'Human Body Surface (Skin & Involucre)',
       system: 'muscular',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xDCE1E6, // Neutral scientific matte alabaster
-      roughness: 0.65,
-      clearcoat: 0.05,
-      opacity: 0.85
+      materialColor: 0xDE9F7E, // Realistic natural skin tone
+      roughness: 0.52,
+      clearcoat: 0.1,
+      opacity: 0.45
     },
     {
       file: 'skeleton.glb',
       id: 'skeleton',
       name: 'Human Skeletal System',
       system: 'skeletal',
-      scale: 0.0465, // Calibrated so ribcage, sternum, and skull stay strictly INSIDE the mannequin
-      position: [0, -4.08, -0.16], // Calibrated vertically and in depth with thoracic cavity
-      materialColor: 0xF5EFEB, // Clean medical ivory bone
-      roughness: 0.42,
-      metalness: 0.0,
-      clearcoat: 0.08
+      scale: 0.045, // 175cm -> meters * 4.5
+      position: [0, -3.80, 0],
+      materialColor: 0xFBF8F0, // Warm natural ivory bone
+      roughness: 0.38,
+      metalness: 0.02
     },
     {
       file: 'heart.glb',
@@ -972,20 +1216,21 @@ function loadAllAnatomicalModels(
       system: 'cardiovascular',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xB91C1C, // Myocardium ruby crimson
-      roughness: 0.28,
-      clearcoat: 0.65
+      materialColor: 0xBE123C, // Myocardium crimson
+      roughness: 0.30,
+      clearcoat: 0.5,
+      separatedOffset: [-0.4, 0, 1.5]
     },
     {
       file: 'lung.glb',
       id: 'lungs',
-      name: 'Lungs & Tracheobronchial Tree',
+      name: 'Lungs & Bronchial Tree',
       system: 'respiratory',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xE07A8B, // Pulmonary rose blush
-      roughness: 0.46,
-      clearcoat: 0.25
+      materialColor: 0xDC828F, // Pulmonary rose-pink
+      roughness: 0.44,
+      separatedOffset: [0.8, 0, 0.6]
     },
     {
       file: 'brain.glb',
@@ -994,20 +1239,21 @@ function loadAllAnatomicalModels(
       system: 'nervous',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xDEC5BA, // Cerebral ivory-pink
+      materialColor: 0xE2C7B8, // Cerebral ivory-pink
       roughness: 0.40,
-      clearcoat: 0.35
+      separatedOffset: [0, 0.4, 0.6]
     },
     {
       file: 'liver.glb',
       id: 'liver',
-      name: 'Liver (Hepatic Lobes)',
+      name: 'Liver',
       system: 'digestive',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0x7F1D1D, // Hepatic burgundy
-      roughness: 0.32,
-      clearcoat: 0.55
+      materialColor: 0x881337, // Hepatic burgundy
+      roughness: 0.35,
+      clearcoat: 0.3,
+      separatedOffset: [-0.8, 0, 1.2]
     },
     {
       file: 'kidney-l.glb',
@@ -1016,9 +1262,10 @@ function loadAllAnatomicalModels(
       system: 'urinary',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0x78350F, // Renal mahogany
-      roughness: 0.34,
-      clearcoat: 0.50
+      materialColor: 0x831843, // Renal mahogany
+      roughness: 0.36,
+      clearcoat: 0.3,
+      separatedOffset: [0.6, 0, 0.9]
     },
     {
       file: 'kidney-r.glb',
@@ -1027,9 +1274,10 @@ function loadAllAnatomicalModels(
       system: 'urinary',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0x78350F,
-      roughness: 0.34,
-      clearcoat: 0.50
+      materialColor: 0x831843,
+      roughness: 0.36,
+      clearcoat: 0.3,
+      separatedOffset: [-0.6, 0, 0.9]
     },
     {
       file: 'gut-large.glb',
@@ -1038,9 +1286,9 @@ function loadAllAnatomicalModels(
       system: 'digestive',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xB45309, // Enteric terracotta tan
-      roughness: 0.40,
-      clearcoat: 0.45
+      materialColor: 0xB45309,
+      roughness: 0.44,
+      separatedOffset: [0, -0.2, 1.4]
     },
     {
       file: 'gut-small.glb',
@@ -1049,9 +1297,9 @@ function loadAllAnatomicalModels(
       system: 'digestive',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xD97706, // Enteric golden amber
-      roughness: 0.42,
-      clearcoat: 0.50
+      materialColor: 0xD97706,
+      roughness: 0.44,
+      separatedOffset: [0, -0.2, 1.2]
     },
     {
       file: 'vasculature.glb',
@@ -1060,9 +1308,9 @@ function loadAllAnatomicalModels(
       system: 'cardiovascular',
       scale: 4.5,
       position: [0, 0, 0],
-      materialColor: 0xDC2626, // Arterial ruby
-      roughness: 0.32,
-      clearcoat: 0.60
+      materialColor: 0xEF4444, // Arterial ruby
+      roughness: 0.35,
+      metalness: 0.1
     }
   ];
 
@@ -1084,35 +1332,31 @@ function loadAllAnatomicalModels(
           lungMeshesRef.current.push(root);
         }
 
-        // Traverse meshes and assign medical PBR materials
+        // Register separable organ for exploded view
+        if (spec.separatedOffset) {
+          separableOrgans.push({
+            object: root,
+            naturalPosition: root.position.clone(),
+            separatedOffset: new THREE.Vector3(...spec.separatedOffset)
+          });
+        }
+
+        // Collect existing meshes first into a static array to prevent mutation during traversal
+        const meshes: THREE.Mesh[] = [];
         root.traverse((child) => {
-
           if ((child as THREE.Mesh).isMesh) {
-            const mesh = child as THREE.Mesh;
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
+            meshes.push(child as THREE.Mesh);
+          }
+        });
 
-            const name = (mesh.name || spec.name).toLowerCase();
+        // Traverse collected meshes and assign medical PBR materials
+        meshes.forEach((mesh) => {
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
 
-            // 1. Neutral Scientific Anatomical Mannequin Material (Skin boundary)
-            if (spec.id === 'skin') {
-              mesh.geometry.computeVertexNormals();
-              const skinMaterial = new THREE.MeshPhysicalMaterial({
-                color: 0xDCE1E6, // Clean matte alabaster scientific mannequin
-                roughness: 0.65,
-                metalness: 0.0,
-                clearcoat: 0.05,
-                clearcoatRoughness: 0.5,
-                emissive: new THREE.Color(0x0A0F1D),
-                emissiveIntensity: 0.03,
-                transparent: true,
-                opacity: spec.opacity ?? 0.85,
-                depthWrite: (spec.opacity ?? 0.85) >= 0.95
-              });
-              mesh.material = skinMaterial;
-              registerMesh('skin', mesh, spec.system, mesh.name || spec.name);
-              return;
-            }
+          const name = (mesh.name || spec.name).toLowerCase();
+
+
 
             // 2. High-precision anatomical structure mappings
             let color = spec.materialColor;
@@ -1245,7 +1489,6 @@ function loadAllAnatomicalModels(
             });
 
             mesh.material = pbrMaterial;
-          }
         });
 
         masterGroup.add(root);

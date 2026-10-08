@@ -1,8 +1,28 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import * as THREE from 'three';
-import { Compass } from 'lucide-react';
+import {
+  Compass,
+  ZoomIn,
+  ZoomOut,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 
-export const VectorPlane3DLab: React.FC = () => {
+export interface VectorPlane3DLabProps {
+  params?: Record<string, number>;
+  isPlaying?: boolean;
+  speed?: number;
+  onParamChange?: (id: string, value: number) => void;
+  onTelemetryUpdate?: (telemetry: Record<string, string>) => void;
+}
+
+export const VectorPlane3DLab: React.FC<VectorPlane3DLabProps> = ({
+  params,
+  onParamChange,
+  onTelemetryUpdate
+}) => {
   // Vector u components (Cyan)
   const [ux, setUx] = useState(3);
   const [uy, setUy] = useState(2);
@@ -12,6 +32,17 @@ export const VectorPlane3DLab: React.FC = () => {
   const [vx, setVx] = useState(1);
   const [vy, setVy] = useState(3);
   const [vz, setVz] = useState(-2);
+
+  // Synchronize state with incoming external params from the control settings panel
+  useEffect(() => {
+    if (!params) return;
+    if (params.ux !== undefined && params.ux !== ux) setUx(params.ux);
+    if (params.uy !== undefined && params.uy !== uy) setUy(params.uy);
+    if (params.uz !== undefined && params.uz !== uz) setUz(params.uz);
+    if (params.vx !== undefined && params.vx !== vx) setVx(params.vx);
+    if (params.vy !== undefined && params.vy !== vy) setVy(params.vy);
+    if (params.vz !== undefined && params.vz !== vz) setVz(params.vz);
+  }, [params]);
 
   // Toggles
   const [showSum, setShowSum] = useState(true);
@@ -23,6 +54,13 @@ export const VectorPlane3DLab: React.FC = () => {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const groupRef = useRef<THREE.Group | null>(null);
+
+  // Camera state for both interactive orbit and button controls
+  const camStateRef = useRef({
+    radius: 15,
+    theta: 0.8,
+    phi: 0.7
+  });
 
   // Mathematical calculations
   const mathResults = useMemo(() => {
@@ -65,6 +103,15 @@ export const VectorPlane3DLab: React.FC = () => {
       proj: { x: Math.round(projX * 10) / 10, y: Math.round(projY * 10) / 10, z: Math.round(projZ * 10) / 10 }
     };
   }, [ux, uy, uz, vx, vy, vz]);
+
+  // Telemetry reporting to parent modal
+  useEffect(() => {
+    onTelemetryUpdate?.({
+      dot: `${mathResults.dot}`,
+      theta: `${mathResults.thetaDeg}°`,
+      cross: `(${mathResults.cross.x}, ${mathResults.cross.y}, ${mathResults.cross.z})`
+    });
+  }, [mathResults, onTelemetryUpdate]);
 
   // Setup Three.js scene
   useEffect(() => {
@@ -111,14 +158,12 @@ export const VectorPlane3DLab: React.FC = () => {
     let isPointerDown = false;
     let prevX = 0;
     let prevY = 0;
-    let camRadius = 15;
-    let camTheta = 0.8;
-    let camPhi = 0.7;
 
     const updateCamPos = () => {
-      camera.position.x = camRadius * Math.sin(camPhi) * Math.sin(camTheta);
-      camera.position.y = camRadius * Math.cos(camPhi);
-      camera.position.z = camRadius * Math.sin(camPhi) * Math.cos(camTheta);
+      const { radius, theta, phi } = camStateRef.current;
+      camera.position.x = radius * Math.sin(phi) * Math.sin(theta);
+      camera.position.y = radius * Math.cos(phi);
+      camera.position.z = radius * Math.sin(phi) * Math.cos(theta);
       camera.lookAt(0, 0, 0);
     };
     updateCamPos();
@@ -133,8 +178,8 @@ export const VectorPlane3DLab: React.FC = () => {
       if (!isPointerDown) return;
       const dx = e.clientX - prevX;
       const dy = e.clientY - prevY;
-      camTheta -= dx * 0.008;
-      camPhi = Math.max(0.1, Math.min(Math.PI - 0.1, camPhi - dy * 0.008));
+      camStateRef.current.theta -= dx * 0.008;
+      camStateRef.current.phi = Math.max(0.1, Math.min(Math.PI - 0.1, camStateRef.current.phi - dy * 0.008));
       prevX = e.clientX;
       prevY = e.clientY;
       updateCamPos();
@@ -144,18 +189,43 @@ export const VectorPlane3DLab: React.FC = () => {
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      camRadius = Math.max(5, Math.min(30, camRadius + e.deltaY * 0.015));
+      camStateRef.current.radius = Math.max(5, Math.min(30, camStateRef.current.radius + e.deltaY * 0.015));
       updateCamPos();
     };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        isPointerDown = true;
+        prevX = e.touches[0].clientX;
+        prevY = e.touches[0].clientY;
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isPointerDown || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - prevX;
+      const dy = e.touches[0].clientY - prevY;
+      camStateRef.current.theta -= dx * 0.008;
+      camStateRef.current.phi = Math.max(0.1, Math.min(Math.PI - 0.1, camStateRef.current.phi - dy * 0.008));
+      prevX = e.touches[0].clientX;
+      prevY = e.touches[0].clientY;
+      updateCamPos();
+    };
+
+    const onTouchEnd = () => { isPointerDown = false; };
 
     renderer.domElement.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
     renderer.domElement.addEventListener('wheel', onWheel, { passive: false });
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd);
 
     // Render loop
     let animId: number;
     const animate = () => {
+      updateCamPos();
       renderer.render(scene, camera);
       animId = requestAnimationFrame(animate);
     };
@@ -178,6 +248,9 @@ export const VectorPlane3DLab: React.FC = () => {
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
       renderer.domElement.removeEventListener('wheel', onWheel);
+      container.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
       renderer.dispose();
     };
   }, []);
@@ -405,15 +478,48 @@ export const VectorPlane3DLab: React.FC = () => {
             <div style={{ display: 'flex', gap: 6 }}>
               <div style={{ flex: 1 }}>
                 <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>X: {ux}</span>
-                <input type="range" min={-5} max={5} value={ux} onChange={e => setUx(Number(e.target.value))} style={{ width: '100%', accentColor: '#06b6d4' }} />
+                <input
+                  type="range"
+                  min={-5}
+                  max={5}
+                  value={ux}
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    setUx(val);
+                    onParamChange?.('ux', val);
+                  }}
+                  style={{ width: '100%', accentColor: '#06b6d4' }}
+                />
               </div>
               <div style={{ flex: 1 }}>
                 <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Y: {uy}</span>
-                <input type="range" min={-5} max={5} value={uy} onChange={e => setUy(Number(e.target.value))} style={{ width: '100%', accentColor: '#06b6d4' }} />
+                <input
+                  type="range"
+                  min={-5}
+                  max={5}
+                  value={uy}
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    setUy(val);
+                    onParamChange?.('uy', val);
+                  }}
+                  style={{ width: '100%', accentColor: '#06b6d4' }}
+                />
               </div>
               <div style={{ flex: 1 }}>
                 <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Z: {uz}</span>
-                <input type="range" min={-5} max={5} value={uz} onChange={e => setUz(Number(e.target.value))} style={{ width: '100%', accentColor: '#06b6d4' }} />
+                <input
+                  type="range"
+                  min={-5}
+                  max={5}
+                  value={uz}
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    setUz(val);
+                    onParamChange?.('uz', val);
+                  }}
+                  style={{ width: '100%', accentColor: '#06b6d4' }}
+                />
               </div>
             </div>
           </div>
@@ -426,15 +532,48 @@ export const VectorPlane3DLab: React.FC = () => {
             <div style={{ display: 'flex', gap: 6 }}>
               <div style={{ flex: 1 }}>
                 <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>X: {vx}</span>
-                <input type="range" min={-5} max={5} value={vx} onChange={e => setVx(Number(e.target.value))} style={{ width: '100%', accentColor: '#f97316' }} />
+                <input
+                  type="range"
+                  min={-5}
+                  max={5}
+                  value={vx}
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    setVx(val);
+                    onParamChange?.('vx', val);
+                  }}
+                  style={{ width: '100%', accentColor: '#f97316' }}
+                />
               </div>
               <div style={{ flex: 1 }}>
                 <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Y: {vy}</span>
-                <input type="range" min={-5} max={5} value={vy} onChange={e => setVy(Number(e.target.value))} style={{ width: '100%', accentColor: '#f97316' }} />
+                <input
+                  type="range"
+                  min={-5}
+                  max={5}
+                  value={vy}
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    setVy(val);
+                    onParamChange?.('vy', val);
+                  }}
+                  style={{ width: '100%', accentColor: '#f97316' }}
+                />
               </div>
               <div style={{ flex: 1 }}>
                 <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Z: {vz}</span>
-                <input type="range" min={-5} max={5} value={vz} onChange={e => setVz(Number(e.target.value))} style={{ width: '100%', accentColor: '#f97316' }} />
+                <input
+                  type="range"
+                  min={-5}
+                  max={5}
+                  value={vz}
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    setVz(val);
+                    onParamChange?.('vz', val);
+                  }}
+                  style={{ width: '100%', accentColor: '#f97316' }}
+                />
               </div>
             </div>
           </div>
@@ -487,6 +626,197 @@ export const VectorPlane3DLab: React.FC = () => {
           style={{ width: '100%', height: '100%', cursor: 'grab' }}
           title="Drag to orbit in 3D • Scroll to zoom"
         />
+
+        {/* Floating 3D Camera Controls Widget */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 14,
+            right: 14,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            background: 'rgba(15, 23, 42, 0.90)',
+            backdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            borderRadius: 10,
+            padding: '8px 10px',
+            zIndex: 40,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.45)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94a3b8', letterSpacing: '0.04em' }}>
+              3D VIEW
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                camStateRef.current.radius = 15;
+                camStateRef.current.theta = 0.8;
+                camStateRef.current.phi = 0.7;
+              }}
+              title="Reset View"
+              style={{
+                background: 'rgba(255,255,255,0.08)',
+                border: 'none',
+                borderRadius: 4,
+                padding: '2px 5px',
+                color: '#38bdf8',
+                cursor: 'pointer',
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3
+              }}
+            >
+              <Compass size={11} />
+              Reset
+            </button>
+          </div>
+
+          {/* D-Pad Orbit Controls */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 26px)', gap: 3, justifyContent: 'center' }}>
+            <div />
+            <button
+              type="button"
+              onClick={() => { camStateRef.current.phi = Math.max(0.15, camStateRef.current.phi - 0.2); }}
+              title="Tilt Up"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+            >
+              <ChevronUp size={14} />
+            </button>
+            <div />
+
+            <button
+              type="button"
+              onClick={() => { camStateRef.current.theta += 0.35; }}
+              title="Rotate Left"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <div />
+            <button
+              type="button"
+              onClick={() => { camStateRef.current.theta -= 0.35; }}
+              title="Rotate Right"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+            >
+              <ChevronRight size={14} />
+            </button>
+
+            <div />
+            <button
+              type="button"
+              onClick={() => { camStateRef.current.phi = Math.min(Math.PI - 0.15, camStateRef.current.phi + 0.2); }}
+              title="Tilt Down"
+              style={{
+                width: 26,
+                height: 26,
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: 0
+              }}
+            >
+              <ChevronDown size={14} />
+            </button>
+            <div />
+          </div>
+
+          {/* Zoom Buttons */}
+          <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
+            <button
+              type="button"
+              onClick={() => { camStateRef.current.radius = Math.max(5, camStateRef.current.radius - 2.5); }}
+              title="Zoom In"
+              style={{
+                flex: 1,
+                padding: '4px 6px',
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                fontSize: '0.68rem',
+                fontWeight: 600
+              }}
+            >
+              <ZoomIn size={12} />
+              In
+            </button>
+            <button
+              type="button"
+              onClick={() => { camStateRef.current.radius = Math.min(35, camStateRef.current.radius + 2.5); }}
+              title="Zoom Out"
+              style={{
+                flex: 1,
+                padding: '4px 6px',
+                borderRadius: 5,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: '#f8fafc',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                fontSize: '0.68rem',
+                fontWeight: 600
+              }}
+            >
+              <ZoomOut size={12} />
+              Out
+            </button>
+          </div>
+        </div>
 
         {/* 3D Navigation Tip */}
         <div

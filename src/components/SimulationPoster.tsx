@@ -481,6 +481,7 @@ export const SimulationPoster: React.FC<SimulationPosterProps> = ({ topicId, sub
       );
 
     // 13. Sequences & Series (AP & GP Staircase)
+    case 'sequences':
     case 'sequences_series':
       return (
         <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
@@ -531,6 +532,7 @@ export const SimulationPoster: React.FC<SimulationPosterProps> = ({ topicId, sub
       );
 
     // 14. Units & Measurements (Vernier Caliper & Error)
+    case 'units_dimensions':
     case 'units_measurements':
       return (
         <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
@@ -773,6 +775,700 @@ export const SimulationPoster: React.FC<SimulationPosterProps> = ({ topicId, sub
           <path d="M 205 135 L 240 135 Q 260 135 270 110 Q 275 106 280 138 Q 285 142 295 135 L 340 135" fill="none" stroke="#FACC15" strokeWidth="2" />
           <circle cx="273" cy="108" r="2.5" fill="#EF4444" />
           <text x="290" y="114" fontSize="7" fontWeight="800" fill="#EF4444">+30 mV</text>
+        </svg>
+      );
+
+    // 19. Cardiac Cycle & Hemodynamics
+    case 'cardiac_hemodynamics':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#FFF1F2" />
+          {/* Arterial Pressure Curve (120/80 mmHg Wiggers profile) */}
+          <path d="M 30 110 Q 80 110 95 90 Q 110 40 130 35 Q 150 40 160 65 Q 165 60 170 70 Q 200 95 240 105 Q 260 90 275 40 Q 295 35 325 70" fill="none" stroke="#E11D48" strokeWidth="3" />
+          {/* Ventricular Volume Curve */}
+          <path d="M 30 75 Q 70 70 95 72 L 130 125 Q 170 128 200 120 L 240 75 Q 270 72 325 72" fill="none" stroke="#0284C7" strokeWidth="2" strokeDasharray="4 3" />
+          {/* ECG Rhythm line underneath */}
+          <path d="M 30 142 L 70 142 L 76 138 L 82 142 L 95 142 L 98 147 L 103 120 L 108 152 L 112 142 L 126 142 Q 138 132 148 142 L 235 142 L 238 147 L 243 120 L 248 152 L 252 142 L 330 142" fill="none" stroke="#10B981" strokeWidth="1.8" />
+          {/* Systole / Diastole Marker */}
+          <rect x="95" y="16" width="75" height="18" rx="4" fill="#FFE4E6" stroke="#FDA4AF" strokeWidth="1" />
+          <text x="132" y="29" fontSize="8" fontWeight="800" fill="#BE123C" textAnchor="middle">SYSTOLE: 120 mmHg</text>
+          <text x="325" y="30" fontSize="9" fontWeight="700" fill="#E11D48" textAnchor="end">Aortic Pressure</text>
+          <text x="325" y="146" fontSize="8" fontWeight="700" fill="#059669" textAnchor="end">ECG P-Q-R-S-T</text>
+        </svg>
+      );
+
+    // 20. Cellular Osmosis & Tonicity
+    case 'cellular_osmosis':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#F0FDFA" />
+          {/* U-Tube Vessel */}
+          <path d="M 70 30 L 70 115 A 40 40 0 0 0 150 115 L 150 30" fill="none" stroke="#0F766E" strokeWidth="4" />
+          <path d="M 210 30 L 210 115 A 40 40 0 0 0 290 115 L 290 30" fill="none" stroke="#0F766E" strokeWidth="4" />
+          {/* Semi-permeable Membrane Line */}
+          <line x1="110" y1="80" x2="110" y2="145" stroke="#F59E0B" strokeWidth="3" strokeDasharray="3 3" />
+          <line x1="250" y1="80" x2="250" y2="145" stroke="#F59E0B" strokeWidth="3" strokeDasharray="3 3" />
+          {/* Fluid levels (osmotic hydrostatic column Δh) */}
+          <rect x="72" y="85" width="36" height="45" fill="#38BDF8" opacity="0.45" />
+          <rect x="112" y="55" width="36" height="75" fill="#0284C7" opacity="0.65" />
+          {/* Solute Particles (Sucrose / Ions) */}
+          {[65, 80, 95, 110].map((y, i) => (
+            <circle key={i} cx={122 + (i % 2) * 12} cy={y} r="3" fill="#D97706" />
+          ))}
+          {/* Water flux arrow */}
+          <line x1="90" y1="120" x2="128" y2="120" stroke="#0284C7" strokeWidth="2.5" strokeLinecap="round" />
+          <polygon points="132,120 126,116 126,124" fill="#0284C7" />
+          <text x="180" y="148" fontSize="9" fontWeight="700" fill="#0F766E" textAnchor="middle">Semi-Permeable Membrane (ΔΨ Flux)</text>
+          {/* Red Blood Cell Biconcave Inset */}
+          <ellipse cx="250" cy="65" rx="22" ry="14" fill="#EF4444" stroke="#DC2626" strokeWidth="1.5" />
+          <ellipse cx="250" cy="65" rx="10" ry="6" fill="#F87171" />
+          <text x="250" y="98" fontSize="8" fontWeight="700" fill="#B91C1C" textAnchor="middle">Isotonic (300 mOsm)</text>
+        </svg>
+      );
+
+    // 21. Molecular Geometry & VSEPR
+    case 'molecular_geometry':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#FFFBEB" />
+          {/* Central Atom (Carbon / Nitrogen) */}
+          <circle cx="180" cy="80" r="18" fill="#1E293B" stroke="#475569" strokeWidth="2" />
+          <text x="180" y="84" fontSize="11" fontWeight="800" fill="#F8FAFC" textAnchor="middle">C</text>
+          {/* Bonds (Tetrahedral 109.5 deg) */}
+          {/* Top Bond */}
+          <line x1="180" y1="62" x2="180" y2="28" stroke="#64748B" strokeWidth="5" strokeLinecap="round" />
+          <circle cx="180" cy="24" r="11" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="2" />
+          <text x="180" y="28" fontSize="9" fontWeight="700" fill="#334155" textAnchor="middle">H</text>
+          {/* Lower Left Bond */}
+          <line x1="168" y1="92" x2="135" y2="128" stroke="#64748B" strokeWidth="5" strokeLinecap="round" />
+          <circle cx="128" cy="134" r="11" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="2" />
+          <text x="128" y="138" fontSize="9" fontWeight="700" fill="#334155" textAnchor="middle">H</text>
+          {/* Lower Right Bond */}
+          <line x1="192" y1="92" x2="225" y2="128" stroke="#64748B" strokeWidth="5" strokeLinecap="round" />
+          <circle cx="232" cy="134" r="11" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="2" />
+          <text x="232" y="138" fontSize="9" fontWeight="700" fill="#334155" textAnchor="middle">H</text>
+          {/* Wedge Bond forward */}
+          <polygon points="180,88 172,108 198,102" fill="#334155" />
+          <circle cx="204" cy="106" r="10" fill="#E2E8F0" stroke="#94A3B8" strokeWidth="1.5" />
+          <text x="204" y="110" fontSize="8" fontWeight="700" fill="#334155" textAnchor="middle">H</text>
+          {/* Bond Angle Arc */}
+          <path d="M 172 45 A 35 35 0 0 0 148 78" fill="none" stroke="#D97706" strokeWidth="1.8" strokeDasharray="3 2" />
+          <text x="135" y="58" fontSize="9" fontWeight="800" fill="#B45309">109.5°</text>
+          <text x="180" y="152" fontSize="9" fontWeight="700" fill="#78350F" textAnchor="middle">Tetrahedral VSEPR Geometry (AX₄)</text>
+        </svg>
+      );
+
+    // 22. Reaction Kinetics & Equilibrium
+    case 'reaction_kinetics':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#FFF7ED" />
+          {/* Energy Coordinate Axes */}
+          <line x1="40" y1="135" x2="330" y2="135" stroke="#94A3B8" strokeWidth="2" />
+          <line x1="40" y1="135" x2="40" y2="25" stroke="#94A3B8" strokeWidth="2" />
+          {/* Uncatalyzed Potential Energy Curve */}
+          <path d="M 40 100 L 90 100 Q 140 100 170 35 Q 200 100 250 120 L 320 120" fill="none" stroke="#EA580C" strokeWidth="3" />
+          {/* Catalyzed Curve (Lower activation barrier) */}
+          <path d="M 90 100 Q 145 100 170 65 Q 195 100 250 120" fill="none" stroke="#0D9488" strokeWidth="2" strokeDasharray="5 3" />
+          {/* Reactants and Products markers */}
+          <text x="55" y="94" fontSize="9" fontWeight="800" fill="#C2410C">Reactants (R)</text>
+          <text x="270" y="114" fontSize="9" fontWeight="800" fill="#C2410C">Products (P)</text>
+          {/* Activation Energy Ea Arrow */}
+          <line x1="170" y1="100" x2="170" y2="38" stroke="#D97706" strokeWidth="1.5" />
+          <polygon points="170,35 167,42 173,42" fill="#D97706" />
+          <text x="176" y="52" fontSize="9" fontWeight="800" fill="#B45309">E_a (Barrier)</text>
+          <text x="180" y="152" fontSize="9" fontWeight="700" fill="#64748B" textAnchor="middle">
+            Arrhenius Rate Law: k = A · e^(-E_a / RT)
+          </text>
+        </svg>
+      );
+
+    // 23. Electromagnetism & Magnetic Fields
+    case 'electromagnetism':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#F8FAFC" />
+          {/* Solenoid Core Cylinder */}
+          <rect x="80" y="65" width="200" height="30" rx="4" fill="#CBD5E1" stroke="#64748B" strokeWidth="1.5" />
+          {/* Copper Coil Helical Windings */}
+          {[95, 120, 145, 170, 195, 220, 245].map((x, i) => (
+            <ellipse key={i} cx={x} cy="80" rx="6" ry="24" fill="none" stroke="#EA580C" strokeWidth="3" />
+          ))}
+          {/* Magnetic Field Flux Loops (Lines of Force B) */}
+          <path d="M 60 70 C 20 40, 20 120, 60 90" fill="none" stroke="#2563EB" strokeWidth="2" strokeDasharray="4 3" />
+          <path d="M 300 70 C 340 40, 340 120, 300 90" fill="none" stroke="#2563EB" strokeWidth="2" strokeDasharray="4 3" />
+          <line x1="40" y1="80" x2="320" y2="80" stroke="#2563EB" strokeWidth="2.5" />
+          <polygon points="325,80 317,76 317,84" fill="#2563EB" />
+          {/* Poles N and S */}
+          <text x="70" y="84" fontSize="12" fontWeight="900" fill="#DC2626" textAnchor="middle">S</text>
+          <text x="290" y="84" fontSize="12" fontWeight="900" fill="#2563EB" textAnchor="middle">N</text>
+          <text x="180" y="148" fontSize="9" fontWeight="700" fill="#334155" textAnchor="middle">
+            Ampère-Biot-Savart Law: B = μ₀ n I
+          </text>
+        </svg>
+      );
+
+    // 24. Wave Optics & Interference
+    case 'wave_optics':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#090D16" />
+          {/* Coherent Laser Source */}
+          <rect x="20" y="74" width="30" height="12" rx="2" fill="#10B981" />
+          <line x1="50" y1="80" x2="110" y2="80" stroke="#34D399" strokeWidth="2.5" />
+          {/* Double Slit Barrier */}
+          <line x1="110" y1="20" x2="110" y2="68" stroke="#64748B" strokeWidth="4" />
+          <line x1="110" y1="74" x2="110" y2="86" stroke="#64748B" strokeWidth="4" />
+          <line x1="110" y1="92" x2="110" y2="140" stroke="#64748B" strokeWidth="4" />
+          {/* Circular Ripples from each slit */}
+          {[20, 45, 75, 110, 150].map((r, i) => (
+            <path key={i} d={`M 110 ${71 - r} A ${r} ${r} 0 0 1 110 ${71 + r}`} fill="none" stroke="#10B981" strokeWidth="1" opacity={0.6 - i * 0.1} />
+          ))}
+          {[20, 45, 75, 110, 150].map((r, i) => (
+            <path key={i} d={`M 110 ${89 - r} A ${r} ${r} 0 0 1 110 ${89 + r}`} fill="none" stroke="#10B981" strokeWidth="1" opacity={0.6 - i * 0.1} />
+          ))}
+          {/* Detection Screen with Intensity Fringes */}
+          <rect x="300" y="20" width="8" height="120" fill="#334155" />
+          {[35, 55, 80, 105, 125].map((y, i) => (
+            <circle key={i} cx="304" cy={y} r={i === 2 ? 6 : 4} fill="#34D399" opacity={i === 2 ? 1 : 0.65} />
+          ))}
+          <text x="210" y="32" fontSize="9" fontWeight="700" fill="#34D399">Interference Fringes: β = λD/d</text>
+        </svg>
+      );
+
+    // 25. Vectors & 3D Coordinate Geometry
+    case 'vectors_3d':
+    case 'vector_3d_lab':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#F8FAFC" />
+          {/* 3D Coordinate Isometric Axes */}
+          {/* Z Axis (Up) */}
+          <line x1="180" y1="120" x2="180" y2="25" stroke="#64748B" strokeWidth="2" />
+          <polygon points="180,20 176,28 184,28" fill="#64748B" />
+          <text x="190" y="32" fontSize="9" fontWeight="800" fill="#475569">Z</text>
+          {/* X Axis (Diagonal Lower Left) */}
+          <line x1="180" y1="120" x2="90" y2="150" stroke="#64748B" strokeWidth="2" />
+          <polygon points="85,152 92,146 95,154" fill="#64748B" />
+          <text x="78" y="152" fontSize="9" fontWeight="800" fill="#475569">X</text>
+          {/* Y Axis (Diagonal Lower Right) */}
+          <line x1="180" y1="120" x2="280" y2="150" stroke="#64748B" strokeWidth="2" />
+          <polygon points="285,152 278,146 275,154" fill="#64748B" />
+          <text x="290" y="152" fontSize="9" fontWeight="800" fill="#475569">Y</text>
+          {/* Vector A (Blue) */}
+          <line x1="180" y1="120" x2="245" y2="60" stroke="#0077C8" strokeWidth="3" strokeLinecap="round" />
+          <polygon points="250,56 240,60 245,68" fill="#0077C8" />
+          <text x="256" y="60" fontSize="11" fontWeight="900" fill="#0077C8">A⃗</text>
+          {/* Vector B (Orange) */}
+          <line x1="180" y1="120" x2="125" y2="65" stroke="#EA580C" strokeWidth="3" strokeLinecap="round" />
+          <polygon points="120,62 125,70 132,65" fill="#EA580C" />
+          <text x="110" y="65" fontSize="11" fontWeight="900" fill="#EA580C">B⃗</text>
+          {/* Orthogonal projection box */}
+          <path d="M 245 60 L 245 95 L 180 120" fill="none" stroke="#0077C8" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
+          <text x="180" y="150" fontSize="9" fontWeight="700" fill="#0077C8" textAnchor="middle">
+            Cross Product: C⃗ = A⃗ × B⃗ (Right-Hand Rule)
+          </text>
+        </svg>
+      );
+
+    // 26. Calculus Riemann Integral
+    case 'calculus_riemann_lab':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#F5F3FF" />
+          {/* Axes */}
+          <line x1="40" y1="135" x2="330" y2="135" stroke="#94A3B8" strokeWidth="2" />
+          <line x1="40" y1="135" x2="40" y2="25" stroke="#94A3B8" strokeWidth="2" />
+          {/* Riemann Rectangles under f(x) */}
+          {[
+            { x: 60, w: 22, h: 32 },
+            { x: 82, w: 22, h: 48 },
+            { x: 104, w: 22, h: 68 },
+            { x: 126, w: 22, h: 86 },
+            { x: 148, w: 22, h: 96 },
+            { x: 170, w: 22, h: 98 },
+            { x: 192, w: 22, h: 92 },
+            { x: 214, w: 22, h: 78 },
+            { x: 236, w: 22, h: 58 },
+            { x: 258, w: 22, h: 36 }
+          ].map((r, i) => (
+            <rect
+              key={i}
+              x={r.x}
+              y={135 - r.h}
+              width={r.w}
+              height={r.h}
+              fill="#C4B5FD"
+              opacity="0.65"
+              stroke="#7C3AED"
+              strokeWidth="1.2"
+            />
+          ))}
+          {/* Smooth continuous curve f(x) */}
+          <path d="M 50 115 Q 165 18 290 120" fill="none" stroke="#6D28D9" strokeWidth="3" />
+          <text x="295" y="115" fontSize="10" fontWeight="800" fill="#6D28D9">f(x)</text>
+          <text x="180" y="152" fontSize="9" fontWeight="700" fill="#5B21B6" textAnchor="middle">
+            Riemann Sum: ∫ₐᵇ f(x) dx = lim Σ f(xᵢ*) Δx
+          </text>
+        </svg>
+      );
+
+    // 27. Projectile Dynamics Flagship
+    case 'projectile_motion_lab':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#EFF6FF" />
+          <line x1="30" y1="135" x2="330" y2="135" stroke="#94A3B8" strokeWidth="2" />
+          {/* Vacuum Parabola (ideal blue dashed) */}
+          <path d="M 40 135 Q 160 15 280 135" fill="none" stroke="#3B82F6" strokeWidth="2" strokeDasharray="5 4" />
+          {/* Aerodynamic Drag Trajectory (steeper descent orange) */}
+          <path d="M 40 135 Q 140 25 215 135" fill="none" stroke="#EA580C" strokeWidth="3" />
+          {/* Projectile Particle */}
+          <circle cx="150" cy="48" r="6" fill="#EA580C" />
+          {/* Velocity Vector */}
+          <line x1="150" y1="48" x2="185" y2="62" stroke="#10B981" strokeWidth="2.5" />
+          <polygon points="188,63 180,59 182,67" fill="#10B981" />
+          {/* Drag Force Vector opposing v */}
+          <line x1="150" y1="48" x2="125" y2="38" stroke="#DC2626" strokeWidth="2" />
+          <polygon points="121,36 128,41 125,33" fill="#DC2626" />
+          <text x="180" y="32" fontSize="8" fontWeight="800" fill="#3B82F6">Vacuum (Ideal)</text>
+          <text x="190" y="98" fontSize="8" fontWeight="800" fill="#EA580C">With Air Drag (RK4)</text>
+          <text x="180" y="150" fontSize="9" fontWeight="700" fill="#1E40AF" textAnchor="middle">
+            Runge-Kutta 4th Order Ballistic Numerical Integration
+          </text>
+        </svg>
+      );
+
+    // 28. Wave Superposition & Beats Flagship
+    case 'wave_interference_lab':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#0B0F19" />
+          {/* High frequency wave 1 */}
+          <path d="M 30 50 Q 45 35 60 50 T 90 50 T 120 50 T 150 50 T 180 50 T 210 50 T 240 50 T 270 50 T 300 50 T 330 50" fill="none" stroke="#38BDF8" strokeWidth="1.5" />
+          {/* Envelope Beat Modulated Wave */}
+          <path d="M 30 110 Q 50 85 70 110 T 110 110 T 150 110 T 190 110 T 230 110 T 270 110 T 310 110 T 330 110" fill="none" stroke="#FACC15" strokeWidth="2.5" />
+          {/* Beat Envelope dashed curve */}
+          <path d="M 30 80 Q 110 70 180 110 Q 250 150 330 110" fill="none" stroke="#EF4444" strokeWidth="1.2" strokeDasharray="3 3" opacity="0.75" />
+          <text x="40" y="35" fontSize="8" fontWeight="700" fill="#38BDF8">Carrier: f₁ = 440 Hz</text>
+          <text x="320" y="35" fontSize="8" fontWeight="700" fill="#FACC15" textAnchor="end">Beats: |f₁ - f₂| Envelope</text>
+          <text x="180" y="150" fontSize="9" fontWeight="700" fill="#94A3B8" textAnchor="middle">
+            Superposition Principle: y(t) = 2A cos((Δω/2)t) sin(ω_avg t)
+          </text>
+        </svg>
+      );
+
+    // 29. 3D Orbital Mechanics & Kepler's Laws Flagship
+    case 'orbital_mechanics_3d':
+    case 'physics_orbital_lab':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#04060C" />
+          {/* Starfield background dots */}
+          {[
+            [30, 25], [75, 45], [120, 18], [240, 22], [310, 35], [45, 120], [90, 140], [280, 130], [335, 115]
+          ].map(([sx, sy], idx) => (
+            <circle key={idx} cx={sx} cy={sy} r="1" fill="#FFFFFF" opacity="0.75" />
+          ))}
+          {/* Reference Orbit Plane Grid lines */}
+          <ellipse cx="180" cy="85" rx="150" ry="55" fill="none" stroke="rgba(0, 98, 255, 0.25)" strokeWidth="1" strokeDasharray="4 4" />
+          {/* Keplerian Elliptical Orbit (Probe) */}
+          <ellipse cx="160" cy="85" rx="110" ry="48" fill="none" stroke="#00E5FF" strokeWidth="2.2" />
+          {/* Swept-out area sector triangle */}
+          <path d="M 125 85 L 60 72 A 110 48 0 0 0 75 105 Z" fill="rgba(0, 229, 255, 0.2)" stroke="#00E5FF" strokeWidth="1" />
+          {/* Central Glowing Sun at focus */}
+          <circle cx="125" cy="85" r="16" fill="rgba(255, 153, 0, 0.3)" />
+          <circle cx="125" cy="85" r="10" fill="#FF9900" />
+          <circle cx="125" cy="85" r="7" fill="#FFDD00" />
+          {/* Orbiting Planet / Spacecraft */}
+          <circle cx="250" cy="65" r="5" fill="#00E5FF" stroke="#FFFFFF" strokeWidth="1.5" />
+          {/* Velocity Vector (Cyan) */}
+          <line x1="250" y1="65" x2="278" y2="52" stroke="#10B981" strokeWidth="2.2" strokeLinecap="round" />
+          <polygon points="282,50 274,49 277,57" fill="#10B981" />
+          {/* Gravitational Force Vector pointing to Sun (Red) */}
+          <line x1="250" y1="65" x2="218" y2="70" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" />
+          <polygon points="214,71 222,66 220,74" fill="#EF4444" />
+          <text x="125" y="115" fontSize="8" fontWeight="800" fill="#FBBF24" textAnchor="middle">Sun (Focus F₁)</text>
+          <text x="250" y="55" fontSize="8" fontWeight="800" fill="#00E5FF">Probe (a, e)</text>
+          <text x="180" y="150" fontSize="9" fontWeight="700" fill="#38BDF8" textAnchor="middle">
+            Vis-Viva: v² = GM(2/r - 1/a) • Kepler's Third: T² ∝ a³
+          </text>
+        </svg>
+      );
+
+    // 30. 3D Quantum Atomic Orbitals Flagship
+    case 'atomic_orbitals_3d':
+    case 'physics_atomic_orbitals_lab':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#04060C" />
+          {/* Cartesian Axes */}
+          <line x1="30" y1="80" x2="330" y2="80" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1" strokeDasharray="3 3" />
+          <line x1="180" y1="15" x2="180" y2="145" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1" strokeDasharray="3 3" />
+          {/* 3D 2pz Dumbbell Lobes */}
+          {/* Positive Phase Lobe (+ψ, Cyan) */}
+          <ellipse cx="180" cy="48" rx="28" ry="34" fill="rgba(0, 229, 255, 0.35)" stroke="#00E5FF" strokeWidth="2" />
+          <circle cx="180" cy="48" r="14" fill="rgba(0, 229, 255, 0.6)" />
+          {/* Negative Phase Lobe (-ψ, Crimson) */}
+          <ellipse cx="180" cy="112" rx="28" ry="34" fill="rgba(239, 68, 68, 0.35)" stroke="#EF4444" strokeWidth="2" />
+          <circle cx="180" cy="112" r="14" fill="rgba(239, 68, 68, 0.6)" />
+          {/* Nodal Plane (ψ = 0 at xy-plane) */}
+          <ellipse cx="180" cy="80" rx="70" ry="16" fill="none" stroke="#F59E0B" strokeWidth="1.5" strokeDasharray="4 3" />
+          {/* Central Nucleus */}
+          <circle cx="180" cy="80" r="4.5" fill="#FACC15" />
+          <text x="218" y="44" fontSize="9" fontWeight="800" fill="#00E5FF">+ψ Lobe</text>
+          <text x="218" y="118" fontSize="9" fontWeight="800" fill="#EF4444">-ψ Lobe</text>
+          <text x="100" y="76" fontSize="8" fontWeight="700" fill="#F59E0B">Nodal Plane (ψ=0)</text>
+          <text x="180" y="152" fontSize="9" fontWeight="700" fill="#A78BFA" textAnchor="middle">
+            Schrödinger Wavefunction: ψ_{210}(r, θ, φ) = R₂₁(r) Y₁⁰(θ, φ)
+          </text>
+        </svg>
+      );
+
+    // 31. 3D Electromagnetic Wave & Polarization Flagship
+    case 'em_wave_3d':
+    case 'physics_em_wave_lab':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#04060C" />
+          {/* Propagation Z-Axis */}
+          <line x1="20" y1="80" x2="330" y2="80" stroke="#64748B" strokeWidth="1.8" />
+          {/* Polarizer Filter 1 (Tilted grid) */}
+          <ellipse cx="130" cy="80" rx="14" ry="45" fill="rgba(0, 98, 255, 0.2)" stroke="#0062FF" strokeWidth="2" />
+          <line x1="130" y1="40" x2="130" y2="120" stroke="#00E5FF" strokeWidth="2" />
+          {/* Polarizer Filter 2 Analyzer (Rotated) */}
+          <ellipse cx="260" cy="80" rx="14" ry="45" fill="rgba(124, 58, 237, 0.2)" stroke="#7C3AED" strokeWidth="2" />
+          <line x1="250" y1="52" x2="270" y2="108" stroke="#EC4899" strokeWidth="2" />
+          {/* Electric Field Oscillations (Vertical Cyan Wave) */}
+          <path d="M 20 80 Q 45 35 70 80 T 120 80" fill="none" stroke="#00E5FF" strokeWidth="2.4" />
+          {/* E-field Vector Arrows */}
+          <line x1="45" y1="80" x2="45" y2="42" stroke="#00E5FF" strokeWidth="2" />
+          <polygon points="45,38 42,46 48,46" fill="#00E5FF" />
+          {/* Magnetic Field Oscillations (Horizontal Red Wave) */}
+          <path d="M 20 80 Q 55 95 70 80 T 120 80" fill="none" stroke="#EF4444" strokeWidth="1.8" strokeDasharray="3 2" />
+          {/* Poynting Vector Arrow */}
+          <line x1="300" y1="80" x2="335" y2="80" stroke="#10B981" strokeWidth="2.8" strokeLinecap="round" />
+          <polygon points="340,80 330,76 330,84" fill="#10B981" />
+          <text x="35" y="32" fontSize="8" fontWeight="800" fill="#00E5FF">E-Field</text>
+          <text x="75" y="105" fontSize="8" fontWeight="800" fill="#EF4444">B-Field</text>
+          <text x="130" y="28" fontSize="8" fontWeight="700" fill="#0062FF" textAnchor="middle">Polarizer (θ₁)</text>
+          <text x="260" y="28" fontSize="8" fontWeight="700" fill="#EC4899" textAnchor="middle">Analyzer (θ₂)</text>
+          <text x="180" y="150" fontSize="9" fontWeight="700" fill="#34D399" textAnchor="middle">
+            Malus's Law: I = I₀ cos²(θ₂ - θ₁) • Transverse Maxwell Wave E ⊥ B ⊥ k
+          </text>
+        </svg>
+      );
+
+    // 32. 3D DNA Double Helix Flagship
+    case 'dna_helix_3d':
+    case 'bio_dna_helix_lab':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#060913" />
+          {/* Helical Ribbons (Strand 1 Cyan and Strand 2 Purple) */}
+          <path d="M 40 40 Q 80 120 120 40 T 200 40 T 280 40 T 340 100" fill="none" stroke="#00E5FF" strokeWidth="3" />
+          <path d="M 40 120 Q 80 40 120 120 T 200 120 T 280 120 T 340 60" fill="none" stroke="#7C3AED" strokeWidth="3" />
+          {/* Base Pairs & Hydrogen Bond Rungs */}
+          {[
+            { x: 60, y1: 70, y2: 90, b1: '#10B981', b2: '#EF4444', label: 'A=T' },
+            { x: 95, y1: 95, y2: 65, b1: '#0062FF', b2: '#F59E0B', label: 'G≡C' },
+            { x: 140, y1: 65, y2: 95, b1: '#EF4444', b2: '#10B981', label: 'T=A' },
+            { x: 180, y1: 95, y2: 65, b1: '#F59E0B', b2: '#0062FF', label: 'C≡G' },
+            { x: 220, y1: 65, y2: 95, b1: '#10B981', b2: '#EF4444', label: 'A=T' },
+            { x: 260, y1: 95, y2: 65, b1: '#0062FF', b2: '#F59E0B', label: 'G≡C' },
+            { x: 300, y1: 65, y2: 95, b1: '#EF4444', b2: '#10B981', label: 'T=A' }
+          ].map((bp, i) => (
+            <g key={i}>
+              <line x1={bp.x} y1={bp.y1} x2={bp.x} y2={(bp.y1 + bp.y2) / 2} stroke={bp.b1} strokeWidth="3" strokeLinecap="round" />
+              <line x1={bp.x} y1={(bp.y1 + bp.y2) / 2} x2={bp.x} y2={bp.y2} stroke={bp.b2} strokeWidth="3" strokeLinecap="round" />
+              <circle cx={bp.x} cy={(bp.y1 + bp.y2) / 2} r="1.8" fill="#FFFFFF" />
+            </g>
+          ))}
+          {/* Major / Minor Groove Labels */}
+          <text x="80" y="28" fontSize="8" fontWeight="800" fill="#00E5FF">5' → 3' Strand</text>
+          <text x="80" y="140" fontSize="8" fontWeight="800" fill="#7C3AED">3' → 5' Strand</text>
+          <text x="240" y="28" fontSize="8" fontWeight="700" fill="#FBBF24">Major Groove (2.2 nm)</text>
+          <text x="180" y="152" fontSize="9" fontWeight="700" fill="#10B981" textAnchor="middle">
+            Watson-Crick Double Helix • A=T (2 H-Bonds) • G≡C (3 H-Bonds)
+          </text>
+        </svg>
+      );
+
+    // 33. 3D Kerr Black Hole & General Relativity
+    case 'black_hole_relativity_3d':
+    case 'grav_black_hole':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <defs>
+            <radialGradient id="bhGlow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#000000" />
+              <stop offset="65%" stopColor="#000000" />
+              <stop offset="85%" stopColor="#F59E0B" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="bhDiskGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#00E5FF" stopOpacity="0.95" />
+              <stop offset="35%" stopColor="#67E8F9" stopOpacity="0.8" />
+              <stop offset="50%" stopColor="#FBBF24" stopOpacity="0.9" />
+              <stop offset="70%" stopColor="#F97316" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="#DC2626" stopOpacity="0.4" />
+            </linearGradient>
+            <linearGradient id="bhJet" x1="0" y1="1" x2="0" y2="0">
+              <stop offset="0%" stopColor="#00E5FF" stopOpacity="0" />
+              <stop offset="50%" stopColor="#38BDF8" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.95" />
+            </linearGradient>
+          </defs>
+          <rect width="360" height="160" fill="#030712" />
+
+          {/* Distant Spacetime Grid Lensing */}
+          {[-40, -20, 0, 20, 40].map((offset, i) => (
+            <line key={`grid-${i}`} x1="20" y1={80 + offset} x2="340" y2={80 + offset} stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="3 4" />
+          ))}
+
+          {/* Relativistic Jets */}
+          <polygon points="178,80 182,80 185,10 175,10" fill="url(#bhJet)" />
+          <polygon points="178,80 182,80 184,150 176,150" fill="url(#bhJet)" />
+
+          {/* Gravitationally Lensed Upper Arc of Accretion Disk */}
+          <ellipse cx="180" cy="74" rx="90" ry="46" fill="none" stroke="url(#bhDiskGrad)" strokeWidth="6" opacity="0.65" />
+
+          {/* Accretion Disk Main Plane */}
+          <ellipse cx="180" cy="80" rx="130" ry="24" fill="none" stroke="url(#bhDiskGrad)" strokeWidth="10" />
+          <ellipse cx="180" cy="80" rx="90" ry="16" fill="none" stroke="#FBBF24" strokeWidth="2.5" opacity="0.85" />
+
+          {/* Black Hole Shadow & Event Horizon */}
+          <circle cx="180" cy="80" r="32" fill="#000000" />
+          <circle cx="180" cy="80" r="33.5" fill="none" stroke="#F59E0B" strokeWidth="1.8" opacity="0.9" />
+
+          {/* Foreground Lower Arc */}
+          <path d="M 60 83 Q 180 110 300 83" fill="none" stroke="url(#bhDiskGrad)" strokeWidth="7" />
+
+          {/* Scientific Overlay Annotations */}
+          <text x="32" y="24" fontSize="8" fontWeight="800" fill="#00E5FF">Doppler Beaming (Blue-Shifted)</text>
+          <text x="328" y="24" fontSize="8" fontWeight="800" fill="#EF4444" textAnchor="end">Receding (Red-Shifted)</text>
+          <text x="180" y="77" fontSize="8" fontWeight="700" fill="#FFFFFF" textAnchor="middle" opacity="0.8">R_s Horizon</text>
+          <text x="180" y="150" fontSize="9" fontWeight="700" fill="#FBBF24" textAnchor="middle">
+            Schwarzschild R_s = 2GM/c² • Photon Sphere 1.5 R_s • Relativistic Lensing
+          </text>
+        </svg>
+      );
+
+    // 34. 3D Crystallography & Bravais Lattice Slicing
+    case 'crystallography_3d':
+    case 'chem_crystallography':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <defs>
+            <linearGradient id="millerPlane" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#00F0FF" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#0062FF" stopOpacity="0.2" />
+            </linearGradient>
+          </defs>
+          <rect width="360" height="160" fill="#0A0E1A" />
+
+          {/* 3D Isometric Unit Cell Wireframe */}
+          {/* Back edges */}
+          <line x1="130" y1="45" x2="230" y2="45" stroke="#334155" strokeWidth="1.5" strokeDasharray="3 3" />
+          <line x1="130" y1="45" x2="130" y2="115" stroke="#334155" strokeWidth="1.5" strokeDasharray="3 3" />
+          <line x1="130" y1="45" x2="80" y2="75" stroke="#334155" strokeWidth="1.5" strokeDasharray="3 3" />
+
+          {/* (111) Miller Slicing Plane Triangle */}
+          <polygon points="180,25 80,145 280,145" fill="url(#millerPlane)" stroke="#00F0FF" strokeWidth="1.5" />
+
+          {/* Front edges */}
+          <line x1="80" y1="75" x2="180" y2="75" stroke="#64748B" strokeWidth="2" />
+          <line x1="180" y1="75" x2="280" y2="75" stroke="#64748B" strokeWidth="2" />
+          <line x1="80" y1="75" x2="80" y2="145" stroke="#64748B" strokeWidth="2" />
+          <line x1="180" y1="75" x2="180" y2="145" stroke="#64748B" strokeWidth="2" />
+          <line x1="280" y1="75" x2="280" y2="145" stroke="#64748B" strokeWidth="2" />
+          <line x1="80" y1="145" x2="180" y2="145" stroke="#64748B" strokeWidth="2" />
+          <line x1="180" y1="145" x2="280" y2="145" stroke="#64748B" strokeWidth="2" />
+          <line x1="180" y1="25" x2="280" y2="25" stroke="#64748B" strokeWidth="2" />
+          <line x1="80" y1="75" x2="180" y2="25" stroke="#64748B" strokeWidth="2" />
+          <line x1="280" y1="75" x2="280" y2="25" stroke="#64748B" strokeWidth="2" />
+          <line x1="230" y1="45" x2="280" y2="25" stroke="#64748B" strokeWidth="2" />
+          <line x1="230" y1="45" x2="230" y2="115" stroke="#64748B" strokeWidth="2" />
+          <line x1="180" y1="145" x2="230" y2="115" stroke="#64748B" strokeWidth="2" />
+          <line x1="280" y1="145" x2="230" y2="115" stroke="#64748B" strokeWidth="2" />
+
+          {/* Lattice Atoms (Vertices & FCC Face Centers) */}
+          {[
+            { cx: 80, cy: 75, r: 6, fill: '#38BDF8' },
+            { cx: 180, cy: 75, r: 6, fill: '#38BDF8' },
+            { cx: 280, cy: 75, r: 6, fill: '#38BDF8' },
+            { cx: 80, cy: 145, r: 6, fill: '#38BDF8' },
+            { cx: 180, cy: 145, r: 6, fill: '#38BDF8' },
+            { cx: 280, cy: 145, r: 6, fill: '#38BDF8' },
+            { cx: 180, cy: 25, r: 6, fill: '#38BDF8' },
+            { cx: 280, cy: 25, r: 6, fill: '#38BDF8' },
+            { cx: 130, cy: 45, r: 4.5, fill: '#0284C7' },
+            { cx: 230, cy: 45, r: 4.5, fill: '#0284C7' },
+            { cx: 130, cy: 115, r: 4.5, fill: '#0284C7' },
+            { cx: 230, cy: 115, r: 4.5, fill: '#0284C7' },
+            // Face Centers
+            { cx: 130, cy: 110, r: 5, fill: '#F59E0B' },
+            { cx: 230, cy: 80, r: 5, fill: '#F59E0B' },
+            { cx: 180, cy: 110, r: 5, fill: '#F59E0B' }
+          ].map((a, i) => (
+            <circle key={i} cx={a.cx} cy={a.cy} r={a.r} fill={a.fill} stroke="#FFFFFF" strokeWidth="1" />
+          ))}
+
+          {/* Bragg XRD Ray Reflection */}
+          <line x1="30" y1="40" x2="135" y2="92" stroke="#EF4444" strokeWidth="2" strokeDasharray="3 3" />
+          <line x1="135" y1="92" x2="220" y2="40" stroke="#EF4444" strokeWidth="2" strokeDasharray="3 3" />
+          <polygon points="225,37 217,38 220,45" fill="#EF4444" />
+
+          {/* Labels */}
+          <text x="35" y="24" fontSize="8" fontWeight="800" fill="#00F0FF">(111) Slicing Plane</text>
+          <text x="35" y="34" fontSize="7.5" fontWeight="600" fill="#94A3B8">d_hkl = a / √(h²+k²+l²)</text>
+          <text x="320" y="24" fontSize="8" fontWeight="800" fill="#F59E0B" textAnchor="end">FCC APF = 74.05%</text>
+          <text x="180" y="154" fontSize="9" fontWeight="700" fill="#38BDF8" textAnchor="middle">
+            Bragg's Law: λ = 2d sin θ • Cubic Bravais Lattices • Powder XRD
+          </text>
+        </svg>
+      );
+
+    // 35. 3D Neuron Action Potential & Synapse Flagship
+    case 'neuron_synapse_3d':
+    case 'bio_neuron_synapse':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <rect width="360" height="160" fill="#080D1A" />
+
+          {/* Axon Fiber Cable */}
+          <line x1="30" y1="80" x2="220" y2="80" stroke="#38BDF8" strokeWidth="8" strokeLinecap="round" />
+
+          {/* Myelin Sheath Blocks & Nodes of Ranvier */}
+          {[
+            { x: 45, w: 40 },
+            { x: 95, w: 40 },
+            { x: 145, w: 40 }
+          ].map((m, i) => (
+            <g key={i}>
+              <rect x={m.x} y="68" width={m.w} height="24" rx="4" fill="#FBBF24" stroke="#D97706" strokeWidth="1.5" />
+              <text x={m.x + m.w / 2} y="83" fontSize="7" fontWeight="800" fill="#78350F" textAnchor="middle">MYELIN</text>
+            </g>
+          ))}
+
+          {/* Saltatory Conduction Sparks at Nodes */}
+          {[88, 138, 188].map((x, i) => (
+            <g key={i}>
+              <path d={`M ${x} 62 Q ${x + 25} 44 ${x + 50} 62`} fill="none" stroke="#FACC15" strokeWidth="2.2" strokeDasharray="3 2" />
+              <circle cx={x} cy="80" r="3" fill="#EF4444" />
+              <polygon points={`${x + 50},62 ${x + 44},58 ${x + 47},65`} fill="#FACC15" />
+            </g>
+          ))}
+
+          {/* Enlarged Presynaptic Terminal Bouton */}
+          <path d="M 220 76 C 240 76 250 50 270 50 C 290 50 295 70 295 80 C 295 90 290 110 270 110 C 250 110 240 84 220 84 Z" fill="rgba(14, 165, 233, 0.25)" stroke="#38BDF8" strokeWidth="2" />
+
+          {/* Synaptic Vesicles with Neurotransmitter */}
+          {[
+            { cx: 260, cy: 68, r: 5 },
+            { cx: 275, cy: 65, r: 5 },
+            { cx: 255, cy: 85, r: 5 },
+            { cx: 270, cy: 82, r: 5 },
+            { cx: 285, cy: 80, r: 5 }
+          ].map((v, i) => (
+            <g key={i}>
+              <circle cx={v.cx} cy={v.cy} r={v.r} fill="rgba(16, 185, 129, 0.4)" stroke="#10B981" strokeWidth="1.2" />
+              <circle cx={v.cx} cy={v.cy} r="1.5" fill="#34D399" />
+            </g>
+          ))}
+
+          {/* Synaptic Cleft (20nm) & Released Neurotransmitters */}
+          <line x1="302" y1="50" x2="302" y2="110" stroke="#64748B" strokeWidth="3" strokeDasharray="4 2" />
+          {[58, 68, 78, 88, 98].map((y, i) => (
+            <circle key={i} cx="299" cy={y} r="2" fill="#34D399" />
+          ))}
+
+          {/* Postsynaptic Membrane */}
+          <rect x="306" y="48" width="12" height="64" rx="2" fill="rgba(168, 85, 247, 0.3)" stroke="#A855F7" strokeWidth="1.5" />
+          {[56, 76, 96].map((y, i) => (
+            <rect key={i} x="304" y={y} width="5" height="8" rx="1" fill="#C084FC" />
+          ))}
+
+          {/* Action Potential Oscilloscope Trace in Top Left */}
+          <path d="M 30 35 L 50 35 L 56 18 L 62 42 L 70 35 L 85 35" fill="none" stroke="#22C55E" strokeWidth="2" />
+          <text x="88" y="24" fontSize="7.5" fontWeight="800" fill="#22C55E">+40 mV Spike</text>
+
+          {/* Labels */}
+          <text x="115" y="108" fontSize="8" fontWeight="700" fill="#FBBF24" textAnchor="middle">Nodes of Ranvier (Saltatory)</text>
+          <text x="270" y="42" fontSize="7.5" fontWeight="700" fill="#38BDF8">Presynaptic Terminal</text>
+          <text x="325" y="42" fontSize="7.5" fontWeight="700" fill="#C084FC">Cleft 20nm</text>
+          <text x="180" y="152" fontSize="9" fontWeight="700" fill="#38BDF8" textAnchor="middle">
+            Hodgkin-Huxley Conduction • Ca²⁺ Influx • Exocytosis • All-or-None Law
+          </text>
+        </svg>
+      );
+
+    // 36. 3D Quantum Double-Slit & Wave Duality Flagship
+    case 'quantum_double_slit_3d':
+    case 'physics_quantum_slit':
+      return (
+        <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
+          <defs>
+            <linearGradient id="quantumBeam" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#10B981" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#00E5FF" stopOpacity="0.8" />
+            </linearGradient>
+          </defs>
+          <rect width="360" height="160" fill="#050814" />
+
+          {/* Incident Electron Wavefronts */}
+          {[40, 60, 80, 100, 120].map((x, i) => (
+            <line key={`in-${i}`} x1={x} y1="40" x2={x} y2="120" stroke="#10B981" strokeWidth="2" strokeOpacity="0.55" />
+          ))}
+          <line x1="25" y1="80" x2="120" y2="80" stroke="#34D399" strokeWidth="2.5" strokeLinecap="round" />
+          <polygon points="126,80 118,76 118,84" fill="#34D399" />
+
+          {/* Double-Slit Barrier at x=140 */}
+          <rect x="138" y="20" width="6" height="42" fill="#64748B" rx="1" />
+          <rect x="138" y="70" width="6" height="20" fill="#64748B" rx="1" />
+          <rect x="138" y="98" width="6" height="42" fill="#64748B" rx="1" />
+
+          {/* Slit Labels */}
+          <text x="134" y="66" fontSize="7" fontWeight="800" fill="#00E5FF" textAnchor="end">Slit 1</text>
+          <text x="134" y="94" fontSize="7" fontWeight="800" fill="#00E5FF" textAnchor="end">Slit 2</text>
+
+          {/* Interfering Circular Wave Ripples from Slit 1 and Slit 2 */}
+          {[16, 32, 48, 64, 80].map((r, i) => (
+            <g key={`ripple-${i}`}>
+              <path d={`M 144 ${66 - r} A ${r} ${r} 0 0 1 144 ${66 + r}`} fill="none" stroke="#00E5FF" strokeWidth="1.2" strokeOpacity={0.6 - i * 0.08} />
+              <path d={`M 144 ${94 - r} A ${r} ${r} 0 0 1 144 ${94 + r}`} fill="none" stroke="#A855F7" strokeWidth="1.2" strokeOpacity={0.6 - i * 0.08} />
+            </g>
+          ))}
+
+          {/* Phosphorescent Detection Screen at x=280 */}
+          <rect x="278" y="20" width="5" height="120" fill="#334155" rx="1" />
+
+          {/* Interference Intensity Curve P(y) = cos² */}
+          <path
+            d="M 285 24 Q 288 35 285 45 Q 295 55 285 64 Q 320 80 285 96 Q 295 105 285 115 Q 288 125 285 136"
+            fill="none"
+            stroke="#22C55E"
+            strokeWidth="2.5"
+          />
+
+          {/* Fringe Bands on Screen */}
+          <rect x="282" y="74" width="3" height="12" fill="#4ADE80" opacity="0.95" />
+          <rect x="282" y="52" width="3" height="7" fill="#4ADE80" opacity="0.65" />
+          <rect x="282" y="99" width="3" height="7" fill="#4ADE80" opacity="0.65" />
+          <rect x="282" y="34" width="3" height="4" fill="#4ADE80" opacity="0.35" />
+          <rect x="282" y="120" width="3" height="4" fill="#4ADE80" opacity="0.35" />
+
+          {/* Which-Way Detector Eye */}
+          <g transform="translate(152, 22)">
+            <ellipse cx="14" cy="8" rx="8" ry="5" fill="none" stroke="#F59E0B" strokeWidth="1.5" />
+            <circle cx="14" cy="8" r="3" fill="#F59E0B" />
+            <text x="26" y="11" fontSize="7" fontWeight="700" fill="#F59E0B">Detector (Observer)</text>
+          </g>
+
+          {/* Bottom Academic Takeaway */}
+          <text x="180" y="152" fontSize="9" fontWeight="700" fill="#4ADE80" textAnchor="middle">
+            Wave-Particle Duality • Born Rule |Ψ₁ + Ψ₂|² • Fringe Spacing Δy = λL/d
+          </text>
         </svg>
       );
 

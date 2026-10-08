@@ -14,6 +14,10 @@ import { ExperimentsView } from './components/experiments/ExperimentsView';
 import { FormulaBankModal } from './components/FormulaBankModal';
 import { SearchModal } from './components/SearchModal';
 import { AnatomyExplorerView } from './components/anatomy/AnatomyExplorerView';
+import { TransformationShowcase } from './components/TransformationShowcase';
+import { AuthModal } from './components/auth/AuthModal';
+import { UserProfileModal } from './components/auth/UserProfileModal';
+import type { AuthView } from './types/auth';
 import { ANATOMY_STRUCTURES } from './data/anatomyData';
 import { X } from 'lucide-react';
 
@@ -56,6 +60,29 @@ export function App() {
     }
     return null;
   });
+
+  const [authModalView, setAuthModalView] = useState<AuthView | null>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      const path = window.location.pathname;
+      if (hash === '#login' || path === '/login') return 'login';
+      if (hash === '#signup' || path === '/signup') return 'signup';
+      if (hash === '#forgot-password' || path === '/forgot-password') return 'forgot-password';
+      if (hash === '#reset-password' || path === '/reset-password' || hash.includes('type=recovery')) return 'reset-password';
+    }
+    return null;
+  });
+
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      const path = window.location.pathname;
+      return hash === '#profile' || path === '/profile';
+    }
+    return false;
+  });
+
+  const [currentContinuumStage, setCurrentContinuumStage] = useState<number>(0);
 
   // Clean Light-First Scientific Laboratory Theme Default
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -108,6 +135,16 @@ export function App() {
         setInitialAnatomyOrganId(organId);
         setSelectedTopicId(null);
         setSelectedExperimentId(null);
+      } else if (hash === '#login') {
+        setAuthModalView('login');
+      } else if (hash === '#signup') {
+        setAuthModalView('signup');
+      } else if (hash === '#forgot-password') {
+        setAuthModalView('forgot-password');
+      } else if (hash === '#reset-password' || hash.includes('type=recovery')) {
+        setAuthModalView('reset-password');
+      } else if (hash === '#profile') {
+        setIsProfileModalOpen(true);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -174,6 +211,21 @@ export function App() {
     }
   };
 
+  const handleCloseAuth = () => {
+    setAuthModalView(null);
+    const hash = window.location.hash;
+    if (['#login', '#signup', '#forgot-password', '#reset-password'].includes(hash) || hash.includes('type=recovery')) {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+  };
+
+  const handleCloseProfile = () => {
+    setIsProfileModalOpen(false);
+    if (window.location.hash === '#profile') {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+  };
+
   return (
     <div style={{ position: 'relative', width: '100%', minHeight: '100vh', overflowX: 'hidden' }}>
       {/* 1. Calm, lightweight scientific technical grid background */}
@@ -188,6 +240,14 @@ export function App() {
         onOpenFormulas={() => setIsFormulaBankOpen(true)}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenAnatomy={() => handleOpenAnatomy()}
+        onOpenAuth={(view) => {
+          setAuthModalView(view || 'login');
+          window.location.hash = view ? `#${view}` : '#login';
+        }}
+        onOpenProfile={() => {
+          setIsProfileModalOpen(true);
+          window.location.hash = '#profile';
+        }}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
@@ -219,6 +279,13 @@ export function App() {
         {/* 4-Step Scientific Inquiry Cycle: Explore → Change → Observe → Understand */}
         <HowVisualLearningWorks />
 
+        {/* 5-Phase Mathematical & Physical Continuum Showcase */}
+        <TransformationShowcase
+          currentStage={currentContinuumStage}
+          onSelectStage={setCurrentContinuumStage}
+          onLaunchTopic={handleSelectTopic}
+        />
+
         {/* Digital Experiments Lab (Predict → Experiment → Observe → Explain) */}
         <FeaturedExperiments onSelectExperiment={handleSelectExperiment} />
 
@@ -232,7 +299,7 @@ export function App() {
       {/* 4. Clean Academic Footer */}
       <Footer />
 
-      {/* 5. Virtual Laboratory Simulation Modal (42 Active Models) */}
+      {/* 5. Virtual Laboratory Simulation Modal (76 Active Models Across 34 Topics) */}
       {selectedTopicId && (
         <TopicLabModal
           topicId={selectedTopicId}
@@ -330,6 +397,19 @@ export function App() {
         onSelectExperiment={handleSelectExperiment}
         onOpenFormulas={() => setIsFormulaBankOpen(true)}
         onOpenAnatomy={handleOpenAnatomy}
+      />
+
+      {/* 10. Native Physora Authentication Modal */}
+      <AuthModal
+        isOpen={authModalView !== null}
+        initialView={authModalView || 'login'}
+        onClose={handleCloseAuth}
+      />
+
+      {/* 11. Researcher User Profile & Session Modal */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={handleCloseProfile}
       />
     </div>
   );

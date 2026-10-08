@@ -1690,7 +1690,9 @@ export const TOPICS_DATA: Record<string, TopicData> = {
         tagline: 'Rotate and inspect 3D molecular structures, lone pair lobes, and net dipole moments.',
         description: 'Manipulate molecules in full 3D WebGL space. Switch between ball-and-stick and space-filling representations and observe bond angles.',
         controls: [
-          { id: 'mode', label: 'View Mode', min: 0, max: 1, step: 1, defaultValue: 0 }
+          { id: 'molecule', label: 'Molecule (0:H₂O, 1:CO₂, 2:NH₃, 3:CH₄, 4:BF₃, 5:SF₆)', min: 0, max: 5, step: 1, defaultValue: 0 },
+          { id: 'mode', label: 'View Mode (0:Stick, 1:Space)', min: 0, max: 1, step: 1, defaultValue: 0 },
+          { id: 'speed', label: 'Rotation Speed', min: 0.0, max: 3.0, step: 0.2, defaultValue: 1.0, unit: 'x' }
         ],
         telemetryLabels: [
           { key: 'geometry', label: 'Molecular Shape' },
@@ -1882,8 +1884,10 @@ export const TOPICS_DATA: Record<string, TopicData> = {
         controls: [
           { id: 'ux', label: 'Vector u (X)', min: -5, max: 5, step: 1, defaultValue: 3 },
           { id: 'uy', label: 'Vector u (Y)', min: -5, max: 5, step: 1, defaultValue: 2 },
+          { id: 'uz', label: 'Vector u (Z)', min: -5, max: 5, step: 1, defaultValue: 1 },
           { id: 'vx', label: 'Vector v (X)', min: -5, max: 5, step: 1, defaultValue: 1 },
-          { id: 'vy', label: 'Vector v (Y)', min: -5, max: 5, step: 1, defaultValue: 3 }
+          { id: 'vy', label: 'Vector v (Y)', min: -5, max: 5, step: 1, defaultValue: 3 },
+          { id: 'vz', label: 'Vector v (Z)', min: -5, max: 5, step: 1, defaultValue: -2 }
         ],
         telemetryLabels: [
           { key: 'dot', label: 'Dot Product' },
@@ -2034,6 +2038,416 @@ export const TOPICS_DATA: Record<string, TopicData> = {
         ]
       }
     ]
+  },
+
+  // ==========================================
+  // NEW 3D INTERACTIVE FLAGSHIP LABORATORIES
+  // ==========================================
+  orbital_mechanics_3d: {
+    id: 'orbital_mechanics_3d',
+    subject: 'physics',
+    title: '3D Orbital Mechanics & Kepler\'s Laws',
+    category: 'PHYSICS & ASTRONOMY',
+    shortDesc: '3D N-body celestial dynamics, Keplerian elliptical orbits, Vis-Viva velocity, and Hohmann transfer orbits.',
+    conceptIntro:
+      'Planetary and satellite motion in 3D spacetime is governed by Newton\'s universal law of gravitation and Kepler\'s three empirical laws. Orbits trace conic sections (circles, ellipses, parabolas, hyperbolas) around the central gravitational barycenter.',
+    realWorldExample:
+      'NASA and ISRO interplanetary missions (Apollo, Mars Orbiter Mission, Artemis) calculate Hohmann transfer ellipses and gravity assists using Keplerian orbital mechanics.',
+    keyFormulas: [
+      { formula: 'T^2 = \\frac{4\\pi^2}{GM} a^3', explanation: 'Kepler\'s Third Law relating orbital period T and semi-major axis a.' },
+      { formula: 'v = \\sqrt{GM\\left(\\frac{2}{r} - \\frac{1}{a}\\right)}', explanation: 'Vis-Viva equation determining instantaneous orbital speed at distance r.' },
+      { formula: '\\frac{dA}{dt} = \\frac{L}{2m} = \\text{const}', explanation: 'Kepler\'s Second Law: conservation of angular momentum yields equal swept areas in equal times.' }
+    ],
+    keyTakeaways: [
+      'The Sun sits at one focus of an elliptical orbit, with distance varying between perihelion a(1-e) and aphelion a(1+e).',
+      'Orbital speed reaches its maximum at perihelion and minimum at aphelion, keeping areal velocity strictly constant.',
+      'Total specific orbital energy ε = -GM/(2a) depends solely on semi-major axis a, independent of eccentricity.'
+    ],
+    editorialTeaching: {
+      headline: 'Interactive 3D Solar System, Keplerian Orbits & Gravity Wells.',
+      story: 'Navigate in full 3D around the Sun, Earth, Mars, and spacecraft. Manipulate eccentricity, orbital radius, and observe real-time gravitational force and velocity vectors.',
+      controlsGuide: 'Adjust orbital eccentricity e from 0.0 (circle) to 0.82 (high ellipse). Change semi-major axis a and simulation time-warp.',
+      variablesAndOutputs: 'Track instantaneous distance r, orbital velocity v, orbital period T, perihelion/aphelion, and specific mechanical energy.',
+      modelAssumptions: 'Ideal two-body and restricted three-body gravitational interactions with point-mass Sun.',
+      learningObjective: 'Master Kepler\'s three laws, elliptical geometry, orbital energy, and interplanetary transfer orbits.'
+    },
+    simulations: [
+      {
+        id: 'physics_orbital_lab',
+        name: '3D Solar Orbital Mechanics Laboratory',
+        tagline: 'Manipulate eccentricity, semi-major axis, and observe Keplerian orbits and force vectors in 3D.',
+        description: 'Rotate the camera in 3D, inspect real-time velocity and gravitational force vectors, and verify equal swept-out areas.',
+        controls: [
+          { id: 'eccentricity', label: 'Eccentricity (e)', min: 0.0, max: 0.82, step: 0.02, defaultValue: 0.35 },
+          { id: 'semiMajorAxis', label: 'Semi-Major Axis (a)', min: 4.0, max: 12.0, step: 0.5, defaultValue: 8.0, unit: 'AU' },
+          { id: 'timeWarp', label: 'Time Warp', min: 0.2, max: 3.5, step: 0.1, defaultValue: 1.0, unit: 'x' }
+        ],
+        telemetryLabels: [
+          { key: 'distanceR', label: 'Distance (r)' },
+          { key: 'velocityV', label: 'Orbital Velocity (v)' },
+          { key: 'periodT', label: 'Period (T)' },
+          { key: 'orbitalEnergy', label: 'Specific Energy (ε)' }
+        ]
+      }
+    ]
+  },
+
+  atomic_orbitals_3d: {
+    id: 'atomic_orbitals_3d',
+    subject: 'physics',
+    title: '3D Quantum Atomic Orbitals & Wavefunctions',
+    category: 'QUANTUM & MODERN PHYSICS',
+    shortDesc: 'Schrödinger hydrogenic wavefunctions, 3D probability density clouds, phase sign lobes, and Bohr electron jump emission.',
+    conceptIntro:
+      'Electrons in atoms do not orbit like planets; they exist as quantum mechanical standing wave probability density clouds described by the Schrödinger wavefunction ψ_nlm(r, θ, φ). The square |ψ|² gives the spatial probability of finding the electron.',
+    realWorldExample:
+      'Chemical bonding, hybridization (sp, sp², sp³), transition metal coordination complexes, and molecular geometry all originate from the 3D shapes and orientations of s, p, d, and f atomic orbitals.',
+    keyFormulas: [
+      { formula: '\\psi_{nlm}(r, \\theta, \\phi) = R_{nl}(r) Y_l^m(\\theta, \\phi)', explanation: 'Separation of variables for hydrogenic Schrödinger wavefunction in spherical coordinates.' },
+      { formula: 'E_n = -\\frac{13.6 \\text{ eV}}{n^2}', explanation: 'Bohr quantized energy levels for hydrogen principal quantum number n.' },
+      { formula: 'N_{\\text{radial}} = n - l - 1 \\quad \\bullet \\quad N_{\\text{angular}} = l', explanation: 'Number of spherical radial nodes and planar/conical angular nodal surfaces.' }
+    ],
+    keyTakeaways: [
+      'Principal quantum number n defines energy and shell size; orbital angular momentum l defines shape (s, p, d, f); magnetic m defines spatial orientation.',
+      'Opposite quantum phases (+ψ in cyan, -ψ in crimson) interfere constructively to form chemical bonds or destructively to form anti-bonding states.',
+      'Electron quantum jumps between energy levels emit or absorb photons with wavelength λ = hc/ΔE matching the Rydberg formula.'
+    ],
+    editorialTeaching: {
+      headline: 'Visualize Schrödinger Hydrogenic Orbitals in Volumetric 3D.',
+      story: 'Explore 1s, 2s, 2p_z, 2p_x, 3d_z², 3d_xy, 3d_x²-y², and 4f_z³ orbitals in 3D. Inspect probability clouds, nodal surfaces, and simulate photon emission from electron jumps.',
+      controlsGuide: 'Switch between volumetric probability clouds, nodal surfaces (ψ=0), and quadrant slice cutaways. Trigger Balmer and Lyman transitions.',
+      variablesAndOutputs: 'Examine energy level E_n, radial nodes, angular nodal planes, peak probability radius r_max, and shell degeneracy.',
+      modelAssumptions: 'Non-relativistic single-electron hydrogen-like Schrödinger wave equation.',
+      learningObjective: 'Master quantum numbers (n, l, m), atomic orbital geometry, nodal topology, and spectral emission.'
+    },
+    simulations: [
+      {
+        id: 'physics_atomic_orbitals_lab',
+        name: '3D Quantum Atomic Orbitals Laboratory',
+        tagline: 'Explore 1s, 2s, 2p, 3d, 4f orbitals, nodal topologies, and simulated photon emission.',
+        description: 'Orbit in 3D around electron probability density clouds, inspect phase sign lobes, and test quantum transitions.',
+        controls: [
+          { id: 'principalN', label: 'Principal (n)', min: 1, max: 4, step: 1, defaultValue: 2 },
+          { id: 'angularL', label: 'Azimuthal (l)', min: 0, max: 3, step: 1, defaultValue: 1 },
+          { id: 'magneticM', label: 'Magnetic (m)', min: -1, max: 1, step: 1, defaultValue: 0 }
+        ],
+        telemetryLabels: [
+          { key: 'energy', label: 'Energy Level (E_n)' },
+          { key: 'radialNodes', label: 'Radial Nodes' },
+          { key: 'angularNodes', label: 'Angular Nodes' },
+          { key: 'rMax', label: 'Peak Radius' }
+        ]
+      }
+    ]
+  },
+
+  em_wave_3d: {
+    id: 'em_wave_3d',
+    subject: 'physics',
+    title: '3D Electromagnetic Wave & Polarization',
+    category: 'PHYSICS & OPTICS',
+    shortDesc: 'Maxwell transverse wave propagation, orthogonal E & B vectors, Malus\'s Law optical bench, and circular/elliptical helices.',
+    conceptIntro:
+      'Electromagnetic radiation consists of synchronized oscillations of electric and magnetic fields that propagate through space at the speed of light c. Because E and B are perpendicular to the propagation direction k, electromagnetic waves are transverse waves and can be polarized.',
+    realWorldExample:
+      'Polaroid sunglasses reduce road and water glare by blocking horizontally polarized reflected light. 3D cinema glasses, LCD screens, and optical telecommunications rely on polarization control.',
+    keyFormulas: [
+      { formula: 'I = I_0 \\cos^2(\\theta_2 - \\theta_1)', explanation: 'Malus\'s Law governing transmitted intensity through crossed or tilted polarizers.' },
+      { formula: '\\vec{S} = \\frac{1}{\\mu_0} (\\vec{E} \\times \\vec{B})', explanation: 'Poynting vector representing directional energy flux density (W/m²).' },
+      { formula: 'B_0 = \\frac{E_0}{c} \\quad \\bullet \\quad c = \\frac{1}{\\sqrt{\\mu_0 \\varepsilon_0}}', explanation: 'Maxwell ratio of peak electric and magnetic fields in vacuum.' }
+    ],
+    keyTakeaways: [
+      'In a linearly polarized wave, the electric field oscillates in a single fixed plane containing the propagation axis.',
+      'In circularly polarized light, the electric field vector rotates with constant magnitude, tracing a 3D helical corkscrew along the direction of travel.',
+      'Two polarizers oriented at 90° to each other (crossed polarizers) completely extinguish transmitted light (0% intensity).'
+    ],
+    editorialTeaching: {
+      headline: 'Explore 3D Maxwell Waves, Orthogonal Vector Fields & Malus\'s Law.',
+      story: 'Control an interactive 3D optical bench with an input polarizer and rotating analyzer. Observe oscillating E (cyan) and B (red) vectors, Poynting energy flow, and circular polarization helices.',
+      controlsGuide: 'Adjust polarizer and analyzer transmission angles, change wavelength from UV to infrared, and toggle between linear, RHCP, LHCP, and elliptical polarization.',
+      variablesAndOutputs: 'Track Malus transmitted intensity percentage, Poynting flux magnitude S, optical frequency in THz, and peak field strengths.',
+      modelAssumptions: 'Monochromatic plane wave propagating in non-dispersive vacuum / ideal dielectric.',
+      learningObjective: 'Master transverse wave nature, polarization states, Malus\'s Law, and electromagnetic energy transport.'
+    },
+    simulations: [
+      {
+        id: 'physics_em_wave_lab',
+        name: '3D Electromagnetic Wave & Polarization Bench',
+        tagline: 'Rotate polarizers, observe Poynting energy flux, and generate 3D circular helices.',
+        description: 'Visualize orthogonal E and B field vectors in 3D, verify Malus\'s Law quantitatively, and switch polarization states.',
+        controls: [
+          { id: 'polarizerAngle', label: 'Polarizer Angle (θ₁)', min: 0, max: 180, step: 5, defaultValue: 45, unit: '°' },
+          { id: 'analyzerAngle', label: 'Analyzer Angle (θ₂)', min: 0, max: 180, step: 5, defaultValue: 90, unit: '°' },
+          { id: 'wavelength', label: 'Wavelength (λ)', min: 380, max: 750, step: 10, defaultValue: 550, unit: 'nm' }
+        ],
+        telemetryLabels: [
+          { key: 'intensity', label: 'Transmitted Intensity (I/I₀)' },
+          { key: 'deltaAngle', label: 'Angle Offset (Δθ)' },
+          { key: 'frequency', label: 'Frequency (f)' },
+          { key: 'poynting', label: 'Poynting Flux (S)' }
+        ]
+      }
+    ]
+  },
+
+  dna_helix_3d: {
+    id: 'dna_helix_3d',
+    subject: 'biology',
+    title: '3D DNA Double Helix & Molecular Genetics',
+    category: 'MOLECULAR BIOLOGY & GENETICS',
+    shortDesc: 'Watson-Crick B-DNA double helix, antiparallel backbones, hydrogen bond bridges, Helicase unzipping, and point mutations.',
+    conceptIntro:
+      'Deoxyribonucleic acid (DNA) is the hereditary macromolecule composed of two antiparallel polynucleotide strands twisted into a right-handed double helix. Genetic information is encoded in the linear sequence of four nitrogenous bases: Adenine, Thymine, Guanine, and Cytosine.',
+    realWorldExample:
+      'PCR (Polymerase Chain Reaction) utilizes thermal denaturation (unzipping) and annealing to amplify specific DNA fragments millions of times for medical diagnostics and forensics.',
+    keyFormulas: [
+      { formula: 'A = T \\; (2\\text{ H-bonds}) \\quad \\bullet \\quad G \\equiv C \\; (3\\text{ H-bonds})', explanation: 'Watson-Crick complementary base pairing rule.' },
+      { formula: 'T_m = 64.9 + 41 \\times \\frac{G+C - 16.4}{N_{\\text{bp}}}', explanation: 'Marmur-Doty formula for DNA melting temperature Tm as a function of GC content.' },
+      { formula: '\\text{Pitch} = 3.4\\text{ nm} \\quad \\bullet \\quad \\text{Rise} = 0.34\\text{ nm/bp}', explanation: 'B-DNA helical geometry with 10.5 base pairs per 360° turn.' }
+    ],
+    keyTakeaways: [
+      'The two strands are antiparallel: one runs 5\' to 3\' while the complementary strand runs 3\' to 5\'.',
+      'Guanine-Cytosine pairs form 3 hydrogen bonds and require significantly higher thermal energy to denature than Adenine-Thymine (2 hydrogen bonds).',
+      'The helical geometry creates alternating major grooves (2.2 nm) and minor grooves (1.2 nm) where transcription factors and regulatory proteins bind.'
+    ],
+    editorialTeaching: {
+      headline: 'Manipulate the Watson-Crick B-DNA Double Helix in Real-Time 3D.',
+      story: 'Inspect color-coded base pairs, hydrogen bond bridges, and antiparallel sugar-phosphate ribbons in full 3D. Simulate thermal denaturation (Helicase unzipping) and perform point mutations.',
+      controlsGuide: 'Drag the unzipping slider to open the replication fork. Adjust temperature to reach melting temperature Tm. Click nucleotides to mutate bases and observe structural stability.',
+      variablesAndOutputs: 'Monitor GC content percentage, melting temperature Tm, total hydrogen bonds, and base pair dimensions.',
+      modelAssumptions: 'Standard canonical B-DNA conformation in physiological aqueous saline conditions.',
+      learningObjective: 'Master nucleotide chemistry, Watson-Crick pairing, DNA thermodynamics, and replication fork dynamics.'
+    },
+    simulations: [
+      {
+        id: 'bio_dna_helix_lab',
+        name: '3D DNA Double Helix Studio',
+        tagline: 'Interactive 3D nucleotide base pairs, thermal denaturation Tm, and genetic engineering.',
+        description: 'Rotate the double helix in 3D, test Helicase unzipping, examine hydrogen bonds, and introduce custom point mutations.',
+        controls: [
+          { id: 'unzip', label: 'Helicase Unzipping', min: 0.0, max: 1.0, step: 0.05, defaultValue: 0.0 },
+          { id: 'temperature', label: 'Temperature', min: 25, max: 98, step: 1, defaultValue: 37, unit: '°C' },
+          { id: 'speed', label: 'Rotation Speed', min: 0.2, max: 2.5, step: 0.1, defaultValue: 1.0, unit: 'x' }
+        ],
+        telemetryLabels: [
+          { key: 'basePairs', label: 'Base Pairs (bp)' },
+          { key: 'gcContent', label: 'GC Content' },
+          { key: 'meltingTemp', label: 'Melting Temp (Tm)' },
+          { key: 'hBonds', label: 'Total H-Bonds' }
+        ]
+      }
+    ]
+  },
+
+  black_hole_relativity_3d: {
+    id: 'black_hole_relativity_3d',
+    subject: 'physics',
+    title: '3D Black Hole & General Relativity',
+    category: 'ASTROPHYSICS & RELATIVITY',
+    shortDesc: 'Schwarzschild event horizon, Kerr spin parameter, photon sphere, ISCO, Keplerian accretion disk with Doppler beaming, and gravitational lensing.',
+    conceptIntro:
+      'A black hole is a region of spacetime where gravity is so strong that nothing—not even light—can escape. According to Einstein’s General Relativity, mass curves spacetime, creating an event horizon at the Schwarzschild radius Rs, a photon sphere where light loops in unstable orbits, and an accretion disk radiating enormous energy through relativistic frame dragging.',
+    realWorldExample:
+      'The Event Horizon Telescope (EHT) direct radio interferometry imaging of the supermassive black holes M87* and Sagittarius A* at the center of the Milky Way.',
+    keyFormulas: [
+      { formula: 'R_s = \\frac{2GM}{c^2}', explanation: 'Schwarzschild radius: event horizon radius for a non-rotating black hole.' },
+      { formula: 'R_{ph} = 1.5 R_s = \\frac{3GM}{c^2}', explanation: 'Photon sphere radius: unstable circular light orbits around the black hole.' },
+      { formula: 'R_{ISCO} = 3 R_s \\; (a=0) \\to 0.5 R_s \\; (a=1)', explanation: 'Innermost Stable Circular Orbit for accretion disk matter.' },
+      { formula: 'g = \\sqrt{1 - \\frac{R_s}{r}}', explanation: 'Gravitational time dilation factor relative to an asymptotic observer at infinity.' }
+    ],
+    keyTakeaways: [
+      'The event horizon marks the point of no return where escape velocity equals the speed of light c.',
+      'Gravitational lensing warps the appearance of the accretion disk, creating secondary images looping over the top and bottom of the black hole.',
+      'Relativistic Doppler beaming makes the approaching side of the accretion disk appear significantly brighter and blue-shifted, while the receding side is dimmed and red-shifted.',
+      'Kerr spin pulls the ISCO closer to the event horizon, increasing energy extraction efficiency up to 42%!'
+    ],
+    editorialTeaching: {
+      headline: 'Inspect Spacetime Curvature and Lensing Around a Rotating Kerr Black Hole.',
+      story: 'Explore an accurate 3D numerical model of a black hole with a glowing accretion disk, photon ring, relativistic bipolar jets, and lensed starlight.',
+      controlsGuide: 'Adjust black hole mass in solar masses, increase Kerr spin parameter to drag spacetime, and toggle Doppler beaming and photon sphere overlays.',
+      variablesAndOutputs: 'Monitors Schwarzschild radius Rs, photon sphere radius, ISCO radius, gravitational time dilation factor g, and Doppler boosting factor.',
+      modelAssumptions: 'General relativistic Kerr and Schwarzschild metrics with Keplerian thin disk approximations.',
+      learningObjective: 'Master general relativity concepts: event horizon, frame dragging, photon orbits, gravitational lensing, and relativistic Doppler shift.'
+    },
+    simulations: [
+      {
+        id: 'black_hole_relativity_3d',
+        name: '3D Kerr Black Hole & Accretion Disk Studio',
+        tagline: 'Interactive 3D event horizon, photon sphere, Keplerian disk, and relativistic Doppler beaming.',
+        description: 'Rotate around the black hole in 3D space, test mass and spin variations, and observe how intense gravitational lensing bends the accretion disk.',
+        controls: [
+          { id: 'mass', label: 'Black Hole Mass', min: 3, max: 50, step: 1, defaultValue: 10, unit: 'M☉' },
+          { id: 'spin', label: 'Kerr Spin Parameter (a)', min: 0.0, max: 0.99, step: 0.05, defaultValue: 0.65 },
+          { id: 'accretion', label: 'Accretion Disk Brightness', min: 0.2, max: 2.5, step: 0.1, defaultValue: 1.2 },
+          { id: 'jetPower', label: 'Relativistic Jet Power', min: 0.0, max: 2.0, step: 0.1, defaultValue: 0.8 }
+        ],
+        telemetryLabels: [
+          { key: 'rsKm', label: 'Event Horizon (Rs)' },
+          { key: 'rPhoton', label: 'Photon Sphere' },
+          { key: 'rIsco', label: 'ISCO Orbit' },
+          { key: 'timeDilation', label: 'Time Dilation' },
+          { key: 'dopplerBoost', label: 'Doppler Boost' }
+        ]
+      }
+    ]
+  },
+
+  crystallography_3d: {
+    id: 'crystallography_3d',
+    subject: 'chemistry',
+    title: '3D Crystallography & Bravais Lattices',
+    category: 'MATERIALS SCIENCE & SOLID STATE',
+    shortDesc: 'Bravais cubic unit cells, Miller indices (hkl) plane slicing, atomic packing factor (APF), and Powder X-ray diffraction (XRD) Bragg peaks.',
+    conceptIntro:
+      'Crystallography is the experimental science of determining the arrangement of atoms in crystalline solids. Atoms arrange in repeating 3D spatial patterns defined by unit cells (Simple Cubic, BCC, FCC, Diamond, HCP). Miller indices (hkl) represent families of parallel crystallographic planes that diffract X-rays according to Bragg’s Law.',
+    realWorldExample:
+      'Semiconductor silicon wafers crystallize in the diamond cubic lattice, while aluminum aerospace alloys utilize high-ductility FCC close-packed planes.',
+    keyFormulas: [
+      { formula: 'd_{hkl} = \\frac{a}{\\sqrt{h^2 + k^2 + l^2}}', explanation: 'Interplanar spacing between adjacent parallel (hkl) crystal planes in cubic lattices.' },
+      { formula: '\\lambda = 2 d_{hkl} \\sin \\theta', explanation: "Bragg's Law of X-ray diffraction: constructive interference condition for incident X-rays." },
+      { formula: '\\text{APF} = \\frac{N_{\\text{atoms}} \\times V_{\\text{atom}}}{V_{\\text{unit cell}}}', explanation: 'Atomic Packing Factor: fraction of unit cell volume occupied by hard spheres.' }
+    ],
+    keyTakeaways: [
+      'FCC and HCP achieve the maximum close-packed atomic density of 74.05% (coordination number 12).',
+      'Miller indices (hkl) define the reciprocal intercepts of the plane with the unit cell crystallographic axes.',
+      'Powder X-ray diffraction (XRD) produces distinct 2θ peak patterns that act as an unmistakable structural fingerprint of the material.'
+    ],
+    editorialTeaching: {
+      headline: 'Slice 3D Crystal Lattices with Miller Indices and Measure XRD Diffraction Peaks.',
+      story: 'Explore 3D crystal structures, toggle between ball-and-stick and hard-sphere touching views, cut planes across arbitrary Miller indices (hkl), and inspect the simulated Cu-Kα XRD powder spectrum.',
+      controlsGuide: 'Switch lattice systems (SC, BCC, FCC, Diamond, HCP), change Miller indices h, k, l to slice planes, and adjust atomic radius.',
+      variablesAndOutputs: 'Monitors unit cell coordination number, atomic packing factor percentage, interplanar d-spacing (Å), and 2θ Bragg diffraction angle.',
+      modelAssumptions: 'Ideal cubic and hexagonal Bravais lattices with monochromatic Cu-Kα radiation (λ = 1.5406 Å).',
+      learningObjective: 'Master solid state crystallography: unit cell geometry, Miller indices, atomic packing fractions, and X-ray diffraction crystallography.'
+    },
+    simulations: [
+      {
+        id: 'crystallography_3d',
+        name: '3D Crystallography & Miller Slicing Lab',
+        tagline: 'Interactive Bravais lattices, Miller indices (hkl) slicing plane, and powder XRD peaks.',
+        description: 'Rotate and slice 3D crystal unit cells, toggle hard-sphere packing, and observe live interplanar spacing calculations and Bragg XRD reflections.',
+        controls: [
+          { id: 'latticeType', label: 'Lattice (0:SC, 1:BCC, 2:FCC, 3:Diamond, 4:HCP)', min: 0, max: 4, step: 1, defaultValue: 2 },
+          { id: 'hIndex', label: 'Miller h', min: 0, max: 3, step: 1, defaultValue: 1 },
+          { id: 'kIndex', label: 'Miller k', min: 0, max: 3, step: 1, defaultValue: 1 },
+          { id: 'lIndex', label: 'Miller l', min: 0, max: 3, step: 1, defaultValue: 1 },
+          { id: 'atomicRadius', label: 'Sphere Packing Ratio', min: 0.2, max: 1.0, step: 0.05, defaultValue: 0.65 }
+        ],
+        telemetryLabels: [
+          { key: 'lattice', label: 'System' },
+          { key: 'coordination', label: 'Coordination No.' },
+          { key: 'apf', label: 'Packing Factor (APF)' },
+          { key: 'd_hkl', label: 'd-Spacing (Å)' },
+          { key: 'bragg_2theta', label: 'XRD Peak 2θ' }
+        ]
+      }
+    ]
+  },
+
+  neuron_synapse_3d: {
+    id: 'neuron_synapse_3d',
+    subject: 'biology',
+    title: '3D Neuron Action Potential & Synapse',
+    category: 'NEUROBIOLOGY & BIOPHYSICS',
+    shortDesc: 'Multipolar neuron anatomy, saltatory conduction along Nodes of Ranvier, Hodgkin-Huxley oscilloscope, and synaptic vesicle neurotransmitter exocytosis.',
+    conceptIntro:
+      'Neurons are the electrically excitable cells of the nervous system. Nerve impulses propagate down myelinated axons via saltatory conduction—leaping rapidly from one Node of Ranvier to the next. At the presynaptic axon terminal, voltage-gated calcium channels open, triggering neurotransmitter vesicle fusion across the 20 nm synaptic cleft.',
+    realWorldExample:
+      'Multiple sclerosis (MS) damages myelin sheaths, slowing axon conduction velocity from 100 m/s down to 5 m/s, causing neurological impairments.',
+    keyFormulas: [
+      { formula: 'E_{\\text{ion}} = \\frac{RT}{zF} \\ln \\frac{[\\text{Ion}]_{\\text{out}}}{[\\text{Ion}]_{\\text{in}}}', explanation: 'Nernst equation for ion equilibrium potential (Na+ = +60mV, K+ = -90mV).' },
+      { formula: 'v \\propto \\sqrt{d} \\; (\\text{unmyelinated}) \\quad \\bullet \\quad v \\propto d \\; (\\text{myelinated})', explanation: 'Axon diameter and myelination scaling of action potential conduction velocity.' },
+      { formula: 'I_{\\text{ion}} = g_{\\text{ion}} (V_m - E_{\\text{ion}})', explanation: 'Hodgkin-Huxley ionic current through voltage-gated channels.' }
+    ],
+    keyTakeaways: [
+      'Resting potential is maintained at -70 mV by Na+/K+ ATPase pumps and potassium leak channels.',
+      'Action potential firing obeys the all-or-none law: stimuli above threshold (-55 mV) fire identical +40 mV spikes.',
+      'Myelin sheaths prevent ion leakage, confining depolarization exclusively to Nodes of Ranvier (saltatory conduction).',
+      'Calcium influx at the synaptic terminal is the essential biochemical trigger for vesicle docking and neurotransmitter exocytosis.'
+    ],
+    editorialTeaching: {
+      headline: 'Experience Saltatory Axonal Conduction and Synaptic Vesicle Exocytosis in 3D.',
+      story: 'Navigate from the macro axon scale to the micro synaptic cleft scale. Inject current stimuli to fire action potentials and watch neurotransmitters cross the synaptic junction.',
+      controlsGuide: 'Adjust stimulus current above the threshold to trigger action potential trains. Modify extracellular calcium and myelin factors to observe conduction speed and neurotransmitter release.',
+      variablesAndOutputs: 'Live monitoring of membrane voltage Vm (mV), action potential firing frequency (Hz), conduction velocity (m/s), and cleft neurotransmitter concentration.',
+      modelAssumptions: 'Calibrated Hodgkin-Huxley mammalian biophysics at 37°C.',
+      learningObjective: 'Master neurobiology concepts: resting potential, saltatory conduction, Nodes of Ranvier, and synaptic vesicle neurotransmission.'
+    },
+    simulations: [
+      {
+        id: 'neuron_synapse_3d',
+        name: '3D Action Potential & Synapse Studio',
+        tagline: 'Interactive 3D neuron anatomy, saltatory conduction, Hodgkin-Huxley oscilloscope, and synaptic cleft.',
+        description: 'Explore axonal impulse propagation, toggle to the microscopic synaptic terminal, and observe neurotransmitter vesicle exocytosis.',
+        controls: [
+          { id: 'stimulus', label: 'Stimulus Current', min: 0, max: 40, step: 2, defaultValue: 22, unit: 'µA/cm²' },
+          { id: 'calcium', label: 'Extracellular Ca²⁺', min: 0.5, max: 5.0, step: 0.25, defaultValue: 2.0, unit: 'mM' },
+          { id: 'myelin', label: 'Myelination Factor', min: 0.1, max: 1.0, step: 0.05, defaultValue: 0.85 },
+          { id: 'vesicles', label: 'Vesicle Pool', min: 10, max: 50, step: 5, defaultValue: 30 }
+        ],
+        telemetryLabels: [
+          { key: 'membranePotential', label: 'Membrane Vm' },
+          { key: 'phase', label: 'Phase' },
+          { key: 'firingRate', label: 'Firing Rate' },
+          { key: 'conductionVelocity', label: 'Conduction Velocity' },
+          { key: 'cleftNeurotransmitter', label: 'Cleft Transmitter' }
+        ]
+      }
+    ]
+  },
+
+  quantum_double_slit_3d: {
+    id: 'quantum_double_slit_3d',
+    subject: 'physics',
+    title: '3D Quantum Double-Slit & Wave Duality',
+    category: 'QUANTUM MECHANICS & WAVE OPTICS',
+    shortDesc: 'Wavefunction interference fringes vs single particle impacts. Which-way detector observer toggle demonstrating wavefunction collapse.',
+    conceptIntro:
+      'The double-slit experiment is the central mystery of quantum mechanics. When particles such as electrons or photons travel through two slits without being observed, their probability wavefunctions Ψ interfere, creating alternating bright and dark fringes on the screen. However, when a detector observes which slit each particle passes through, the wavefunction collapses into classical particle trajectories, destroying the interference pattern.',
+    realWorldExample:
+      'Quantum cryptography (QKD) relies directly on the observer effect: any eavesdropper attempting to read photons unavoidably collapses quantum states, revealing their presence.',
+    keyFormulas: [
+      { formula: '\\lambda = \\frac{h}{p} = \\frac{h}{mv}', explanation: 'de Broglie wavelength connecting particle momentum p to matter wavelength λ.' },
+      { formula: '\\Delta y = \\frac{\\lambda L}{d}', explanation: 'Interference fringe spacing on detection screen at distance L with slit separation d.' },
+      { formula: 'P(y) = |\\Psi_1(y) + \\Psi_2(y)|^2 = |\\Psi_1|^2 + |\\Psi_2|^2 + 2\\text{Re}(\\Psi_1^* \\Psi_2)', explanation: 'Born rule probability density with quantum interference cross-term.' },
+      { formula: 'V = \\frac{I_{\\max} - I_{\\min}}{I_{\\max} + I_{\\min}} = 1 - D', explanation: 'Fringe visibility V as a function of quantum decoherence D (which-way detection).' }
+    ],
+    keyTakeaways: [
+      'Even when particles are fired one by one, an interference pattern accumulates over time, proving each particle interferes with itself!',
+      'Wave-particle duality: Matter behaves as a wave during propagation and as a localized particle upon measurement.',
+      'The Which-Way Observer introduces entanglement with the environment, causing quantum decoherence and classical collapse.',
+      'Heisenberg uncertainty principle: Any measurement precise enough to determine the particle’s slit imparts enough momentum uncertainty to wash out the fringes.'
+    ],
+    editorialTeaching: {
+      headline: 'Observe Wavefunction Interference and Trigger Quantum Measurement Collapse in Real-Time 3D.',
+      story: 'Fire single electrons through a double-slit barrier. Watch the ripple wavefunction propagate, observe discrete quantum impacts accumulating on the detector screen, and activate the which-way observer to witness decoherence.',
+      controlsGuide: 'Adjust de Broglie wavelength λ, slit separation d, and emission rate. Use the Which-Way Observer slider to transition smoothly from pure quantum superposition to classical particle collapse.',
+      variablesAndOutputs: 'Monitors de Broglie wavelength (nm), fringe spacing (mm), quantum coherence percentage, fringe visibility V, and total accumulated hits.',
+      modelAssumptions: 'Paraxial Fraunhofer diffraction with de Broglie matter wave and Von Neumann quantum measurement model.',
+      learningObjective: 'Master foundational quantum mechanics: wave-particle duality, de Broglie relation, Born rule probability density, and quantum measurement decoherence.'
+    },
+    simulations: [
+      {
+        id: 'quantum_double_slit_3d',
+        name: '3D Quantum Wave-Particle Duality Studio',
+        tagline: 'Interactive 3D particle emitter, double-slit barrier, phosphorescent screen, and observer collapse.',
+        description: 'Examine matter wave propagation in 3D space, accumulate single particle hits according to Born probability density, and test the observer effect.',
+        controls: [
+          { id: 'wavelength', label: 'Wavelength (λ)', min: 200, max: 800, step: 25, defaultValue: 500, unit: 'nm' },
+          { id: 'slitDistance', label: 'Slit Separation (d)', min: 1.0, max: 10.0, step: 0.5, defaultValue: 4.0, unit: 'µm' },
+          { id: 'slitWidth', label: 'Slit Width (a)', min: 0.2, max: 2.0, step: 0.1, defaultValue: 0.8, unit: 'µm' },
+          { id: 'observerIntensity', label: 'Which-Way Detector', min: 0.0, max: 1.0, step: 0.05, defaultValue: 0.0 },
+          { id: 'emissionRate', label: 'Emission Rate', min: 20, max: 300, step: 20, defaultValue: 120, unit: '/s' }
+        ],
+        telemetryLabels: [
+          { key: 'deBroglieWavelength', label: 'Wavelength λ' },
+          { key: 'fringeSpacing', label: 'Fringe Spacing' },
+          { key: 'quantumCoherence', label: 'Coherence' },
+          { key: 'fringeVisibility', label: 'Visibility' },
+          { key: 'accumulatedHits', label: 'Total Hits' }
+        ]
+      }
+    ]
   }
 };
 
@@ -2081,6 +2495,18 @@ export const ANIMATED_SIMULATION_IDS = new Set<string>([
   'bio_synapse_transmission',
   'physics_projectile_lab',
   'physics_wave_lab',
+  'physics_orbital_lab',
+  'orbital_mechanics_3d',
+  'physics_atomic_orbitals_lab',
+  'atomic_orbitals_3d',
+  'physics_em_wave_lab',
+  'em_wave_3d',
+  'black_hole_relativity_3d',
+  'crystallography_3d',
+  'neuron_synapse_3d',
+  'quantum_double_slit_3d',
+  'bio_dna_helix_lab',
+  'dna_helix_3d',
   'chem_vsepr_lab',
   'chem_kinetics_lab',
   'bio_cardiac_lab',
@@ -2091,3 +2517,4 @@ export const isSimulationAnimated = (simId?: string): boolean => {
   if (!simId) return false;
   return ANIMATED_SIMULATION_IDS.has(simId);
 };
+

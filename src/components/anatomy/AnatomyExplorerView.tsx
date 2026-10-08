@@ -65,22 +65,22 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     }
   }, [initialStructureId]);
 
-  // System Visibilities & Opacities
+  // System Visibilities & Opacities (Default to Layer 1: Surface & Form)
   const [systemVisibility, setSystemVisibility] = useState<Record<AnatomicalSystemId, boolean>>({
-    skeletal: true,
+    skeletal: false,
     muscular: true,
-    cardiovascular: true,
-    respiratory: true,
-    digestive: true,
-    nervous: true,
-    urinary: true,
-    endocrine: true,
-    lymphatic: true
+    cardiovascular: false,
+    respiratory: false,
+    digestive: false,
+    nervous: false,
+    urinary: false,
+    endocrine: false,
+    lymphatic: false
   });
 
   const [systemOpacity, setSystemOpacity] = useState<Record<AnatomicalSystemId, number>>({
     skeletal: 1.0,
-    muscular: 0.65, // Slightly translucent by default so internal organs are visible!
+    muscular: 1.0,
     cardiovascular: 1.0,
     respiratory: 0.9,
     digestive: 0.95,
@@ -105,7 +105,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   const [isLayerStackExpanded, setIsLayerStackExpanded] = useState<boolean>(true);
 
   // Outer Anatomical Mannequin Boundary
-  const [skinOpacity, setSkinOpacity] = useState(0.85); // Neutral matte alabaster mannequin by default
+  const [skinOpacity, setSkinOpacity] = useState(1.0); // Full opaque realistic human surface by default
   const [skinMode] = useState<'natural' | 'translucent' | 'xray'>('natural');
   const [skinVisible, setSkinVisible] = useState(true);
 
@@ -384,7 +384,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
           }}
         >
-          {selectedStructure ? (
+          {selectedStructure && (
             /* Contextual Controls for Selected Organ */
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <div
@@ -496,59 +496,57 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                 <span>Overview</span>
               </button>
             </div>
-          ) : (
-            /* Clean Camera Presets in Full Body Overview */
-            <>
-              {(['front', 'back', 'left', 'right'] as const).map((view) => (
-                <button
-                  key={view}
-                  onClick={() => setPresetView(view)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: '#CBD5E1',
-                    fontSize: '0.74rem',
-                    fontWeight: 600,
-                    padding: '4px 10px',
-                    borderRadius: 20,
-                    cursor: 'pointer',
-                    textTransform: 'capitalize',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                    e.currentTarget.style.color = '#FFFFFF';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#CBD5E1';
-                  }}
-                >
-                  {view}
-                </button>
-              ))}
-              <button
-                onClick={() => setPresetView('reset')}
-                style={{
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  border: 'none',
-                  color: '#38BDF8',
-                  fontSize: '0.74rem',
-                  fontWeight: 700,
-                  padding: '4px 10px',
-                  borderRadius: 20,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4
-                }}
-                title="Reset Camera Orientation"
-              >
-                <RotateCcw size={12} />
-                <span>Reset</span>
-              </button>
-            </>
           )}
+
+          {/* Clean Camera Presets Always Accessible */}
+          {(['front', 'back', 'left', 'right'] as const).map((view) => (
+            <button
+              key={view}
+              onClick={() => setPresetView(view)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#CBD5E1',
+                fontSize: '0.74rem',
+                fontWeight: 600,
+                padding: '4px 8px',
+                borderRadius: 20,
+                cursor: 'pointer',
+                textTransform: 'capitalize',
+                transition: 'all 0.15s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.color = '#FFFFFF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#CBD5E1';
+              }}
+            >
+              {view}
+            </button>
+          ))}
+          <button
+            onClick={() => setPresetView('reset')}
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: 'none',
+              color: '#38BDF8',
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              padding: '4px 10px',
+              borderRadius: 20,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+            title="Reset Camera Orientation"
+          >
+            <RotateCcw size={12} />
+            <span>Reset</span>
+          </button>
         </div>
 
         {/* Right: Tools & Layers Toggle */}
