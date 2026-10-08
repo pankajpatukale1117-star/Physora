@@ -39,6 +39,7 @@ export interface Anatomy3DCanvasProps {
   detailLevel: DetailLevel;
   presetView: 'front' | 'back' | 'left' | 'right' | 'top' | 'reset' | null;
   onPresetViewHandled: () => void;
+  activeLayerId?: string;
   skinOpacity?: number;
   skinMode?: 'natural' | 'translucent' | 'xray';
   skinVisible?: boolean;
@@ -48,7 +49,7 @@ export interface Anatomy3DCanvasProps {
 interface MeshUserData {
   id: string;
   name: string;
-  system: AnatomicalSystemId;
+  system: AnatomicalSystemId | 'integumentary';
   baseMaterial?: THREE.Material;
 }
 
@@ -66,9 +67,86 @@ interface CirculationParticleSystem {
   isArterialList: boolean[];
 }
 
+// Procedural high-resolution striated skeletal muscle texture
+function createMuscularSystemTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    // Rich anatomical deep muscle ground
+    ctx.fillStyle = '#7F1D1D';
+    ctx.fillRect(0, 0, 1024, 1024);
+
+    // Striated myofibrillar fascicle bundles (longitudinal fibers)
+    for (let y = 0; y < 1024; y += 3) {
+      const v = Math.sin(y * 0.08) * 0.5 + 0.5;
+      const shade = Math.floor(135 + v * 70);
+      ctx.fillStyle = `rgb(${shade}, 22, 38)`;
+      ctx.fillRect(0, y, 1024, 2.5);
+    }
+
+    // High-frequency muscle striation micro-fibrils
+    for (let i = 0; i < 400; i++) {
+      const y = Math.random() * 1024;
+      const h = 1 + Math.random() * 2;
+      const alpha = 0.25 + Math.random() * 0.45;
+      ctx.fillStyle = Math.random() > 0.35 
+        ? `rgba(185, 28, 28, ${alpha})` 
+        : `rgba(225, 29, 72, ${alpha * 0.8})`;
+      ctx.fillRect(0, y, 1024, h);
+    }
+
+    // Tendinous aponeuroses and fascia cross-bands
+    for (let i = 0; i < 30; i++) {
+      const x = Math.random() * 1024;
+      const w = 2 + Math.random() * 6;
+      ctx.fillStyle = 'rgba(254, 242, 242, 0.06)';
+      ctx.fillRect(x, 0, w, 1024);
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(6, 12);
+  return texture;
+}
+
+// Anatomical spatial mapper resolving 3D coordinates on mannequin to discrete muscle groups
+function resolveMuscleStructureAtPoint(point: THREE.Vector3): string {
+  const { x, y, z } = point;
+  // Shoulders: Deltoid
+  if (y >= 1.95 && y <= 2.65 && Math.abs(x) >= 0.60) {
+    return 'deltoids';
+  }
+  // Chest: Pectoralis Major (anterior)
+  if (y >= 1.80 && y <= 2.45 && z >= 0.02 && Math.abs(x) < 0.60) {
+    return 'pectoralis_major';
+  }
+  // Upper Arms: Biceps Brachii
+  if (y >= 1.15 && y < 1.95 && Math.abs(x) >= 0.65) {
+    return 'biceps_brachii';
+  }
+  // Abdomen: Rectus Abdominis (anterior)
+  if (y >= 0.70 && y < 1.80 && z >= 0.02 && Math.abs(x) < 0.60) {
+    return 'rectus_abdominis';
+  }
+  // Posterior Pelvis / Buttocks: Gluteus Maximus
+  if (y >= -0.65 && y <= 0.35 && z < -0.02) {
+    return 'gluteus_maximus';
+  }
+  // Anterior / Lateral Thighs: Quadriceps Femoris
+  if (y >= -2.30 && y < -0.30 && z >= -0.10) {
+    return 'quadriceps_femoris';
+  }
+  // Head / Neck / Back / Lower Legs / Core
+  return 'muscles_core';
+}
+
 export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   selectedStructureId,
   onSelectStructure,
+  activeLayerId = 'surface',
   systemVisibility,
   systemOpacity,
   isIsolated,
@@ -100,6 +178,11 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   const lastScreenPosRef = useRef<{ x: number; y: number } | null>(null);
 
   // Synchronized refs to avoid stale closures in Three.js animate() loop
+  const muscularTextureRef = useRef<THREE.CanvasTexture | null>(null);
+  if (!muscularTextureRef.current) {
+    muscularTextureRef.current = createMuscularSystemTexture();
+  }
+
   const selectedStructureIdRef = useRef<string | null>(selectedStructureId);
   useEffect(() => {
     selectedStructureIdRef.current = selectedStructureId;
@@ -520,7 +603,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
 
       // Determine system visibility
       const meshSystem = (meshes[0]?.userData as MeshUserData)?.system;
-      const systemId = meshSystem || struct?.system || 'skeletal';
+      const systemId = (meshSystem && meshSystem !== 'integumentary' ? meshSystem : (struct?.system || 'skeletal')) as AnatomicalSystemId;
       const isSystemVisible = systemVisibility[systemId] ?? true;
       const systemAlpha = systemOpacity[systemId] ?? 1.0;
 
@@ -536,10 +619,19 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         circulationGroupRef.current.visible = isCardioActive && (!isConcealedBySkin || selectedStructureId === 'aorta' || selectedStructureId === 'heart');
       }
 
-      // Skin represents outer anatomical boundary (realistic medical anatomical skin)
+      // Skin represents outer anatomical boundary (realistic medical anatomical skin) or somatic musculature
       if (id === 'skin') {
-        const effectiveOpacity = skinOpacity;
-        const isVisible = skinVisible && effectiveOpacity > 0.01 && !isIsolated;
+        const isMuscularMode = activeLayerId === 'muscles' || (!skinVisible && systemVisibility.muscular);
+        const effectiveOpacity = isMuscularMode ? (systemOpacity.muscular ?? 1.0) : skinOpacity;
+        const isVisible = (isMuscularMode ? systemVisibility.muscular : skinVisible) && effectiveOpacity > 0.01 && !isIsolated;
+
+        const isSelectedMuscle = selectedStructureId === 'muscles_core' || 
+          selectedStructureId === 'deltoids' || 
+          selectedStructureId === 'pectoralis_major' || 
+          selectedStructureId === 'rectus_abdominis' || 
+          selectedStructureId === 'biceps_brachii' || 
+          selectedStructureId === 'quadriceps_femoris' || 
+          selectedStructureId === 'gluteus_maximus';
 
         meshes.forEach((mesh) => {
           mesh.visible = isVisible;
@@ -548,14 +640,33 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
           const mat = mesh.material as THREE.MeshPhysicalMaterial;
           if (!mat) return;
 
-          if (isSelected) {
+          if (isSelected || (isMuscularMode && isSelectedMuscle)) {
             mat.emissive.set(new THREE.Color(0x10B981));
-            mat.emissiveIntensity = 0.45;
-            mat.opacity = Math.max(0.65, effectiveOpacity);
+            mat.emissiveIntensity = 0.55;
+            mat.opacity = Math.max(0.75, effectiveOpacity);
             mat.transparent = true;
-            mat.depthWrite = false;
+            mat.depthWrite = effectiveOpacity >= 0.95;
+            mat.needsUpdate = true;
+          } else if (isMuscularMode) {
+            // Authentic medical muscular system ecorché rendering
+            mat.map = muscularTextureRef.current;
+            mat.color.setHex(0x9E242B); // Rich anatomical muscle crimson
+            mat.roughness = 0.40;
+            mat.metalness = 0.02;
+            mat.clearcoat = 0.35;
+            mat.clearcoatRoughness = 0.28;
+            mat.sheen = 0.75;
+            mat.sheenColor = new THREE.Color(0xFB7185); // Vibrant myofibril sheen
+            mat.sheenRoughness = 0.32;
+            mat.emissive.setHex(0x450A0A);
+            mat.emissiveIntensity = 0.12;
+            mat.transparent = effectiveOpacity < 0.98;
+            mat.opacity = effectiveOpacity;
+            mat.depthWrite = effectiveOpacity >= 0.98;
+            mat.needsUpdate = true;
           } else {
             // Realistic medical PBR human skin rendering
+            mat.map = null;
             const skinColor = skinMode === 'natural' ? 0xE8C4B8 : (skinMode === 'xray' ? 0x38BDF8 : 0xDCE1E6);
             mat.color.setHex(skinColor);
             mat.roughness = 0.52;
@@ -576,6 +687,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
               mat.opacity = effectiveOpacity;
               mat.depthWrite = false;
             }
+            mat.needsUpdate = true;
           }
         });
         return;
@@ -619,7 +731,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         }
       });
     });
-  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated, showInternal, layerSeparation, skinOpacity, skinMode, skinVisible, biologicalSex, loadedVersion]);
+  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated, showInternal, layerSeparation, skinOpacity, skinMode, skinVisible, biologicalSex, loadedVersion, activeLayerId]);
 
   // --------------------------------------------------------------------------
   // 7. MOUSE & TOUCH ORBIT / ZOOM / PAN INTERACTIONS
@@ -785,10 +897,20 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     const intersects = raycaster.intersectObjects(anatomyMasterGroupRef.current.children, true);
     if (intersects.length > 0) {
       for (const hit of intersects) {
-        // Find closest hit that is visible (or skin if opaque)
+        // Find closest hit that is visible
         if (hit.object.visible && hit.object.userData?.id) {
           const ud = hit.object.userData as MeshUserData;
-          if (ud.id !== 'skin' || skinOpacity >= 0.85) {
+          if (ud.id === 'skin') {
+            const isMuscularMode = activeLayerId === 'muscles' || (!skinVisible && systemVisibility.muscular);
+            if (isMuscularMode) {
+              const muscleId = resolveMuscleStructureAtPoint(hit.point);
+              onSelectStructure(muscleId);
+              return;
+            } else if (skinVisible && skinOpacity >= 0.85) {
+              onSelectStructure('skin');
+              return;
+            }
+          } else {
             onSelectStructure(ud.id);
             return;
           }
@@ -818,7 +940,30 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       for (const hit of intersects) {
         if (hit.object.visible && hit.object.userData?.id) {
           const ud = hit.object.userData as MeshUserData;
-          if (ud.id !== 'skin' || skinOpacity >= 0.85) {
+          if (ud.id === 'skin') {
+            const isMuscularMode = activeLayerId === 'muscles' || (!skinVisible && systemVisibility.muscular);
+            if (isMuscularMode) {
+              const muscleId = resolveMuscleStructureAtPoint(hit.point);
+              const mStruct = ANATOMY_STRUCTURES[muscleId];
+              setHoveredStructure({
+                id: muscleId,
+                name: mStruct?.name || 'Muscular System',
+                system: 'muscular',
+                x: clientX,
+                y: clientY
+              });
+              return;
+            } else if (skinVisible && skinOpacity >= 0.85) {
+              setHoveredStructure({
+                id: 'skin',
+                name: 'Human Body Surface (Skin & Involucre)',
+                system: 'integumentary',
+                x: clientX,
+                y: clientY
+              });
+              return;
+            }
+          } else {
             setHoveredStructure({
               id: ud.id,
               name: ud.name,
@@ -1167,7 +1312,7 @@ function loadAllAnatomicalModels(
   lungMeshesRef: React.MutableRefObject<THREE.Object3D[]>,
   onProgress: (percent: number, message: string) => void
 ) {
-  const registerMesh = (id: string, mesh: THREE.Mesh, system: AnatomicalSystemId, name: string) => {
+  const registerMesh = (id: string, mesh: THREE.Mesh, system: AnatomicalSystemId | 'integumentary', name: string) => {
     mesh.userData = { id, system, name } as MeshUserData;
     let list = meshMap.get(id);
     if (!list) {
@@ -1183,7 +1328,7 @@ function loadAllAnatomicalModels(
     file: string;
     id: string;
     name: string;
-    system: AnatomicalSystemId;
+    system: AnatomicalSystemId | 'integumentary';
     scale: number;
     position: [number, number, number];
     materialColor: number;
@@ -1197,7 +1342,7 @@ function loadAllAnatomicalModels(
       file: 'skin.glb',
       id: 'skin',
       name: 'Human Body Surface (Skin & Involucre)',
-      system: 'muscular',
+      system: 'integumentary',
       scale: 4.5,
       position: [0, 0, 0],
       materialColor: 0xDE9F7E, // Realistic natural skin tone
@@ -1483,19 +1628,19 @@ function loadAllAnatomicalModels(
               registerMesh(spec.id, mesh, spec.system, mesh.name || spec.name);
             }
 
-            const isTranslucent = spec.opacity !== undefined && spec.opacity < 1.0;
+            const isTranslucent = spec.id === 'skin' || (spec.opacity !== undefined && spec.opacity < 1.0);
             const pbrMaterial = new THREE.MeshPhysicalMaterial({
               color,
               roughness: spec.roughness ?? 0.35,
               metalness: spec.metalness ?? 0.02,
               clearcoat: spec.clearcoat ?? 0.35,
               clearcoatRoughness: 0.22,
-              sheen: spec.id === 'heart' || spec.id === 'lungs' || spec.id === 'liver' ? 0.35 : 0.0,
+              sheen: spec.id === 'heart' || spec.id === 'lungs' || spec.id === 'liver' || spec.id === 'skin' ? 0.35 : 0.0,
               sheenRoughness: 0.3,
               sheenColor: spec.id === 'heart' ? new THREE.Color(0xF87171) : new THREE.Color(0xFCA5A5),
               transparent: isTranslucent,
               opacity: spec.opacity ?? 1.0,
-              depthWrite: !isTranslucent
+              depthWrite: spec.id === 'skin' ? true : !isTranslucent
             });
 
             mesh.material = pbrMaterial;

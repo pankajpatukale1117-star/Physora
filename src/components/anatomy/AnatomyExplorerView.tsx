@@ -631,6 +631,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               setIsProcessPlaying(false);
             }
           }}
+          activeLayerId={ANATOMICAL_LAYER_STACK[activeLayerIndex]?.id || 'surface'}
           systemVisibility={systemVisibility}
           systemOpacity={systemOpacity}
           isIsolated={isIsolated}
