@@ -167,93 +167,161 @@ function setupMuscularAnatomyShader(material: THREE.MeshPhysicalMaterial) {
       varying vec3 vWorldPosCustom;
       varying vec3 vWorldNormCustom;
       uniform float uMuscularMode;
+
+      // Organic Continuous Muscular System Height Evaluator (True Sculptural Anatomy)
+      float evaluateAnatomicalEcorche(vec3 p) {
+        float x = p.x;
+        float y = p.y;
+        float z = p.z;
+        float ax = abs(x);
+        float H = 0.0;
+
+        // 1. CHEST: Pectoralis Major (Broad convex muscular plates with natural sternal cleft)
+        if (y >= 1.70 && y <= 2.50 && z > -0.04) {
+          float pecX = smoothstep(0.04, 0.10, ax) * smoothstep(0.50, 0.38, ax);
+          float pecY = smoothstep(1.72, 1.88, y) * smoothstep(2.48, 2.32, y);
+          float pecZ = smoothstep(-0.03, 0.04, z);
+          float pecPlate = pecX * pecY * pecZ;
+          float pecPeak = smoothstep(0.40, 0.05, length(vec2((ax - 0.24) * 1.3, (y - 2.12) * 1.7)));
+          H += (pecPlate * 0.25 + pecPeak * 0.30);
+        }
+
+        // 2. ABDOMEN: Rectus Abdominis (Continuous abdominal column sculpted into 6-pack)
+        if (y >= 0.65 && y < 1.82 && ax < 0.32 && z > -0.04) {
+          float abX = smoothstep(0.035, 0.08, ax) * smoothstep(0.24, 0.17, ax);
+          float abY = smoothstep(0.68, 0.82, y) * smoothstep(1.80, 1.66, y);
+          float abZ = smoothstep(-0.03, 0.04, z);
+          float abStrap = abX * abY * abZ;
+
+          float c1 = smoothstep(0.18, 0.02, length(vec2((ax - 0.125) * 1.3, (y - 1.62) * 1.6)));
+          float c2 = smoothstep(0.18, 0.02, length(vec2((ax - 0.125) * 1.3, (y - 1.36) * 1.6)));
+          float c3 = smoothstep(0.18, 0.02, length(vec2((ax - 0.120) * 1.3, (y - 1.10) * 1.6)));
+          float c4 = smoothstep(0.19, 0.02, length(vec2((ax - 0.115) * 1.3, (y - 0.84) * 1.5)));
+          float cushions = max(c1, max(c2, max(c3, c4)));
+
+          H += (abStrap * 0.20 + cushions * 0.28);
+        }
+
+        // 3. FLANKS: Serratus Anterior & External Obliques
+        if (ax >= 0.22 && ax <= 0.54 && y >= 0.75 && y <= 1.85) {
+          float dFlank = length(vec2((ax - 0.36) * 1.5, (y - 0.98) * 1.7));
+          float flank = smoothstep(0.36, 0.04, dFlank) * 0.28;
+
+          float serratus = smoothstep(0.26, 0.44, ax) * smoothstep(1.15, 1.75, y) * (sin((y * 3.4 + ax * 1.5) * 6.28) * 0.5 + 0.5) * 0.16;
+          H += (flank + serratus);
+        }
+
+        // 4. SHOULDERS: Deltoids (Anatomical 3-headed muscular cap)
+        if (y >= 1.95 && y <= 2.65 && ax >= 0.44) {
+          float deltX = smoothstep(0.44, 0.52, ax) * smoothstep(0.76, 0.65, ax);
+          float deltY = smoothstep(1.95, 2.10, y) * smoothstep(2.62, 2.45, y);
+          float dDelt = length(vec2((ax - 0.64) * 1.4, (y - 2.30) * 1.5));
+          H += (deltX * deltY * 0.22 + smoothstep(0.42, 0.04, dDelt) * 0.28);
+        }
+
+        // 5. ARMS: Biceps Brachii, Triceps, and Forearms
+        if (y >= 1.15 && y < 1.95 && ax >= 0.54) {
+          if (z > 0.0) {
+            float dBicep = length(vec2((ax - 0.74) * 2.0, (y - 1.56) * 1.3));
+            H += smoothstep(0.38, 0.04, dBicep) * smoothstep(0.0, 0.04, z) * 0.45;
+          } else {
+            float dTricep = length(vec2((ax - 0.74) * 1.8, (y - 1.56) * 1.3));
+            H += smoothstep(0.42, 0.04, dTricep) * smoothstep(0.0, -0.04, z) * 0.42;
+          }
+        }
+
+        if (y >= 0.35 && y < 1.20 && ax >= 0.60) {
+          float dForearm = length(vec2((ax - 0.75) * 2.2, (y - 0.85) * 1.2));
+          H += smoothstep(0.42, 0.05, dForearm) * 0.32;
+        }
+
+        // 6. THIGHS: Quadriceps (Vastus Medialis, Rectus Femoris, Vastus Lateralis)
+        if (y >= -2.28 && y < -0.30) {
+          if (z > -0.04) {
+            // Teardrop Vastus Medialis above inner knee
+            float dVM = length(vec2((ax - 0.23) * 2.2, (y + 1.95) * 2.6));
+            float vm = smoothstep(0.32, 0.04, dVM) * smoothstep(-0.02, 0.04, z) * 0.52;
+
+            // Rectus Femoris central longitudinal column
+            float dRF = length(vec2((ax - 0.32) * 2.4, (y + 1.25) * 1.2));
+            float rf = smoothstep(0.38, 0.04, dRF) * smoothstep(-0.02, 0.04, z) * 0.38;
+
+            // Vastus Lateralis sweeping outer thigh
+            float dVL = length(vec2((ax - 0.42) * 2.0, (y + 1.45) * 1.5));
+            float vl = smoothstep(0.40, 0.04, dVL) * smoothstep(-0.02, 0.04, z) * 0.42;
+
+            H += (vm + rf + vl);
+          } else {
+            float dHam = abs(ax - 0.30);
+            H += smoothstep(0.25, 0.04, dHam) * smoothstep(-0.02, -0.06, z) * smoothstep(-2.25, -2.0, y) * smoothstep(-0.3, -0.5, y) * 0.38;
+          }
+        }
+
+        // 7. CALVES: Twin Gastrocnemius Bellies & Anterior Tibialis
+        if (y >= -3.85 && y < -2.30) {
+          if (z < -0.02) {
+            float dCalfMed = length(vec2((ax - 0.22) * 2.4, (y + 2.72) * 1.8));
+            float dCalfLat = length(vec2((ax - 0.32) * 2.4, (y + 2.68) * 1.8));
+            H += max(smoothstep(0.34, 0.04, dCalfMed), smoothstep(0.34, 0.04, dCalfLat)) * smoothstep(-0.02, -0.06, z) * 0.48;
+          } else {
+            float dShin = abs(ax - 0.29);
+            H += smoothstep(0.18, 0.04, dShin) * smoothstep(-0.02, 0.04, z) * smoothstep(-3.7, -3.4, y) * smoothstep(-2.4, -2.6, y) * 0.32;
+          }
+        }
+
+        // 8. GLUTEUS MAXIMUS (Posterior Pelvis)
+        if (y >= -0.55 && y <= 0.30 && z < -0.04) {
+          float dGlute = length(vec2((ax - 0.32) * 1.4, (y + 0.15) * 1.8));
+          H += smoothstep(0.50, 0.04, dGlute) * smoothstep(-0.02, -0.06, z) * 0.50;
+        }
+
+        return H;
+      }
+
       ${shader.fragmentShader}
     `.replace(
+      '#include <normal_fragment_maps>',
+      `
+      #include <normal_fragment_maps>
+
+      if (uMuscularMode > 0.5) {
+        // True 3D Volumetric Sculpted Relief via Screen-Space Normal Derivatives
+        float H = evaluateAnatomicalEcorche(vWorldPosCustom);
+        float bumpScale = 7.0;
+        vec2 dHdxy = vec2(dFdx(H), dFdy(H)) * bumpScale;
+        vec3 vSigmaX = normalize(dFdx(-vViewPosition));
+        vec3 vSigmaY = normalize(dFdy(-vViewPosition));
+        vec3 R1 = cross(vSigmaY, normal);
+        vec3 R2 = cross(normal, vSigmaX);
+        float fDet = dot(vSigmaX, R1) * faceDirection;
+        vec3 vGrad = sign(fDet) * (dHdxy.x * R1 + dHdxy.y * R2);
+        normal = normalize(abs(fDet) * normal - vGrad);
+      }
+      `
+    ).replace(
       '#include <color_fragment>',
       `
       #include <color_fragment>
 
       if (uMuscularMode > 0.5) {
         vec3 p = vWorldPosCustom;
-        float x = p.x;
-        float y = p.y;
-        float z = p.z;
-        float ax = abs(x);
+        float H = evaluateAnatomicalEcorche(p);
 
-        // Authentic anatomical ecorché palette (deep crimson muscle, dark natural sulci, soft tendon)
-        vec3 colDeepFlesh    = vec3(0.18, 0.02, 0.03); // Deep shadow crevice
-        vec3 colRichMuscle   = vec3(0.34, 0.05, 0.08); // Rich arterial muscle tissue
-        vec3 colMuscleLight  = vec3(0.48, 0.09, 0.12); // Superficial fascicle highlight
-        vec3 colTendonFascia = vec3(0.66, 0.60, 0.52); // Subtle warm fibrous tendon
+        // Deep Somatic Écorché Palette
+        vec3 colSulcus     = vec3(0.12, 0.015, 0.022); // #1E0406 Deep shadowy intermuscular sulcus
+        vec3 colMuscleBase = vec3(0.24, 0.032, 0.045); // #3D080B Rich arterial muscular ground
+        vec3 colMuscleHigh = vec3(0.44, 0.068, 0.092); // #701117 Contractile myofibrils on rounded crests
 
-        // Fast, smooth procedural 3D muscle grain (organic micro-fascicles)
-        vec3 grainPos = p * vec3(120.0, 45.0, 120.0);
-        float grain1 = sin(grainPos.y + sin(grainPos.x * 0.7 + grainPos.z * 0.5) * 2.5);
-        float grain2 = sin(grainPos.x * 0.8 + grainPos.y * 1.5 + grainPos.z * 0.8);
-        float microFibers = (grain1 * 0.5 + grain2 * 0.5) * 0.5 + 0.5;
+        // Subtle organic cellular micro-grain (multi-frequency speckle, NO zebra stripes!)
+        float f1 = sin(p.x * 90.0 + p.y * 35.0 + p.z * 80.0);
+        float f2 = sin(p.x * 40.0 - p.y * 70.0 + p.z * 50.0);
+        float microGrain = (f1 * f2) * 0.05;
 
-        // Base muscle tissue with organic fiber variations
-        vec3 muscleColor = mix(colRichMuscle, colMuscleLight, microFibers * 0.35);
+        // Volumetric shading: peaks catch vibrant hemoglobin tones, valleys deepen into dark sulci
+        vec3 muscleCol = mix(colMuscleBase, colMuscleHigh, clamp(H * 1.8 + microGrain, 0.0, 1.0));
+        muscleCol = mix(colSulcus, muscleCol, clamp(H * 2.2, 0.0, 1.0));
 
-        // Anatomical Furrows & Tendons (Soft natural shading, no harsh white lines)
-        float tendonStrength = 0.0;
-        float creviceDepth = 0.0;
-
-        // 1. Sternal furrow (Natural groove between pectoralis major bellies)
-        if (y >= 1.80 && y <= 2.45 && z > 0.0) {
-          if (ax < 0.030) {
-            creviceDepth = max(creviceDepth, smoothstep(0.030, 0.005, ax) * 0.40);
-          }
-        }
-
-        // 2. Abdominal wall: Linea Alba & Tendinous Inscriptions (Rectus Abdominis)
-        if (y >= 0.75 && y < 1.80 && z > 0.0 && ax < 0.35) {
-          // Linea Alba: subtle central vertical furrow
-          if (ax < 0.024) {
-            creviceDepth = max(creviceDepth, smoothstep(0.024, 0.004, ax) * 0.45);
-          }
-
-          // Transverse tendinous intersections (natural 6-pack furrow seams)
-          if (ax > 0.015 && ax < 0.22) {
-            float dT1 = abs(y - 1.45);
-            float dT2 = abs(y - 1.20);
-            float dT3 = abs(y - 0.95);
-            float minT = min(dT1, min(dT2, dT3));
-            if (minT < 0.024) {
-              creviceDepth = max(creviceDepth, smoothstep(0.024, 0.004, minT) * 0.45);
-            }
-          }
-
-          // Linea Semilunaris: lateral border groove
-          float dLat = abs(ax - 0.23);
-          if (dLat < 0.025) {
-            creviceDepth = max(creviceDepth, smoothstep(0.025, 0.005, dLat) * 0.35);
-          }
-        }
-
-        // 3. Patellar Tendon (Vertical ligament capping the knee)
-        if (y >= -2.35 && y <= -2.10 && z > 0.0) {
-          float dKnee = abs(ax - 0.30);
-          if (dKnee < 0.028) {
-            tendonStrength = max(tendonStrength, smoothstep(0.028, 0.004, dKnee) * 0.35);
-          }
-        }
-
-        // 4. Achilles Tendon (Vertical fibrous band running down to the heel)
-        if (y >= -3.85 && y <= -3.10 && z < -0.02) {
-          float dAch = abs(ax - 0.25);
-          if (dAch < 0.022) {
-            tendonStrength = max(tendonStrength, smoothstep(0.022, 0.003, dAch) * 0.60);
-          }
-        }
-
-        // Deepen intermuscular sulci naturally (subtle shadowing, no harsh black lines)
-        muscleColor = mix(muscleColor, colDeepFlesh, creviceDepth);
-
-        // Blend pearlescent fibrous fascia & tendons smoothly
-        vec3 finalColor = mix(muscleColor, colTendonFascia, tendonStrength);
-
-        diffuseColor.rgb = finalColor;
+        diffuseColor.rgb = muscleCol;
       }
       `
     );
@@ -770,16 +838,16 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
               mat.userData.uMuscularMode.value = 1.0;
             }
             mat.map = null;
-            mat.color.setHex(0x66141F); // Organic deep muscle ground
-            mat.roughness = 0.58;
+            mat.color.setHex(0x3D080B); // Deep rich oxblood ground
+            mat.roughness = 0.58; // Organic matte-satin anatomical specimen finish (not shiny plastic!)
             mat.metalness = 0.0;
-            mat.clearcoat = 0.04;
+            mat.clearcoat = 0.12; // Subtle biological hydration
             mat.clearcoatRoughness = 0.50;
-            mat.sheen = 0.35;
-            mat.sheenColor = new THREE.Color(0x9E2A2B); // Organic biological muscle sheen
-            mat.sheenRoughness = 0.45;
-            mat.emissive.setHex(0x100204);
-            mat.emissiveIntensity = 0.03;
+            mat.sheen = 0.0; // Zero sheen to prevent pink wash-out
+            mat.sheenColor = new THREE.Color(0x000000);
+            mat.sheenRoughness = 0.50;
+            mat.emissive.setHex(0x000000);
+            mat.emissiveIntensity = 0.0;
             mat.transparent = effectiveOpacity < 0.98;
             mat.opacity = effectiveOpacity;
             mat.depthWrite = effectiveOpacity >= 0.98;
