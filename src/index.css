@@ -1286,4 +1286,113 @@ input[type="range"]::-moz-range-thumb {
   }
 }
 
+/* ==========================================================================
+   Mobile Touch Ergonomics & Bottom Sheet (<768px)
+   ========================================================================== */
+
+/* Ensure Stepper Buttons Have 44x44px Minimum Touch Target */
+.phet-stepper-btn {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--border-medium, rgba(255, 255, 255, 0.16));
+  background: var(--bg-card, rgba(15, 23, 42, 0.7));
+  color: var(--text-primary, #FFFFFF);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.phet-stepper-btn:hover:not(:disabled) {
+  background: var(--bg-subtle, rgba(255, 255, 255, 0.12));
+  border-color: var(--electric-blue, #00F0FF);
+  transform: translateY(-1px);
+}
+
+.phet-stepper-btn:active:not(:disabled) {
+  transform: scale(0.94);
+  background: rgba(0, 240, 255, 0.18);
+}
+
+.phet-stepper-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Ensure Slider Thumbs Have 44x44px Hit Box Touch Area */
+.card-range-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+  margin: 0;
+}
+
+.card-range-slider:focus {
+  outline: none;
+}
+
+.card-range-slider::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+  transition: all 0.2s ease;
+}
+
+.card-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: var(--electric-blue, #00f0ff);
+  border: 2.5px solid #FFFFFF;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.6), 0 2px 6px rgba(0, 0, 0, 0.4);
+  cursor: grab;
+  margin-top: -9px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+}
+
+.card-range-slider::-webkit-slider-thumb:active {
+  cursor: grabbing;
+  transform: scale(1.2);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.9);
+}
+
+.card-range-slider::-moz-range-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.card-range-slider::-moz-range-thumb {
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  background: var(--electric-blue, #00f0ff);
+  border: 2.5px solid #FFFFFF;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
+  cursor: grab;
+}
+
+/* Draggable Bottom Sheet Transitions */
+.mobile-bottom-sheet {
+  transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: height, transform;
+}
+
 

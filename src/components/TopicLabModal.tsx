@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
+  ChevronUp,
+  ChevronDown,
   HelpCircle,
   Award,
   Maximize2,
@@ -22,7 +24,10 @@ import {
   Plus,
   StepForward,
   Gauge,
-  Sparkles
+  Sparkles,
+  Ghost,
+  FileText,
+  Radio
 } from 'lucide-react';
 import { TOPICS_DATA, isSimulationAnimated, type EditorialTeaching } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
@@ -34,12 +39,13 @@ import { LabReportModal } from './reports/LabReportModal';
 import { PresenterModeOverlay } from './classroom/PresenterModeOverlay';
 import { AiMentorDrawer } from './ai/AiMentorDrawer';
 import { PricingModal } from './pricing/PricingModal';
-import { FileText, Radio } from 'lucide-react';
+import { useSubscription } from '../context/SubscriptionContext';
 
 interface TopicLabModalProps {
   topicId: string | null;
+  initialSimId?: string | null;
   onClose: () => void;
-  onSelectTopic: (topicId: string) => void;
+  onSelectTopic: (topicId: string, simId?: string) => void;
 }
 
 interface NumericControlItemProps {
@@ -78,17 +84,19 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
     }
   }
 
-  const handleStepDown = (e: React.MouseEvent) => {
+  const precision = control.step.toString().includes('.')
+    ? control.step.toString().split('.')[1].length
+    : 0;
+
+  const handleStepDown = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    const precision = control.step.toString().includes('.') ? control.step.toString().split('.')[1].length : 0;
     const nextVal = Math.max(control.min, parseFloat((value - control.step).toFixed(precision)));
     setTextValue(String(nextVal));
     onChange(nextVal);
   };
 
-  const handleStepUp = (e: React.MouseEvent) => {
+  const handleStepUp = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
-    const precision = control.step.toString().includes('.') ? control.step.toString().split('.')[1].length : 0;
     const nextVal = Math.min(control.max, parseFloat((value + control.step).toFixed(precision)));
     setTextValue(String(nextVal));
     onChange(nextVal);
@@ -162,7 +170,13 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
       )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontSize: '0.80rem', fontWeight: 650, color: isHighlighted ? 'var(--electric-blue)' : 'var(--text-secondary)' }}>
+        <span
+          style={{
+            fontSize: '0.82rem',
+            fontWeight: 700,
+            color: isHighlighted ? 'var(--electric-blue)' : 'var(--text-primary)'
+          }}
+        >
           {control.label}
         </span>
 
@@ -211,7 +225,7 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
         </div>
       </div>
 
-      {/* PhET Stepper Slider Row [-] Slider [+] */}
+      {/* Touch Ergonomic Stepper Slider Row: 44x44px [-] | Slider | 44x44px [+] */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <button
           type="button"
@@ -220,20 +234,34 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
           className="phet-stepper-btn"
           title={`Decrease by ${control.step}`}
           aria-label={`Decrease ${control.label}`}
+          style={{
+            minWidth: '44px',
+            minHeight: '44px',
+            width: '44px',
+            height: '44px',
+            flexShrink: 0
+          }}
         >
-          <Minus size={13} strokeWidth={2.5} />
+          <Minus size={16} strokeWidth={2.8} />
         </button>
 
-        <input
-          type="range"
-          min={control.min}
-          max={control.max}
-          step={control.step}
-          value={value}
-          onChange={handleSliderChange}
-          className="card-range-slider"
-          style={{ flex: 1, cursor: 'pointer', accentColor }}
-        />
+        <div style={{ flex: 1, minHeight: '44px', display: 'flex', alignItems: 'center' }}>
+          <input
+            type="range"
+            min={control.min}
+            max={control.max}
+            step={control.step}
+            value={value}
+            onChange={handleSliderChange}
+            className="card-range-slider"
+            style={{
+              width: '100%',
+              minHeight: '44px',
+              cursor: 'pointer',
+              accentColor
+            }}
+          />
+        </div>
 
         <button
           type="button"
@@ -242,13 +270,21 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
           className="phet-stepper-btn"
           title={`Increase by ${control.step}`}
           aria-label={`Increase ${control.label}`}
+          style={{
+            minWidth: '44px',
+            minHeight: '44px',
+            width: '44px',
+            height: '44px',
+            flexShrink: 0
+          }}
         >
-          <Plus size={13} strokeWidth={2.5} />
+          <Plus size={16} strokeWidth={2.8} />
         </button>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
         <span>Min: {control.min}</span>
+        <span>Step: ±{control.step}</span>
         <span>Max: {control.max}</span>
       </div>
     </div>
@@ -257,10 +293,27 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
 
 export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   topicId,
+  initialSimId,
   onClose,
   onSelectTopic
 }) => {
-  const [activeSimIndex, setActiveSimIndex] = useState(0);
+  const topic = topicId ? TOPICS_DATA[topicId] : null;
+
+  const getSimIndexFromContext = React.useCallback(() => {
+    if (!topic) return 0;
+    if (initialSimId) {
+      const idx = topic.simulations.findIndex((s) => s.id === initialSimId);
+      if (idx !== -1) return idx;
+    }
+    if (typeof window !== 'undefined') {
+      const hashId = window.location.hash.replace(/^#(sim|topic)\//, '');
+      const idx = topic.simulations.findIndex((s) => s.id === hashId);
+      if (idx !== -1) return idx;
+    }
+    return 0;
+  }, [topic, initialSimId]);
+
+  const [activeSimIndex, setActiveSimIndex] = useState<number>(getSimIndexFromContext);
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeed] = useState<number>(1); // 1 = Normal, 0.25 = Slow motion
   const [stepTrigger, setStepTrigger] = useState<number>(0);
@@ -268,7 +321,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [telemetry, setTelemetry] = useState<Record<string, string>>({});
   const [sideTab, setSideTab] = useState<'intuition' | 'formulas' | 'quiz'>('intuition');
   const [userAnswers, setUserAnswers] = useState<Record<string, number>>({});
-  const [isFullWindow, setIsFullWindow] = useState<boolean>(false);
+  const [isFullWindow, setIsFullWindow] = useState<boolean>(true);
   const [leftDrawerOpen, setLeftDrawerOpen] = useState<boolean>(true);
   const [rightDrawerOpen, setRightDrawerOpen] = useState<boolean>(true);
   const [showAllControls, setShowAllControls] = useState<boolean>(false);
@@ -283,16 +336,51 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [telemetryB, setTelemetryB] = useState<Record<string, string>>({});
   const [activeCompareTab, setActiveCompareTab] = useState<'A' | 'B'>('B');
 
-  // Commercial & Classroom Upgrades
+  // Commercial & Classroom Upgrades & Subscription Paywall
+  const { canUsePresenterMode, triggerPaywall } = useSubscription();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isPresenterModeActive, setIsPresenterModeActive] = useState(false);
   const [isAiMentorOpen, setIsAiMentorOpen] = useState(false);
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
 
+  // Mobile Detection (< 768px Breakpoint)
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Mobile Bottom Sheet State: 'peek' | 'half' | 'expanded'
+  const [bottomSheetSnap, setBottomSheetSnap] = useState<'peek' | 'half' | 'expanded'>('peek');
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+
+  // Mobile Dual Compare: Tabbed Stack View ('A' | 'B')
+  const [activeMobileCompareView, setActiveMobileCompareView] = useState<'A' | 'B'>('A');
+
+  // Desktop Visual Diffing: Ghost Overlay toggle (Superimpose Reference at 30% opacity onto Hypothesis)
+  const [isGhostOverlayEnabled, setIsGhostOverlayEnabled] = useState<boolean>(false);
+
+  const handleOpenPresenter = () => {
+    if (!canUsePresenterMode()) {
+      triggerPaywall('presenter_mode', 'EDUCATOR');
+      setIsPricingModalOpen(true);
+      return;
+    }
+    setIsPresenterModeActive(true);
+  };
+
   const [prevTopicId, setPrevTopicId] = useState(topicId);
   const [prevSimId, setPrevSimId] = useState<string | null>(null);
 
-  const topic = topicId ? TOPICS_DATA[topicId] : null;
   const currentSim = topic ? topic.simulations[activeSimIndex] || topic.simulations[0] : null;
   const isAnimated = isSimulationAnimated(currentSim?.id);
 
@@ -306,7 +394,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   // Reset active simulation index when topic changes
   if (topicId !== prevTopicId) {
     setPrevTopicId(topicId);
-    setActiveSimIndex(0);
+    setActiveSimIndex(getSimIndexFromContext());
     setShowAllControls(false);
   }
 
@@ -589,7 +677,10 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 return (
                   <button
                     key={sim.id}
-                    onClick={() => setActiveSimIndex(idx)}
+                    onClick={() => {
+                      setActiveSimIndex(idx);
+                      window.location.hash = `#sim/${sim.id}`;
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -718,7 +809,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
               <button
                 type="button"
-                onClick={() => setIsPresenterModeActive(true)}
+                onClick={handleOpenPresenter}
                 className="btn btn-sm"
                 style={{
                   background: 'rgba(239, 68, 68, 0.15)',
@@ -768,117 +859,253 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             }}
           >
             {isDualCompare ? (
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  width: '100%',
-                  height: '100%',
-                  gap: 2,
-                  background: 'rgba(0,0,0,0.7)'
-                }}
-              >
-                {/* Viewport A (Reference) */}
-                <div
-                  style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: '100%',
-                    overflow: 'hidden',
-                    borderRight: '1px solid rgba(0, 240, 255, 0.3)',
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}
-                >
-                  {/* Dedicated Non-Overlapping Lab A Sub-Header */}
+              isMobile ? (
+                /* Mobile Tabbed Stack Viewport */
+                <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%' }}>
                   <div
                     style={{
-                      height: 28,
-                      minHeight: 28,
+                      height: 38,
+                      minHeight: 38,
                       flexShrink: 0,
                       background: 'rgba(15, 23, 42, 0.95)',
-                      borderBottom: '1px solid rgba(0, 240, 255, 0.25)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0 12px',
-                      boxSizing: 'border-box'
+                      padding: '0 8px',
+                      gap: 8,
+                      zIndex: 30
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 800, color: 'var(--electric-blue)' }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--electric-blue)', boxShadow: '0 0 6px var(--electric-blue)' }} />
-                      <span>LAB A (REFERENCE)</span>
-                    </div>
-                    <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600 }}>Baseline Model</span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveMobileCompareView('A')}
+                      style={{
+                        flex: 1,
+                        padding: '6px 10px',
+                        borderRadius: 'var(--radius-pill)',
+                        border: activeMobileCompareView === 'A' ? '1.5px solid var(--electric-blue)' : '1px solid rgba(255, 255, 255, 0.12)',
+                        background: activeMobileCompareView === 'A' ? 'rgba(0, 240, 255, 0.22)' : 'transparent',
+                        color: activeMobileCompareView === 'A' ? '#00f0ff' : 'var(--text-secondary)',
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      View A (Reference)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveMobileCompareView('B')}
+                      style={{
+                        flex: 1,
+                        padding: '6px 10px',
+                        borderRadius: 'var(--radius-pill)',
+                        border: activeMobileCompareView === 'B' ? '1.5px solid #f59e0b' : '1px solid rgba(255, 255, 255, 0.12)',
+                        background: activeMobileCompareView === 'B' ? 'rgba(245, 158, 11, 0.22)' : 'transparent',
+                        color: activeMobileCompareView === 'B' ? '#f59e0b' : 'var(--text-secondary)',
+                        fontSize: '0.74rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      View B (Hypothesis)
+                    </button>
                   </div>
 
-                  <div style={{ flex: 1, width: '100%', height: 'calc(100% - 28px)', position: 'relative', overflow: 'hidden' }}>
-                    <FlagshipSimulatorDispatcher
-                      simId={currentSim.id}
-                      params={params}
-                      isPlaying={isPlaying}
-                      speed={speed}
-                      stepTrigger={stepTrigger}
-                      onTelemetryUpdate={setTelemetry}
-                      controls={currentSim.controls}
-                      onParamChange={handleControlChange}
-                      onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
-                      onReset={handleReset}
-                      isCompact={true}
-                    />
+                  <div style={{ flex: 1, width: '100%', height: 'calc(100% - 38px)', position: 'relative', overflow: 'hidden' }}>
+                    {activeMobileCompareView === 'A' ? (
+                      <FlagshipSimulatorDispatcher
+                        simId={currentSim.id}
+                        params={params}
+                        isPlaying={isPlaying}
+                        speed={speed}
+                        stepTrigger={stepTrigger}
+                        onTelemetryUpdate={setTelemetry}
+                        controls={currentSim.controls}
+                        onParamChange={handleControlChange}
+                        onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                        onReset={handleReset}
+                        isCompact={true}
+                      />
+                    ) : (
+                      <FlagshipSimulatorDispatcher
+                        simId={currentSim.id}
+                        params={paramsB}
+                        isPlaying={isPlaying}
+                        speed={speed}
+                        stepTrigger={stepTrigger}
+                        onTelemetryUpdate={setTelemetryB}
+                        controls={currentSim.controls}
+                        onParamChange={handleControlChangeB}
+                        onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                        onReset={handleReset}
+                        isCompact={true}
+                      />
+                    )}
                   </div>
                 </div>
-
-                {/* Viewport B (Hypothesis) */}
+              ) : (
+                /* Desktop Side-by-Side Dual Viewport with Ghost Overlay */
                 <div
                   style={{
-                    position: 'relative',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
                     width: '100%',
                     height: '100%',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column'
+                    gap: 2,
+                    background: 'rgba(0,0,0,0.7)'
                   }}
                 >
-                  {/* Dedicated Non-Overlapping Lab B Sub-Header */}
+                  {/* Viewport A (Reference) */}
                   <div
                     style={{
-                      height: 28,
-                      minHeight: 28,
-                      flexShrink: 0,
-                      background: 'rgba(15, 23, 42, 0.95)',
-                      borderBottom: '1px solid rgba(245, 158, 11, 0.25)',
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
+                      overflow: 'hidden',
+                      borderRight: '1px solid rgba(0, 240, 255, 0.3)',
                       display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '0 12px',
-                      boxSizing: 'border-box'
+                      flexDirection: 'column'
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 800, color: '#f59e0b' }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 6px #f59e0b' }} />
-                      <span>LAB B (HYPOTHESIS)</span>
+                    <div
+                      style={{
+                        height: 28,
+                        minHeight: 28,
+                        flexShrink: 0,
+                        background: 'rgba(15, 23, 42, 0.95)',
+                        borderBottom: '1px solid rgba(0, 240, 255, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0 12px',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 800, color: 'var(--electric-blue)' }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--electric-blue)', boxShadow: '0 0 6px var(--electric-blue)' }} />
+                        <span>LAB A (REFERENCE)</span>
+                      </div>
+                      <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600 }}>Baseline Model</span>
                     </div>
-                    <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600 }}>Experimental Variation</span>
+
+                    <div style={{ flex: 1, width: '100%', height: 'calc(100% - 28px)', position: 'relative', overflow: 'hidden' }}>
+                      <FlagshipSimulatorDispatcher
+                        simId={currentSim.id}
+                        params={params}
+                        isPlaying={isPlaying}
+                        speed={speed}
+                        stepTrigger={stepTrigger}
+                        onTelemetryUpdate={setTelemetry}
+                        controls={currentSim.controls}
+                        onParamChange={handleControlChange}
+                        onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                        onReset={handleReset}
+                        isCompact={true}
+                      />
+                    </div>
                   </div>
 
-                  <div style={{ flex: 1, width: '100%', height: 'calc(100% - 28px)', position: 'relative', overflow: 'hidden' }}>
-                    <FlagshipSimulatorDispatcher
-                      simId={currentSim.id}
-                      params={paramsB}
-                      isPlaying={isPlaying}
-                      speed={speed}
-                      stepTrigger={stepTrigger}
-                      onTelemetryUpdate={setTelemetryB}
-                      controls={currentSim.controls}
-                      onParamChange={handleControlChangeB}
-                      onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
-                      onReset={handleReset}
-                      isCompact={true}
-                    />
+                  {/* Viewport B (Hypothesis) */}
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column'
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: 28,
+                        minHeight: 28,
+                        flexShrink: 0,
+                        background: 'rgba(15, 23, 42, 0.95)',
+                        borderBottom: '1px solid rgba(245, 158, 11, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0 12px',
+                        boxSizing: 'border-box'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 800, color: '#f59e0b' }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 6px #f59e0b' }} />
+                        <span>LAB B (HYPOTHESIS)</span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {/* Ghost Overlay Toggle Button */}
+                        <button
+                          type="button"
+                          onClick={() => setIsGhostOverlayEnabled(prev => !prev)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            fontSize: '0.66rem',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: 'var(--radius-pill)',
+                            border: isGhostOverlayEnabled ? '1px solid #00f0ff' : '1px solid rgba(255, 255, 255, 0.2)',
+                            background: isGhostOverlayEnabled ? 'rgba(0, 240, 255, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                            color: isGhostOverlayEnabled ? '#00f0ff' : 'var(--text-secondary)',
+                            cursor: 'pointer'
+                          }}
+                          title="Superimpose Reference simulation (Lab A) at 30% opacity onto Hypothesis canvas"
+                        >
+                          <Ghost size={11} />
+                          <span>Ghost Overlay {isGhostOverlayEnabled ? 'ON' : 'OFF'}</span>
+                        </button>
+                        <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600 }}>Experimental Variation</span>
+                      </div>
+                    </div>
+
+                    <div style={{ flex: 1, width: '100%', height: 'calc(100% - 28px)', position: 'relative', overflow: 'hidden' }}>
+                      <FlagshipSimulatorDispatcher
+                        simId={currentSim.id}
+                        params={paramsB}
+                        isPlaying={isPlaying}
+                        speed={speed}
+                        stepTrigger={stepTrigger}
+                        onTelemetryUpdate={setTelemetryB}
+                        controls={currentSim.controls}
+                        onParamChange={handleControlChangeB}
+                        onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                        onReset={handleReset}
+                        isCompact={true}
+                      />
+
+                      {/* Ghost Overlay Layer (Reference at 30% Opacity) */}
+                      {isGhostOverlayEnabled && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            inset: 0,
+                            opacity: 0.30,
+                            pointerEvents: 'none',
+                            zIndex: 10,
+                            mixBlendMode: 'screen'
+                          }}
+                        >
+                          <FlagshipSimulatorDispatcher
+                            simId={currentSim.id}
+                            params={params}
+                            isPlaying={isPlaying}
+                            speed={speed}
+                            stepTrigger={stepTrigger}
+                            onTelemetryUpdate={() => {}}
+                            controls={currentSim.controls}
+                            isCompact={true}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )
             ) : (
               <FlagshipSimulatorDispatcher
                 simId={currentSim.id}
@@ -895,87 +1122,97 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             )}
           </div>
 
-          {/* Floating Collapsible Left Parameter Drawer */}
-          {leftDrawerOpen ? (
+          {/* Left Controls: Draggable Bottom Sheet for Mobile, Left Drawer for Desktop */}
+          {isMobile ? (
+            /* Mobile Bottom Sheet (Google Maps Style) */
             <div
-              className="throughline-hud-panel"
+              className="mobile-bottom-sheet"
               style={{
-                position: 'absolute',
-                top: isDualCompare ? 88 : 64,
-                left: 20,
-                bottom: 84,
-                width: 320,
-                zIndex: 50,
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: bottomSheetSnap === 'peek' ? '58px' : bottomSheetSnap === 'half' ? '46vh' : '82vh',
+                zIndex: 65,
+                background: 'rgba(15, 23, 42, 0.96)',
+                borderTop: '1px solid rgba(255, 255, 255, 0.16)',
+                borderTopLeftRadius: 18,
+                borderTopRightRadius: 18,
+                boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.65)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                transition: 'height 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
               }}
             >
-              {/* Drawer Header */}
+              {/* Drag Handle & Header */}
               <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '12px 16px',
-                  borderBottom: '1px solid rgba(255,255,255,0.08)'
+                onTouchStart={(e) => setTouchStartY(e.touches[0].clientY)}
+                onTouchMove={(e) => {
+                  if (touchStartY === null) return;
+                  const delta = touchStartY - e.touches[0].clientY;
+                  if (delta > 40) {
+                    setBottomSheetSnap(prev => prev === 'peek' ? 'half' : 'expanded');
+                    setTouchStartY(null);
+                  } else if (delta < -40) {
+                    setBottomSheetSnap(prev => prev === 'expanded' ? 'half' : 'peek');
+                    setTouchStartY(null);
+                  }
                 }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Sliders size={14} color={accentColor} />
-                  <span
-                    style={{
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      color: 'var(--text-secondary)'
-                    }}
-                  >
-                    Controls ({currentSim.controls.length})
-                  </span>
-                </div>
-                <button
-                  onClick={() => setLeftDrawerOpen(false)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    padding: 4
-                  }}
-                  title="Collapse Controls Panel"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-              </div>
-
-              {/* Drawer Sliders List */}
-              <div
+                onTouchEnd={() => setTouchStartY(null)}
+                onClick={() => {
+                  setBottomSheetSnap(prev => prev === 'peek' ? 'half' : prev === 'half' ? 'expanded' : 'peek');
+                }}
                 style={{
-                  flex: 1,
-                  overflowY: 'auto',
-                  padding: '14px 16px',
+                  padding: '8px 16px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: 12
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  borderBottom: bottomSheetSnap === 'peek' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)'
                 }}
               >
-                {isDualCompare && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 6 }}>
-                    <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.06)', padding: 3, borderRadius: 'var(--radius-sm)' }}>
+                <div style={{ width: 44, height: 4, borderRadius: 2, background: 'rgba(255, 255, 255, 0.4)', marginBottom: 6 }} />
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    <Sliders size={14} color={accentColor} />
+                    <span>Controls ({currentSim.controls.length})</span>
+                    <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>
+                      ({bottomSheetSnap.toUpperCase()})
+                    </span>
+                  </div>
+                  <div style={{ color: 'var(--text-tertiary)' }}>
+                    {bottomSheetSnap === 'peek' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Sheet Controls Body */}
+              {bottomSheetSnap !== 'peek' && (
+                <div
+                  style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    padding: '12px 16px 80px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12
+                  }}
+                >
+                  {isDualCompare && (
+                    <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.06)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
                       <button
                         onClick={() => setActiveCompareTab('A')}
                         style={{
                           flex: 1,
-                          padding: '5px 8px',
+                          padding: '6px 8px',
                           borderRadius: 'var(--radius-xs)',
                           border: 'none',
                           background: activeCompareTab === 'A' ? 'var(--electric-blue)' : 'transparent',
                           color: activeCompareTab === 'A' ? '#000000' : 'var(--text-secondary)',
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
+                          fontSize: '0.74rem',
+                          fontWeight: 800
                         }}
                       >
                         Lab A (Ref)
@@ -984,126 +1221,263 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                         onClick={() => setActiveCompareTab('B')}
                         style={{
                           flex: 1,
-                          padding: '5px 8px',
+                          padding: '6px 8px',
                           borderRadius: 'var(--radius-xs)',
                           border: 'none',
                           background: activeCompareTab === 'B' ? '#f59e0b' : 'transparent',
                           color: activeCompareTab === 'B' ? '#000000' : 'var(--text-secondary)',
-                          fontSize: '0.72rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease'
+                          fontSize: '0.74rem',
+                          fontWeight: 800
                         }}
                       >
                         Lab B (Hyp)
                       </button>
                     </div>
+                  )}
 
-                    {/* Presets pill bar */}
-                    <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 2 }}>
-                      <button
-                        onClick={() => handleApplyComparePreset('sync')}
-                        className="btn btn-secondary btn-xs"
-                        style={{ fontSize: '0.68rem', padding: '3px 8px', whiteSpace: 'nowrap' }}
-                        title="Copy all parameters from Lab A to Lab B"
-                      >
-                        Sync A → B
-                      </button>
-                      <button
-                        onClick={() => handleApplyComparePreset('boost')}
-                        className="btn btn-secondary btn-xs"
-                        style={{ fontSize: '0.68rem', padding: '3px 8px', whiteSpace: 'nowrap' }}
-                        title="Increase primary parameter of Lab B by +50%"
-                      >
-                        +50% Primary
-                      </button>
-                      <button
-                        onClick={() => handleApplyComparePreset('extremes')}
-                        className="btn btn-secondary btn-xs"
-                        style={{ fontSize: '0.68rem', padding: '3px 8px', whiteSpace: 'nowrap' }}
-                        title="Set Lab A to minimum and Lab B to maximum"
-                      >
-                        Min vs Max
-                      </button>
-                    </div>
+                  {currentSim.controls.map((ctrl) => {
+                    const isTabB = isDualCompare && activeCompareTab === 'B';
+                    const val = isTabB ? (paramsB[ctrl.id] ?? ctrl.defaultValue) : (params[ctrl.id] ?? ctrl.defaultValue);
+                    const onValChange = isTabB ? (v: number) => handleControlChangeB(ctrl.id, v) : (v: number) => handleControlChange(ctrl.id, v);
+                    const activeAccent = isTabB ? '#f59e0b' : accentColor;
+
+                    return (
+                      <NumericControlItem
+                        key={ctrl.id}
+                        control={ctrl}
+                        value={val}
+                        onChange={onValChange}
+                        accentColor={activeAccent}
+                        isHighlighted={highlightedParamId === ctrl.id}
+                        highlightLabel={highlightedFormulaLatex ? `Governs: ${highlightedFormulaLatex}` : undefined}
+                      />
+                    );
+                  })}
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                    <button
+                      onClick={handleReset}
+                      className="btn btn-secondary btn-sm"
+                      style={{ fontSize: '0.76rem', gap: 6, minHeight: 40 }}
+                    >
+                      <RotateCcw size={14} />
+                      <span>Reset Parameters</span>
+                    </button>
                   </div>
-                )}
-
-                {currentSim.controls.map((ctrl) => {
-                  const isTabB = isDualCompare && activeCompareTab === 'B';
-                  const val = isTabB ? (paramsB[ctrl.id] ?? ctrl.defaultValue) : (params[ctrl.id] ?? ctrl.defaultValue);
-                  const onValChange = isTabB ? (v: number) => handleControlChangeB(ctrl.id, v) : (v: number) => handleControlChange(ctrl.id, v);
-                  const activeAccent = isTabB ? '#f59e0b' : accentColor;
-
-                  return (
-                    <NumericControlItem
-                      key={ctrl.id}
-                      control={ctrl}
-                      value={val}
-                      onChange={onValChange}
-                      accentColor={activeAccent}
-                      isHighlighted={highlightedParamId === ctrl.id}
-                      highlightLabel={highlightedFormulaLatex ? `Governs: ${highlightedFormulaLatex}` : undefined}
-                    />
-                  );
-                })}
-              </div>
-
-              {/* Drawer Footer Actions */}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* Desktop Persistent Left Parameter Drawer */
+            leftDrawerOpen ? (
               <div
+                className="throughline-hud-panel"
                 style={{
-                  padding: '10px 16px',
-                  borderTop: '1px solid rgba(255,255,255,0.08)',
+                  position: 'absolute',
+                  top: isDualCompare ? 88 : 64,
+                  left: 20,
+                  bottom: 84,
+                  width: 320,
+                  zIndex: 50,
                   display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
+                  flexDirection: 'column'
                 }}
               >
-                <button
-                  onClick={handleReset}
+                {/* Drawer Header */}
+                <div
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 6,
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid var(--border-subtle)',
-                    borderRadius: 'var(--radius-sm)',
-                    padding: '5px 10px',
-                    color: 'var(--text-secondary)',
-                    fontSize: '0.75rem',
-                    cursor: 'pointer'
+                    justifyContent: 'space-between',
+                    padding: '12px 16px',
+                    borderBottom: '1px solid rgba(255,255,255,0.08)'
                   }}
                 >
-                  <RotateCcw size={12} />
-                  <span>Reset Controls</span>
-                </button>
-                <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Throughline Engine</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <Sliders size={14} color={accentColor} />
+                    <span
+                      style={{
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        color: 'var(--text-secondary)'
+                      }}
+                    >
+                      Controls ({currentSim.controls.length})
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setLeftDrawerOpen(false)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      padding: 4
+                    }}
+                    title="Collapse Controls Panel"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                </div>
+
+                {/* Drawer Sliders List */}
+                <div
+                  style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    padding: '14px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12
+                  }}
+                >
+                  {isDualCompare && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 6 }}>
+                      <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.06)', padding: 3, borderRadius: 'var(--radius-sm)' }}>
+                        <button
+                          onClick={() => setActiveCompareTab('A')}
+                          style={{
+                            flex: 1,
+                            padding: '5px 8px',
+                            borderRadius: 'var(--radius-xs)',
+                            border: 'none',
+                            background: activeCompareTab === 'A' ? 'var(--electric-blue)' : 'transparent',
+                            color: activeCompareTab === 'A' ? '#000000' : 'var(--text-secondary)',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          Lab A (Ref)
+                        </button>
+                        <button
+                          onClick={() => setActiveCompareTab('B')}
+                          style={{
+                            flex: 1,
+                            padding: '5px 8px',
+                            borderRadius: 'var(--radius-xs)',
+                            border: 'none',
+                            background: activeCompareTab === 'B' ? '#f59e0b' : 'transparent',
+                            color: activeCompareTab === 'B' ? '#000000' : 'var(--text-secondary)',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          Lab B (Hyp)
+                        </button>
+                      </div>
+
+                      {/* Presets pill bar */}
+                      <div style={{ display: 'flex', gap: 5, overflowX: 'auto', paddingBottom: 2 }}>
+                        <button
+                          onClick={() => handleApplyComparePreset('sync')}
+                          className="btn btn-secondary btn-xs"
+                          style={{ fontSize: '0.68rem', padding: '3px 8px', whiteSpace: 'nowrap' }}
+                          title="Copy all parameters from Lab A to Lab B"
+                        >
+                          Sync A → B
+                        </button>
+                        <button
+                          onClick={() => handleApplyComparePreset('boost')}
+                          className="btn btn-secondary btn-xs"
+                          style={{ fontSize: '0.68rem', padding: '3px 8px', whiteSpace: 'nowrap' }}
+                          title="Increase primary parameter of Lab B by +50%"
+                        >
+                          +50% Primary
+                        </button>
+                        <button
+                          onClick={() => handleApplyComparePreset('extremes')}
+                          className="btn btn-secondary btn-xs"
+                          style={{ fontSize: '0.68rem', padding: '3px 8px', whiteSpace: 'nowrap' }}
+                          title="Set Lab A to minimum and Lab B to maximum"
+                        >
+                          Min vs Max
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentSim.controls.map((ctrl) => {
+                    const isTabB = isDualCompare && activeCompareTab === 'B';
+                    const val = isTabB ? (paramsB[ctrl.id] ?? ctrl.defaultValue) : (params[ctrl.id] ?? ctrl.defaultValue);
+                    const onValChange = isTabB ? (v: number) => handleControlChangeB(ctrl.id, v) : (v: number) => handleControlChange(ctrl.id, v);
+                    const activeAccent = isTabB ? '#f59e0b' : accentColor;
+
+                    return (
+                      <NumericControlItem
+                        key={ctrl.id}
+                        control={ctrl}
+                        value={val}
+                        onChange={onValChange}
+                        accentColor={activeAccent}
+                        isHighlighted={highlightedParamId === ctrl.id}
+                        highlightLabel={highlightedFormulaLatex ? `Governs: ${highlightedFormulaLatex}` : undefined}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Drawer Footer Actions */}
+                <div
+                  style={{
+                    padding: '10px 16px',
+                    borderTop: '1px solid rgba(255,255,255,0.08)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <button
+                    onClick={handleReset}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      background: 'rgba(255,255,255,0.06)',
+                      border: '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '5px 10px',
+                      color: 'var(--text-secondary)',
+                      fontSize: '0.75rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <RotateCcw size={12} />
+                    <span>Reset Controls</span>
+                  </button>
+                  <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Throughline Engine</span>
+                </div>
               </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setLeftDrawerOpen(true)}
-              className="throughline-pill-nav"
-              style={{
-                position: 'absolute',
-                top: isDualCompare ? 88 : 64,
-                left: 20,
-                zIndex: 50,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '8px 14px',
-                cursor: 'pointer',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                color: 'var(--text-primary)'
-              }}
-              title="Expand Controls Panel"
-            >
-              <Sliders size={14} color={accentColor} />
-              <span>Controls ({currentSim.controls.length})</span>
-              <ChevronRight size={14} />
-            </button>
+            ) : (
+              <button
+                onClick={() => setLeftDrawerOpen(true)}
+                className="throughline-pill-nav"
+                style={{
+                  position: 'absolute',
+                  top: isDualCompare ? 88 : 64,
+                  left: 20,
+                  zIndex: 50,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '8px 14px',
+                  cursor: 'pointer',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)'
+                }}
+                title="Expand Controls Panel"
+              >
+                <Sliders size={14} color={accentColor} />
+                <span>Controls ({currentSim.controls.length})</span>
+                <ChevronRight size={14} />
+              </button>
+            )
           )}
 
           {/* Floating Collapsible Right Telemetry Drawer */}
@@ -1962,7 +2336,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
             <button
               type="button"
-              onClick={() => setIsPresenterModeActive(true)}
+              onClick={handleOpenPresenter}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -2071,7 +2445,10 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     return (
                       <button
                         key={sim.id}
-                        onClick={() => setActiveSimIndex(idx)}
+                        onClick={() => {
+                          setActiveSimIndex(idx);
+                          window.location.hash = `#sim/${sim.id}`;
+                        }}
                         style={{
                           padding: '6px 14px',
                           borderRadius: 'var(--radius-pill)',
@@ -2149,16 +2526,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   marginBottom: 16
                 }}
               >
-                <button
-                  onClick={() => setIsFullWindow(true)}
-                  className="sim-full-view-btn"
-                  title="Open full graph with settings covering whole window"
-                  aria-label="Open full graph and settings view"
-                >
-                  <Maximize2 size={13} />
-                  <span>Full Graph &amp; Settings</span>
-                </button>
-
                 {isDualCompare ? (
                   <div
                     style={{

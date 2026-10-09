@@ -11,6 +11,7 @@ interface SearchResultItem {
   title: string;
   subtitle: string;
   topicId: string;
+  simId?: string;
   category: string;
   subject: 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology';
   keywords: string[];
@@ -19,7 +20,7 @@ interface SearchResultItem {
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectTopic: (topicId: string) => void;
+  onSelectTopic: (topicId: string, simId?: string) => void;
   onSelectExperiment: (experimentId: string) => void;
   onOpenFormulas: () => void;
   onOpenAnatomy?: (organId?: string) => void;
@@ -67,6 +68,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           title: sim.name,
           subtitle: `${sim.tagline} • Part of ${topic.title}`,
           topicId: topic.id,
+          simId: sim.id,
           category: topic.title,
           subject: topic.subject === 'physics' ? 'Physics' : topic.subject === 'chemistry' ? 'Chemistry' : topic.subject === 'biology' ? 'Biology' : 'Mathematics',
           keywords: [
@@ -386,7 +388,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   } else if (item.type === 'formula') {
                     onSelectTopic(item.topicId);
                   } else {
-                    onSelectTopic(item.topicId);
+                    onSelectTopic(item.topicId, item.simId);
                   }
                 }}
                 className="scientific-card-interactive"

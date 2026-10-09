@@ -20,14 +20,42 @@ import { UserProfileModal } from './components/auth/UserProfileModal';
 import { PricingModal } from './components/pricing/PricingModal';
 import type { AuthView } from './types/auth';
 import { ANATOMY_STRUCTURES } from './data/anatomyData';
+import { TOPICS_DATA } from './data/topicsData';
 import { X } from 'lucide-react';
+
+// Helper to resolve either a topic ID or a nested simulation ID into { topicId, simId }
+function resolveTopicAndSim(id: string): { topicId: string; simId?: string } {
+  if (id in TOPICS_DATA) {
+    return { topicId: id };
+  }
+  for (const [topicKey, topicData] of Object.entries(TOPICS_DATA)) {
+    const matchedSim = topicData.simulations.find((s) => s.id === id);
+    if (matchedSim) {
+      return { topicId: topicKey, simId: matchedSim.id };
+    }
+  }
+  return { topicId: id };
+}
 
 export function App() {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
-      if (hash.startsWith('#sim/')) return hash.replace('#sim/', '');
-      if (hash.startsWith('#topic/')) return hash.replace('#topic/', '');
+      if (hash.startsWith('#sim/') || hash.startsWith('#topic/')) {
+        const raw = hash.replace(/^#(sim|topic)\//, '');
+        return resolveTopicAndSim(raw).topicId;
+      }
+    }
+    return null;
+  });
+
+  const [selectedSimId, setSelectedSimId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash.startsWith('#sim/') || hash.startsWith('#topic/')) {
+        const raw = hash.replace(/^#(sim|topic)\//, '');
+        return resolveTopicAndSim(raw).simId || null;
+      }
     }
     return null;
   });
@@ -118,9 +146,11 @@ export function App() {
     const handleHashChange = () => {
       const hash = window.location.hash;
       if (hash.startsWith('#sim/') || hash.startsWith('#topic/')) {
-        const id = hash.replace(/^#(sim|topic)\//, '');
-        if (id) {
-          setSelectedTopicId(id);
+        const raw = hash.replace(/^#(sim|topic)\//, '');
+        if (raw) {
+          const resolved = resolveTopicAndSim(raw);
+          setSelectedTopicId(resolved.topicId);
+          setSelectedSimId(resolved.simId || null);
           setSelectedExperimentId(null);
         }
       } else if (hash.startsWith('#exp/') || hash.startsWith('#experiments/')) {
@@ -186,10 +216,12 @@ export function App() {
     window.location.hash = '#sim/motion';
   };
 
-  const handleSelectTopic = (topicId: string) => {
-    setSelectedTopicId(topicId);
+  const handleSelectTopic = (topicId: string, simId?: string) => {
+    const resolved = resolveTopicAndSim(topicId);
+    setSelectedTopicId(resolved.topicId);
+    setSelectedSimId(simId || resolved.simId || null);
     setSelectedExperimentId(null);
-    window.location.hash = `#sim/${topicId}`;
+    window.location.hash = simId ? `#sim/${simId}` : (resolved.simId ? `#sim/${resolved.simId}` : `#sim/${resolved.topicId}`);
   };
 
   const handleSelectExperiment = (expId: string) => {
@@ -318,8 +350,10 @@ export function App() {
       {selectedTopicId && (
         <TopicLabModal
           topicId={selectedTopicId}
+          initialSimId={selectedSimId}
           onClose={() => {
             setSelectedTopicId(null);
+            setSelectedSimId(null);
             if (window.location.hash.startsWith('#sim/') || window.location.hash.startsWith('#topic/')) {
               window.history.pushState(null, '', window.location.pathname);
             }

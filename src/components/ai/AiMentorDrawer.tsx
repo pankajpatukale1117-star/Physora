@@ -8,7 +8,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { MathView } from '../MathView';
-import { useAuth } from '../../context/AuthContext';
+import { useSubscription } from '../../context/SubscriptionContext';
+import { Lock } from 'lucide-react';
 import type { TopicData, SimulationConfig } from '../../data/topicsData';
 
 interface AiMentorDrawerProps {
@@ -36,7 +37,13 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
   telemetry,
   onOpenPricing
 }) => {
-  const { isPro } = useAuth();
+  const {
+    tier,
+    remainingAiQueries,
+    canUseAiTutor,
+    incrementAiQueries,
+    triggerPaywall
+  } = useSubscription();
 
   const [inputMessage, setInputMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([
@@ -45,7 +52,6 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
       text: `Hello! I'm your Physora AI Science Tutor. I'm actively analyzing your experiment on ${simulation.name} (${topic.title}) with ${Object.keys(params).length} controls configured. Ask me anything about the governing equations or what will happen if you tweak your sliders!`
     }
   ]);
-  const [queryCount, setQueryCount] = useState(0);
 
   if (!isOpen) return null;
 
@@ -61,10 +67,22 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
     const query = textToSend || inputMessage;
     if (!query.trim()) return;
 
+    // Check Free tier limit (3 queries per session/day)
+    if (!canUseAiTutor()) {
+      triggerPaywall('ai_tutor', 'PRO');
+      onOpenPricing();
+      return;
+    }
+
+    const allowed = incrementAiQueries();
+    if (!allowed) {
+      onOpenPricing();
+      return;
+    }
+
     const newMessages: Message[] = [...messages, { role: 'user', text: query }];
     setMessages(newMessages);
     setInputMessage('');
-    setQueryCount((prev) => prev + 1);
 
     // Generate intelligent simulation-aware Socratic explanation
     setTimeout(() => {
@@ -150,11 +168,11 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
                   fontWeight: 800,
                   padding: '1px 6px',
                   borderRadius: '10px',
-                  background: isPro ? '#10B98120' : '#2563EB20',
-                  color: isPro ? '#10B981' : '#2563EB'
+                  background: tier !== 'FREE' ? '#10B98120' : remainingAiQueries > 0 ? '#2563EB20' : 'rgba(239, 68, 68, 0.2)',
+                  color: tier !== 'FREE' ? '#10B981' : remainingAiQueries > 0 ? '#2563EB' : '#EF4444'
                 }}
               >
-                {isPro ? 'PRO UNLIMITED' : 'FREE PREVIEW'}
+                {tier !== 'FREE' ? 'PRO UNLIMITED' : `${remainingAiQueries}/3 FREE QUERIES`}
               </span>
             </div>
             <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
@@ -274,8 +292,8 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
           </div>
         ))}
 
-        {/* Free Tier Callout if user asks several questions */}
-        {!isPro && queryCount >= 3 && (
+        {/* Free Tier Callout if user exhausted queries */}
+        {tier === 'FREE' && remainingAiQueries === 0 && (
           <div
             style={{
               margin: '10px 0',
@@ -364,48 +382,104 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
           padding: '14px 16px',
           borderTop: '1px solid var(--border-medium)',
           display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
+          flexDirection: 'column',
+          gap: '10px',
           background: 'var(--bg-card)'
         }}
       >
-        <input
-          type="text"
-          value={inputMessage}
-          onChange={(e) => setInputMessage(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleSendMessage();
-          }}
-          placeholder="Ask AI tutor about these formulas or variables..."
-          style={{
-            flex: 1,
-            padding: '10px 14px',
-            borderRadius: '10px',
-            border: '1px solid var(--border-medium)',
-            background: 'var(--bg-subtle)',
-            fontSize: '0.84rem',
-            color: 'var(--text-primary)',
-            outline: 'none'
-          }}
-        />
-        <button
-          type="button"
-          onClick={() => handleSendMessage()}
-          style={{
-            padding: '10px',
-            borderRadius: '10px',
-            border: 'none',
-            background: 'var(--electric-blue, #2563EB)',
-            color: '#FFFFFF',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          aria-label="Send query"
-        >
-          <Send size={16} />
-        </button>
+        {tier === 'FREE' && remainingAiQueries === 0 ? (
+          <div
+            style={{
+              padding: '10px 14px',
+              borderRadius: '8px',
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              alignItems: 'center',
+              textAlign: 'center'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#EF4444', fontSize: '0.78rem', fontWeight: 700 }}>
+              <Lock size={14} />
+              <span>Free Query Limit Reached (3/3 used today)</span>
+            </div>
+            <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: 0 }}>
+              Upgrade to Physora Pro for unlimited Socratic step-by-step guidance, deep derivations, and exam problem solving.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                triggerPaywall('ai_tutor', 'PRO');
+                onOpenPricing();
+              }}
+              style={{
+                width: '100%',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+                color: '#FFFFFF',
+                fontSize: '0.80rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.35)'
+              }}
+            >
+              <Sparkles size={13} />
+              <span>Unlock Unlimited AI Tutor with Pro</span>
+            </button>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <input
+              type="text"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSendMessage();
+              }}
+              placeholder={
+                tier === 'FREE'
+                  ? `Ask AI tutor (${remainingAiQueries} free queries left)...`
+                  : 'Ask AI tutor about these formulas or variables...'
+              }
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: '10px',
+                border: '1px solid var(--border-medium)',
+                background: 'var(--bg-subtle)',
+                fontSize: '0.84rem',
+                color: 'var(--text-primary)',
+                outline: 'none'
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => handleSendMessage()}
+              style={{
+                padding: '10px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'var(--electric-blue, #2563EB)',
+                color: '#FFFFFF',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              aria-label="Send query"
+            >
+              <Send size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

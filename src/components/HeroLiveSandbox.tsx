@@ -535,20 +535,6 @@ export const HeroLiveSandbox: React.FC<HeroLiveSandboxProps> = ({ onOpenFullLab 
             cursor: 'crosshair'
           }}
         >
-          {/* Small Full Graph & Settings Button inside Canvas Area */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsFullWindow(!isFullWindow);
-            }}
-            className="sim-full-view-btn"
-            title={isFullWindow ? 'Exit Full View (Esc)' : 'Open full graph with settings covering whole window'}
-            aria-label={isFullWindow ? 'Exit Full View' : 'Open full graph and settings view'}
-          >
-            {isFullWindow ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-            <span>{isFullWindow ? 'Exit Full View' : 'Full Graph & Settings'}</span>
-          </button>
-
           <canvas
             ref={canvasRef}
             style={{ width: '100%', height: '100%', display: 'block' }}

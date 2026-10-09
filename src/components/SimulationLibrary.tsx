@@ -18,6 +18,13 @@ interface SimulationLibraryProps {
   onOpenAnatomy?: (organId?: string) => void;
 }
 
+export const FLAGSHIP_TOPIC_IDS = new Set([
+  'projectile_motion_lab',
+  'molecular_geometry',
+  'cardiac_hemodynamics',
+  'vectors_3d'
+]);
+
 export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
   onSelectTopic,
   onOpenFormulas,
@@ -27,6 +34,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
   const [selectedSubject, setSelectedSubject] = useState<'All' | 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology'>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [selectedExam, setSelectedExam] = useState<string>('All Syllabi');
+  const [focusMode, setFocusMode] = useState<'flagships' | 'all'>('flagships');
 
   // Available topics
   const topics = useMemo(() => Object.values(TOPICS_DATA), []);
@@ -34,6 +42,11 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
   // Filter topics
   const filteredTopics = useMemo(() => {
     return topics.filter((t) => {
+      // Flagship Focus Mode Filter
+      if (focusMode === 'flagships' && !FLAGSHIP_TOPIC_IDS.has(t.id)) {
+        return false;
+      }
+
       // Subject filter
       if (selectedSubject === 'Physics' && t.subject !== 'physics') return false;
       if (selectedSubject === 'Chemistry' && t.subject !== 'chemistry') return false;
@@ -62,7 +75,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
 
       return true;
     });
-  }, [topics, selectedSubject, selectedCategory, selectedExam, searchQuery]);
+  }, [topics, focusMode, selectedSubject, selectedCategory, selectedExam, searchQuery]);
 
   return (
     <section
@@ -127,11 +140,26 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               <Atom size={24} />
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                Physics
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                  Physics
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    padding: '1px 6px',
+                    borderRadius: 8,
+                    background: 'rgba(0, 240, 255, 0.2)',
+                    color: '#00f0ff',
+                    border: '1px solid rgba(0, 240, 255, 0.4)'
+                  }}
+                >
+                  FLAGSHIP LIVE
+                </span>
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                Motion, Waves, Energy, Optics, Thermo (26 Sims)
+                Advanced Projectile Dynamics &amp; Ballistics
               </div>
             </div>
           </div>
@@ -162,57 +190,24 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                  Chemistry Lab
+                  Chemistry
                 </span>
                 <span
                   style={{
                     fontSize: '0.62rem',
                     fontWeight: 800,
-                    padding: '1px 5px',
+                    padding: '1px 6px',
                     borderRadius: 8,
                     background: 'rgba(249, 115, 22, 0.2)',
                     color: '#ea580c',
                     border: '1px solid rgba(249, 115, 22, 0.35)'
                   }}
                 >
-                  3D LAB
+                  FLAGSHIP LIVE
                 </span>
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                3D VSEPR, Kinetics &amp; Equilibrium
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Mathematics */}
-          <div
-            className={`phet-category-card ${selectedSubject === 'Mathematics' ? 'active' : ''}`}
-            onClick={() => {
-              setSelectedSubject('Mathematics');
-              setSelectedCategory('All');
-            }}
-          >
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 'var(--radius-md)',
-                background: 'var(--electric-violet-soft)',
-                color: 'var(--electric-violet)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}
-            >
-              <Compass size={24} />
-            </div>
-            <div>
-              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                Mathematics
-              </div>
-              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                Calculus, Trigonometry, Vectors (18 Sims)
+                3D Molecular Geometry (VSEPR) &amp; Dipoles
               </div>
             </div>
           </div>
@@ -249,29 +244,79 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                   style={{
                     fontSize: '0.62rem',
                     fontWeight: 800,
-                    padding: '1px 5px',
+                    padding: '1px 6px',
                     borderRadius: 8,
                     background: 'rgba(16, 185, 129, 0.2)',
                     color: '#059669',
                     border: '1px solid rgba(16, 185, 129, 0.35)'
                   }}
                 >
-                  3D CORE
+                  FLAGSHIP LIVE
                 </span>
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                3D Human Body, 8 Systems &amp; PhET Sims
+                Cardiac Cycle, PV Loops &amp; Wiggers Diagram
               </div>
             </div>
           </div>
 
-          {/* Card 4: Class 11 & JEE Rigor */}
+          {/* Card 4: Mathematics */}
+          <div
+            className={`phet-category-card ${selectedSubject === 'Mathematics' ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedSubject('Mathematics');
+              setSelectedCategory('All');
+            }}
+            style={{ position: 'relative', overflow: 'hidden', cursor: 'pointer' }}
+          >
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--electric-violet-soft)',
+                color: 'var(--electric-violet)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}
+            >
+              <Compass size={24} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                  Mathematics
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    padding: '1px 6px',
+                    borderRadius: 8,
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    color: '#10B981',
+                    border: '1px solid rgba(16, 185, 129, 0.4)'
+                  }}
+                >
+                  LIVE
+                </span>
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+                Vectors &amp; 3D Space (River-Boat Velocity)
+              </div>
+            </div>
+          </div>
+
+          {/* Card 5: Class 9–11 & JEE (Coming Soon Badge) */}
           <div
             className={`phet-category-card ${selectedSubject === 'All' ? 'active' : ''}`}
             onClick={() => {
               setSelectedSubject('All');
               setSelectedCategory('All');
             }}
+            style={{ position: 'relative', overflow: 'hidden' }}
           >
             <div
               style={{
@@ -289,11 +334,26 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               <Target size={24} />
             </div>
             <div>
-              <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
-                Class 9–11 &amp; JEE
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+                  Class 9–11 &amp; JEE
+                </span>
+                <span
+                  style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    padding: '1px 6px',
+                    borderRadius: 8,
+                    background: 'rgba(148, 163, 184, 0.2)',
+                    color: '#94a3b8',
+                    border: '1px solid rgba(148, 163, 184, 0.35)'
+                  }}
+                >
+                  COMING SOON
+                </span>
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                Full Standard &amp; Advanced Syllabus (54 Sims)
+                Competitive Exam Test Banks (Expanding in V2)
               </div>
             </div>
           </div>
@@ -566,6 +626,58 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
           </div>
         )}
 
+        {/* Focus Mode & Filter Bar Toggle */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 24,
+            padding: '12px 18px',
+            background: 'var(--bg-card)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-medium)',
+            flexWrap: 'wrap',
+            gap: 12
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Catalog View:
+            </span>
+            <button
+              type="button"
+              onClick={() => setFocusMode('flagships')}
+              className={`btn btn-sm ${focusMode === 'flagships' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{
+                gap: 6,
+                fontWeight: 800,
+                fontSize: '0.80rem',
+                background: focusMode === 'flagships' ? 'linear-gradient(135deg, #059669, #047857)' : undefined,
+                color: '#FFFFFF'
+              }}
+            >
+              <span>★ 4 Flagship Interactive Models (Production Ready)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setFocusMode('all')}
+              className={`btn btn-sm ${focusMode === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{
+                gap: 6,
+                fontSize: '0.80rem'
+              }}
+            >
+              <span>All Topics (Coming Soon Badges)</span>
+            </button>
+          </div>
+
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 6px #10B981' }} />
+            <span>4 Flagships Live (Projectile Motion, 3D VSEPR, Cardiac PV Loops, River-Boat Velocity)</span>
+          </div>
+        </div>
+
         {/* Results Grid */}
         {filteredTopics.length === 0 ? (
           <div
@@ -582,17 +694,18 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               No simulations found matching "{searchQuery}"
             </h3>
             <p style={{ fontSize: '0.88rem', marginBottom: 16 }}>
-              Try searching for "velocity", "angle", "force", "optics", "energy", or clear your filters.
+              Try switching back to 3 Flagship Focus Models or clear your search term.
             </p>
             <button
               onClick={() => {
                 setSearchQuery('');
+                setFocusMode('flagships');
                 setSelectedSubject('All');
                 setSelectedCategory('All');
               }}
               className="btn btn-secondary btn-sm"
             >
-              Reset All Filters
+              Reset to 3 Flagship Simulators
             </button>
           </div>
         ) : (
@@ -603,189 +716,276 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               gap: 20
             }}
           >
-            {filteredTopics.map((topic) => (
-              <div
-                key={topic.id}
-                className="scientific-card scientific-card-interactive"
-                onClick={() => onSelectTopic(topic.id)}
-                style={{
-                  padding: 0,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  background: 'var(--bg-surface)',
-                  borderRadius: 'var(--radius-lg)',
-                  overflow: 'hidden',
-                  border: '1px solid var(--border-subtle)',
-                  boxShadow: 'var(--shadow-sm)'
-                }}
-              >
-                {/* Visual Simulation Poster at Top (PhET Vector Graphic) */}
+            {filteredTopics.map((topic) => {
+              const isFlagship = FLAGSHIP_TOPIC_IDS.has(topic.id);
+
+              return (
                 <div
-                  style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: 155,
-                    overflow: 'hidden',
-                    background: 'var(--bg-subtle)',
-                    borderBottom: '1px solid var(--border-subtle)'
+                  key={topic.id}
+                  className={`scientific-card ${isFlagship ? 'scientific-card-interactive' : ''}`}
+                  onClick={() => {
+                    if (isFlagship || topic.id === 'vectors_3d' || focusMode === 'all') {
+                      onSelectTopic(topic.id);
+                    }
                   }}
-                >
-                  <SimulationPoster topicId={topic.id} subject={topic.subject} title={topic.title} />
-
-                  {/* Overlaid Subject Badge at top-left */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 10,
-                      left: 12,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6
-                    }}
-                  >
-                    <span
-                      className={`badge ${
-                        topic.subject === 'physics'
-                          ? 'badge-physics'
-                          : topic.subject === 'biology'
-                          ? 'badge-biology'
-                          : 'badge-math'
-                      }`}
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-                      }}
-                    >
-                      {topic.subject === 'physics'
-                        ? 'Physics'
-                        : topic.subject === 'biology'
-                        ? 'Biology'
-                        : 'Mathematics'}
-                    </span>
-                    <span
-                      className="badge font-mono"
-                      style={{
-                        fontSize: '0.68rem',
-                        background: 'rgba(255, 255, 255, 0.94)',
-                        color: 'var(--text-secondary)',
-                        border: '1px solid var(--border-subtle)',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.06)'
-                      }}
-                    >
-                      3 Models
-                    </span>
-                  </div>
-
-                  {/* Iconic PhET Circular Orange Play Button at bottom-right */}
-                  <div
-                    className="phet-play-badge"
-                    title={`Launch ${topic.title}`}
-                    style={{
-                      position: 'absolute',
-                      bottom: 10,
-                      right: 12
-                    }}
-                  >
-                    <Play size={20} fill="#FFFFFF" style={{ marginLeft: 2 }} />
-                  </div>
-                </div>
-
-                {/* Card Content Body */}
-                <div
                   style={{
-                    padding: '16px 18px 18px',
+                    padding: 0,
                     display: 'flex',
                     flexDirection: 'column',
-                    flex: 1,
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    background: 'var(--bg-surface)',
+                    borderRadius: 'var(--radius-lg)',
+                    overflow: 'hidden',
+                    border: isFlagship ? '1.5px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-subtle)',
+                    boxShadow: isFlagship ? '0 4px 18px rgba(16, 185, 129, 0.12)' : 'var(--shadow-sm)',
+                    opacity: isFlagship ? 1 : 0.78,
+                    cursor: isFlagship ? 'pointer' : 'default',
+                    position: 'relative'
                   }}
                 >
-                  <div>
-                    {/* Title */}
-                    <h3
-                      style={{
-                        fontSize: '1.15rem',
-                        fontWeight: 800,
-                        color: 'var(--text-primary)',
-                        marginBottom: 6,
-                        lineHeight: 1.3
-                      }}
-                    >
-                      {topic.title}
-                    </h3>
-
-                    {/* One-line explanation */}
-                    <p
-                      style={{
-                        fontSize: '0.85rem',
-                        color: 'var(--text-secondary)',
-                        lineHeight: 1.5,
-                        marginBottom: 14,
-                        minHeight: 38
-                      }}
-                    >
-                      {topic.shortDesc}
-                    </p>
-
-                    {/* Sub-models Tags */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-                      {topic.simulations.map((sim) => (
-                        <span
-                          key={sim.id}
-                          style={{
-                            fontSize: '0.72rem',
-                            fontWeight: 600,
-                            padding: '3px 8px',
-                            borderRadius: 'var(--radius-sm)',
-                            background: 'var(--bg-subtle)',
-                            color: 'var(--text-secondary)',
-                            border: '1px solid var(--border-subtle)'
-                          }}
-                        >
-                          {sim.name}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Bottom PhET Play Simulation Action */}
+                  {/* Visual Simulation Poster at Top (PhET Vector Graphic) */}
                   <div
                     style={{
-                      paddingTop: 12,
-                      borderTop: '1px solid var(--border-subtle)'
+                      position: 'relative',
+                      width: '100%',
+                      height: 155,
+                      overflow: 'hidden',
+                      background: 'var(--bg-subtle)',
+                      borderBottom: '1px solid var(--border-subtle)'
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectTopic(topic.id);
-                      }}
-                      className="btn"
+                    <SimulationPoster topicId={topic.id} subject={topic.subject} title={topic.title} />
+
+                    {/* Overlaid Subject & Flagship Badge at top-left */}
+                    <div
                       style={{
-                        width: '100%',
-                        padding: '10px 16px',
-                        borderRadius: 'var(--radius-pill)',
-                        background: '#FF6600',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        justifyContent: 'center',
-                        gap: 8,
-                        fontWeight: 800,
-                        fontSize: '0.88rem',
-                        boxShadow: '0 3px 10px rgba(255, 102, 0, 0.35)',
-                        cursor: 'pointer'
+                        position: 'absolute',
+                        top: 10,
+                        left: 12,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 6
                       }}
                     >
-                      <Play size={16} fill="#FFFFFF" />
-                      <span>Play Simulation</span>
-                    </button>
+                      <span
+                        className={`badge ${
+                          topic.subject === 'physics'
+                            ? 'badge-physics'
+                            : topic.subject === 'biology'
+                            ? 'badge-biology'
+                            : 'badge-math'
+                        }`}
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        {topic.subject === 'physics'
+                          ? 'Physics'
+                          : topic.subject === 'biology'
+                          ? 'Biology'
+                          : topic.subject === 'chemistry'
+                          ? 'Chemistry'
+                          : 'Mathematics'}
+                      </span>
+
+                      {isFlagship ? (
+                        <span
+                          className="badge"
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            background: '#10B981',
+                            color: '#FFFFFF',
+                            boxShadow: '0 2px 6px rgba(16, 185, 129, 0.4)',
+                            letterSpacing: '0.04em'
+                          }}
+                        >
+                          ★ FLAGSHIP MVP
+                        </span>
+                      ) : (
+                        <span
+                          className="badge"
+                          style={{
+                            fontSize: '0.68rem',
+                            fontWeight: 800,
+                            background: 'rgba(15, 23, 42, 0.85)',
+                            color: '#94A3B8',
+                            border: '1px solid rgba(148, 163, 184, 0.3)'
+                          }}
+                        >
+                          COMING SOON
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Coming Soon Frosted Watermark if culled */}
+                    {!isFlagship && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          inset: 0,
+                          background: 'rgba(15, 23, 42, 0.45)',
+                          backdropFilter: 'blur(2px)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <div
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 'var(--radius-pill)',
+                            background: 'rgba(15, 23, 42, 0.85)',
+                            border: '1px solid rgba(255, 255, 255, 0.25)',
+                            color: '#F1F5F9',
+                            fontSize: '0.74rem',
+                            fontWeight: 800,
+                            letterSpacing: '0.06em',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
+                          }}
+                        >
+                          COMING SOON • IN PRODUCTION
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Iconic PhET Circular Play Button at bottom-right (for Flagships) */}
+                    {isFlagship && (
+                      <div
+                        className="phet-play-badge"
+                        title={`Launch ${topic.title}`}
+                        style={{
+                          position: 'absolute',
+                          bottom: 10,
+                          right: 12
+                        }}
+                      >
+                        <Play size={20} fill="#FFFFFF" style={{ marginLeft: 2 }} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Card Content Body */}
+                  <div
+                    style={{
+                      padding: '16px 18px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      flex: 1,
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div>
+                      {/* Title */}
+                      <h3
+                        style={{
+                          fontSize: '1.15rem',
+                          fontWeight: 800,
+                          color: 'var(--text-primary)',
+                          marginBottom: 6,
+                          lineHeight: 1.3
+                        }}
+                      >
+                        {topic.title}
+                      </h3>
+
+                      {/* One-line explanation */}
+                      <p
+                        style={{
+                          fontSize: '0.85rem',
+                          color: 'var(--text-secondary)',
+                          lineHeight: 1.5,
+                          marginBottom: 14,
+                          minHeight: 38
+                        }}
+                      >
+                        {topic.shortDesc}
+                      </p>
+
+                      {/* Sub-models Tags */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+                        {topic.simulations.map((sim) => (
+                          <span
+                            key={sim.id}
+                            style={{
+                              fontSize: '0.72rem',
+                              fontWeight: 600,
+                              padding: '3px 8px',
+                              borderRadius: 'var(--radius-sm)',
+                              background: 'var(--bg-subtle)',
+                              color: 'var(--text-secondary)',
+                              border: '1px solid var(--border-subtle)'
+                            }}
+                          >
+                            {sim.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Bottom PhET Play Simulation Action */}
+                    <div
+                      style={{
+                        paddingTop: 12,
+                        borderTop: '1px solid var(--border-subtle)'
+                      }}
+                    >
+                      {isFlagship ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectTopic(topic.id);
+                          }}
+                          className="btn"
+                          style={{
+                            width: '100%',
+                            padding: '10px 16px',
+                            borderRadius: 'var(--radius-pill)',
+                            background: '#FF6600',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            justifyContent: 'center',
+                            gap: 8,
+                            fontWeight: 800,
+                            fontSize: '0.88rem',
+                            boxShadow: '0 3px 10px rgba(255, 102, 0, 0.35)',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <Play size={16} fill="#FFFFFF" />
+                          <span>Play Flagship Simulation</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          style={{
+                            width: '100%',
+                            padding: '10px 16px',
+                            borderRadius: 'var(--radius-pill)',
+                            background: 'var(--bg-subtle)',
+                            color: 'var(--text-tertiary)',
+                            border: '1px solid var(--border-subtle)',
+                            justifyContent: 'center',
+                            fontWeight: 700,
+                            fontSize: '0.82rem',
+                            cursor: 'not-allowed',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6
+                          }}
+                        >
+                          <span>Coming Soon (In Production)</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import {
   X,
-  Printer,
+  Download,
   Copy,
   Check,
-  FileText
+  FileText,
+  Lock,
+  Loader2
 } from 'lucide-react';
 import { MathView } from '../MathView';
 import { useAuth } from '../../context/AuthContext';
+import { useSubscription } from '../../context/SubscriptionContext';
+import { exportLabReportPdf } from '../../utils/LabReportExporter';
 import type { TopicData, SimulationConfig } from '../../data/topicsData';
 
 interface LabReportModalProps {
@@ -18,6 +22,7 @@ interface LabReportModalProps {
   params: Record<string, number>;
   telemetry: Record<string, string>;
   snapshotDataUrl?: string | null;
+  onOpenPricing?: () => void;
 }
 
 export const LabReportModal: React.FC<LabReportModalProps> = ({
@@ -27,9 +32,11 @@ export const LabReportModal: React.FC<LabReportModalProps> = ({
   simulation,
   params,
   telemetry,
-  snapshotDataUrl
+  snapshotDataUrl,
+  onOpenPricing
 }) => {
   const { profile } = useAuth();
+  const { canExportPdf, triggerPaywall, tier } = useSubscription();
 
   const [studentName, setStudentName] = useState(
     profile?.display_name || profile?.username || 'Student Investigator'
@@ -41,6 +48,7 @@ export const LabReportModal: React.FC<LabReportModalProps> = ({
     `Trial executed with active simulation parameters. The observed results align with the governing theoretical equations within computational tolerance.`
   );
   const [copied, setCopied] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   if (!isOpen) return null;
 
@@ -52,8 +60,36 @@ export const LabReportModal: React.FC<LabReportModalProps> = ({
 
   const reportId = `PHY-${topic.id.toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-  const handlePrint = () => {
-    window.print();
+  const handleExportPdf = async () => {
+    // Pro Tier Gate: Lock native PDF export behind Pro Upgrade modal
+    if (!canExportPdf()) {
+      if (onOpenPricing) {
+        onOpenPricing();
+      } else {
+        triggerPaywall('pdf_export', 'PRO');
+      }
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      await exportLabReportPdf({
+        topic,
+        simulation,
+        params,
+        telemetry,
+        studentName,
+        institutionName,
+        labNotes,
+        reportId,
+        reportDate,
+        snapshotDataUrl
+      });
+    } catch (err) {
+      console.error('[LabReportModal] PDF export failed:', err);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleCopySummary = () => {
@@ -114,7 +150,7 @@ ${labNotes}
           animation: 'physoraModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)'
         }}
       >
-        {/* Modal Action Bar (Hidden in Print) */}
+        {/* Modal Action Bar */}
         <div
           className="no-print"
           style={{
@@ -123,7 +159,9 @@ ${labNotes}
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            background: 'var(--bg-subtle, #F8FAFC)'
+            background: 'var(--bg-subtle, #F8FAFC)',
+            flexWrap: 'wrap',
+            gap: 12
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -143,6 +181,23 @@ ${labNotes}
             >
               Academic Standard
             </span>
+            {tier === 'FREE' && (
+              <span
+                style={{
+                  fontSize: '0.70rem',
+                  padding: '2px 8px',
+                  borderRadius: '6px',
+                  background: 'rgba(245, 158, 11, 0.15)',
+                  color: '#D97706',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4
+                }}
+              >
+                <Lock size={11} /> PDF Download: Pro Only
+              </span>
+            )}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -167,14 +222,18 @@ ${labNotes}
               {copied ? 'Copied' : 'Copy Text'}
             </button>
 
+            {/* Native PDF Download Button (Pro Tier Gated) */}
             <button
               type="button"
-              onClick={handlePrint}
+              onClick={handleExportPdf}
+              disabled={isExporting}
               style={{
-                padding: '7px 16px',
+                padding: '7px 18px',
                 borderRadius: '8px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                background: canExportPdf()
+                  ? 'linear-gradient(135deg, #2563EB, #1D4ED8)'
+                  : 'linear-gradient(135deg, #7C3AED, #6D28D9)',
                 color: '#FFFFFF',
                 fontSize: '0.84rem',
                 fontWeight: 800,
@@ -182,10 +241,31 @@ ${labNotes}
                 alignItems: 'center',
                 gap: '6px',
                 cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)'
+                boxShadow: canExportPdf()
+                  ? '0 2px 8px rgba(37, 99, 235, 0.3)'
+                  : '0 2px 8px rgba(124, 58, 237, 0.35)',
+                opacity: isExporting ? 0.75 : 1
               }}
+              title={
+                canExportPdf()
+                  ? 'Download formatted academic PDF laboratory report'
+                  : 'Upgrade to Pro to export native PDF documents'
+              }
             >
-              <Printer size={15} /> Print / Save as PDF
+              {isExporting ? (
+                <Loader2 size={15} className="animate-spin" />
+              ) : canExportPdf() ? (
+                <Download size={15} />
+              ) : (
+                <Lock size={14} />
+              )}
+              <span>
+                {isExporting
+                  ? 'Generating PDF...'
+                  : canExportPdf()
+                  ? 'Download Academic PDF'
+                  : 'Export PDF (Upgrade to Pro)'}
+              </span>
             </button>
 
             <button

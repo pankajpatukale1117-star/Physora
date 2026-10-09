@@ -936,38 +936,75 @@ export const SimulationPoster: React.FC<SimulationPosterProps> = ({ topicId, sub
         </svg>
       );
 
-    // 25. Vectors & 3D Coordinate Geometry
+    // 25. Vectors & 3D Space / River-Boat Relative Velocity
     case 'vectors_3d':
     case 'vector_3d_lab':
+    case 'vec_river_boat':
       return (
         <svg viewBox="0 0 360 160" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block', borderRadius: '12px 12px 0 0' }}>
-          <rect width="360" height="160" fill="#F8FAFC" />
-          {/* 3D Coordinate Isometric Axes */}
-          {/* Z Axis (Up) */}
-          <line x1="180" y1="120" x2="180" y2="25" stroke="#64748B" strokeWidth="2" />
-          <polygon points="180,20 176,28 184,28" fill="#64748B" />
-          <text x="190" y="32" fontSize="9" fontWeight="800" fill="#475569">Z</text>
-          {/* X Axis (Diagonal Lower Left) */}
-          <line x1="180" y1="120" x2="90" y2="150" stroke="#64748B" strokeWidth="2" />
-          <polygon points="85,152 92,146 95,154" fill="#64748B" />
-          <text x="78" y="152" fontSize="9" fontWeight="800" fill="#475569">X</text>
-          {/* Y Axis (Diagonal Lower Right) */}
-          <line x1="180" y1="120" x2="280" y2="150" stroke="#64748B" strokeWidth="2" />
-          <polygon points="285,152 278,146 275,154" fill="#64748B" />
-          <text x="290" y="152" fontSize="9" fontWeight="800" fill="#475569">Y</text>
-          {/* Vector A (Blue) */}
-          <line x1="180" y1="120" x2="245" y2="60" stroke="#0077C8" strokeWidth="3" strokeLinecap="round" />
-          <polygon points="250,56 240,60 245,68" fill="#0077C8" />
-          <text x="256" y="60" fontSize="11" fontWeight="900" fill="#0077C8">A⃗</text>
-          {/* Vector B (Orange) */}
-          <line x1="180" y1="120" x2="125" y2="65" stroke="#EA580C" strokeWidth="3" strokeLinecap="round" />
-          <polygon points="120,62 125,70 132,65" fill="#EA580C" />
-          <text x="110" y="65" fontSize="11" fontWeight="900" fill="#EA580C">B⃗</text>
-          {/* Orthogonal projection box */}
-          <path d="M 245 60 L 245 95 L 180 120" fill="none" stroke="#0077C8" strokeWidth="1" strokeDasharray="3 3" opacity="0.6" />
-          <text x="180" y="150" fontSize="9" fontWeight="700" fill="#0077C8" textAnchor="middle">
-            Cross Product: C⃗ = A⃗ × B⃗ (Right-Hand Rule)
-          </text>
+          <defs>
+            <linearGradient id="riverWaterPoster" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#1E3A8A" />
+              <stop offset="15%" stopColor="#0284C7" />
+              <stop offset="50%" stopColor="#0369A1" />
+              <stop offset="85%" stopColor="#0284C7" />
+              <stop offset="100%" stopColor="#1E3A8A" />
+            </linearGradient>
+            <linearGradient id="riverBankPoster" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#14532D" />
+              <stop offset="100%" stopColor="#166534" />
+            </linearGradient>
+          </defs>
+          <rect width="360" height="160" fill="#0B132B" />
+          
+          {/* Top River Bank */}
+          <rect x="0" y="0" width="360" height="28" fill="url(#riverBankPoster)" />
+          <line x1="0" y1="28" x2="360" y2="28" stroke="#15803D" strokeWidth="1.5" />
+          <text x="14" y="19" fontSize="8.5" fontWeight="800" fill="#86EFAC">OPPOSITE BANK</text>
+          
+          {/* River Water Body */}
+          <rect x="0" y="28" width="360" height="104" fill="url(#riverWaterPoster)" />
+          
+          {/* Animated Water Current Streamlines */}
+          <line x1="30" y1="52" x2="90" y2="52" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.4" strokeDasharray="16 8" />
+          <line x1="160" y1="52" x2="240" y2="52" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.4" strokeDasharray="16 8" />
+          <line x1="80" y1="80" x2="180" y2="80" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.5" strokeDasharray="20 10" />
+          <line x1="220" y1="80" x2="320" y2="80" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.5" strokeDasharray="20 10" />
+          <line x1="40" y1="108" x2="130" y2="108" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.4" strokeDasharray="16 8" />
+          <line x1="200" y1="108" x2="290" y2="108" stroke="#38BDF8" strokeWidth="1.5" strokeOpacity="0.4" strokeDasharray="16 8" />
+
+          {/* Bottom River Bank */}
+          <rect x="0" y="132" width="360" height="28" fill="url(#riverBankPoster)" />
+          <line x1="0" y1="132" x2="360" y2="132" stroke="#15803D" strokeWidth="1.5" />
+          <text x="14" y="150" fontSize="8.5" fontWeight="800" fill="#86EFAC">START BANK</text>
+
+          {/* Resultant Trajectory Path */}
+          <line x1="100" y1="132" x2="190" y2="38" stroke="#F8FAFC" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.6" />
+          
+          {/* Sleek Minimal Dart Boat Silhouette at (145, 85) */}
+          <g transform="translate(145, 85) rotate(-45)">
+            <polygon points="0,-13 6,11 0,8 -6,11" fill="#1E293B" stroke="#F1F5F9" strokeWidth="1.2" />
+            <circle cx="0" cy="0" r="1.8" fill="#38BDF8" />
+          </g>
+
+          {/* Heading Velocity Vector v_b (Rose #F43F5E) */}
+          <line x1="145" y1="85" x2="118" y2="42" stroke="#F43F5E" strokeWidth="2.5" strokeLinecap="round" />
+          <polygon points="115,37 114,46 122,41" fill="#F43F5E" />
+          <text x="100" y="52" fontSize="9.5" fontWeight="900" fill="#F43F5E">v⃗_b</text>
+
+          {/* River Current Velocity Vector v_r (Cyan/Sky #0284C7) */}
+          <line x1="145" y1="85" x2="205" y2="85" stroke="#0284C7" strokeWidth="2.5" strokeLinecap="round" />
+          <polygon points="210,85 202,81 202,89" fill="#0284C7" />
+          <text x="214" y="89" fontSize="9.5" fontWeight="900" fill="#38BDF8">v⃗_r</text>
+
+          {/* Resultant Ground Velocity Vector v_ground (Gold #EAB308) */}
+          <line x1="145" y1="85" x2="178" y2="42" stroke="#EAB308" strokeWidth="2.8" strokeLinecap="round" />
+          <polygon points="181,37 174,43 182,46" fill="#EAB308" />
+          <text x="187" y="46" fontSize="9.5" fontWeight="900" fill="#FDE047">v⃗_ground</text>
+
+          {/* HUD Badge with Vector Equation */}
+          <rect x="226" y="6" width="126" height="18" rx="4" fill="rgba(15,23,42,0.85)" stroke="rgba(255,255,255,0.2)" />
+          <text x="289" y="18" fontSize="8" fontWeight="800" fill="#38BDF8" textAnchor="middle">v⃗_ground = v⃗_b + v⃗_r</text>
         </svg>
       );
 

@@ -1181,23 +1181,6 @@ export const TOPICS_DATA: Record<string, TopicData> = {
     },
     simulations: [
       {
-        id: 'vec_cross_dot_product',
-        name: '3D Cross & Dot Product Studio',
-        tagline: 'See the shaded area of A × B and the projected shadow of A · B.',
-        description: 'Adjust vector lengths and the angle between them. Inspect the perpendicular normal vector and the scalar projection in real time.',
-        controls: [
-          { id: 'mag_a', label: 'Vector A Magnitude', min: 2, max: 10, step: 1, defaultValue: 6 },
-          { id: 'mag_b', label: 'Vector B Magnitude', min: 2, max: 10, step: 1, defaultValue: 5 },
-          { id: 'theta', label: 'Angle θ between A & B', min: 0, max: 180, step: 5, defaultValue: 50, unit: '°' }
-        ],
-        telemetryLabels: [
-          { key: 'dot_product', label: 'Dot Product (A · B)' },
-          { key: 'cross_magnitude', label: 'Cross Product Area' },
-          { key: 'direction_rule', label: 'Right Hand Rule' },
-          { key: 'orthogonality', label: 'Perpendicular Status' }
-        ]
-      },
-      {
         id: 'vec_river_boat',
         name: 'River-Boat Relative Velocity',
         tagline: 'Steer across a flowing river and solve shortest path vs shortest time.',
@@ -1212,6 +1195,23 @@ export const TOPICS_DATA: Record<string, TopicData> = {
           { key: 'drift_distance', label: 'Downstream Drift' },
           { key: 'net_velocity', label: 'Ground Velocity' },
           { key: 'shortest_path_condition', label: 'Shortest Path Angle' }
+        ]
+      },
+      {
+        id: 'vec_cross_dot_product',
+        name: '3D Cross & Dot Product Studio',
+        tagline: 'See the shaded area of A × B and the projected shadow of A · B.',
+        description: 'Adjust vector lengths and the angle between them. Inspect the perpendicular normal vector and the scalar projection in real time.',
+        controls: [
+          { id: 'mag_a', label: 'Vector A Magnitude', min: 2, max: 10, step: 1, defaultValue: 6 },
+          { id: 'mag_b', label: 'Vector B Magnitude', min: 2, max: 10, step: 1, defaultValue: 5 },
+          { id: 'theta', label: 'Angle θ between A & B', min: 0, max: 180, step: 5, defaultValue: 50, unit: '°' }
+        ],
+        telemetryLabels: [
+          { key: 'dot_product', label: 'Dot Product (A · B)' },
+          { key: 'cross_magnitude', label: 'Cross Product Area' },
+          { key: 'direction_rule', label: 'Right Hand Rule' },
+          { key: 'orthogonality', label: 'Perpendicular Status' }
         ]
       },
       {
