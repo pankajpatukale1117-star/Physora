@@ -16,12 +16,14 @@ export interface VectorPlane3DLabProps {
   speed?: number;
   onParamChange?: (id: string, value: number) => void;
   onTelemetryUpdate?: (telemetry: Record<string, string>) => void;
+  isCompact?: boolean;
 }
 
 export const VectorPlane3DLab: React.FC<VectorPlane3DLabProps> = ({
   params,
   onParamChange,
-  onTelemetryUpdate
+  onTelemetryUpdate,
+  isCompact = false
 }) => {
   // Vector u components (Cyan)
   const [ux, setUx] = useState(3);
@@ -364,48 +366,65 @@ export const VectorPlane3DLab: React.FC<VectorPlane3DLabProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 16px',
+          padding: '6px 14px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 20
+          zIndex: 20,
+          gap: 10,
+          flexWrap: 'wrap',
+          boxSizing: 'border-box'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 }}>
+          {!isCompact && (
+            <div
+              style={{
+                padding: '3px 7px',
+                borderRadius: 5,
+                background: 'rgba(168, 85, 247, 0.2)',
+                border: '1px solid #a855f7',
+                color: '#c084fc',
+                fontWeight: 800,
+                fontSize: '0.70rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              <Compass size={11} />
+              <span>FLAGSHIP LAB</span>
+            </div>
+          )}
+          <span
             style={{
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: 'rgba(168, 85, 247, 0.2)',
-              border: '1px solid #a855f7',
-              color: '#c084fc',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              color: '#f1f5f9',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
-            <Compass size={13} />
-            <span>FLAGSHIP MATHEMATICS LAB</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>
-            3D Vector Operations, Dot Product, Cross Product &amp; Spanned Planes
+            {isCompact ? '3D Vector Operations' : '3D Vector Operations, Dot & Cross Product, Planes'}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={() => setShowSum(!showSum)}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: showSum ? 'rgba(250, 204, 21, 0.2)' : 'rgba(255,255,255,0.06)',
               border: `1px solid ${showSum ? '#facc15' : 'rgba(255,255,255,0.1)'}`,
               color: showSum ? '#facc15' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Sum (u + v) {showSum ? 'ON' : 'OFF'}
@@ -415,14 +434,15 @@ export const VectorPlane3DLab: React.FC<VectorPlane3DLabProps> = ({
             type="button"
             onClick={() => setShowCrossProduct(!showCrossProduct)}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: showCrossProduct ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.06)',
               border: `1px solid ${showCrossProduct ? '#22c55e' : 'rgba(255,255,255,0.1)'}`,
               color: showCrossProduct ? '#22c55e' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Normal (u × v) {showCrossProduct ? 'ON' : 'OFF'}
@@ -432,14 +452,15 @@ export const VectorPlane3DLab: React.FC<VectorPlane3DLabProps> = ({
             type="button"
             onClick={() => setShowSpannedPlane(!showSpannedPlane)}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: showSpannedPlane ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.06)',
               border: `1px solid ${showSpannedPlane ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`,
               color: showSpannedPlane ? '#38bdf8' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Plane {showSpannedPlane ? 'ON' : 'OFF'}

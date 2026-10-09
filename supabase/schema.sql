@@ -10,6 +10,9 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   display_name TEXT NOT NULL,
   avatar_url TEXT,
   bio TEXT,
+  membership_tier TEXT NOT NULL DEFAULT 'free', -- 'free' | 'pro' | 'institution'
+  institution_name TEXT,
+  role TEXT DEFAULT 'student', -- 'student' | 'teacher' | 'researcher'
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );

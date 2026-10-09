@@ -17,6 +17,7 @@ import { AnatomyExplorerView } from './components/anatomy/AnatomyExplorerView';
 import { TransformationShowcase } from './components/TransformationShowcase';
 import { AuthModal } from './components/auth/AuthModal';
 import { UserProfileModal } from './components/auth/UserProfileModal';
+import { PricingModal } from './components/pricing/PricingModal';
 import type { AuthView } from './types/auth';
 import { ANATOMY_STRUCTURES } from './data/anatomyData';
 import { X } from 'lucide-react';
@@ -78,6 +79,14 @@ export function App() {
       const hash = window.location.hash;
       const path = window.location.pathname;
       return hash === '#profile' || path === '/profile';
+    }
+    return false;
+  });
+
+  const [isPricingOpen, setIsPricingOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      return hash === '#pricing' || hash === '#upgrade';
     }
     return false;
   });
@@ -145,6 +154,8 @@ export function App() {
         setAuthModalView('reset-password');
       } else if (hash === '#profile') {
         setIsProfileModalOpen(true);
+      } else if (hash === '#pricing' || hash === '#upgrade') {
+        setIsPricingOpen(true);
       }
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -247,6 +258,10 @@ export function App() {
         onOpenProfile={() => {
           setIsProfileModalOpen(true);
           window.location.hash = '#profile';
+        }}
+        onOpenPricing={() => {
+          setIsPricingOpen(true);
+          window.location.hash = '#pricing';
         }}
         theme={theme}
         onToggleTheme={toggleTheme}
@@ -410,6 +425,17 @@ export function App() {
       <UserProfileModal
         isOpen={isProfileModalOpen}
         onClose={handleCloseProfile}
+      />
+
+      {/* 12. Commercial Subscription & Institutional Pricing Modal */}
+      <PricingModal
+        isOpen={isPricingOpen}
+        onClose={() => {
+          setIsPricingOpen(false);
+          if (['#pricing', '#upgrade'].includes(window.location.hash)) {
+            window.history.pushState(null, '', window.location.pathname);
+          }
+        }}
       />
     </div>
   );

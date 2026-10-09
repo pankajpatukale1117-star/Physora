@@ -1,11 +1,17 @@
 import type { User, Session } from '@supabase/supabase-js';
 
+export type MembershipTier = 'free' | 'pro' | 'institution';
+export type UserRole = 'student' | 'teacher' | 'researcher';
+
 export interface PhysoraProfile {
   id: string;
   username: string;
   display_name: string;
   avatar_url: string | null;
   bio: string | null;
+  membership_tier?: MembershipTier;
+  institution_name?: string | null;
+  role?: UserRole;
   created_at: string;
   updated_at: string;
 }
@@ -59,11 +65,15 @@ export interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   isConfigured: boolean;
+  membershipTier: MembershipTier;
+  isPro: boolean;
+  isInstitution: boolean;
   signIn: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   signUp: (data: SignUpFormData) => Promise<{ success: boolean; requiresVerification?: boolean; error?: string }>;
   signOut: () => Promise<void>;
   resetPasswordForEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
-  updateProfile: (updates: Partial<Pick<PhysoraProfile, 'display_name' | 'username' | 'bio' | 'avatar_url'>>) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (updates: Partial<Pick<PhysoraProfile, 'display_name' | 'username' | 'bio' | 'avatar_url' | 'membership_tier' | 'institution_name' | 'role'>>) => Promise<{ success: boolean; error?: string }>;
+  upgradeTier: (tier: MembershipTier, institutionName?: string) => Promise<{ success: boolean; error?: string }>;
   refreshProfile: () => Promise<void>;
 }

@@ -30,6 +30,11 @@ import { FlagshipSimulatorDispatcher } from './simulations/FlagshipSimulatorDisp
 import { MathView } from './MathView';
 import { ChallengeModalWidget } from './challenges/ChallengeModalWidget';
 import { getTopicChallenges } from '../data/challengesData';
+import { LabReportModal } from './reports/LabReportModal';
+import { PresenterModeOverlay } from './classroom/PresenterModeOverlay';
+import { AiMentorDrawer } from './ai/AiMentorDrawer';
+import { PricingModal } from './pricing/PricingModal';
+import { FileText, Radio } from 'lucide-react';
 
 interface TopicLabModalProps {
   topicId: string | null;
@@ -278,6 +283,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [telemetryB, setTelemetryB] = useState<Record<string, string>>({});
   const [activeCompareTab, setActiveCompareTab] = useState<'A' | 'B'>('B');
 
+  // Commercial & Classroom Upgrades
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isPresenterModeActive, setIsPresenterModeActive] = useState(false);
+  const [isAiMentorOpen, setIsAiMentorOpen] = useState(false);
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false);
+
   const [prevTopicId, setPrevTopicId] = useState(topicId);
   const [prevSimId, setPrevSimId] = useState<string | null>(null);
 
@@ -486,49 +497,60 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
           }}
         >
           {/* Top Floating Pill Navigation Bar */}
+          {/* Top Stage Studio Navigation Bar (Non-Overlapping Solid Top Bar) */}
           <header
             style={{
-              position: 'absolute',
-              top: 16,
-              left: 20,
-              right: 20,
-              zIndex: 60,
+              height: 52,
+              minHeight: 52,
+              flexShrink: 0,
+              width: '100%',
+              background: '#0B1120',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.12)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              pointerEvents: 'none',
-              gap: 12
+              padding: '0 16px',
+              gap: 10,
+              zIndex: 100,
+              boxSizing: 'border-box'
             }}
           >
             {/* Left: Exit Stage & Breadcrumbs */}
             <div
-              className="throughline-pill-nav"
-              style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexShrink: 0
+              }}
             >
               <button
                 onClick={() => setIsFullWindow(false)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 6,
-                  background: 'transparent',
-                  border: 'none',
+                  gap: 5,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '4px 9px',
                   color: 'var(--text-primary)',
                   cursor: 'pointer',
                   fontWeight: 600,
-                  fontSize: '0.80rem'
+                  fontSize: '0.76rem',
+                  whiteSpace: 'nowrap'
                 }}
                 title="Exit Stage View (Esc)"
               >
-                <Minimize2 size={14} />
+                <Minimize2 size={13} />
                 <span>Exit Stage</span>
                 <span
                   style={{
-                    fontSize: '0.68rem',
-                    opacity: 0.5,
-                    padding: '1px 5px',
-                    borderRadius: 4,
-                    background: 'rgba(255,255,255,0.08)'
+                    fontSize: '0.65rem',
+                    opacity: 0.6,
+                    padding: '1px 4px',
+                    borderRadius: 3,
+                    background: 'rgba(255,255,255,0.1)'
                   }}
                 >
                   Esc
@@ -537,7 +559,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
               <span style={{ opacity: 0.25 }}>|</span>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.80rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                 <img
                   src="/logo-mark.png"
                   alt="Physora"
@@ -551,14 +573,15 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
             {/* Center: Simulation Switcher Tabs */}
             <div
-              className="throughline-pill-nav"
               style={{
-                pointerEvents: 'auto',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                maxWidth: '45vw',
-                overflowX: 'auto'
+                maxWidth: '34vw',
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                flexShrink: 1,
+                minWidth: 0
               }}
             >
               {topic.simulations.map((sim, idx) => {
@@ -571,16 +594,17 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       gap: 6,
-                      padding: '5px 12px',
+                      padding: '4px 10px',
                       borderRadius: 'var(--radius-pill)',
-                      border: isActive ? `1px solid ${accentColor}` : '1px solid transparent',
-                      background: isActive ? `${accentColor}18` : 'transparent',
+                      border: isActive ? `1px solid ${accentColor}` : '1px solid rgba(255,255,255,0.08)',
+                      background: isActive ? `${accentColor}22` : 'rgba(255,255,255,0.03)',
                       color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      fontSize: '0.76rem',
+                      fontSize: '0.74rem',
                       fontWeight: isActive ? 750 : 500,
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
-                      transition: 'all 0.15s ease'
+                      transition: 'all 0.15s ease',
+                      flexShrink: 0
                     }}
                   >
                     <span
@@ -597,10 +621,15 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               })}
             </div>
 
-            {/* Right: Learn to understand jump button & Close */}
+            {/* Right: Actions, Commercial Tools & Close */}
             <div
-              className="throughline-pill-nav"
-              style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                flexShrink: 0,
+                whiteSpace: 'nowrap'
+              }}
             >
               <ChallengeModalWidget
                 challenges={topicChallenges}
@@ -613,12 +642,13 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 onClick={() => setIsDualCompare(prev => !prev)}
                 className={`btn btn-sm ${isDualCompare ? 'btn-primary' : 'btn-secondary'}`}
                 style={{
-                  padding: '4px 10px',
-                  fontSize: '0.76rem',
+                  padding: '4px 9px',
+                  fontSize: '0.75rem',
                   gap: 5,
                   background: isDualCompare ? 'rgba(0, 240, 255, 0.22)' : undefined,
                   borderColor: isDualCompare ? 'var(--electric-blue)' : undefined,
-                  color: isDualCompare ? '#00f0ff' : undefined
+                  color: isDualCompare ? '#00f0ff' : undefined,
+                  whiteSpace: 'nowrap'
                 }}
                 title="Toggle Split-Screen Dual Compare Mode (Side-by-Side Reference vs Hypothesis)"
               >
@@ -635,92 +665,103 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 }}
                 className="btn btn-secondary btn-sm"
                 style={{
-                  padding: '4px 10px',
-                  fontSize: '0.76rem',
-                  gap: 4
+                  padding: '4px 9px',
+                  fontSize: '0.75rem',
+                  gap: 4,
+                  whiteSpace: 'nowrap'
                 }}
               >
-                <span>Educational Guide</span>
+                <span>Guide</span>
                 <ArrowDown size={12} />
               </button>
 
-              {/* Quick Topic Switcher */}
-              <select
-                value={topic.id}
-                onChange={(e) => onSelectTopic(e.target.value)}
+              {/* Classroom & Commercial Toolbar Tools in Stage Studio */}
+              <button
+                type="button"
+                onClick={() => setIsAiMentorOpen(true)}
+                className="btn btn-sm"
                 style={{
-                  padding: '4px 8px',
-                  borderRadius: 'var(--radius-pill)',
-                  border: '1px solid var(--border-subtle)',
-                  fontSize: '0.74rem',
-                  color: 'var(--text-primary)',
-                  background: 'var(--bg-surface)',
-                  cursor: 'pointer',
-                  outline: 'none'
+                  background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.25), rgba(124, 58, 237, 0.25))',
+                  border: '1px solid rgba(124, 58, 237, 0.4)',
+                  color: '#C084FC',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  gap: 4,
+                  padding: '4px 9px',
+                  whiteSpace: 'nowrap'
                 }}
+                title="Open Context-Aware AI Science Tutor"
               >
-                <optgroup label="Physics">
-                  <option value="projectile_motion_lab">★ Projectile Motion &amp; Ballistics</option>
-                  <option value="wave_interference_lab">★ Wave Interference &amp; Superposition</option>
-                  <option value="motion">Motion &amp; Kinematics</option>
-                  <option value="newtons_laws">Newton's Laws</option>
-                  <option value="work_energy_power">Work, Energy &amp; Power</option>
-                  <option value="gravitation">Gravitation</option>
-                  <option value="waves">Waves</option>
-                  <option value="optics">Optics &amp; Light</option>
-                  <option value="thermodynamics">Thermodynamics</option>
-                  <option value="units_dimensions">Units &amp; Dimensions</option>
-                </optgroup>
-                <optgroup label="Chemistry">
-                  <option value="molecular_geometry">★ 3D Molecular Geometry &amp; VSEPR</option>
-                  <option value="reaction_kinetics">★ Reaction Kinetics &amp; Equilibrium</option>
-                </optgroup>
-                <optgroup label="Biology">
-                  <option value="cardiac_hemodynamics">★ Cardiac Hemodynamics &amp; Circulation</option>
-                  <option value="cellular_osmosis">★ Cellular Osmosis &amp; Membrane</option>
-                  <option value="natural_selection">Natural Selection</option>
-                  <option value="gene_expression">Gene Expression</option>
-                  <option value="membrane_transport">Membrane Transport</option>
-                  <option value="neuron">Neuron &amp; Action Potential</option>
-                </optgroup>
-                <optgroup label="Mathematics">
-                  <option value="vector_3d_lab">★ 3D Vector &amp; Plane Geometry</option>
-                  <option value="calculus_riemann_lab">★ Calculus: Tangents &amp; Riemann Integrals</option>
-                  <option value="algebra">Algebra</option>
-                  <option value="trigonometry">Trigonometry</option>
-                  <option value="coordinate_geometry">Coordinate Geometry</option>
-                  <option value="functions">Functions</option>
-                  <option value="sequences">Sequences</option>
-                  <option value="basic_calculus">Basic Calculus</option>
-                </optgroup>
-              </select>
+                <Sparkles size={12} />
+                <span>AI Tutor</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsReportModalOpen(true)}
+                className="btn btn-sm"
+                style={{
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  color: '#34D399',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  gap: 4,
+                  padding: '4px 9px',
+                  whiteSpace: 'nowrap'
+                }}
+                title="Export Academic Printable Lab Report PDF"
+              >
+                <FileText size={12} />
+                <span>Lab Report</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsPresenterModeActive(true)}
+                className="btn btn-sm"
+                style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#F87171',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  gap: 4,
+                  padding: '4px 9px',
+                  whiteSpace: 'nowrap'
+                }}
+                title="Open Classroom Presenter HUD with Laser Pointer & Annotation"
+              >
+                <Radio size={12} />
+                <span>Presenter</span>
+              </button>
 
               <button
                 onClick={onClose}
                 className="btn btn-secondary btn-sm"
                 style={{
-                  width: 30,
-                  height: 30,
+                  width: 28,
+                  height: 28,
                   padding: 0,
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center'
+                  justifyContent: 'center',
+                  flexShrink: 0
                 }}
                 title="Close (Esc)"
               >
-                <X size={15} />
+                <X size={14} />
               </button>
             </div>
           </header>
 
-
-          {/* Wall-to-Wall Simulation Stage */}
+          {/* Wall-to-Wall Simulation Stage Viewport */}
           <div
-            id="sim-stage"
+            id="sim-stage-viewport"
             style={{
               width: '100%',
-              height: '100%',
+              height: 'calc(100vh - 52px)',
               flex: 1,
               position: 'relative',
               overflow: 'hidden'
@@ -738,80 +779,104 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 }}
               >
                 {/* Viewport A (Reference) */}
-                <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', borderRight: '1px solid rgba(0, 240, 255, 0.3)' }}>
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                    overflow: 'hidden',
+                    borderRight: '1px solid rgba(0, 240, 255, 0.3)',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}
+                >
+                  {/* Dedicated Non-Overlapping Lab A Sub-Header */}
                   <div
                     style={{
-                      position: 'absolute',
-                      top: 76,
-                      left: leftDrawerOpen ? 346 : 24,
-                      zIndex: 35,
+                      height: 28,
+                      minHeight: 28,
+                      flexShrink: 0,
+                      background: 'rgba(15, 23, 42, 0.95)',
+                      borderBottom: '1px solid rgba(0, 240, 255, 0.25)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 6,
-                      padding: '4px 10px',
-                      borderRadius: 'var(--radius-pill)',
-                      background: 'rgba(15, 23, 42, 0.88)',
-                      border: '1px solid var(--electric-blue)',
-                      color: 'var(--electric-blue)',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      backdropFilter: 'blur(8px)',
-                      transition: 'left 0.2s ease'
+                      justifyContent: 'space-between',
+                      padding: '0 12px',
+                      boxSizing: 'border-box'
                     }}
                   >
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--electric-blue)' }} />
-                    <span>LAB A (REFERENCE)</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 800, color: 'var(--electric-blue)' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--electric-blue)', boxShadow: '0 0 6px var(--electric-blue)' }} />
+                      <span>LAB A (REFERENCE)</span>
+                    </div>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600 }}>Baseline Model</span>
                   </div>
-                  <FlagshipSimulatorDispatcher
-                    simId={currentSim.id}
-                    params={params}
-                    isPlaying={isPlaying}
-                    speed={speed}
-                    stepTrigger={stepTrigger}
-                    onTelemetryUpdate={setTelemetry}
-                    controls={currentSim.controls}
-                    onParamChange={handleControlChange}
-                    onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
-                    onReset={handleReset}
-                  />
+
+                  <div style={{ flex: 1, width: '100%', height: 'calc(100% - 28px)', position: 'relative', overflow: 'hidden' }}>
+                    <FlagshipSimulatorDispatcher
+                      simId={currentSim.id}
+                      params={params}
+                      isPlaying={isPlaying}
+                      speed={speed}
+                      stepTrigger={stepTrigger}
+                      onTelemetryUpdate={setTelemetry}
+                      controls={currentSim.controls}
+                      onParamChange={handleControlChange}
+                      onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                      onReset={handleReset}
+                      isCompact={true}
+                    />
+                  </div>
                 </div>
 
                 {/* Viewport B (Hypothesis) */}
-                <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '100%',
+                    height: '100%',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column'
+                  }}
+                >
+                  {/* Dedicated Non-Overlapping Lab B Sub-Header */}
                   <div
                     style={{
-                      position: 'absolute',
-                      top: 76,
-                      left: 24,
-                      zIndex: 35,
+                      height: 28,
+                      minHeight: 28,
+                      flexShrink: 0,
+                      background: 'rgba(15, 23, 42, 0.95)',
+                      borderBottom: '1px solid rgba(245, 158, 11, 0.25)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 6,
-                      padding: '4px 10px',
-                      borderRadius: 'var(--radius-pill)',
-                      background: 'rgba(15, 23, 42, 0.88)',
-                      border: '1px solid #f59e0b',
-                      color: '#f59e0b',
-                      fontSize: '0.72rem',
-                      fontWeight: 800,
-                      backdropFilter: 'blur(8px)'
+                      justifyContent: 'space-between',
+                      padding: '0 12px',
+                      boxSizing: 'border-box'
                     }}
                   >
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b' }} />
-                    <span>LAB B (HYPOTHESIS)</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.72rem', fontWeight: 800, color: '#f59e0b' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#f59e0b', boxShadow: '0 0 6px #f59e0b' }} />
+                      <span>LAB B (HYPOTHESIS)</span>
+                    </div>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600 }}>Experimental Variation</span>
                   </div>
-                  <FlagshipSimulatorDispatcher
-                    simId={currentSim.id}
-                    params={paramsB}
-                    isPlaying={isPlaying}
-                    speed={speed}
-                    stepTrigger={stepTrigger}
-                    onTelemetryUpdate={setTelemetryB}
-                    controls={currentSim.controls}
-                    onParamChange={handleControlChangeB}
-                    onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
-                    onReset={handleReset}
-                  />
+
+                  <div style={{ flex: 1, width: '100%', height: 'calc(100% - 28px)', position: 'relative', overflow: 'hidden' }}>
+                    <FlagshipSimulatorDispatcher
+                      simId={currentSim.id}
+                      params={paramsB}
+                      isPlaying={isPlaying}
+                      speed={speed}
+                      stepTrigger={stepTrigger}
+                      onTelemetryUpdate={setTelemetryB}
+                      controls={currentSim.controls}
+                      onParamChange={handleControlChangeB}
+                      onTogglePlay={isAnimated ? () => setIsPlaying(!isPlaying) : undefined}
+                      onReset={handleReset}
+                      isCompact={true}
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -836,7 +901,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               className="throughline-hud-panel"
               style={{
                 position: 'absolute',
-                top: 76,
+                top: isDualCompare ? 88 : 64,
                 left: 20,
                 bottom: 84,
                 width: 320,
@@ -1021,7 +1086,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               className="throughline-pill-nav"
               style={{
                 position: 'absolute',
-                top: 76,
+                top: isDualCompare ? 88 : 64,
                 left: 20,
                 zIndex: 50,
                 display: 'flex',
@@ -1047,7 +1112,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               className="throughline-hud-panel"
               style={{
                 position: 'absolute',
-                top: 76,
+                top: isDualCompare ? 88 : 64,
                 right: 20,
                 bottom: 84,
                 width: 290,
@@ -1214,7 +1279,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               className="throughline-pill-nav"
               style={{
                 position: 'absolute',
-                top: 76,
+                top: isDualCompare ? 88 : 64,
                 right: 20,
                 zIndex: 50,
                 display: 'flex',
@@ -1847,6 +1912,76 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 <option value="basic_calculus">Basic Calculus</option>
               </optgroup>
             </select>
+
+            {/* Commercial Feature Buttons in Normal View */}
+            <button
+              type="button"
+              onClick={() => setIsAiMentorOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1.5px solid rgba(124, 58, 237, 0.4)',
+                background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(124, 58, 237, 0.15))',
+                color: '#7C3AED',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              title="Open Physora AI Science Tutor"
+            >
+              <Sparkles size={13} />
+              <span>AI Tutor</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsReportModalOpen(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1.5px solid rgba(16, 185, 129, 0.4)',
+                background: 'rgba(16, 185, 129, 0.1)',
+                color: '#10B981',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              title="Generate Printable Academic Lab Report"
+            >
+              <FileText size={13} />
+              <span>Lab Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsPresenterModeActive(true)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5,
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-pill)',
+                border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#EF4444',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              title="Open Smartboard Classroom Presenter Mode"
+            >
+              <Radio size={13} />
+              <span>Presenter</span>
+            </button>
 
             <button
               onClick={() => setIsFullWindow(true)}
@@ -2803,6 +2938,46 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Commercial & Classroom Modal Mounts */}
+      {topic && currentSim && (
+        <>
+          <LabReportModal
+            isOpen={isReportModalOpen}
+            onClose={() => setIsReportModalOpen(false)}
+            topic={topic}
+            simulation={currentSim}
+            params={params}
+            telemetry={telemetry}
+          />
+
+          <PresenterModeOverlay
+            isActive={isPresenterModeActive}
+            onClose={() => setIsPresenterModeActive(false)}
+            simulationName={currentSim.name}
+            topicTitle={topic.title}
+            isPlaying={isPlaying}
+            onTogglePlay={() => setIsPlaying(!isPlaying)}
+            onReset={handleReset}
+            telemetry={telemetry}
+          />
+
+          <AiMentorDrawer
+            isOpen={isAiMentorOpen}
+            onClose={() => setIsAiMentorOpen(false)}
+            topic={topic}
+            simulation={currentSim}
+            params={params}
+            telemetry={telemetry}
+            onOpenPricing={() => setIsPricingModalOpen(true)}
+          />
+
+          <PricingModal
+            isOpen={isPricingModalOpen}
+            onClose={() => setIsPricingModalOpen(false)}
+          />
+        </>
+      )}
     </div>
   );
 };

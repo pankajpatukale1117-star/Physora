@@ -196,6 +196,7 @@ export interface MolecularVSEPRLabProps {
   speed?: number;
   onParamChange?: (id: string, value: number) => void;
   onTelemetryUpdate?: (telemetry: Record<string, string>) => void;
+  isCompact?: boolean;
 }
 
 export const MolecularVSEPRLab: React.FC<MolecularVSEPRLabProps> = ({
@@ -203,7 +204,8 @@ export const MolecularVSEPRLab: React.FC<MolecularVSEPRLabProps> = ({
   isPlaying: externalIsPlaying,
   speed: externalSpeed,
   onParamChange,
-  onTelemetryUpdate
+  onTelemetryUpdate,
+  isCompact = false
 }) => {
   const [selectedMoleculeId, setSelectedMoleculeId] = useState('h2o');
   const [renderMode, setRenderMode] = useState<'ball_stick' | 'space_fill'>('ball_stick');
@@ -518,36 +520,52 @@ export const MolecularVSEPRLab: React.FC<MolecularVSEPRLabProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 16px',
+          padding: '6px 14px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 20
+          zIndex: 20,
+          gap: 10,
+          flexWrap: 'wrap',
+          boxSizing: 'border-box'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 }}>
+          {!isCompact && (
+            <div
+              style={{
+                padding: '3px 7px',
+                borderRadius: 5,
+                background: 'rgba(239, 68, 68, 0.2)',
+                border: '1px solid #ef4444',
+                color: '#f87171',
+                fontWeight: 800,
+                fontSize: '0.70rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              <Sparkles size={11} />
+              <span>FLAGSHIP LAB</span>
+            </div>
+          )}
+          <span
             style={{
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: 'rgba(239, 68, 68, 0.2)',
-              border: '1px solid #ef4444',
-              color: '#f87171',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              color: '#f1f5f9',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
-            <Sparkles size={13} />
-            <span>FLAGSHIP CHEMISTRY LAB</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>
-            3D Molecular Geometry, VSEPR &amp; Dipole Moments
+            {isCompact ? 'Molecular Controls' : '3D Molecular Geometry, VSEPR & Dipole Moments'}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={() => {
@@ -556,31 +574,33 @@ export const MolecularVSEPRLab: React.FC<MolecularVSEPRLabProps> = ({
               onParamChange?.('mode', next === 'space_fill' ? 1 : 0);
             }}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.15)',
               color: '#e2e8f0',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
-            Mode: {renderMode === 'ball_stick' ? 'Ball & Stick' : 'Space Filling'}
+            Mode: {renderMode === 'ball_stick' ? 'Ball & Stick' : 'Space-Fill'}
           </button>
 
           <button
             type="button"
             onClick={() => setShowLonePairs(!showLonePairs)}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: showLonePairs ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.06)',
               border: `1px solid ${showLonePairs ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`,
               color: showLonePairs ? '#38bdf8' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Lone Pairs {showLonePairs ? 'ON' : 'OFF'}
@@ -590,14 +610,15 @@ export const MolecularVSEPRLab: React.FC<MolecularVSEPRLabProps> = ({
             type="button"
             onClick={() => setShowDipole(!showDipole)}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: showDipole ? 'rgba(250, 204, 21, 0.2)' : 'rgba(255,255,255,0.06)',
               border: `1px solid ${showDipole ? '#facc15' : 'rgba(255,255,255,0.1)'}`,
               color: showDipole ? '#facc15' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Net Dipole {showDipole ? 'ON' : 'OFF'}
@@ -607,14 +628,15 @@ export const MolecularVSEPRLab: React.FC<MolecularVSEPRLabProps> = ({
             type="button"
             onClick={() => setIsRotating(!isRotating)}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: isRotating ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.06)',
               border: `1px solid ${isRotating ? '#22c55e' : 'rgba(255,255,255,0.1)'}`,
               color: isRotating ? '#22c55e' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Auto-Rotate {isRotating ? 'ON' : 'PAUSED'}

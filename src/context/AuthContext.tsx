@@ -5,7 +5,8 @@ import type {
   AuthContextType, 
   PhysoraProfile, 
   LoginFormData, 
-  SignUpFormData 
+  SignUpFormData,
+  MembershipTier 
 } from '../types/auth';
 
 interface DevAccount {
@@ -480,10 +481,50 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // Commercial Membership Tier State
+  const [localTier, setLocalTier] = useState<MembershipTier>(() => {
+    try {
+      const stored = localStorage.getItem('physora_active_tier');
+      if (stored === 'pro' || stored === 'institution' || stored === 'free') {
+        return stored as MembershipTier;
+      }
+    } catch {
+      // Ignore
+    }
+    return 'free';
+  });
+
+  const effectiveTier: MembershipTier = profile?.membership_tier || localTier;
+  const isPro = effectiveTier === 'pro' || effectiveTier === 'institution';
+  const isInstitution = effectiveTier === 'institution';
+
+  // Upgrade or switch commercial tier
+  const upgradeTier = async (tier: MembershipTier, institutionName?: string) => {
+    try {
+      localStorage.setItem('physora_active_tier', tier);
+      setLocalTier(tier);
+    } catch {
+      // Ignore
+    }
+
+    if (profile) {
+      return await updateProfile({
+        membership_tier: tier,
+        institution_name: institutionName || profile.institution_name,
+        role: tier === 'institution' ? 'teacher' : (profile.role || 'student')
+      });
+    }
+
+    return { success: true };
+  };
+
   // Update Profile details
-  const updateProfile = async (updates: Partial<Pick<PhysoraProfile, 'display_name' | 'username' | 'bio' | 'avatar_url'>>) => {
+  const updateProfile = async (updates: Partial<Pick<PhysoraProfile, 'display_name' | 'username' | 'bio' | 'avatar_url' | 'membership_tier' | 'institution_name' | 'role'>>) => {
     if (!user) {
-      return { success: false, error: 'Must be logged in to update profile.' };
+      if (updates.membership_tier) {
+        setLocalTier(updates.membership_tier);
+      }
+      return { success: true };
     }
 
     if (!isSupabaseConfigured) {
@@ -527,7 +568,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       setProfile(data as PhysoraProfile);
       return { success: true };
-    } catch (err) {
+    } catch {
       return { success: false, error: 'Failed to update profile.' };
     }
   };
@@ -546,12 +587,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isLoading,
     isAuthenticated: Boolean(user && session),
     isConfigured: isSupabaseConfigured,
+    membershipTier: effectiveTier,
+    isPro,
+    isInstitution,
     signIn,
     signUp,
     signOut,
     resetPasswordForEmail,
     updatePassword,
     updateProfile,
+    upgradeTier,
     refreshProfile
   };
 

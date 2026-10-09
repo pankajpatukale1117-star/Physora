@@ -5,7 +5,11 @@ import { UniversalPlaybackBar } from '../../ui/UniversalPlaybackBar';
 import type { ActiveInstruments, GraphDataPoint } from '../../types';
 import { Heart, Stethoscope } from 'lucide-react';
 
-export const CardiacHemodynamicsLab: React.FC = () => {
+export interface CardiacHemodynamicsLabProps {
+  isCompact?: boolean;
+}
+
+export const CardiacHemodynamicsLab: React.FC<CardiacHemodynamicsLabProps> = ({ isCompact = false }) => {
   // Physiological variables
   const [heartRateBpm, setHeartRateBpm] = useState(72); // 40 - 180 bpm
   const [strokeVolumeMl, setStrokeVolumeMl] = useState(70); // 40 - 120 mL
@@ -317,50 +321,67 @@ export const CardiacHemodynamicsLab: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 16px',
+          padding: '6px 14px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 20
+          zIndex: 20,
+          gap: 10,
+          flexWrap: 'wrap',
+          boxSizing: 'border-box'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 }}>
+          {!isCompact && (
+            <div
+              style={{
+                padding: '3px 7px',
+                borderRadius: 5,
+                background: 'rgba(244, 63, 94, 0.2)',
+                border: '1px solid #f43f5e',
+                color: '#fb7185',
+                fontWeight: 800,
+                fontSize: '0.70rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              <Heart size={11} fill="#f43f5e" />
+              <span>FLAGSHIP LAB</span>
+            </div>
+          )}
+          <span
             style={{
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: 'rgba(244, 63, 94, 0.2)',
-              border: '1px solid #f43f5e',
-              color: '#fb7185',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              color: '#f1f5f9',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
-            <Heart size={13} fill="#f43f5e" />
-            <span>FLAGSHIP BIOLOGY LAB</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>
-            Cardiac Cycle, Hemodynamics &amp; Wiggers Pressure-Volume Simulator
+            {isCompact ? 'Cardiac Hemodynamics' : 'Cardiac Cycle, Hemodynamics & Wiggers Simulator'}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 5,
-              padding: '4px 8px',
+              gap: 4,
+              padding: '3px 8px',
               borderRadius: 5,
               background: 'rgba(255,255,255,0.06)',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               color: '#34d399',
-              fontWeight: 700
+              fontWeight: 700,
+              whiteSpace: 'nowrap'
             }}
           >
-            <Stethoscope size={13} />
+            <Stethoscope size={11} />
             <span>{telemetry.heartSound}</span>
           </div>
         </div>

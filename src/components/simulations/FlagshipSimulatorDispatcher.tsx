@@ -28,6 +28,7 @@ interface FlagshipSimulatorDispatcherProps {
   onParamChange?: (id: string, value: number) => void;
   onTogglePlay?: () => void;
   onReset?: () => void;
+  isCompact?: boolean;
 }
 
 export const FlagshipSimulatorDispatcher: React.FC<FlagshipSimulatorDispatcherProps> = (props) => {
@@ -35,10 +36,10 @@ export const FlagshipSimulatorDispatcher: React.FC<FlagshipSimulatorDispatcherPr
 
   // 1. Physics & Astronomy Flagships
   if (simId === 'physics_projectile_lab') {
-    return <ProjectileMotionLab />;
+    return <ProjectileMotionLab {...(props as any)} />;
   }
   if (simId === 'physics_wave_lab') {
-    return <WaveSuperpositionLab />;
+    return <WaveSuperpositionLab {...(props as any)} />;
   }
   if (simId === 'physics_orbital_lab' || simId === 'orbital_mechanics_3d') {
     return <OrbitalMechanics3DLab {...props} />;
@@ -61,7 +62,7 @@ export const FlagshipSimulatorDispatcher: React.FC<FlagshipSimulatorDispatcherPr
     return <MolecularVSEPRLab {...props} />;
   }
   if (simId === 'chem_kinetics_lab') {
-    return <ReactionKineticsLab />;
+    return <ReactionKineticsLab {...(props as any)} />;
   }
   if (simId === 'crystallography_3d' || simId === 'chem_crystallography') {
     return <Crystallography3DLab {...props} />;
@@ -69,10 +70,10 @@ export const FlagshipSimulatorDispatcher: React.FC<FlagshipSimulatorDispatcherPr
 
   // 3. Biology Process Flagships
   if (simId === 'bio_cardiac_lab') {
-    return <CardiacHemodynamicsLab />;
+    return <CardiacHemodynamicsLab {...(props as any)} />;
   }
   if (simId === 'bio_osmosis_lab') {
-    return <OsmosisMembraneLab />;
+    return <OsmosisMembraneLab {...(props as any)} />;
   }
   if (simId === 'bio_dna_helix_lab' || simId === 'dna_helix_3d') {
     return <DnaHelix3DLab {...props} />;
@@ -86,7 +87,7 @@ export const FlagshipSimulatorDispatcher: React.FC<FlagshipSimulatorDispatcherPr
     return <VectorPlane3DLab {...props} />;
   }
   if (simId === 'math_calculus_lab') {
-    return <CalculusRiemannLab />;
+    return <CalculusRiemannLab {...(props as any)} />;
   }
 
   // Fallback to existing CanvasSimulators

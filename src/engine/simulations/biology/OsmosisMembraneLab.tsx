@@ -20,7 +20,11 @@ interface SoluteMolecule {
   side: 'left' | 'right';
 }
 
-export const OsmosisMembraneLab: React.FC = () => {
+export interface OsmosisMembraneLabProps {
+  isCompact?: boolean;
+}
+
+export const OsmosisMembraneLab: React.FC<OsmosisMembraneLabProps> = ({ isCompact = false }) => {
   // Environmental Solute Concentrations (mM)
   const [extracellularSolute, setExtracellularSolute] = useState(150); // Right side
   const [intracellularSolute, setIntracellularSolute] = useState(300); // Left side (Cell interior)
@@ -357,44 +361,61 @@ export const OsmosisMembraneLab: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 16px',
+          padding: '6px 14px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 20
+          zIndex: 20,
+          gap: 10,
+          flexWrap: 'wrap',
+          boxSizing: 'border-box'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 }}>
+          {!isCompact && (
+            <div
+              style={{
+                padding: '3px 7px',
+                borderRadius: 5,
+                background: 'rgba(56, 189, 248, 0.2)',
+                border: '1px solid #38bdf8',
+                color: '#38bdf8',
+                fontWeight: 800,
+                fontSize: '0.70rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              <Droplets size={11} />
+              <span>FLAGSHIP LAB</span>
+            </div>
+          )}
+          <span
             style={{
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: 'rgba(56, 189, 248, 0.2)',
-              border: '1px solid #38bdf8',
-              color: '#38bdf8',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              color: '#f1f5f9',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
-            <Droplets size={13} />
-            <span>FLAGSHIP BIOLOGY LAB</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>
-            Cellular Osmosis, Aquaporin Transport &amp; Tonicity
+            {isCompact ? 'Osmosis Controls' : 'Cellular Osmosis, Aquaporin Transport & Tonicity'}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           <span
             style={{
-              fontSize: '0.75rem',
+              fontSize: '0.70rem',
               fontWeight: 700,
               color: '#38bdf8',
               background: 'rgba(56, 189, 248, 0.15)',
               padding: '3px 8px',
-              borderRadius: 5
+              borderRadius: 5,
+              whiteSpace: 'nowrap'
             }}
           >
             {telemetry.netFluxDirection}

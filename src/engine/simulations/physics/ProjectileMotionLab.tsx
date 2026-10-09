@@ -7,7 +7,11 @@ import { UniversalPlaybackBar } from '../../ui/UniversalPlaybackBar';
 import type { ActiveInstruments, GraphDataPoint } from '../../types';
 import { Target, Zap } from 'lucide-react';
 
-export const ProjectileMotionLab: React.FC = () => {
+export interface ProjectileMotionLabProps {
+  isCompact?: boolean;
+}
+
+export const ProjectileMotionLab: React.FC<ProjectileMotionLabProps> = ({ isCompact = false }) => {
   // Physical parameters
   const [v0, setV0] = useState(25); // m/s
   const [angleDeg, setAngleDeg] = useState(45); // degrees
@@ -458,39 +462,55 @@ export const ProjectileMotionLab: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 16px',
+          padding: '6px 14px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 20
+          zIndex: 20,
+          gap: 10,
+          flexWrap: 'wrap',
+          boxSizing: 'border-box'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 }}>
+          {!isCompact && (
+            <div
+              style={{
+                padding: '3px 7px',
+                borderRadius: 5,
+                background: 'rgba(56, 189, 248, 0.2)',
+                border: '1px solid #38bdf8',
+                color: '#38bdf8',
+                fontWeight: 800,
+                fontSize: '0.70rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              <Zap size={11} />
+              <span>FLAGSHIP LAB</span>
+            </div>
+          )}
+          <span
             style={{
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: 'rgba(56, 189, 248, 0.2)',
-              border: '1px solid #38bdf8',
-              color: '#38bdf8',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              color: '#f1f5f9',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
-            <Zap size={13} />
-            <span>FLAGSHIP PHYSICS LAB</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>
-            Advanced Projectile Dynamics &amp; Aerodynamic Drag
+            {isCompact ? 'Ballistics Controls' : 'Advanced Projectile Dynamics & Aerodynamic Drag'}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
           {/* Target Distance Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.75rem' }}>
-            <Target size={13} color="#ef4444" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: '0.72rem' }}>
+            <Target size={12} color="#ef4444" />
             <span style={{ color: '#94a3b8' }}>Target:</span>
             <input
               type="number"
@@ -499,13 +519,13 @@ export const ProjectileMotionLab: React.FC = () => {
               value={targetDist}
               onChange={(e) => setTargetDist(Number(e.target.value))}
               style={{
-                width: 55,
-                padding: '2px 6px',
+                width: 50,
+                padding: '2px 5px',
                 borderRadius: 4,
                 background: 'rgba(0,0,0,0.5)',
                 border: '1px solid rgba(255,255,255,0.2)',
                 color: '#fff',
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontFamily: 'monospace'
               }}
             />
@@ -517,14 +537,15 @@ export const ProjectileMotionLab: React.FC = () => {
             type="button"
             onClick={() => setShowVectors(!showVectors)}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
-              background: showVectors ? 'rgba(34, 197, 94, 0.2)' : 'rgba(255,255,255,0.06)',
-              border: `1px solid ${showVectors ? '#22c55e' : 'rgba(255,255,255,0.1)'}`,
-              color: showVectors ? '#22c55e' : '#94a3b8',
-              fontSize: '0.72rem',
+              background: showVectors ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.06)',
+              border: `1px solid ${showVectors ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`,
+              color: showVectors ? '#38bdf8' : '#94a3b8',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Vectors {showVectors ? 'ON' : 'OFF'}

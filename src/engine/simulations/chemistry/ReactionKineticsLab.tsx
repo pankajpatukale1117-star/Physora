@@ -6,7 +6,11 @@ import { UniversalPlaybackBar } from '../../ui/UniversalPlaybackBar';
 import type { ActiveInstruments, GraphDataPoint } from '../../types';
 import { FlaskConical, Flame, Zap, RefreshCw } from 'lucide-react';
 
-export const ReactionKineticsLab: React.FC = () => {
+export interface ReactionKineticsLabProps {
+  isCompact?: boolean;
+}
+
+export const ReactionKineticsLab: React.FC<ReactionKineticsLabProps> = ({ isCompact = false }) => {
   // Reaction conditions
   const [temperatureK, setTemperatureK] = useState(350); // Kelvin
   const [activationEa, setActivationEa] = useState(35); // kJ/mol
@@ -232,36 +236,52 @@ export const ReactionKineticsLab: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 16px',
+          padding: '6px 14px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 20
+          zIndex: 20,
+          gap: 10,
+          flexWrap: 'wrap',
+          boxSizing: 'border-box'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 }}>
+          {!isCompact && (
+            <div
+              style={{
+                padding: '3px 7px',
+                borderRadius: 5,
+                background: 'rgba(16, 185, 129, 0.2)',
+                border: '1px solid #10b981',
+                color: '#34d399',
+                fontWeight: 800,
+                fontSize: '0.70rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              <FlaskConical size={11} />
+              <span>FLAGSHIP LAB</span>
+            </div>
+          )}
+          <span
             style={{
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: 'rgba(16, 185, 129, 0.2)',
-              border: '1px solid #10b981',
-              color: '#34d399',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              color: '#f1f5f9',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
-            <FlaskConical size={13} />
-            <span>FLAGSHIP CHEMISTRY LAB</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>
-            Reaction Kinetics, Collision Theory &amp; Equilibrium: A + B ⇌ C
+            {isCompact ? 'Kinetics Controls' : 'Reaction Kinetics, Collision Theory & Equilibrium: A + B ⇌ C'}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={() => setHasCatalyst(!hasCatalyst)}
@@ -269,17 +289,18 @@ export const ReactionKineticsLab: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              padding: '4px 10px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: hasCatalyst ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.06)',
               border: `1px solid ${hasCatalyst ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`,
               color: hasCatalyst ? '#38bdf8' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 700,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
-            <Zap size={12} fill={hasCatalyst ? '#38bdf8' : 'none'} />
+            <Zap size={11} fill={hasCatalyst ? '#38bdf8' : 'none'} />
             Catalyst {hasCatalyst ? 'ACTIVE' : 'OFF'}
           </button>
         </div>

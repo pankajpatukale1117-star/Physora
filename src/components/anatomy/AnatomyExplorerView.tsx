@@ -1577,6 +1577,52 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                 {selectedStructure.clinicalRelevance}
               </p>
             </div>
+
+            {/* Commercial Physiotherapy & Kinesiology Biomechanics Panel */}
+            <div
+              style={{
+                marginTop: 12,
+                background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.08))',
+                border: '1px solid rgba(124, 58, 237, 0.3)',
+                borderRadius: 8,
+                padding: '10px 12px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: '0.70rem', fontWeight: 800, color: '#C084FC', textTransform: 'uppercase' }}>
+                  Kinesiology &amp; Biomechanics (PT)
+                </span>
+                <span style={{ fontSize: '0.66rem', background: '#7C3AED25', color: '#C084FC', padding: '1px 6px', borderRadius: 6, fontWeight: 700 }}>
+                  Clinical Pro
+                </span>
+              </div>
+              <div style={{ fontSize: '0.76rem', color: '#E2E8F0', lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div>
+                  <strong style={{ color: '#93C5FD' }}>Movement Action: </strong>
+                  {selectedStructure.system === 'muscular'
+                    ? 'Force transmission across articulating skeletal axes, eccentric braking, and postural stabilization.'
+                    : selectedStructure.system === 'skeletal'
+                    ? 'Structural lever arm, load distribution, and mechanical axial support.'
+                    : 'Physiological function coupled with neuromuscular and metabolic feedback loops.'}
+                </div>
+                <div>
+                  <strong style={{ color: '#FCA5A5' }}>Common Clinical Pathologies: </strong>
+                  {selectedStructure.system === 'muscular'
+                    ? 'Strain/tear from eccentric overload, myofascial trigger points, tendinopathy.'
+                    : selectedStructure.system === 'skeletal'
+                    ? 'Stress fractures, osteopenia, joint degenerative wear, ligamentous laxity.'
+                    : 'Systemic dysregulation, ischemic events, or microvascular stress.'}
+                </div>
+                <div>
+                  <strong style={{ color: '#6EE7B7' }}>Physiotherapy &amp; Rehab: </strong>
+                  {selectedStructure.system === 'muscular'
+                    ? 'Progressive resistance loading, isometric tendon desensitization, and kinetic chain integration.'
+                    : selectedStructure.system === 'skeletal'
+                    ? 'Axial weight-bearing stimuli, closed-chain joint stabilization, proprioceptive drills.'
+                    : 'Graded aerobic reconditioning and autonomic regulation.'}
+                </div>
+              </div>
+            </div>
           </div>
         </aside>
       ) : (

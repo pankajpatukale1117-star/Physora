@@ -5,7 +5,11 @@ import { UniversalPlaybackBar } from '../../ui/UniversalPlaybackBar';
 import type { ActiveInstruments, GraphDataPoint } from '../../types';
 import { Waves } from 'lucide-react';
 
-export const WaveSuperpositionLab: React.FC = () => {
+export interface WaveSuperpositionLabProps {
+  isCompact?: boolean;
+}
+
+export const WaveSuperpositionLab: React.FC<WaveSuperpositionLabProps> = ({ isCompact = false }) => {
   // Wave 1 parameters
   const [amp1, setAmp1] = useState(25); // px
   const [freq1, setFreq1] = useState(1.5); // Hz
@@ -264,48 +268,65 @@ export const WaveSuperpositionLab: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 16px',
+          padding: '6px 14px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 20
+          zIndex: 20,
+          gap: 10,
+          flexWrap: 'wrap',
+          boxSizing: 'border-box'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 }}>
+          {!isCompact && (
+            <div
+              style={{
+                padding: '3px 7px',
+                borderRadius: 5,
+                background: 'rgba(74, 222, 128, 0.2)',
+                border: '1px solid #4ade80',
+                color: '#4ade80',
+                fontWeight: 800,
+                fontSize: '0.70rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              <Waves size={11} />
+              <span>FLAGSHIP LAB</span>
+            </div>
+          )}
+          <span
             style={{
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: 'rgba(74, 222, 128, 0.2)',
-              border: '1px solid #4ade80',
-              color: '#4ade80',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              color: '#f1f5f9',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
-            <Waves size={13} />
-            <span>FLAGSHIP PHYSICS LAB</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>
-            Wave Interference, Superposition &amp; Standing Waves
+            {isCompact ? 'Superposition Controls' : 'Wave Interference, Superposition & Standing Waves'}
           </span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={() => setShowComponentWaves(!showComponentWaves)}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: showComponentWaves ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.06)',
               border: `1px solid ${showComponentWaves ? '#38bdf8' : 'rgba(255,255,255,0.1)'}`,
               color: showComponentWaves ? '#38bdf8' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Components {showComponentWaves ? 'ON' : 'OFF'}
@@ -315,14 +336,15 @@ export const WaveSuperpositionLab: React.FC = () => {
             type="button"
             onClick={() => setShowNodes(!showNodes)}
             style={{
-              padding: '4px 8px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: showNodes ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.06)',
               border: `1px solid ${showNodes ? '#ef4444' : 'rgba(255,255,255,0.1)'}`,
               color: showNodes ? '#f87171' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             Nodes {showNodes ? 'ON' : 'OFF'}

@@ -61,7 +61,11 @@ const FUNCTIONS: FunctionDef[] = [
   }
 ];
 
-export const CalculusRiemannLab: React.FC = () => {
+export interface CalculusRiemannLabProps {
+  isCompact?: boolean;
+}
+
+export const CalculusRiemannLab: React.FC<CalculusRiemannLabProps> = ({ isCompact = false }) => {
   const [selectedFuncId, setSelectedFuncId] = useState<FunctionId>('sin');
   const [mode, setMode] = useState<'derivative' | 'integral'>('integral');
 
@@ -352,49 +356,66 @@ export const CalculusRiemannLab: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '8px 16px',
+          padding: '6px 14px',
           background: 'rgba(15, 23, 42, 0.95)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 20
+          zIndex: 20,
+          gap: 10,
+          flexWrap: 'wrap',
+          boxSizing: 'border-box'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexShrink: 1 }}>
+          {!isCompact && (
+            <div
+              style={{
+                padding: '3px 7px',
+                borderRadius: 5,
+                background: 'rgba(168, 85, 247, 0.2)',
+                border: '1px solid #a855f7',
+                color: '#c084fc',
+                fontWeight: 800,
+                fontSize: '0.70rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                whiteSpace: 'nowrap',
+                flexShrink: 0
+              }}
+            >
+              <Activity size={11} />
+              <span>FLAGSHIP LAB</span>
+            </div>
+          )}
+          <span
             style={{
-              padding: '4px 8px',
-              borderRadius: 6,
-              background: 'rgba(168, 85, 247, 0.2)',
-              border: '1px solid #a855f7',
-              color: '#c084fc',
-              fontWeight: 800,
-              fontSize: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5
+              fontWeight: 700,
+              fontSize: '0.82rem',
+              color: '#f1f5f9',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
-            <Activity size={13} />
-            <span>FLAGSHIP MATHEMATICS LAB</span>
-          </div>
-          <span style={{ fontWeight: 700, fontSize: '0.9rem', color: '#f1f5f9' }}>
-            Calculus: Derivative Tangents &amp; Riemann Definite Integrals
+            {isCompact ? 'Calculus Modes' : 'Calculus: Derivative Tangents & Riemann Integrals'}
           </span>
         </div>
 
         {/* Mode Selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, flexWrap: 'wrap' }}>
           <button
             type="button"
             onClick={() => setMode('integral')}
             style={{
-              padding: '4px 10px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: mode === 'integral' ? '#0284c7' : 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.15)',
               color: mode === 'integral' ? '#fff' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 700,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             ∫ Integral Area
@@ -404,14 +425,15 @@ export const CalculusRiemannLab: React.FC = () => {
             type="button"
             onClick={() => setMode('derivative')}
             style={{
-              padding: '4px 10px',
+              padding: '3px 8px',
               borderRadius: 5,
               background: mode === 'derivative' ? '#059669' : 'rgba(255,255,255,0.06)',
               border: '1px solid rgba(255,255,255,0.15)',
               color: mode === 'derivative' ? '#fff' : '#94a3b8',
-              fontSize: '0.72rem',
+              fontSize: '0.70rem',
               fontWeight: 700,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             d/dx Derivative Slope

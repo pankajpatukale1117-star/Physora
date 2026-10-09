@@ -26,6 +26,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<'All' | 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology'>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedExam, setSelectedExam] = useState<string>('All Syllabi');
 
   // Available topics
   const topics = useMemo(() => Object.values(TOPICS_DATA), []);
@@ -42,6 +43,11 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
       // Category filter
       if (selectedCategory !== 'All' && t.category !== selectedCategory) return false;
 
+      // Exam syllabus filter
+      if (selectedExam === 'JEE Main & Advanced' && t.subject !== 'physics' && t.subject !== 'maths') return false;
+      if (selectedExam === 'NEET-UG (Medical)' && t.subject !== 'biology' && t.subject !== 'chemistry' && t.id !== 'optics' && t.id !== 'waves') return false;
+      if (selectedExam === 'AP Physics & IB' && t.subject !== 'physics') return false;
+
       // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -56,7 +62,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
 
       return true;
     });
-  }, [topics, selectedSubject, selectedCategory, searchQuery]);
+  }, [topics, selectedSubject, selectedCategory, selectedExam, searchQuery]);
 
   return (
     <section
@@ -417,6 +423,46 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               <span>Formula Bank</span>
             </button>
           </div>
+        </div>
+
+        {/* Exam Focus Syllabus Filter Bar (Commercial & Student Exam Prep) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 24,
+            padding: '10px 16px',
+            background: 'var(--bg-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-subtle)',
+            overflowX: 'auto',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            🎯 Target Exam Alignment:
+          </span>
+          {['All Syllabi', 'JEE Main & Advanced', 'NEET-UG (Medical)', 'CBSE Class 11-12', 'AP Physics & IB'].map((exam) => (
+            <button
+              key={exam}
+              type="button"
+              onClick={() => setSelectedExam(exam)}
+              style={{
+                padding: '4px 12px',
+                borderRadius: 'var(--radius-pill)',
+                border: selectedExam === exam ? '1.5px solid var(--electric-blue)' : '1px solid var(--border-medium)',
+                background: selectedExam === exam ? 'rgba(37, 99, 235, 0.15)' : 'var(--bg-card)',
+                color: selectedExam === exam ? 'var(--electric-blue)' : 'var(--text-secondary)',
+                fontSize: '0.76rem',
+                fontWeight: selectedExam === exam ? 800 : 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              {exam}
+            </button>
+          ))}
         </div>
 
         {/* FEATURED: 3D HUMAN ANATOMY EXPLORER HERO CARD (Core of Physora Biology) */}

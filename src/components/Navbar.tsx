@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass, Dna, User } from 'lucide-react';
+import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass, Dna, User, Sparkles } from 'lucide-react';
 import { PhysoraLogo } from './PhysoraLogo';
 import { useAuth } from '../context/AuthContext';
 
@@ -13,6 +13,7 @@ interface NavbarProps {
   onOpenAnatomy: () => void;
   onOpenAuth: (view?: 'login' | 'signup') => void;
   onOpenProfile: () => void;
+  onOpenPricing: () => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
 }
@@ -27,10 +28,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAnatomy,
   onOpenAuth,
   onOpenProfile,
+  onOpenPricing,
   theme,
   onToggleTheme
 }) => {
-  const { user, profile, isAuthenticated } = useAuth();
+  const { user, profile, isAuthenticated, isPro, membershipTier } = useAuth();
 
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -209,6 +211,34 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <Moon size={17} color="#FFFFFF" />
             )}
+          </button>
+
+          {/* Commercial Pro Upgrade / Tier Badge */}
+          <button
+            onClick={onOpenPricing}
+            className="btn btn-sm hide-mobile"
+            style={{
+              padding: '5px 12px',
+              fontSize: '0.80rem',
+              fontWeight: 800,
+              gap: 6,
+              color: '#FFFFFF',
+              background: isPro
+                ? 'linear-gradient(135deg, #10B981, #059669)'
+                : 'linear-gradient(135deg, #2563EB, #7C3AED)',
+              border: 'none',
+              borderRadius: 'var(--radius-pill)',
+              cursor: 'pointer',
+              boxShadow: isPro
+                ? '0 2px 8px rgba(16, 185, 129, 0.3)'
+                : '0 2px 10px rgba(37, 99, 235, 0.35)',
+              display: 'inline-flex',
+              alignItems: 'center'
+            }}
+            title="Commercial Edition & Institutional Plans"
+          >
+            <Sparkles size={13} />
+            <span>{isPro ? `${membershipTier.toUpperCase()} PASS` : 'UPGRADE TO PRO'}</span>
           </button>
 
           {/* User Account / Profile Button (Desktop) */}
@@ -489,6 +519,32 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <BookOpen size={18} color="var(--electric-cyan)" />
                 <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                   Formula Bank &amp; Variable Index
+                </span>
+              </div>
+              <ArrowRight size={15} color="var(--text-tertiary)" />
+            </button>
+
+            {/* 5. Commercial Pro Upgrade */}
+            <button
+              onClick={() => handleMobileNavClick(onOpenPricing)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 14px',
+                borderRadius: 'var(--radius-md)',
+                background: isPro
+                  ? 'rgba(16, 185, 129, 0.12)'
+                  : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(124, 58, 237, 0.12))',
+                border: isPro ? '1px solid #10B981' : '1px solid #2563EB',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Sparkles size={18} color={isPro ? '#10B981' : '#2563EB'} />
+                <span style={{ fontWeight: 800, color: isPro ? '#10B981' : '#2563EB', fontSize: '0.95rem' }}>
+                  {isPro ? `${membershipTier.toUpperCase()} PASS ACTIVE` : 'UPGRADE TO PRO'}
                 </span>
               </div>
               <ArrowRight size={15} color="var(--text-tertiary)" />
