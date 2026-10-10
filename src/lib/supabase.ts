@@ -4,23 +4,23 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 const rawSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const rawSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+const FALLBACK_SUPABASE_URL = 'https://qadcqxmxbggfybzvdkjn.supabase.co';
+const FALLBACK_SUPABASE_ANON_KEY = 'sb_publishable_AWtfYkPp1dyFb3m36Wdf0A_jaxpp05m';
+
+export const supabaseUrl = (rawSupabaseUrl && rawSupabaseUrl.startsWith('https://') && !rawSupabaseUrl.includes('your-project.supabase.co'))
+  ? rawSupabaseUrl
+  : FALLBACK_SUPABASE_URL;
+
+export const supabaseAnonKey = (rawSupabaseAnonKey && !rawSupabaseAnonKey.includes('your-anon-key'))
+  ? rawSupabaseAnonKey
+  : FALLBACK_SUPABASE_ANON_KEY;
+
 // Check if valid Supabase configuration is present
 export const isSupabaseConfigured = Boolean(
-  rawSupabaseUrl &&
-  rawSupabaseAnonKey &&
-  !rawSupabaseUrl.includes('your-project.supabase.co') &&
-  !rawSupabaseAnonKey.includes('your-anon-key') &&
-  rawSupabaseUrl.startsWith('https://')
+  supabaseUrl &&
+  supabaseAnonKey &&
+  supabaseUrl.startsWith('https://')
 );
-
-// Fallback dummy URL to prevent createClient throwing during initialization if env vars not provided yet
-const supabaseUrl = isSupabaseConfigured
-  ? rawSupabaseUrl
-  : 'https://placeholder-physora.supabase.co';
-
-const supabaseAnonKey = isSupabaseConfigured
-  ? rawSupabaseAnonKey
-  : 'placeholder-anon-key';
 
 /**
  * Production Supabase Client instance for Physora
