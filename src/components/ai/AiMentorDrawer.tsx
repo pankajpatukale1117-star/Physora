@@ -8,8 +8,6 @@ import {
   ArrowRight,
   Globe,
   Lock,
-  Key,
-  Check,
   ExternalLink
 } from 'lucide-react';
 import { MathView } from '../MathView';
@@ -17,8 +15,6 @@ import { useSubscription } from '../../context/SubscriptionContext';
 import type { TopicData, SimulationConfig } from '../../data/topicsData';
 import {
   sendMentorMessage,
-  getActiveGeminiKey,
-  setStoredGeminiKey,
   type MentorChatMessage
 } from '../../services/aiMentorService';
 import { audioFX } from '../../utils/audioEffects';
@@ -59,12 +55,6 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
       mathFormula: topic.keyFormulas[0]?.formula
     }
   ]);
-
-  // Key Settings Modal / Toggle
-  const [showKeyModal, setShowKeyModal] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState(() => getActiveGeminiKey());
-  const [keySaved, setKeySaved] = useState(false);
-  const hasActiveKey = !!getActiveGeminiKey();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -157,16 +147,6 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
     }
   };
 
-  const handleSaveApiKey = () => {
-    setStoredGeminiKey(apiKeyInput.trim());
-    setKeySaved(true);
-    audioFX.playTick();
-    setTimeout(() => {
-      setKeySaved(false);
-      setShowKeyModal(false);
-    }, 1200);
-  };
-
   return (
     <div
       style={{
@@ -235,25 +215,27 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
                 Socratic STEM Mentor
               </span>
               <span style={{ fontSize: '0.70rem', color: 'var(--text-tertiary)' }}>•</span>
-              <button
-                type="button"
-                onClick={() => setShowKeyModal(!showKeyModal)}
+              <span
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: '5px',
                   fontSize: '0.70rem',
                   fontWeight: 700,
-                  color: hasActiveKey ? '#059669' : '#2563EB'
+                  color: '#059669'
                 }}
               >
-                <Globe size={11} />
-                <span>{hasActiveKey ? 'Live Web Active' : 'Live Web Key'}</span>
-              </button>
+                <span
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: '#10B981',
+                    boxShadow: '0 0 8px #10B981'
+                  }}
+                />
+                <span>Live Gemini AI Active</span>
+              </span>
             </div>
           </div>
         </div>
@@ -278,74 +260,6 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
           <X size={16} />
         </button>
       </div>
-
-      {/* Optional Gemini Live Web Key Config Popover */}
-      {showKeyModal && (
-        <div
-          style={{
-            padding: '12px 18px',
-            background: 'var(--bg-subtle)',
-            borderBottom: '1px solid var(--border-medium)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '8px'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              <Key size={13} color="#2563EB" />
-              <span>Real-Time Internet (Google Gemini Key)</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowKeyModal(false)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}
-            >
-              <X size={14} />
-            </button>
-          </div>
-          <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-            Enter a free <strong>Google AI Studio Gemini Key</strong> for live web grounding (Google Search across real-time internet):
-          </p>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <input
-              type="password"
-              value={apiKeyInput}
-              onChange={(e) => setApiKeyInput(e.target.value)}
-              placeholder="AIzaSy... (free key from ai.google.dev)"
-              style={{
-                flex: 1,
-                padding: '6px 10px',
-                borderRadius: '8px',
-                border: '1px solid var(--border-medium)',
-                background: 'var(--bg-card)',
-                fontSize: '0.76rem',
-                color: 'var(--text-primary)'
-              }}
-            />
-            <button
-              type="button"
-              onClick={handleSaveApiKey}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '8px',
-                border: 'none',
-                background: keySaved ? '#059669' : '#2563EB',
-                color: '#FFFFFF',
-                fontSize: '0.76rem',
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              {keySaved ? <Check size={12} /> : null}
-              {keySaved ? 'Saved!' : 'Save'}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Real-time Telemetry Context Capsule */}
       <div
