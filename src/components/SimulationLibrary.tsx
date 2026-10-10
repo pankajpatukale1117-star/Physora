@@ -668,13 +668,13 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                 fontSize: '0.80rem'
               }}
             >
-              <span>All Topics (Coming Soon Badges)</span>
+              <span>All Topics (35+ Playable Labs)</span>
             </button>
           </div>
 
           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 6px #10B981' }} />
-            <span>4 Flagships Live (Projectile Motion, 3D VSEPR, Cardiac PV Loops, River-Boat Velocity)</span>
+            <span>{focusMode === 'flagships' ? 'Showing 4 Flagships (Projectile Motion, 3D VSEPR, Cardiac, River-Boat)' : 'Showing All 35+ Playable Interactive Labs'}</span>
           </div>
         </div>
 
@@ -722,11 +722,9 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               return (
                 <div
                   key={topic.id}
-                  className={`scientific-card ${isFlagship ? 'scientific-card-interactive' : ''}`}
+                  className="scientific-card scientific-card-interactive"
                   onClick={() => {
-                    if (isFlagship || topic.id === 'vectors_3d' || focusMode === 'all') {
-                      onSelectTopic(topic.id);
-                    }
+                    onSelectTopic(topic.id);
                   }}
                   style={{
                     padding: 0,
@@ -738,8 +736,8 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                     overflow: 'hidden',
                     border: isFlagship ? '1.5px solid rgba(16, 185, 129, 0.4)' : '1px solid var(--border-subtle)',
                     boxShadow: isFlagship ? '0 4px 18px rgba(16, 185, 129, 0.12)' : 'var(--shadow-sm)',
-                    opacity: isFlagship ? 1 : 0.78,
-                    cursor: isFlagship ? 'pointer' : 'default',
+                    opacity: 1,
+                    cursor: 'pointer',
                     position: 'relative'
                   }}
                 >
@@ -810,61 +808,28 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                           style={{
                             fontSize: '0.68rem',
                             fontWeight: 800,
-                            background: 'rgba(15, 23, 42, 0.85)',
-                            color: '#94A3B8',
-                            border: '1px solid rgba(148, 163, 184, 0.3)'
+                            background: 'rgba(2, 132, 199, 0.18)',
+                            color: '#38BDF8',
+                            border: '1px solid rgba(56, 189, 248, 0.35)'
                           }}
                         >
-                          COMING SOON
+                          ● INTERACTIVE LAB
                         </span>
                       )}
                     </div>
 
-                    {/* Coming Soon Frosted Watermark if culled */}
-                    {!isFlagship && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          inset: 0,
-                          background: 'rgba(15, 23, 42, 0.45)',
-                          backdropFilter: 'blur(2px)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <div
-                          style={{
-                            padding: '6px 14px',
-                            borderRadius: 'var(--radius-pill)',
-                            background: 'rgba(15, 23, 42, 0.85)',
-                            border: '1px solid rgba(255, 255, 255, 0.25)',
-                            color: '#F1F5F9',
-                            fontSize: '0.74rem',
-                            fontWeight: 800,
-                            letterSpacing: '0.06em',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-                          }}
-                        >
-                          COMING SOON • IN PRODUCTION
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Iconic PhET Circular Play Button at bottom-right (for Flagships) */}
-                    {isFlagship && (
-                      <div
-                        className="phet-play-badge"
-                        title={`Launch ${topic.title}`}
-                        style={{
-                          position: 'absolute',
-                          bottom: 10,
-                          right: 12
-                        }}
-                      >
-                        <Play size={20} fill="#FFFFFF" style={{ marginLeft: 2 }} />
-                      </div>
-                    )}
+                    {/* Iconic PhET Circular Play Button at bottom-right */}
+                    <div
+                      className="phet-play-badge"
+                      title={`Launch ${topic.title}`}
+                      style={{
+                        position: 'absolute',
+                        bottom: 10,
+                        right: 12
+                      }}
+                    >
+                      <Play size={20} fill="#FFFFFF" style={{ marginLeft: 2 }} />
+                    </div>
                   </div>
 
                   {/* Card Content Body */}
@@ -961,24 +926,30 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                       ) : (
                         <button
                           type="button"
-                          disabled
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectTopic(topic.id);
+                          }}
+                          className="btn"
                           style={{
                             width: '100%',
                             padding: '10px 16px',
                             borderRadius: 'var(--radius-pill)',
-                            background: 'var(--bg-subtle)',
-                            color: 'var(--text-tertiary)',
-                            border: '1px solid var(--border-subtle)',
+                            background: 'linear-gradient(135deg, #0284C7, #0369A1)',
+                            color: '#FFFFFF',
+                            border: 'none',
                             justifyContent: 'center',
-                            fontWeight: 700,
-                            fontSize: '0.82rem',
-                            cursor: 'not-allowed',
+                            fontWeight: 800,
+                            fontSize: '0.86rem',
+                            cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 6
+                            gap: 8,
+                            boxShadow: '0 3px 10px rgba(2, 132, 199, 0.3)'
                           }}
                         >
-                          <span>Coming Soon (In Production)</span>
+                          <Play size={16} fill="#FFFFFF" />
+                          <span>Launch Interactive Lab</span>
                         </button>
                       )}
                     </div>
