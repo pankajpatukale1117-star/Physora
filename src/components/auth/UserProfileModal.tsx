@@ -15,7 +15,8 @@ import {
   Zap,
   ExternalLink,
   Sparkles,
-  CreditCard
+  CreditCard,
+  Crown
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { openStripeCustomerPortal } from '../../services/stripeService';
@@ -27,7 +28,7 @@ interface UserProfileModalProps {
 }
 
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, onOpenPricing }) => {
-  const { user, profile, updateProfile, signOut, membershipTier, isPro, isInstitution } = useAuth();
+  const { user, profile, updateProfile, signOut, membershipTier, isPro, isInstitution, upgradeTier } = useAuth();
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
 
@@ -489,6 +490,35 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
               <span>{portalError}</span>
             </div>
           )}
+
+          {/* Founder Master Access Control */}
+          <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed var(--border-subtle)', paddingTop: 8 }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+              Founder & Creator Override:
+            </span>
+            <button
+              type="button"
+              onClick={async () => {
+                await upgradeTier(isPro ? 'free' : 'institution');
+              }}
+              style={{
+                background: isPro ? 'rgba(16, 185, 129, 0.1)' : 'rgba(37, 99, 235, 0.08)',
+                border: isPro ? '1px solid #10B981' : '1px dashed #2563EB',
+                borderRadius: '8px',
+                padding: '4px 10px',
+                color: isPro ? '#059669' : '#2563EB',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 5
+              }}
+            >
+              <Crown size={12} color={isPro ? '#059669' : '#F59E0B'} />
+              <span>{isPro ? '👑 Founder Mode: Unlocked' : '👑 1-Click Founder Unlock'}</span>
+            </button>
+          </div>
         </div>
 
         {/* Divider */}

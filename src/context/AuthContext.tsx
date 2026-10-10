@@ -494,7 +494,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return 'free';
   });
 
-  const effectiveTier: MembershipTier = profile?.membership_tier || localTier;
+  const isFounderEmail = Boolean(
+    user?.email?.toLowerCase().includes('pankaj') || 
+    user?.email?.toLowerCase().includes('admin')
+  );
+  const effectiveTier: MembershipTier = isFounderEmail ? 'institution' : (profile?.membership_tier || localTier);
   const isPro = effectiveTier === 'pro' || effectiveTier === 'institution';
   const isInstitution = effectiveTier === 'institution';
 
