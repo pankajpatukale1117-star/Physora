@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Sparkles,
   Send,
   Zap,
   Bot,
-  ArrowRight
+  ArrowRight,
+  Globe,
+  Lock,
+  Key,
+  Check,
+  ExternalLink
 } from 'lucide-react';
 import { MathView } from '../MathView';
 import { useSubscription } from '../../context/SubscriptionContext';
-import { Lock } from 'lucide-react';
 import type { TopicData, SimulationConfig } from '../../data/topicsData';
+import {
+  sendMentorMessage,
+  getActiveGeminiKey,
+  setStoredGeminiKey,
+  type MentorChatMessage
+} from '../../services/aiMentorService';
+import { audioFX } from '../../utils/audioEffects';
 
 interface AiMentorDrawerProps {
   isOpen: boolean;
@@ -20,12 +31,6 @@ interface AiMentorDrawerProps {
   params: Record<string, number>;
   telemetry: Record<string, string>;
   onOpenPricing: () => void;
-}
-
-interface Message {
-  role: 'assistant' | 'user';
-  text: string;
-  mathFormula?: string;
 }
 
 export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
@@ -46,28 +51,56 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
   } = useSubscription();
 
   const [inputMessage, setInputMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([
+  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<MentorChatMessage[]>([
     {
       role: 'assistant',
-      text: `Hello! I'm your Physora AI Science Tutor. I'm actively analyzing your experiment on ${simulation.name} (${topic.title}) with ${Object.keys(params).length} controls configured. Ask me anything about the governing equations or what will happen if you tweak your sliders!`
+      text: `Yo! I'm Arya, your Physora study buddy & science partner. 🚀\n\nI'm watching your live simulation on **${simulation.name}** (${topic.title}) in real-time. Ask me literally anything—from how this physics works in real life to crazy sci-fi questions, JEE/NEET shortcuts, or tap a Sim Mission below to test your intuition!`,
+      mathFormula: topic.keyFormulas[0]?.formula
     }
   ]);
 
+  // Key Settings Modal / Toggle
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState(() => getActiveGeminiKey());
+  const [keySaved, setKeySaved] = useState(false);
+  const hasActiveKey = !!getActiveGeminiKey();
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isOpen]);
+
   if (!isOpen) return null;
 
-  // Preset Socratic Prompts
-  const quickPrompts = [
-    `Explain the mathematical relationship between the current controls and telemetry.`,
-    `What happens if I double the primary control variable?`,
-    `Give me a challenging concept question based on these exact values.`,
-    `How does this concept appear in JEE Advanced / NEET / AP Physics?`
+  // Addictive gamified quick prompts
+  const addictivePrompts = [
+    {
+      label: '🎮 Give me a Sim Mission!',
+      prompt: `Give me a fun, gamified Sim Mission based on this exact ${simulation.name} lab! Tell me what target values to hit with my sliders.`
+    },
+    {
+      label: '🧠 Explain like I am 12',
+      prompt: `Explain what is happening in this ${simulation.name} experiment using an absurdly fun everyday analogy (like gaming, sports, or food) so it clicks instantly.`
+    },
+    {
+      label: '⚡ Why is this so cool in real life?',
+      prompt: `Where does this exact principle of ${topic.title} show up in real-world technology, space exploration, or extreme engineering?`
+    },
+    {
+      label: '🎯 JEE / NEET Exam Trap',
+      prompt: `What is the trickiest conceptual trap examiners set on ${topic.title} in JEE Advanced and NEET? How do I spot it in 5 seconds?`
+    }
   ];
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const query = textToSend || inputMessage;
-    if (!query.trim()) return;
+    if (!query.trim() || isLoading) return;
 
-    // Check Free tier limit (3 queries per session/day)
+    // Check Free tier limit (3 queries per session/day for free users)
     if (!canUseAiTutor()) {
       triggerPaywall('ai_tutor', 'PRO');
       onOpenPricing();
@@ -80,37 +113,58 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
       return;
     }
 
-    const newMessages: Message[] = [...messages, { role: 'user', text: query }];
-    setMessages(newMessages);
+    audioFX.playTick();
+    const userMsg: MentorChatMessage = { role: 'user', text: query.trim() };
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInputMessage('');
+    setIsLoading(true);
 
-    // Generate intelligent simulation-aware Socratic explanation
-    setTimeout(() => {
-      let responseText = '';
-      let responseFormula = topic.keyFormulas[0]?.formula;
+    try {
+      const response = await sendMentorMessage(query.trim(), messages, {
+        topicTitle: topic.title,
+        topicCategory: topic.category,
+        topicIntro: topic.conceptIntro,
+        simulationName: simulation.name,
+        simulationDesc: simulation.description,
+        params,
+        telemetry,
+        keyFormulas: topic.keyFormulas
+      });
 
-      const lower = query.toLowerCase();
-      if (lower.includes('relationship') || lower.includes('mathematical') || lower.includes('equation')) {
-        responseText = `In this ${simulation.name} model, your independent variables directly govern the system state via the fundamental equations of ${topic.title}. Notice that changes propagate non-linearly when quadratic or inverse-square dependencies are involved.`;
-      } else if (lower.includes('double') || lower.includes('increase')) {
-        responseText = `If you double your main parameter, watch your telemetry outputs closely. For example, if velocity doubles, kinetic energy quadruples ($E_k \\propto v^2$), while momentum merely doubles ($p \\propto v$). Test this right now by nudging the slider!`;
-      } else if (lower.includes('jee') || lower.includes('neet') || lower.includes('exam')) {
-        responseText = `In competitive examinations like JEE Advanced and NEET, examiners frequently test limiting cases: what happens as friction approaches zero, or when angles equal $45^\\circ$ or $90^\\circ$? In Physora, you can verify these edge cases visually before solving analytical derivations.`;
-      } else if (lower.includes('challenge') || lower.includes('question')) {
-        responseText = `Here is your conceptual challenge: Without altering the external constraints, calculate what exact parameter values are required to increase the primary telemetry output by exactly $50\\%$. Verify your calculation by setting the sliders!`;
-      } else {
-        responseText = `Based on your current telemetry (${Object.entries(telemetry).slice(0, 3).map(([k, v]) => `${k} = ${v}`).join(', ')}), the system is behaving strictly according to ${topic.keyFormulas[0]?.explanation || 'first-principles physics'}. Pay special attention to the conservation laws at play here.`;
-      }
-
+      audioFX.playSuccessChime();
       setMessages([
-        ...newMessages,
+        ...updatedMessages,
         {
           role: 'assistant',
-          text: responseText,
-          mathFormula: responseFormula
+          text: response.text,
+          mathFormula: response.mathFormula,
+          webSources: response.webSources,
+          groundingUsed: response.groundingUsed
         }
       ]);
-    }, 600);
+    } catch (err) {
+      console.error('Failed to get AI response:', err);
+      setMessages([
+        ...updatedMessages,
+        {
+          role: 'assistant',
+          text: `Ayy, my neural connection had a momentary flicker. Let's try that again! What slider were you tweaking?`
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveApiKey = () => {
+    setStoredGeminiKey(apiKeyInput.trim());
+    setKeySaved(true);
+    audioFX.playTick();
+    setTimeout(() => {
+      setKeySaved(false);
+      setShowKeyModal(false);
+    }, 1200);
   };
 
   return (
@@ -121,14 +175,14 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
         right: 0,
         bottom: 0,
         width: '100%',
-        maxWidth: '430px',
+        maxWidth: '450px',
         zIndex: 10001,
         background: 'var(--bg-card, #FFFFFF)',
         borderLeft: '1px solid var(--border-medium, #E2E8F0)',
-        boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.25)',
+        boxShadow: '-12px 0 45px rgba(0, 0, 0, 0.35)',
         display: 'flex',
         flexDirection: 'column',
-        animation: 'physoraDrawerIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+        animation: 'physoraDrawerIn 0.24s cubic-bezier(0.16, 1, 0.3, 1)'
       }}
     >
       {/* Header */}
@@ -145,39 +199,62 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <div
             style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '8px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '10px',
               background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#FFFFFF'
+              color: '#FFFFFF',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
             }}
           >
             <Sparkles size={18} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '0.90rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                Physora AI Tutor
+              <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                Arya (AI Study Buddy)
               </span>
               <span
                 style={{
                   fontSize: '0.68rem',
                   fontWeight: 800,
-                  padding: '1px 6px',
+                  padding: '2px 7px',
                   borderRadius: '10px',
                   background: tier !== 'FREE' ? '#10B98120' : remainingAiQueries > 0 ? '#2563EB20' : 'rgba(239, 68, 68, 0.2)',
                   color: tier !== 'FREE' ? '#10B981' : remainingAiQueries > 0 ? '#2563EB' : '#EF4444'
                 }}
               >
-                {tier !== 'FREE' ? 'PRO UNLIMITED' : `${remainingAiQueries}/3 FREE QUERIES`}
+                {tier !== 'FREE' ? 'PRO UNLIMITED' : `${remainingAiQueries}/3 FREE`}
               </span>
             </div>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
-              Context-Aware Socratic Science Mentor
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-secondary)' }}>
+                Socratic STEM Mentor
+              </span>
+              <span style={{ fontSize: '0.70rem', color: 'var(--text-tertiary)' }}>•</span>
+              <button
+                type="button"
+                onClick={() => setShowKeyModal(!showKeyModal)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '0.70rem',
+                  fontWeight: 700,
+                  color: hasActiveKey ? '#059669' : '#2563EB'
+                }}
+              >
+                <Globe size={11} />
+                <span>{hasActiveKey ? 'Live Web Active' : 'Live Web Key'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -185,22 +262,95 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
           type="button"
           onClick={onClose}
           style={{
-            background: 'transparent',
+            background: 'var(--bg-subtle, #F1F5F9)',
             border: 'none',
+            borderRadius: '50%',
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             color: 'var(--text-secondary)',
-            cursor: 'pointer',
-            padding: '4px'
+            cursor: 'pointer'
           }}
           aria-label="Close AI Tutor"
         >
-          <X size={20} />
+          <X size={16} />
         </button>
       </div>
+
+      {/* Optional Gemini Live Web Key Config Popover */}
+      {showKeyModal && (
+        <div
+          style={{
+            padding: '12px 18px',
+            background: 'var(--bg-subtle)',
+            borderBottom: '1px solid var(--border-medium)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              <Key size={13} color="#2563EB" />
+              <span>Real-Time Internet (Google Gemini Key)</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowKeyModal(false)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+            Enter a free <strong>Google AI Studio Gemini Key</strong> for live web grounding (Google Search across real-time internet):
+          </p>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <input
+              type="password"
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+              placeholder="AIzaSy... (free key from ai.google.dev)"
+              style={{
+                flex: 1,
+                padding: '6px 10px',
+                borderRadius: '8px',
+                border: '1px solid var(--border-medium)',
+                background: 'var(--bg-card)',
+                fontSize: '0.76rem',
+                color: 'var(--text-primary)'
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleSaveApiKey}
+              style={{
+                padding: '6px 12px',
+                borderRadius: '8px',
+                border: 'none',
+                background: keySaved ? '#059669' : '#2563EB',
+                color: '#FFFFFF',
+                fontSize: '0.76rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              {keySaved ? <Check size={12} /> : null}
+              {keySaved ? 'Saved!' : 'Save'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Real-time Telemetry Context Capsule */}
       <div
         style={{
-          padding: '10px 16px',
+          padding: '8px 18px',
           background: 'var(--bg-subtle)',
           borderBottom: '1px solid var(--border-subtle)',
           fontSize: '0.74rem',
@@ -210,11 +360,11 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
           justifyContent: 'space-between'
         }}
       >
-        <span>
-          Observing: <strong>{simulation.name}</strong>
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '240px' }}>
+          Lab: <strong>{simulation.name}</strong>
         </span>
-        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--electric-blue)' }}>
-          {Object.keys(telemetry).length} telemetry points active
+        <span style={{ fontFamily: 'var(--font-mono)', color: '#2563EB', fontWeight: 700, fontSize: '0.72rem' }}>
+          {Object.keys(params).length} controls • {Object.keys(telemetry).length} telemetry
         </span>
       </div>
 
@@ -242,8 +392,8 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
             {msg.role === 'assistant' && (
               <div
                 style={{
-                  width: '26px',
-                  height: '26px',
+                  width: '28px',
+                  height: '28px',
                   borderRadius: '50%',
                   background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
                   display: 'flex',
@@ -251,46 +401,123 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
                   justifyContent: 'center',
                   color: '#FFFFFF',
                   flexShrink: 0,
-                  marginTop: '2px'
+                  marginTop: '2px',
+                  boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
                 }}
               >
-                <Bot size={14} />
+                <Bot size={15} />
               </div>
             )}
 
             <div
               style={{
                 padding: '12px 14px',
-                borderRadius: '14px',
+                borderRadius: '16px',
                 background:
                   msg.role === 'user'
-                    ? 'var(--electric-blue, #2563EB)'
+                    ? 'linear-gradient(135deg, #2563EB, #1D4ED8)'
                     : 'var(--bg-subtle, #F8FAFC)',
                 color: msg.role === 'user' ? '#FFFFFF' : 'var(--text-primary)',
-                fontSize: '0.84rem',
-                lineHeight: 1.55,
-                border: msg.role === 'user' ? 'none' : '1px solid var(--border-medium)'
+                fontSize: '0.85rem',
+                lineHeight: 1.6,
+                border: msg.role === 'user' ? 'none' : '1px solid var(--border-medium)',
+                boxShadow: msg.role === 'user' ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
               }}
             >
-              <div>{msg.text}</div>
+              <div style={{ whiteSpace: 'pre-line' }}>{msg.text}</div>
 
+              {/* Render Math formula card if present */}
               {msg.mathFormula && (
                 <div
                   style={{
-                    marginTop: '8px',
-                    padding: '6px 10px',
-                    background: msg.role === 'user' ? 'rgba(255,255,255,0.15)' : 'var(--bg-card)',
-                    borderRadius: '6px',
+                    marginTop: '10px',
+                    padding: '8px 12px',
+                    background: msg.role === 'user' ? 'rgba(255,255,255,0.18)' : 'var(--bg-card)',
+                    borderRadius: '8px',
                     border: '1px solid var(--border-subtle)',
-                    fontSize: '0.90rem'
+                    fontSize: '0.94rem'
                   }}
                 >
                   <MathView math={msg.mathFormula} block={false} />
                 </div>
               )}
+
+              {/* Real-time Google Search grounding sources */}
+              {msg.webSources && msg.webSources.length > 0 && (
+                <div style={{ marginTop: '10px', borderTop: '1px solid var(--border-subtle)', paddingTop: '8px' }}>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#059669', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+                    <Globe size={11} />
+                    <span>Verified via Google Search (Live Web):</span>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                    {msg.webSources.map((s, si) => (
+                      <a
+                        key={si}
+                        href={s.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          fontSize: '0.68rem',
+                          color: '#2563EB',
+                          background: 'var(--bg-card)',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--border-medium)',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px'
+                        }}
+                      >
+                        <span style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {s.title}
+                        </span>
+                        <ExternalLink size={9} />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ))}
+
+        {/* Live Loading / Thinking Indicator */}
+        {isLoading && (
+          <div style={{ display: 'flex', gap: '10px', alignSelf: 'flex-start', maxWidth: '85%' }}>
+            <div
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFFFFF',
+                flexShrink: 0
+              }}
+            >
+              <Bot size={15} />
+            </div>
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: '16px',
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-medium)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '0.78rem',
+                color: 'var(--text-secondary)'
+              }}
+            >
+              <span className="animate-spin">⚡</span>
+              <span>Arya is analyzing simulation & computing response...</span>
+            </div>
+          </div>
+        )}
 
         {/* Free Tier Callout if user exhausted queries */}
         {tier === 'FREE' && remainingAiQueries === 0 && (
@@ -305,10 +532,10 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
             }}
           >
             <div style={{ fontSize: '0.84rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '4px' }}>
-              Enjoying the AI Science Tutor?
+              Addicted to the AI Mentor?
             </div>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', margin: '0 0 10px' }}>
-              Upgrade to <strong>Physora Pro</strong> for unlimited AI tutoring, step-by-step derivations, and full exam prep.
+              Upgrade to <strong>Physora Pro</strong> for unlimited interactive tutoring, deep Socratic missions, and exam prep.
             </p>
             <button
               type="button"
@@ -327,13 +554,15 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
                 gap: '6px'
               }}
             >
-              <Zap size={14} /> Unlock Unlimited AI Mentor
+              <Zap size={14} /> Unlock Unlimited AI Mentor (₹499)
             </button>
           </div>
         )}
+
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Preset Quick Prompts */}
+      {/* Gamified Sim Mission Quick Buttons */}
       <div
         style={{
           padding: '10px 16px',
@@ -344,33 +573,38 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
           background: 'var(--bg-subtle)'
         }}
       >
-        <span style={{ fontSize: '0.70rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--text-tertiary)' }}>
-          Suggested Socratic Prompts:
-        </span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {quickPrompts.slice(0, 2).map((p, i) => (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '0.70rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--text-tertiary)', letterSpacing: '0.04em' }}>
+            ⚡ Socratic Power Prompts:
+          </span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+          {addictivePrompts.map((item, i) => (
             <button
               key={i}
               type="button"
-              onClick={() => handleSendMessage(p)}
+              disabled={isLoading}
+              onClick={() => handleSendMessage(item.prompt)}
               style={{
                 textAlign: 'left',
-                padding: '6px 10px',
-                borderRadius: '6px',
+                padding: '7px 10px',
+                borderRadius: '8px',
                 border: '1px solid var(--border-medium)',
                 background: 'var(--bg-card)',
                 color: 'var(--text-primary)',
-                fontSize: '0.74rem',
-                cursor: 'pointer',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: isLoading ? 'wait' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                transition: 'all 0.15s ease'
               }}
             >
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {p}
+                {item.label}
               </span>
-              <ArrowRight size={12} color="var(--text-tertiary)" />
+              <ArrowRight size={11} color="var(--text-tertiary)" />
             </button>
           ))}
         </div>
@@ -391,7 +625,7 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
           <div
             style={{
               padding: '10px 14px',
-              borderRadius: '8px',
+              borderRadius: '10px',
               background: 'rgba(239, 68, 68, 0.08)',
               border: '1px solid rgba(239, 68, 68, 0.25)',
               display: 'flex',
@@ -406,7 +640,7 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
               <span>Free Query Limit Reached (3/3 used today)</span>
             </div>
             <p style={{ fontSize: '0.74rem', color: 'var(--text-secondary)', margin: 0 }}>
-              Upgrade to Physora Pro for unlimited Socratic step-by-step guidance, deep derivations, and exam problem solving.
+              Upgrade to Physora Pro for unlimited step-by-step guidance, deep derivations, and live Socratic missions.
             </p>
             <button
               type="button"
@@ -432,7 +666,7 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
               }}
             >
               <Sparkles size={13} />
-              <span>Unlock Unlimited AI Tutor with Pro</span>
+              <span>Unlock Unlimited AI Mentor with Pro (₹499)</span>
             </button>
           </div>
         ) : (
@@ -440,39 +674,45 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
             <input
               type="text"
               value={inputMessage}
+              disabled={isLoading}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSendMessage();
               }}
               placeholder={
-                tier === 'FREE'
-                  ? `Ask AI tutor (${remainingAiQueries} free queries left)...`
-                  : 'Ask AI tutor about these formulas or variables...'
+                isLoading
+                  ? 'Arya is thinking...'
+                  : tier === 'FREE'
+                  ? `Ask Arya anything (${remainingAiQueries} free left)...`
+                  : 'Ask Arya any question, formula, or exam trap...'
               }
               style={{
                 flex: 1,
-                padding: '10px 14px',
-                borderRadius: '10px',
+                padding: '11px 14px',
+                borderRadius: '12px',
                 border: '1px solid var(--border-medium)',
                 background: 'var(--bg-subtle)',
-                fontSize: '0.84rem',
+                fontSize: '0.85rem',
                 color: 'var(--text-primary)',
-                outline: 'none'
+                outline: 'none',
+                boxSizing: 'border-box'
               }}
             />
             <button
               type="button"
+              disabled={isLoading || !inputMessage.trim()}
               onClick={() => handleSendMessage()}
               style={{
-                padding: '10px',
-                borderRadius: '10px',
+                padding: '11px 14px',
+                borderRadius: '12px',
                 border: 'none',
-                background: 'var(--electric-blue, #2563EB)',
-                color: '#FFFFFF',
-                cursor: 'pointer',
+                background: inputMessage.trim() && !isLoading ? 'linear-gradient(135deg, #2563EB, #1D4ED8)' : 'var(--border-medium)',
+                color: inputMessage.trim() && !isLoading ? '#FFFFFF' : 'var(--text-tertiary)',
+                cursor: inputMessage.trim() && !isLoading ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                transition: 'all 0.15s ease'
               }}
               aria-label="Send query"
             >
