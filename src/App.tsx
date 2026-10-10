@@ -114,7 +114,7 @@ export function App() {
   const [isPricingOpen, setIsPricingOpen] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
-      return hash === '#pricing' || hash === '#upgrade';
+      return hash.startsWith('#pricing') || hash.startsWith('#upgrade');
     }
     return false;
   });
@@ -140,6 +140,16 @@ export function App() {
       // Ignore
     }
   }, [theme]);
+
+  // Proactively clear any legacy custom UPI keys from browser localStorage
+  useEffect(() => {
+    try {
+      localStorage.removeItem('physora_custom_upi_id');
+      localStorage.removeItem('physora_custom_upi_name');
+    } catch {
+      // Ignore
+    }
+  }, []);
 
   // Synchronize browser history / URL hash
   useEffect(() => {
@@ -184,7 +194,7 @@ export function App() {
         setAuthModalView('reset-password');
       } else if (hash === '#profile') {
         setIsProfileModalOpen(true);
-      } else if (hash === '#pricing' || hash === '#upgrade') {
+      } else if (hash.startsWith('#pricing') || hash.startsWith('#upgrade')) {
         setIsPricingOpen(true);
       }
     };
@@ -459,6 +469,7 @@ export function App() {
       <UserProfileModal
         isOpen={isProfileModalOpen}
         onClose={handleCloseProfile}
+        onOpenPricing={() => setIsPricingOpen(true)}
       />
 
       {/* 12. Commercial Subscription & Institutional Pricing Modal */}
@@ -466,10 +477,11 @@ export function App() {
         isOpen={isPricingOpen}
         onClose={() => {
           setIsPricingOpen(false);
-          if (['#pricing', '#upgrade'].includes(window.location.hash)) {
+          if (window.location.hash.startsWith('#pricing') || window.location.hash.startsWith('#upgrade')) {
             window.history.pushState(null, '', window.location.pathname);
           }
         }}
+        onOpenAuthModal={(view) => setAuthModalView(view)}
       />
     </div>
   );

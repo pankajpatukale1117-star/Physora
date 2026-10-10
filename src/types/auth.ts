@@ -12,9 +12,17 @@ export interface PhysoraProfile {
   membership_tier?: MembershipTier;
   institution_name?: string | null;
   role?: UserRole;
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  subscription_status?: 'active' | 'trialing' | 'canceled' | 'past_due' | 'unpaid' | 'incomplete' | 'inactive';
+  subscription_period_end?: string | null;
   created_at: string;
   updated_at: string;
 }
+
+export type StripePlanId = 'pro_monthly' | 'pro_annual' | 'institution_annual';
+export type BillingCurrency = 'USD' | 'INR';
+
 
 export type AuthView = 
   | 'login' 

@@ -11,17 +11,25 @@ import {
   CheckCircle, 
   AlertCircle,
   ShieldCheck,
-  FlaskConical
+  FlaskConical,
+  Zap,
+  ExternalLink,
+  Sparkles,
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { openStripeCustomerPortal } from '../../services/stripeService';
 
 interface UserProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenPricing?: () => void;
 }
 
-export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose }) => {
-  const { user, profile, updateProfile, signOut } = useAuth();
+export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, onOpenPricing }) => {
+  const { user, profile, updateProfile, signOut, membershipTier, isPro, isInstitution } = useAuth();
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
 
   const [displayName, setDisplayName] = useState(profile?.display_name || '');
   const [bio, setBio] = useState(profile?.bio || '');
@@ -373,8 +381,119 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
           </button>
         </form>
 
+        {/* Commercial Subscription & Stripe Billing Card */}
+        <div
+          style={{
+            marginTop: 20,
+            padding: '14px 16px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: isPro ? 'rgba(37, 99, 235, 0.05)' : 'var(--bg-subtle)',
+            border: isPro ? '1px solid rgba(37, 99, 235, 0.25)' : '1px solid var(--border-subtle)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {isInstitution ? (
+                <ShieldCheck size={18} color="#7C3AED" />
+              ) : isPro ? (
+                <Zap size={18} color="#2563EB" />
+              ) : (
+                <CreditCard size={18} color="var(--text-secondary)" />
+              )}
+              <div>
+                <span style={{ fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--text-tertiary)' }}>
+                  Current Tier
+                </span>
+                <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  {membershipTier === 'institution'
+                    ? 'Classroom & School License'
+                    : membershipTier === 'pro'
+                    ? 'Physora Pro (Active)'
+                    : 'Free Explorer Plan'}
+                </div>
+              </div>
+            </div>
+
+            {isPro ? (
+              <button
+                type="button"
+                disabled={isOpeningPortal}
+                onClick={async () => {
+                  setPortalError(null);
+                  setIsOpeningPortal(true);
+                  const res = await openStripeCustomerPortal();
+                  if (!res.success) {
+                    setIsOpeningPortal(false);
+                    setPortalError(res.error || 'Unable to open Stripe portal.');
+                  }
+                }}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-medium)',
+                  color: '#2563EB',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: isOpeningPortal ? 'wait' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6
+                }}
+              >
+                {isOpeningPortal ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : (
+                  <ExternalLink size={13} />
+                )}
+                <span>Manage in Stripe</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  if (onOpenPricing) {
+                    onOpenPricing();
+                  } else {
+                    window.location.hash = '#pricing';
+                  }
+                }}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: 'var(--radius-md)',
+                  background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                  border: 'none',
+                  color: '#FFFFFF',
+                  fontSize: '0.8rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  boxShadow: '0 2px 8px rgba(37, 99, 235, 0.25)'
+                }}
+              >
+                <Sparkles size={13} />
+                <span>Upgrade to Pro</span>
+              </button>
+            )}
+          </div>
+
+          {portalError && (
+            <div style={{ fontSize: '0.78rem', color: 'var(--accent-error)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <AlertCircle size={14} />
+              <span>{portalError}</span>
+            </div>
+          )}
+        </div>
+
         {/* Divider */}
         <hr style={{ border: 'none', borderTop: '1px solid var(--border-subtle)', margin: '22px 0' }} />
+
 
         {/* Laboratory Status & Sign Out */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>

@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   membership_tier TEXT NOT NULL DEFAULT 'free', -- 'free' | 'pro' | 'institution'
   institution_name TEXT,
   role TEXT DEFAULT 'student', -- 'student' | 'teacher' | 'researcher'
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  subscription_status TEXT DEFAULT 'inactive',
+  subscription_period_end TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
@@ -20,6 +24,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- 2. Performance Indexes
 CREATE INDEX IF NOT EXISTS idx_profiles_username ON public.profiles(username);
 CREATE INDEX IF NOT EXISTS idx_profiles_created_at ON public.profiles(created_at);
+CREATE INDEX IF NOT EXISTS idx_profiles_stripe_customer_id ON public.profiles(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_profiles_stripe_subscription_id ON public.profiles(stripe_subscription_id);
 
 -- 3. Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;

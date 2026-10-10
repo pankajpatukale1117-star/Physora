@@ -1,73 +1,170 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Check,
-  Sparkles,
   Zap,
   Building2,
   GraduationCap,
   ShieldCheck,
   ArrowRight,
-  FileCheck2
+  FileCheck2,
+  AlertCircle,
+  ExternalLink,
+  Loader2,
+  Lock,
+  CreditCard,
+  CheckCircle2,
+  QrCode
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import type { MembershipTier } from '../../types/auth';
+import { useSubscription } from '../../context/SubscriptionContext';
+import type { MembershipTier, StripePlanId } from '../../types/auth';
+import { startStripeCheckout, openStripeCustomerPortal } from '../../services/stripeService';
+import { isSupabaseConfigured } from '../../lib/supabase';
+import { audioFX } from '../../utils/audioEffects';
+import { UpiPaymentModal } from './UpiPaymentModal';
 
 interface PricingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenAuthModal?: (view: 'login' | 'signup') => void;
 }
 
 export const PricingModal: React.FC<PricingModalProps> = ({
   isOpen,
-  onClose
+  onClose,
+  onOpenAuthModal
 }) => {
-  const { membershipTier, upgradeTier, profile } = useAuth();
+  const { user, membershipTier, upgradeTier, profile, refreshProfile } = useAuth();
+  const { setTier } = useSubscription();
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
-  const [currency, setCurrency] = useState<'USD' | 'INR'>('USD');
+  const [currency, setCurrencyState] = useState<'USD' | 'INR'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('physora_preferred_currency');
+      if (saved === 'USD' || saved === 'INR') return saved;
+    }
+    return 'INR';
+  });
+
+  const setCurrency = (c: 'USD' | 'INR') => {
+    setCurrencyState(c);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('physora_preferred_currency', c);
+    }
+  };
+
   const [activeTab, setActiveTab] = useState<'plans' | 'institution-quote'>('plans');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [upiModalPlanId, setUpiModalPlanId] = useState<StripePlanId | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Quote Form State
   const [institutionForm, setInstitutionForm] = useState({
     institutionName: '',
     contactName: profile?.display_name || '',
-    contactEmail: '',
+    contactEmail: user?.email || '',
     studentCount: '100-500',
     notes: ''
   });
   const [quoteSubmitted, setQuoteSubmitted] = useState(false);
 
+  // Listen for Stripe redirect return status from URL query/hash
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') return;
+
+    const href = window.location.href;
+    if (href.includes('payment=success')) {
+      audioFX.playSuccessChime();
+      setSuccessMessage('🎉 Payment successfully verified with Stripe! Your account is upgraded to Physora Pro.');
+      refreshProfile().then(() => {
+        setTier('PRO');
+      });
+      // Clean up URL query
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname + '#pricing');
+      }
+    } else if (href.includes('payment=cancelled')) {
+      setErrorMessage('Checkout was canceled. No charges were made to your account.');
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname + '#pricing');
+      }
+    }
+  }, [isOpen, refreshProfile, setTier]);
+
   if (!isOpen) return null;
 
+  // Real Stripe Checkout or Direct UPI Trigger
   const handleSelectPlan = async (tier: MembershipTier) => {
-    setIsProcessing(true);
+    setErrorMessage(null);
     setSuccessMessage(null);
 
-    // Simulate payment processing flow
-    setTimeout(async () => {
-      await upgradeTier(tier);
-      setIsProcessing(false);
-      setSuccessMessage(
-        tier === 'pro'
-          ? '🎉 Welcome to Physora Pro! All flagship simulations and Lab Report export are now unlocked.'
-          : '🏛️ Institutional license active! Teacher Presenter Mode and LMS embeds enabled.'
+    // 1. Free plan downgrade
+    if (tier === 'free') {
+      await upgradeTier('free');
+      setTier('FREE');
+      setSuccessMessage('You are now on the Free Explorer plan.');
+      return;
+    }
+
+    // 2. Authentication check: User must be signed in to attach subscription to profile
+    if (!user) {
+      setErrorMessage('Please sign in or create a Physora account first so your subscription is safely attached to your email.');
+      if (onOpenAuthModal) {
+        onOpenAuthModal('signup');
+      } else {
+        window.location.hash = '#signup';
+      }
+      return;
+    }
+
+    const planId: StripePlanId =
+      tier === 'institution'
+        ? 'institution_annual'
+        : billingCycle === 'annual'
+        ? 'pro_annual'
+        : 'pro_monthly';
+
+    // 3. For INR: Route to Direct UPI Payment flow (Dynamic QR & Mobile Intent)
+    if (currency === 'INR') {
+      setUpiModalPlanId(planId);
+      return;
+    }
+
+    // 4. For USD: Check if Supabase Edge Functions are deployed
+    if (!isSupabaseConfigured) {
+      setErrorMessage(
+        'Stripe USD requires Supabase edge functions. Please switch to "INR (₹ UPI / Cards)" to pay or test with Google Pay & PhonePe!'
       );
-      setTimeout(() => {
-        onClose();
-      }, 2200);
-    }, 900);
+      return;
+    }
+
+    // 5. Call Stripe Hosted Checkout
+    setIsProcessing(true);
+    const result = await startStripeCheckout(planId, currency);
+
+    if (!result.success) {
+      setIsProcessing(false);
+      setErrorMessage(result.error || 'Failed to initiate secure Stripe checkout.');
+    }
+  };
+
+  // Open Stripe Customer Billing Portal
+  const handleOpenBillingPortal = async () => {
+    setErrorMessage(null);
+    setIsOpeningPortal(true);
+    const res = await openStripeCustomerPortal();
+    if (!res.success) {
+      setIsOpeningPortal(false);
+      setErrorMessage(res.error || 'Unable to open billing portal.');
+    }
   };
 
   const handleQuoteSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setQuoteSubmitted(true);
-    setTimeout(() => {
-      // Simulate enterprise license assignment
-      upgradeTier('institution', institutionForm.institutionName);
-    }, 1200);
   };
 
   // Pricing calculations
@@ -86,6 +183,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
   const currentPrices = prices[currency];
   const symbol = currency === 'USD' ? '$' : '₹';
+  const isPaidSubscriber = membershipTier === 'pro' || membershipTier === 'institution';
 
   return (
     <div
@@ -140,13 +238,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                   fontWeight: 800,
                   textTransform: 'uppercase',
                   letterSpacing: '0.08em',
-                  background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+                  background: currency === 'INR' ? 'linear-gradient(135deg, #059669, #10B981)' : 'linear-gradient(135deg, #2563EB, #7C3AED)',
                   color: '#FFFFFF',
                   padding: '3px 8px',
                   borderRadius: '12px'
                 }}
               >
-                Commercial Edition
+                {currency === 'INR' ? 'Direct UPI • NPCI' : 'Stripe Verified'}
               </span>
               <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                 Current plan: <strong style={{ textTransform: 'capitalize' }}>{membershipTier}</strong>
@@ -195,6 +293,57 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           >
             <ShieldCheck size={20} />
             {successMessage}
+          </div>
+        )}
+
+        {/* Error Alert Banner */}
+        {errorMessage && (
+          <div
+            style={{
+              padding: '12px 24px',
+              background: '#FEE2E2',
+              color: '#B91C1C',
+              fontWeight: 650,
+              fontSize: '0.88rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              borderBottom: '1px solid #FCA5A5'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <AlertCircle size={18} style={{ flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+              {currency === 'USD' && !isSupabaseConfigured && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrency('INR');
+                    setErrorMessage(null);
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    background: '#B91C1C',
+                    color: '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '0.78rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Switch to INR (UPI)
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setErrorMessage(null)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#B91C1C' }}
+            >
+              <X size={16} />
+            </button>
           </div>
         )}
 
@@ -249,89 +398,172 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               </button>
             </div>
 
-            {/* Currency & Annual Billing */}
-            {activeTab === 'plans' && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                {/* Currency selector */}
-                <div style={{ display: 'flex', border: '1px solid var(--border-medium)', borderRadius: '8px', overflow: 'hidden' }}>
-                  <button
-                    type="button"
-                    onClick={() => setCurrency('USD')}
-                    style={{
-                      padding: '6px 12px',
-                      border: 'none',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      background: currency === 'USD' ? 'var(--electric-blue, #2563EB)' : 'var(--bg-card)',
-                      color: currency === 'USD' ? '#FFFFFF' : 'var(--text-secondary)'
-                    }}
-                  >
-                    USD ($)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCurrency('INR')}
-                    style={{
-                      padding: '6px 12px',
-                      border: 'none',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      background: currency === 'INR' ? 'var(--electric-blue, #2563EB)' : 'var(--bg-card)',
-                      color: currency === 'INR' ? '#FFFFFF' : 'var(--text-secondary)'
-                    }}
-                  >
-                    INR (₹)
-                  </button>
-                </div>
-
-                {/* Billing Cycle */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-subtle)', padding: '4px', borderRadius: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setBillingCycle('monthly')}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      background: billingCycle === 'monthly' ? 'var(--bg-card)' : 'transparent',
-                      color: billingCycle === 'monthly' ? 'var(--text-primary)' : 'var(--text-secondary)'
-                    }}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setBillingCycle('annual')}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      fontSize: '0.78rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      background: billingCycle === 'annual' ? 'var(--bg-card)' : 'transparent',
-                      color: billingCycle === 'annual' ? 'var(--text-primary)' : 'var(--text-secondary)'
-                    }}
-                  >
-                    Annual <span style={{ color: '#10B981', marginLeft: '3px' }}>(-30%)</span>
-                  </button>
-                </div>
+            {/* Currency & Billing Cycle Toggles */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+              {/* Currency Selector */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-subtle)', padding: '4px', borderRadius: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setCurrency('USD')}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: currency === 'USD' ? 'var(--bg-card)' : 'transparent',
+                    color: currency === 'USD' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    boxShadow: currency === 'USD' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'
+                  }}
+                >
+                  USD ($)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrency('INR')}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    border: 'none',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: currency === 'INR' ? 'var(--bg-card)' : 'transparent',
+                    color: currency === 'INR' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    boxShadow: currency === 'INR' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none'
+                  }}
+                >
+                  INR (₹ UPI / Cards)
+                </button>
               </div>
-            )}
+
+              {/* Annual / Monthly Toggle */}
+              {activeTab === 'plans' && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: billingCycle === 'monthly' ? 700 : 500, color: 'var(--text-secondary)' }}>
+                    Monthly
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'annual' : 'monthly')}
+                    style={{
+                      width: '46px',
+                      height: '24px',
+                      borderRadius: '12px',
+                      background: billingCycle === 'annual' ? '#2563EB' : 'var(--border-medium)',
+                      border: 'none',
+                      position: 'relative',
+                      cursor: 'pointer',
+                      padding: 0,
+                      transition: 'background 0.2s ease'
+                    }}
+                    aria-label="Toggle billing cycle"
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '2px',
+                        left: billingCycle === 'annual' ? '24px' : '2px',
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        background: '#FFFFFF',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                        transition: 'left 0.2s ease'
+                      }}
+                    />
+                  </button>
+                  <span style={{ fontSize: '0.82rem', fontWeight: billingCycle === 'annual' ? 700 : 500, color: 'var(--text-secondary)' }}>
+                    Annual
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                      color: '#059669',
+                      background: '#ECFDF5',
+                      padding: '2px 8px',
+                      borderRadius: '10px',
+                      border: '1px solid #A7F3D0'
+                    }}
+                  >
+                    Save 27%
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* Tab 1: Three Tier Plans */}
-          {activeTab === 'plans' ? (
+          {/* ACTIVE SUBSCRIBER QUICK ACTIONS */}
+          {isPaidSubscriber && (
+            <div
+              style={{
+                marginBottom: '28px',
+                padding: '16px 20px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.08))',
+                border: '1.5px solid rgba(37, 99, 235, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '12px'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <CheckCircle2 size={24} color="#2563EB" />
+                <div>
+                  <div style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    Your {membershipTier.toUpperCase()} Subscription is Active
+                  </div>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                    Update payment methods, view official VAT receipts, or manage your renewal in Stripe.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenBillingPortal}
+                disabled={isOpeningPortal}
+                style={{
+                  padding: '9px 18px',
+                  borderRadius: '10px',
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--border-medium)',
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  cursor: isOpeningPortal ? 'wait' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                }}
+              >
+                {isOpeningPortal ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Opening Stripe Portal...</span>
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink size={16} />
+                    <span>Manage Billing & Invoices (Stripe)</span>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          {/* TAB 1: STANDARD TIER CARDS */}
+          {activeTab === 'plans' && (
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
-                gap: '20px'
+                gap: '24px',
+                alignItems: 'stretch'
               }}
             >
               {/* TIER 1: FREE */}
@@ -342,8 +574,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                   padding: '24px',
                   display: 'flex',
                   flexDirection: 'column',
-                  background: 'var(--bg-card)',
-                  opacity: membershipTier === 'free' ? 1 : 0.85
+                  background: 'var(--bg-card)'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -362,7 +593,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                 <button
                   type="button"
                   disabled={membershipTier === 'free'}
-                  onClick={() => upgradeTier('free')}
+                  onClick={() => handleSelectPlan('free')}
                   style={{
                     padding: '10px 16px',
                     borderRadius: '10px',
@@ -391,6 +622,9 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
                       <Check size={16} color="#10B981" /> Standard 3D anatomy viewer
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+                      <Check size={16} color="#10B981" /> 3 AI Tutor queries per day
                     </li>
                   </ul>
                 </div>
@@ -446,37 +680,86 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                   </span>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={isProcessing || membershipTier === 'pro'}
-                  onClick={() => handleSelectPlan('pro')}
-                  style={{
-                    padding: '12px 18px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: 'linear-gradient(135deg, #2563EB, #1D4ED8)',
-                    color: '#FFFFFF',
-                    fontWeight: 800,
-                    fontSize: '0.92rem',
-                    cursor: membershipTier === 'pro' ? 'default' : 'pointer',
-                    marginBottom: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
-                  }}
-                >
-                  {isProcessing ? (
-                    'Processing...'
-                  ) : membershipTier === 'pro' ? (
-                    'Active Plan ✓'
-                  ) : (
-                    <>
-                      <Sparkles size={16} /> Upgrade to Pro
-                    </>
-                  )}
-                </button>
+                {membershipTier === 'pro' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                    <div
+                      style={{
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        background: '#EFF6FF',
+                        color: '#1D4ED8',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Check size={16} /> Active Pro Plan
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isOpeningPortal}
+                      onClick={handleOpenBillingPortal}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid #BFDBFE',
+                        background: '#FFFFFF',
+                        color: '#1D4ED8',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <ExternalLink size={14} /> Stripe Customer Portal
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isProcessing}
+                    onClick={() => handleSelectPlan('pro')}
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: currency === 'INR' ? 'linear-gradient(135deg, #059669, #047857)' : 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                      color: '#FFFFFF',
+                      fontWeight: 800,
+                      fontSize: '0.92rem',
+                      cursor: isProcessing ? 'wait' : 'pointer',
+                      marginBottom: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: currency === 'INR' ? '0 4px 12px rgba(5, 150, 105, 0.3)' : '0 4px 12px rgba(37, 99, 235, 0.3)'
+                    }}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Connecting...</span>
+                      </>
+                    ) : currency === 'INR' ? (
+                      <>
+                        <QrCode size={16} />
+                        <span>Pay via UPI / QR ({symbol}{billingCycle === 'annual' ? currentPrices.proAnnual : currentPrices.proMonthly})</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={15} />
+                        <span>Pay with Stripe ({symbol}{billingCycle === 'annual' ? currentPrices.proAnnual : currentPrices.proMonthly})</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
                 <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', flex: 1 }}>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>
@@ -529,28 +812,86 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}> / year</span>
                 </div>
 
-                <button
-                  type="button"
-                  disabled={isProcessing || membershipTier === 'institution'}
-                  onClick={() => handleSelectPlan('institution')}
-                  style={{
-                    padding: '12px 18px',
-                    borderRadius: '10px',
-                    border: 'none',
-                    background: 'var(--bg-subtle)',
-                    color: 'var(--text-primary)',
-                    fontWeight: 700,
-                    fontSize: '0.90rem',
-                    cursor: membershipTier === 'institution' ? 'default' : 'pointer',
-                    marginBottom: '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  {membershipTier === 'institution' ? 'Institution Active ✓' : 'Activate Institutional Pass'}
-                </button>
+                {membershipTier === 'institution' ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                    <div
+                      style={{
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        background: '#F5F3FF',
+                        color: '#6D28D9',
+                        fontWeight: 800,
+                        fontSize: '0.88rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Check size={16} /> Institution Active
+                    </div>
+                    <button
+                      type="button"
+                      disabled={isOpeningPortal}
+                      onClick={handleOpenBillingPortal}
+                      style={{
+                        padding: '8px 14px',
+                        borderRadius: '8px',
+                        border: '1px solid #DDD6FE',
+                        background: '#FFFFFF',
+                        color: '#6D28D9',
+                        fontWeight: 700,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <ExternalLink size={14} /> Stripe Billing Portal
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={isProcessing}
+                    onClick={() => handleSelectPlan('institution')}
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: currency === 'INR' ? 'linear-gradient(135deg, #059669, #047857)' : 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                      color: '#FFFFFF',
+                      fontWeight: 800,
+                      fontSize: '0.90rem',
+                      cursor: isProcessing ? 'wait' : 'pointer',
+                      marginBottom: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: currency === 'INR' ? '0 4px 12px rgba(5, 150, 105, 0.25)' : '0 4px 12px rgba(124, 58, 237, 0.25)'
+                    }}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Connecting...</span>
+                      </>
+                    ) : currency === 'INR' ? (
+                      <>
+                        <QrCode size={16} />
+                        <span>Pay via UPI / QR ({symbol}{currentPrices.instAnnual}/yr)</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock size={15} />
+                        <span>Pay with Stripe ({symbol}{currentPrices.instAnnual}/yr)</span>
+                      </>
+                    )}
+                  </button>
+                )}
 
                 <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', flex: 1 }}>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>
@@ -569,58 +910,82 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
                       <Check size={16} color="#7C3AED" /> Custom school branding on exported Lab Reports
                     </li>
-                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#7C3AED" /> Priority teacher onboarding & PO Invoicing
-                    </li>
                   </ul>
                 </div>
               </div>
             </div>
-          ) : (
-            /* Tab 2: School & Coaching Quote Form */
+          )}
+
+          {/* TAB 2: INSTITUTION QUOTE FORM */}
+          {activeTab === 'institution-quote' && (
             <div
               style={{
                 maxWidth: '680px',
                 margin: '0 auto',
                 background: 'var(--bg-subtle)',
-                padding: '32px',
+                padding: '28px',
                 borderRadius: '18px',
                 border: '1px solid var(--border-medium)'
               }}
             >
+              <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0 0 8px', color: 'var(--text-primary)' }}>
+                  Request Institutional License & School Onboarding
+                </h3>
+                <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', margin: 0 }}>
+                  Volume pricing for schools, universities, school districts, and coaching centers.
+                </p>
+              </div>
+
               {quoteSubmitted ? (
-                <div style={{ textAlign: 'center', padding: '30px 10px' }}>
-                  <FileCheck2 size={54} color="#10B981" style={{ marginBottom: '16px' }} />
-                  <h3 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '8px' }}>
-                    Institutional Inquiry Received!
-                  </h3>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem', lineHeight: 1.6 }}>
-                    Thank you, <strong>{institutionForm.contactName}</strong>. A dedicated educational licensing representative will reach out to <strong>{institutionForm.contactEmail}</strong> with custom pricing and an onboarding package for <strong>{institutionForm.institutionName || 'your institution'}</strong> within 24 hours.
+                <div style={{ textAlign: 'center', padding: '32px 16px' }}>
+                  <div
+                    style={{
+                      width: '56px',
+                      height: '56px',
+                      borderRadius: '50%',
+                      background: '#10B981',
+                      color: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      margin: '0 auto 16px'
+                    }}
+                  >
+                    <FileCheck2 size={28} />
+                  </div>
+                  <h4 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '8px' }}>
+                    Institutional Proposal Dispatched!
+                  </h4>
+                  <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, maxWidth: '460px', margin: '0 auto 20px' }}>
+                    Thank you, <strong>{institutionForm.contactName}</strong>. An educational licensing representative will reach out to <strong>{institutionForm.contactEmail}</strong> with custom pricing and an onboarding package for <strong>{institutionForm.institutionName || 'your institution'}</strong> within 24 hours.
                   </p>
-                  <p style={{ marginTop: '16px', color: '#10B981', fontWeight: 700, fontSize: '0.88rem' }}>
-                    ✨ Institutional Demonstration License has been temporarily enabled on your account.
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('plans')}
+                    style={{
+                      padding: '10px 20px',
+                      borderRadius: '8px',
+                      background: 'var(--bg-card)',
+                      border: '1px solid var(--border-medium)',
+                      fontWeight: 700,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Return to Plans
+                  </button>
                 </div>
               ) : (
                 <form onSubmit={handleQuoteSubmit}>
-                  <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0 0 6px' }}>
-                      Request Institutional School Quote
-                    </h3>
-                    <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: 0 }}>
-                      Empower your entire science and mathematics department with smartboard-ready 3D interactive laboratories.
-                    </p>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
-                        Institution / School / Coaching Name
+                        Institution or School Name *
                       </label>
                       <input
                         type="text"
                         required
-                        placeholder="e.g. Apex International School"
+                        placeholder="e.g. St. Xavier's Science College"
                         value={institutionForm.institutionName}
                         onChange={(e) => setInstitutionForm({ ...institutionForm, institutionName: e.target.value })}
                         style={{
@@ -633,10 +998,52 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                         }}
                       />
                     </div>
-
                     <div>
                       <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
-                        Estimated Student Volume
+                        Contact Person Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Dr. A. Sharma"
+                        value={institutionForm.contactName}
+                        onChange={(e) => setInstitutionForm({ ...institutionForm, contactName: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-medium)',
+                          background: 'var(--bg-card)',
+                          fontSize: '0.88rem'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
+                        Official Institutional Email *
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="e.g. principal@school.edu"
+                        value={institutionForm.contactEmail}
+                        onChange={(e) => setInstitutionForm({ ...institutionForm, contactEmail: e.target.value })}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-medium)',
+                          background: 'var(--bg-card)',
+                          fontSize: '0.88rem'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
+                        Estimated Student Count
                       </label>
                       <select
                         value={institutionForm.studentCount}
@@ -650,55 +1057,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                           fontSize: '0.88rem'
                         }}
                       >
-                        <option value="under-100">Under 100 students (Classroom)</option>
-                        <option value="100-500">100 - 500 students (Department)</option>
-                        <option value="500-2000">500 - 2,000 students (Whole School)</option>
-                        <option value="2000+">2,000+ students (Campus / Group)</option>
+                        <option value="50-100">50 - 100 students</option>
+                        <option value="100-500">100 - 500 students</option>
+                        <option value="500-2000">500 - 2,000 students</option>
+                        <option value="2000+">2,000+ students (District/University)</option>
                       </select>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
-                        Contact Name / Designation
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="e.g. Dr. Ramesh / Head of Science"
-                        value={institutionForm.contactName}
-                        onChange={(e) => setInstitutionForm({ ...institutionForm, contactName: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          borderRadius: '8px',
-                          border: '1px solid var(--border-medium)',
-                          background: 'var(--bg-card)',
-                          fontSize: '0.88rem'
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 700, marginBottom: '6px' }}>
-                        Official Email Address
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="principal@school.edu"
-                        value={institutionForm.contactEmail}
-                        onChange={(e) => setInstitutionForm({ ...institutionForm, contactEmail: e.target.value })}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          borderRadius: '8px',
-                          border: '1px solid var(--border-medium)',
-                          background: 'var(--bg-card)',
-                          fontSize: '0.88rem'
-                        }}
-                      />
                     </div>
                   </div>
 
@@ -741,7 +1104,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                       gap: '8px'
                     }}
                   >
-                    Submit Request & Activate Instant Demo <ArrowRight size={18} />
+                    Submit Request & Contact Sales <ArrowRight size={18} />
                   </button>
                 </form>
               )}
@@ -763,18 +1126,52 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               color: 'var(--text-tertiary)'
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <ShieldCheck size={16} color="#10B981" /> 256-bit Encrypted Checkout • Instant Tier Activation
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldCheck size={16} color="#10B981" />
+              <span>
+                {currency === 'INR' ? (
+                  <><strong>NPCI Instant UPI & Bank Transfer</strong> • Zero Gateway Surcharge</>
+                ) : (
+                  <><strong>Secured by Stripe</strong> • Official 256-bit SSL Encryption</>
+                )}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CreditCard size={15} />
+              <span>
+                {currency === 'INR' ? (
+                  'Google Pay • PhonePe • Paytm • BHIM • Cred • Netbanking (INR)'
+                ) : (
+                  'Credit & Debit Cards • Apple Pay • Google Pay (USD)'
+                )}
+              </span>
             </div>
             <div>
-              Compatible with Stripe & Razorpay (UPI, Netbanking, Cards)
-            </div>
-            <div>
-              14-Day Money-Back Guarantee
+              <span>Automatic Invoicing & Instant Activation</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Direct UPI Intent & Dynamic QR Modal */}
+      {upiModalPlanId && (
+        <UpiPaymentModal
+          isOpen={!!upiModalPlanId}
+          onClose={() => setUpiModalPlanId(null)}
+          planId={upiModalPlanId}
+          userEmail={user?.email || undefined}
+          userId={user?.id || undefined}
+          onSuccess={async (targetTier) => {
+            setUpiModalPlanId(null);
+            await upgradeTier(targetTier);
+            setTier(targetTier === 'institution' ? 'EDUCATOR' : 'PRO');
+            setSuccessMessage(
+              `🎉 UPI Payment successfully verified! Your account is upgraded to Physora ${targetTier.toUpperCase()}.`
+            );
+            refreshProfile();
+          }}
+        />
+      )}
     </div>
   );
 };
