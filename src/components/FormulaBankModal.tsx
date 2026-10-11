@@ -700,11 +700,11 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
             >
               <BookOpen size={20} />
             </div>
-            <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <h2 style={{ fontSize: 'clamp(1.1rem, 4vw, 1.25rem)', fontWeight: 800, color: 'var(--text-primary)', margin: 0, lineHeight: 1.25 }}>
                 Formula Bank &amp; Variable Index
               </h2>
-              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+              <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', margin: '4px 0 0', lineHeight: 1.4 }}>
                 Rigorous KaTeX mathematical expressions with Plain English definitions, SI units, and direct simulation links
               </p>
             </div>

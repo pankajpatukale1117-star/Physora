@@ -58,13 +58,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
           {/* Main Headline */}
           <h1
-            className="text-display"
+            className="text-display hero-main-title"
             style={{
               marginBottom: 16,
               color: 'var(--text-primary)',
-              fontSize: 'clamp(2.1rem, 4.2vw, 3.2rem)',
+              fontSize: 'clamp(1.85rem, 4vw, 3.2rem)',
               fontWeight: 900,
-              lineHeight: 1.15
+              lineHeight: 1.25
             }}
           >
             Interactive <span style={{ color: 'var(--brand-primary)' }}>Physics</span>, <span style={{ color: '#059669' }}>3D Biology</span> &amp; <span style={{ color: '#D97706' }}>Maths</span>

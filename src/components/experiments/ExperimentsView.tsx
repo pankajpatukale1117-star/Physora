@@ -240,7 +240,8 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
             style={{
               fontSize: 'clamp(1.2rem, 4vw, 2.3rem)',
               fontWeight: 800,
-              letterSpacing: '-0.025em',
+              letterSpacing: '-0.01em',
+              lineHeight: 1.25,
               marginBottom: 8,
               color: 'var(--text-primary)',
               wordBreak: 'break-word'
@@ -949,8 +950,8 @@ export const ExperimentsView: React.FC<ExperimentsViewProps> = ({
             style={{
               fontSize: 'clamp(1.8rem, 6vw, 3.2rem)',
               fontWeight: 900,
-              letterSpacing: '-0.03em',
-              lineHeight: 1.15,
+              letterSpacing: '-0.01em',
+              lineHeight: 1.25,
               marginBottom: 14,
               color: 'var(--text-primary)',
               wordBreak: 'break-word'

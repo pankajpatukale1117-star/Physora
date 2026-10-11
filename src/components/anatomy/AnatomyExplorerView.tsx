@@ -828,12 +828,15 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               >
                 <Layers size={16} />
               </div>
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, flex: 1, overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.80rem', fontWeight: 800, color: '#FFFFFF', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '0.80rem', fontWeight: 800, color: '#FFFFFF' }}>
                     {ANATOMICAL_LAYER_STACK[activeLayerIndex]?.name}
                   </span>
-                  <span style={{ fontSize: '0.68rem', color: '#64748B', fontStyle: 'italic', whiteSpace: 'nowrap' }}>
+                  <span
+                    className="hide-mobile"
+                    style={{ fontSize: '0.68rem', color: '#64748B', fontStyle: 'italic' }}
+                  >
                     ({ANATOMICAL_LAYER_STACK[activeLayerIndex]?.latinName})
                   </span>
                 </div>

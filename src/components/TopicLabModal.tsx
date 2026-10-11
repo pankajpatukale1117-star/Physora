@@ -412,7 +412,9 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                flexShrink: 0
+                flexShrink: 1,
+                minWidth: 0,
+                overflow: 'hidden'
               }}
             >
               <button
@@ -429,13 +431,15 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   cursor: 'pointer',
                   fontWeight: 600,
                   fontSize: '0.76rem',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}
                 title="Exit Stage View (Esc)"
               >
                 <Minimize2 size={13} />
-                <span>Exit Stage</span>
+                <span className="hide-mobile">Exit Stage</span>
                 <span
+                  className="hide-mobile"
                   style={{
                     fontSize: '0.65rem',
                     opacity: 0.6,
@@ -448,22 +452,26 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 </span>
               </button>
 
-              <span style={{ opacity: 0.25 }}>|</span>
+              <span className="hide-mobile" style={{ opacity: 0.25 }}>|</span>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', minWidth: 0, overflow: 'hidden' }}>
                 <img
                   src="/logo-mark.png"
                   alt="Physora"
-                  style={{ width: 18, height: 18, borderRadius: 4, objectFit: 'cover' }}
+                  className="hide-mobile"
+                  style={{ width: 18, height: 18, borderRadius: 4, objectFit: 'cover', flexShrink: 0 }}
                 />
-                <span style={{ opacity: 0.8, fontWeight: 700 }}>Physora</span>
-                <span style={{ opacity: 0.3 }}>/</span>
-                <span style={{ color: accentColor, fontWeight: 700 }}>{topic.title}</span>
+                <span className="hide-mobile" style={{ opacity: 0.8, fontWeight: 700 }}>Physora</span>
+                <span className="hide-mobile" style={{ opacity: 0.3 }}>/</span>
+                <span style={{ color: accentColor, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {topic.title}
+                </span>
               </div>
             </div>
 
             {/* Center: Simulation Switcher Tabs */}
             <div
+              className="hide-mobile"
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -525,16 +533,18 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 whiteSpace: 'nowrap'
               }}
             >
-              <ChallengeModalWidget
-                challenges={topicChallenges}
-                currentParams={params}
-                onApplyInitialParams={handleApplyChallengeParams}
-                accentColor={accentColor}
-              />
+              <div className="hide-mobile">
+                <ChallengeModalWidget
+                  challenges={topicChallenges}
+                  currentParams={params}
+                  onApplyInitialParams={handleApplyChallengeParams}
+                  accentColor={accentColor}
+                />
+              </div>
 
               <button
                 onClick={() => setIsDualCompare(prev => !prev)}
-                className={`btn btn-sm ${isDualCompare ? 'btn-primary' : 'btn-secondary'}`}
+                className={`btn btn-sm hide-mobile ${isDualCompare ? 'btn-primary' : 'btn-secondary'}`}
                 style={{
                   padding: '4px 9px',
                   fontSize: '0.75rem',
@@ -557,7 +567,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 onClick={() => {
                   document.getElementById('sim-teaching')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary btn-sm hide-mobile"
                 style={{
                   padding: '4px 9px',
                   fontSize: '0.75rem',
@@ -587,7 +597,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 title="Open Context-Aware AI Science Tutor"
               >
                 <Sparkles size={12} />
-                <span>AI Tutor</span>
+                <span className="hide-mobile">AI Tutor</span>
               </button>
 
               <button

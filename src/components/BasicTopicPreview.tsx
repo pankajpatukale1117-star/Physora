@@ -190,11 +190,11 @@ export const BasicTopicPreview: React.FC<BasicTopicPreviewProps> = ({ onSelectTo
 
           <h2
             style={{
-              fontSize: 'clamp(2.2rem, 3.8vw, 3.2rem)',
+              fontSize: 'clamp(1.75rem, 3.8vw, 3.2rem)',
               fontWeight: 800,
-              letterSpacing: '-0.025em',
+              letterSpacing: '-0.01em',
               color: 'var(--text-primary)',
-              lineHeight: 1.18,
+              lineHeight: 1.25,
               marginBottom: 8
             }}
           >

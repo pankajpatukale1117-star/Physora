@@ -1432,50 +1432,72 @@ input[type="range"]::-moz-range-thumb {
   }
 
   /* Minimum 44px by 44px Touch Targets for all interactive buttons and toggles */
-  button,
-  .btn,
-  .phet-stepper-btn,
-  .stepper-btn,
-  input[type="button"],
-  input[type="submit"],
-  input[type="reset"] {
-    min-width: 44px !important;
+  /* Ergonomic Touch Targets for Primary Action Buttons (without blowing out compact toolbars) */
+  .btn-lg,
+  .hero-action-btn,
+  .phet-stepper-btn {
     min-height: 44px !important;
   }
 
-  /* Slider and Thumb 44x44px Touch Targets */
+  /* Compact toolbar and stepper buttons on mobile retain sensible proportions */
+  .stepper-btn,
+  .sim-playback-btn {
+    min-height: 38px;
+    touch-action: manipulation;
+  }
+
+  /* Slider and Thumb Touch Targets */
   input[type="range"],
   .card-range-slider {
-    min-height: 44px !important;
-    height: 44px !important;
+    min-height: 38px !important;
+    height: 38px !important;
     touch-action: manipulation;
   }
 
   input[type="range"]::-webkit-slider-thumb,
   .card-range-slider::-webkit-slider-thumb {
-    width: 28px !important;
-    height: 28px !important;
-    border: 8px solid transparent !important;
+    width: 24px !important;
+    height: 24px !important;
+    border: 4px solid transparent !important;
     background-clip: padding-box !important;
     box-sizing: content-box !important;
   }
 
   input[type="range"]::-moz-range-thumb,
   .card-range-slider::-moz-range-thumb {
-    width: 28px !important;
-    height: 28px !important;
-    border: 8px solid transparent !important;
+    width: 24px !important;
+    height: 24px !important;
+    border: 4px solid transparent !important;
     background-clip: padding-box !important;
     box-sizing: content-box !important;
   }
 
-  /* Toggles & Checkboxes */
-  input[type="checkbox"],
-  input[type="radio"],
-  .toggle-switch,
-  .toggle-switch-slider {
-    min-width: 44px !important;
-    min-height: 44px !important;
+  /* Mobile Typography Anti-Overlap & Readability: generous line-height and normal letter spacing */
+  .text-display,
+  h1 {
+    line-height: 1.25 !important;
+    letter-spacing: -0.01em !important;
+    word-break: break-word;
+  }
+
+  .text-h1,
+  h2 {
+    line-height: 1.28 !important;
+    letter-spacing: -0.01em !important;
+    word-break: break-word;
+  }
+
+  .text-h2,
+  h3 {
+    line-height: 1.32 !important;
+    letter-spacing: normal !important;
+    word-break: break-word;
+  }
+
+  .text-body,
+  p {
+    line-height: 1.6 !important;
+    letter-spacing: normal !important;
   }
 
   .modal-controls-dock {
@@ -1494,6 +1516,11 @@ input[type="range"]::-moz-range-thumb {
   .modal-guide {
     order: 4 !important;
     width: 100% !important;
+  }
+
+  /* Hide duplicate desktop timeline floating bar when mobile bottom sheet is active */
+  .throughline-timeline-bar {
+    display: none !important;
   }
 
   /* Full Graph button location on mobile: avoid top HUD clashing */

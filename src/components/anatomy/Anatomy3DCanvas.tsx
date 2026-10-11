@@ -1074,11 +1074,12 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         </div>
       )}
 
-      {/* Floating 3D Medical Camera Controls Widget */}
+      {/* Floating 3D Medical Camera Controls Widget (Desktop only; on mobile, direct touch gestures are used) */}
       <div
+        className="anatomy-camera-controls hide-mobile"
         style={{
           position: 'absolute',
-          top: 16,
+          top: 72,
           right: 16,
           zIndex: 45,
           display: 'flex',
@@ -1194,14 +1195,14 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 color: '#CBD5E1',
-                fontSize: '0.62rem',
+                fontSize: '0.60rem',
                 fontWeight: 700,
                 textTransform: 'capitalize',
                 cursor: 'pointer'
               }}
               title={`Preset view: ${view}`}
             >
-              {view[0].toUpperCase() + view.slice(1, 3)}
+              {view}
             </button>
           ))}
         </div>

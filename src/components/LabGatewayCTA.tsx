@@ -49,10 +49,10 @@ export const LabGatewayCTA: React.FC<LabGatewayCTAProps> = ({ onEnterLabClick })
 
             <h2
               style={{
-                fontSize: 'clamp(1.8rem, 3.5vw, 2.5rem)',
+                fontSize: 'clamp(1.5rem, 3.5vw, 2.5rem)',
                 fontWeight: 800,
-                letterSpacing: '-0.025em',
-                lineHeight: 1.2,
+                letterSpacing: '-0.01em',
+                lineHeight: 1.25,
                 marginBottom: 14,
                 color: '#FFFFFF'
               }}

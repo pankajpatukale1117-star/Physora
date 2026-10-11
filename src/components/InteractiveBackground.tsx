@@ -287,20 +287,22 @@ export const InteractiveBackground: React.FC = () => {
         ctx.fill();
       }
 
-      // 4. Elegant Minimal Technical Corner Coordinates (Authentic Scientific Reticle)
-      ctx.save();
-      ctx.font = '10px "JetBrains Mono", SFMono-Regular, Menlo, monospace';
-      ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.22)' : 'rgba(100, 116, 139, 0.26)';
-      
-      // Top right coordinate tag
-      ctx.textAlign = 'right';
-      ctx.fillText(`FIELD_REF // [${width}px × ${height}px]`, width - 24, 28);
-      ctx.fillText('STATE: STEADY // HARMONICS: 3.0', width - 24, 42);
+      // 4. Elegant Minimal Technical Corner Coordinates (Desktop only to prevent mobile UI text collision)
+      if (width >= 860) {
+        ctx.save();
+        ctx.font = '10px "JetBrains Mono", SFMono-Regular, Menlo, monospace';
+        ctx.fillStyle = isDark ? 'rgba(148, 163, 184, 0.22)' : 'rgba(100, 116, 139, 0.26)';
+        
+        // Top right coordinate tag
+        ctx.textAlign = 'right';
+        ctx.fillText(`FIELD_REF // [${width}px × ${height}px]`, width - 24, 28);
+        ctx.fillText('STATE: STEADY // HARMONICS: 3.0', width - 24, 42);
 
-      // Bottom left reference tag
-      ctx.textAlign = 'left';
-      ctx.fillText('PHY_GRID: 56mm • SCALE: 1:1', 24, height - 20);
-      ctx.restore();
+        // Bottom left reference tag
+        ctx.textAlign = 'left';
+        ctx.fillText('PHY_GRID: 56mm • SCALE: 1:1', 24, height - 20);
+        ctx.restore();
+      }
 
       animId = requestAnimationFrame(render);
     };

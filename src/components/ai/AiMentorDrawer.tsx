@@ -176,7 +176,7 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
           background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(124, 58, 237, 0.08))'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1, overflow: 'hidden' }}>
           <div
             style={{
               width: '36px',
@@ -187,14 +187,15 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               color: '#FFFFFF',
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
+              flexShrink: 0
             }}
           >
             <Sparkles size={18} />
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
                 Arya (AI Study Buddy)
               </span>
               <span
@@ -204,7 +205,8 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
                   padding: '2px 7px',
                   borderRadius: '10px',
                   background: tier !== 'FREE' ? '#10B98120' : remainingAiQueries > 0 ? '#2563EB20' : 'rgba(239, 68, 68, 0.2)',
-                  color: tier !== 'FREE' ? '#10B981' : remainingAiQueries > 0 ? '#2563EB' : '#EF4444'
+                  color: tier !== 'FREE' ? '#10B981' : remainingAiQueries > 0 ? '#2563EB' : '#EF4444',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {tier !== 'FREE' ? 'PRO UNLIMITED' : `${remainingAiQueries}/3 FREE`}
@@ -338,7 +340,7 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
                 boxShadow: msg.role === 'user' ? '0 4px 12px rgba(37, 99, 235, 0.25)' : 'none'
               }}
             >
-              <div style={{ whiteSpace: 'pre-line' }}>{msg.text}</div>
+              <div style={{ whiteSpace: 'pre-line', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{msg.text}</div>
 
               {/* Render Math formula card if present */}
               {msg.mathFormula && (
@@ -349,7 +351,9 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
                     background: msg.role === 'user' ? 'rgba(255,255,255,0.18)' : 'var(--bg-card)',
                     borderRadius: '8px',
                     border: '1px solid var(--border-subtle)',
-                    fontSize: '0.94rem'
+                    fontSize: '0.94rem',
+                    overflowX: 'auto',
+                    maxWidth: '100%'
                   }}
                 >
                   <MathView math={msg.mathFormula} block={false} />

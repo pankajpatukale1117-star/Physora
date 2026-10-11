@@ -128,6 +128,7 @@ export const PhysoraLogo: React.FC<PhysoraLogoProps> = ({
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div
+          className="physora-brand-text"
           style={{
             fontSize: `${Math.max(1.15, size * 0.038)}rem`,
             fontWeight: 900,

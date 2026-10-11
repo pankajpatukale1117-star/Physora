@@ -555,8 +555,9 @@ export const ProjectileMotionLab: React.FC<ProjectileMotionLabProps> = ({ isComp
 
       {/* Main Workspace (Canvas + Parameters Drawer) */}
       <div style={{ flex: 1, position: 'relative', display: 'flex', overflow: 'hidden' }}>
-        {/* Left Floating Parameter Controls */}
+        {/* Left Floating Parameter Controls (Desktop only; on mobile, parameters are in Bottom Sheet) */}
         <div
+          className="desktop-floating-hud hide-mobile"
           style={{
             position: 'absolute',
             top: 14,
