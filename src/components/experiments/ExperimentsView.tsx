@@ -1,3 +1,4 @@
+import { Stepper } from '../Stepper';
 import React, { useState, useEffect } from 'react';
 import {
   FlaskConical,
@@ -43,91 +44,7 @@ interface LabTrialRecord {
   variance: string;
 }
 
-const NumericControlBadge: React.FC<{
-  min: number;
-  max: number;
-  step: number;
-  value: number;
-  unit?: string;
-  accentColor: string;
-  onChange: (val: number) => void;
-}> = ({ min, max, step, value, unit, accentColor, onChange }) => {
-  const [prevVal, setPrevVal] = useState(value);
-  const [text, setText] = useState(String(value));
-  const [isEditing, setIsEditing] = useState(false);
 
-  if (value !== prevVal) {
-    setPrevVal(value);
-    if (!isEditing) {
-      setText(String(value));
-    }
-  }
-
-  const commit = () => {
-    setIsEditing(false);
-    const parsed = parseFloat(text);
-    if (!isNaN(parsed)) {
-      const clamped = Math.min(max, Math.max(min, parsed));
-      onChange(clamped);
-      setText(String(clamped));
-    } else {
-      setText(String(value));
-    }
-  };
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-      <input
-        type="number"
-        min={min}
-        max={max}
-        step={step}
-        value={text}
-        onFocus={() => setIsEditing(true)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            (e.target as HTMLInputElement).blur();
-          }
-        }}
-        onChange={(e) => {
-          setText(e.target.value);
-          const p = parseFloat(e.target.value);
-          if (!isNaN(p)) {
-            onChange(p);
-          }
-        }}
-        className="font-mono"
-        style={{
-          width: '74px',
-          padding: '2px 8px',
-          textAlign: 'right',
-          fontSize: '0.84rem',
-          fontWeight: 700,
-          color: '#FFFFFF',
-          background: 'rgba(0, 0, 0, 0.45)',
-          border: isEditing ? `1.5px solid ${accentColor}` : '1px solid rgba(255, 255, 255, 0.15)',
-          borderRadius: 'var(--radius-sm)',
-          outline: 'none',
-          boxShadow: isEditing ? `0 0 0 2px ${accentColor}40` : 'none',
-          transition: 'all 0.15s ease'
-        }}
-      />
-      {unit && (
-        <span
-          className="font-mono"
-          style={{
-            fontSize: '0.78rem',
-            color: accentColor,
-            fontWeight: 700
-          }}
-        >
-          {unit}
-        </span>
-      )}
-    </div>
-  );
-};
 
 const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
   experiment,
@@ -498,47 +415,17 @@ const ExperimentStudioView: React.FC<ExperimentStudioViewProps> = ({
                   <div
                     key={ctrl.id}
                     className={`control-card ${isHiddenOnMobile ? 'hide-mobile' : ''}`}
-                    style={{
-                      padding: '14px',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'rgba(0, 0, 0, 0.25)',
-                      border: '1px solid var(--border-subtle)'
-                    }}
                   >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 10
-                      }}
-                    >
-                      <label style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                        {ctrl.label}
-                      </label>
-                      <NumericControlBadge
-                        min={ctrl.min}
-                        max={ctrl.max}
-                        step={ctrl.step}
-                        value={val}
-                        unit={ctrl.unit}
-                        accentColor={experiment.accentColor}
-                        onChange={(newV) => handleParamChange(ctrl.id, newV)}
-                      />
-                    </div>
-
-                    <input
-                      type="range"
+                    <Stepper
+                      id={ctrl.id}
+                      label={ctrl.label}
+                      value={val}
                       min={ctrl.min}
                       max={ctrl.max}
                       step={ctrl.step}
-                      value={val}
-                      onChange={(e) => handleParamChange(ctrl.id, parseFloat(e.target.value))}
-                      style={{
-                        width: '100%',
-                        cursor: 'pointer',
-                        accentColor: experiment.accentColor
-                      }}
+                      unit={ctrl.unit}
+                      accentColor={experiment.accentColor}
+                      onChange={(newV) => handleParamChange(ctrl.id, newV)}
                     />
 
                     {/* Preset buttons */}

@@ -754,7 +754,7 @@ input[type="range"]::-moz-range-thumb {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  touch-action: pan-y !important;
+  touch-action: none !important;
   user-select: none;
 }
 
@@ -1396,3 +1396,112 @@ input[type="range"]::-moz-range-thumb {
 }
 
 
+
+
+/* ==========================================================================
+   Mobile-First Strict Vertical Layout & Bottom Sheet Architecture (< 768px)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .modal-layout-container {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+
+  /* Anchored Simulation Canvas: stays at top and occupies at least 60% vertical viewport */
+  .modal-canvas-box,
+  #sim-stage-viewport,
+  .simulation-canvas-wrapper,
+  .sim-stage-canvas-container {
+    order: 1 !important;
+    height: 60vh !important;
+    min-height: 60vh !important;
+    width: 100% !important;
+    flex: 0 0 60vh !important;
+    touch-action: none !important;
+  }
+
+  /* Hide left and right sidebars on mobile screens */
+  .throughline-hud-panel,
+  .sidebar-left,
+  .sidebar-right,
+  .desktop-controls-drawer,
+  .desktop-telemetry-drawer {
+    display: none !important;
+  }
+
+  /* Minimum 44px by 44px Touch Targets for all interactive buttons and toggles */
+  button,
+  .btn,
+  .phet-stepper-btn,
+  .stepper-btn,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  /* Slider and Thumb 44x44px Touch Targets */
+  input[type="range"],
+  .card-range-slider {
+    min-height: 44px !important;
+    height: 44px !important;
+    touch-action: manipulation;
+  }
+
+  input[type="range"]::-webkit-slider-thumb,
+  .card-range-slider::-webkit-slider-thumb {
+    width: 28px !important;
+    height: 28px !important;
+    border: 8px solid transparent !important;
+    background-clip: padding-box !important;
+    box-sizing: content-box !important;
+  }
+
+  input[type="range"]::-moz-range-thumb,
+  .card-range-slider::-moz-range-thumb {
+    width: 28px !important;
+    height: 28px !important;
+    border: 8px solid transparent !important;
+    background-clip: padding-box !important;
+    box-sizing: content-box !important;
+  }
+
+  /* Toggles & Checkboxes */
+  input[type="checkbox"],
+  input[type="radio"],
+  .toggle-switch,
+  .toggle-switch-slider {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .modal-controls-dock {
+    order: 2 !important;
+    width: 100% !important;
+  }
+
+  .modal-telemetry-box {
+    order: 3 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .modal-guide {
+    order: 4 !important;
+    width: 100% !important;
+  }
+
+  /* Full Graph button location on mobile: avoid top HUD clashing */
+  .sim-full-view-btn {
+    top: auto !important;
+    bottom: 12px !important;
+    right: 12px !important;
+    padding: 6px 12px !important;
+    font-size: 0.72rem !important;
+  }
+}

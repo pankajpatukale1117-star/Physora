@@ -1,3 +1,5 @@
+import { Stepper } from './Stepper';
+import { BottomSheet } from './BottomSheet';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
@@ -9,8 +11,6 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
-  ChevronUp,
-  ChevronDown,
   HelpCircle,
   Award,
   Maximize2,
@@ -20,8 +20,6 @@ import {
   Layers,
   ArrowDown,
   ArrowUp,
-  Minus,
-  Plus,
   StepForward,
   Gauge,
   Sparkles,
@@ -74,221 +72,20 @@ const NumericControlItem: React.FC<NumericControlItemProps> = ({
   isHighlighted = false,
   highlightLabel
 }) => {
-  const [prevValue, setPrevValue] = useState(value);
-  const [textValue, setTextValue] = useState(String(value));
-  const [isFocused, setIsFocused] = useState(false);
-
-  if (value !== prevValue) {
-    setPrevValue(value);
-    if (!isFocused) {
-      setTextValue(String(value));
-    }
-  }
-
-  const precision = control.step.toString().includes('.')
-    ? control.step.toString().split('.')[1].length
-    : 0;
-
-  const handleStepDown = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    const nextVal = Math.max(control.min, parseFloat((value - control.step).toFixed(precision)));
-    setTextValue(String(nextVal));
-    onChange(nextVal);
-  };
-
-  const handleStepUp = (e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    const nextVal = Math.min(control.max, parseFloat((value + control.step).toFixed(precision)));
-    setTextValue(String(nextVal));
-    onChange(nextVal);
-  };
-
-  const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value;
-    setTextValue(raw);
-    const parsed = parseFloat(raw);
-    if (!isNaN(parsed)) {
-      onChange(parsed);
-    }
-  };
-
-  const handleBlur = () => {
-    setIsFocused(false);
-    const parsed = parseFloat(textValue);
-    if (isNaN(parsed)) {
-      setTextValue(String(control.defaultValue));
-      onChange(control.defaultValue);
-    } else {
-      const clamped = Math.min(control.max, Math.max(control.min, parsed));
-      setTextValue(String(clamped));
-      onChange(clamped);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      (e.target as HTMLInputElement).blur();
-    }
-  };
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setTextValue(String(val));
-    onChange(val);
-  };
-
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        padding: '12px 14px',
-        borderRadius: 'var(--radius-md)',
-        background: isHighlighted ? 'rgba(0, 240, 255, 0.08)' : 'var(--bg-glass-card)',
-        border: isHighlighted ? '1.5px solid var(--electric-blue)' : '1px solid var(--border-subtle)',
-        boxShadow: isHighlighted ? '0 0 16px rgba(0, 240, 255, 0.35)' : 'var(--shadow-xs)',
-        transition: 'all 0.25s ease'
-      }}
-    >
-      {isHighlighted && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            padding: '2px 8px',
-            borderRadius: 'var(--radius-pill)',
-            background: 'rgba(0, 240, 255, 0.18)',
-            color: 'var(--electric-blue)',
-            fontSize: '0.68rem',
-            fontWeight: 800,
-            letterSpacing: '0.04em'
-          }}
-        >
-          <span>✨ {highlightLabel ? `Governs ${highlightLabel}` : 'Governs Equation'}</span>
-        </div>
-      )}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span
-          style={{
-            fontSize: '0.82rem',
-            fontWeight: 700,
-            color: isHighlighted ? 'var(--electric-blue)' : 'var(--text-primary)'
-          }}
-        >
-          {control.label}
-        </span>
-
-        {/* Interactive Numeric Input Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <input
-            type="number"
-            min={control.min}
-            max={control.max}
-            step={control.step}
-            value={textValue}
-            onChange={handleTextChange}
-            onFocus={() => setIsFocused(true)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            title={`Click to type number (${control.min} to ${control.max})`}
-            className="control-number-badge-input font-mono"
-            style={{
-              width: '74px',
-              padding: '4px 6px',
-              textAlign: 'right',
-              fontSize: '0.84rem',
-              fontWeight: 700,
-              fontFamily: 'var(--font-mono)',
-              color: 'var(--text-primary)',
-              background: 'var(--bg-subtle)',
-              border: isFocused ? `1.5px solid ${accentColor}` : '1px solid var(--border-medium)',
-              borderRadius: 'var(--radius-xs)',
-              outline: 'none',
-              boxShadow: isFocused ? `0 0 0 2px ${accentColor}25` : 'none',
-              transition: 'all 0.15s ease'
-            }}
-          />
-          {control.unit && (
-            <span
-              style={{
-                fontSize: '0.74rem',
-                color: 'var(--text-secondary)',
-                fontWeight: 600,
-                minWidth: '22px'
-              }}
-            >
-              {control.unit}
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Touch Ergonomic Stepper Slider Row: 44x44px [-] | Slider | 44x44px [+] */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <button
-          type="button"
-          onClick={handleStepDown}
-          disabled={value <= control.min}
-          className="phet-stepper-btn"
-          title={`Decrease by ${control.step}`}
-          aria-label={`Decrease ${control.label}`}
-          style={{
-            minWidth: '44px',
-            minHeight: '44px',
-            width: '44px',
-            height: '44px',
-            flexShrink: 0
-          }}
-        >
-          <Minus size={16} strokeWidth={2.8} />
-        </button>
-
-        <div style={{ flex: 1, minHeight: '44px', display: 'flex', alignItems: 'center' }}>
-          <input
-            type="range"
-            min={control.min}
-            max={control.max}
-            step={control.step}
-            value={value}
-            onChange={handleSliderChange}
-            className="card-range-slider"
-            style={{
-              width: '100%',
-              minHeight: '44px',
-              cursor: 'pointer',
-              accentColor
-            }}
-          />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleStepUp}
-          disabled={value >= control.max}
-          className="phet-stepper-btn"
-          title={`Increase by ${control.step}`}
-          aria-label={`Increase ${control.label}`}
-          style={{
-            minWidth: '44px',
-            minHeight: '44px',
-            width: '44px',
-            height: '44px',
-            flexShrink: 0
-          }}
-        >
-          <Plus size={16} strokeWidth={2.8} />
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-        <span>Min: {control.min}</span>
-        <span>Step: ±{control.step}</span>
-        <span>Max: {control.max}</span>
-      </div>
-    </div>
+    <Stepper
+      id={control.id}
+      label={control.label}
+      value={value}
+      min={control.min}
+      max={control.max}
+      step={control.step}
+      unit={control.unit}
+      accentColor={accentColor}
+      onChange={onChange}
+      isHighlighted={isHighlighted}
+      highlightLabel={highlightLabel}
+    />
   );
 };
 
@@ -363,8 +160,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
   // Mobile Bottom Sheet State: 'peek' | 'half' | 'expanded'
   const [bottomSheetSnap, setBottomSheetSnap] = useState<'peek' | 'half' | 'expanded'>('peek');
-  const [touchStartY, setTouchStartY] = useState<number | null>(null);
-
+  
   // Mobile Dual Compare: Tabbed Stack View ('A' | 'B')
   const [activeMobileCompareView, setActiveMobileCompareView] = useState<'A' | 'B'>('A');
 
@@ -1131,149 +927,142 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
           {/* Left Controls: Draggable Bottom Sheet for Mobile, Left Drawer for Desktop */}
           {isMobile ? (
-            /* Mobile Bottom Sheet (Google Maps Style) */
-            <div
-              className="mobile-bottom-sheet"
-              style={{
-                position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: bottomSheetSnap === 'peek' ? '58px' : bottomSheetSnap === 'half' ? '46vh' : '82vh',
-                zIndex: 65,
-                background: 'rgba(15, 23, 42, 0.96)',
-                borderTop: '1px solid rgba(255, 255, 255, 0.16)',
-                borderTopLeftRadius: 18,
-                borderTopRightRadius: 18,
-                boxShadow: '0 -8px 32px rgba(0, 0, 0, 0.65)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'height 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}
-            >
-              {/* Drag Handle & Header */}
-              <div
-                onTouchStart={(e) => setTouchStartY(e.touches[0].clientY)}
-                onTouchMove={(e) => {
-                  if (touchStartY === null) return;
-                  const delta = touchStartY - e.touches[0].clientY;
-                  if (delta > 40) {
-                    setBottomSheetSnap(prev => prev === 'peek' ? 'half' : 'expanded');
-                    setTouchStartY(null);
-                  } else if (delta < -40) {
-                    setBottomSheetSnap(prev => prev === 'expanded' ? 'half' : 'peek');
-                    setTouchStartY(null);
-                  }
-                }}
-                onTouchEnd={() => setTouchStartY(null)}
-                onClick={() => {
-                  setBottomSheetSnap(prev => prev === 'peek' ? 'half' : prev === 'half' ? 'expanded' : 'peek');
-                }}
-                style={{
-                  padding: '8px 16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  borderBottom: bottomSheetSnap === 'peek' ? 'none' : '1px solid rgba(255, 255, 255, 0.08)'
-                }}
-              >
-                <div style={{ width: 44, height: 4, borderRadius: 2, background: 'rgba(255, 255, 255, 0.4)', marginBottom: 6 }} />
-                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                    <Sliders size={14} color={accentColor} />
-                    <span>Controls ({currentSim.controls.length})</span>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--text-tertiary)', fontWeight: 500 }}>
-                      ({bottomSheetSnap.toUpperCase()})
-                    </span>
-                  </div>
-                  <div style={{ color: 'var(--text-tertiary)' }}>
-                    {bottomSheetSnap === 'peek' ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Sheet Controls Body */}
-              {bottomSheetSnap !== 'peek' && (
-                <div
-                  style={{
-                    flex: 1,
-                    overflowY: 'auto',
-                    padding: '12px 16px 80px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 12
-                  }}
-                >
-                  {isDualCompare && (
-                    <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.06)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
-                      <button
-                        onClick={() => setActiveCompareTab('A')}
-                        style={{
-                          flex: 1,
-                          padding: '6px 8px',
-                          borderRadius: 'var(--radius-xs)',
-                          border: 'none',
-                          background: activeCompareTab === 'A' ? 'var(--electric-blue)' : 'transparent',
-                          color: activeCompareTab === 'A' ? '#000000' : 'var(--text-secondary)',
-                          fontSize: '0.74rem',
-                          fontWeight: 800
-                        }}
-                      >
-                        Lab A (Ref)
-                      </button>
-                      <button
-                        onClick={() => setActiveCompareTab('B')}
-                        style={{
-                          flex: 1,
-                          padding: '6px 8px',
-                          borderRadius: 'var(--radius-xs)',
-                          border: 'none',
-                          background: activeCompareTab === 'B' ? '#f59e0b' : 'transparent',
-                          color: activeCompareTab === 'B' ? '#000000' : 'var(--text-secondary)',
-                          fontSize: '0.74rem',
-                          fontWeight: 800
-                        }}
-                      >
-                        Lab B (Hyp)
-                      </button>
-                    </div>
-                  )}
-
-                  {currentSim.controls.map((ctrl) => {
-                    const isTabB = isDualCompare && activeCompareTab === 'B';
-                    const val = isTabB ? (paramsB[ctrl.id] ?? ctrl.defaultValue) : (params[ctrl.id] ?? ctrl.defaultValue);
-                    const onValChange = isTabB ? (v: number) => handleControlChangeB(ctrl.id, v) : (v: number) => handleControlChange(ctrl.id, v);
-                    const activeAccent = isTabB ? '#f59e0b' : accentColor;
-
-                    return (
-                      <NumericControlItem
-                        key={ctrl.id}
-                        control={ctrl}
-                        value={val}
-                        onChange={onValChange}
-                        accentColor={activeAccent}
-                        isHighlighted={highlightedParamId === ctrl.id}
-                        highlightLabel={highlightedFormulaLatex ? `Governs: ${highlightedFormulaLatex}` : undefined}
-                      />
-                    );
-                  })}
-
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                    <button
-                      onClick={handleReset}
-                      className="btn btn-secondary btn-sm"
-                      style={{ fontSize: '0.76rem', gap: 6, minHeight: 40 }}
+            <BottomSheet
+              snap={bottomSheetSnap}
+              onSnapChange={setBottomSheetSnap}
+              title="Controls & Telemetry"
+              badgeCount={currentSim.controls.length}
+              accentColor={accentColor}
+              telemetrySection={
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
+                  {currentSim.telemetryLabels.map((tLabel) => (
+                    <div
+                      key={tLabel.key}
+                      style={{
+                        padding: '6px 10px',
+                        borderRadius: 'var(--radius-sm, 8px)',
+                        background: 'rgba(15, 23, 42, 0.7)',
+                        border: '1px solid rgba(56, 189, 248, 0.2)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2
+                      }}
                     >
-                      <RotateCcw size={14} />
-                      <span>Reset Parameters</span>
+                      <span style={{ fontSize: '0.64rem', color: 'var(--text-muted, #94a3b8)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        {tLabel.label}
+                      </span>
+                      {isDualCompare ? (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontFamily: 'var(--font-mono, monospace)' }}>
+                          <span style={{ color: '#38BDF8', fontWeight: 700 }}>A: {telemetry[tLabel.key] || '—'}</span>
+                          <span style={{ color: '#fbbf24', fontWeight: 700 }}>B: {telemetryB[tLabel.key] || '—'}</span>
+                        </div>
+                      ) : (
+                        <span style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.92rem', fontWeight: 700, color: '#38BDF8' }}>
+                          {telemetry[tLabel.key] || '—'}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              }
+              footerActions={
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                  <button
+                    onClick={handleReset}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.76rem', gap: 6, minHeight: 44, minWidth: 44, padding: '0 14px' }}
+                  >
+                    <RotateCcw size={14} />
+                    <span>Reset Controls</span>
+                  </button>
+                  <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Throughline Engine</span>
+                </div>
+              }
+            >
+              {isDualCompare && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+                  <div style={{ display: 'flex', gap: 6, background: 'rgba(255,255,255,0.06)', padding: 4, borderRadius: 'var(--radius-sm)' }}>
+                    <button
+                      onClick={() => setActiveCompareTab('A')}
+                      style={{
+                        flex: 1,
+                        minHeight: 44,
+                        padding: '6px 8px',
+                        borderRadius: 'var(--radius-xs)',
+                        border: 'none',
+                        background: activeCompareTab === 'A' ? 'var(--electric-blue)' : 'transparent',
+                        color: activeCompareTab === 'A' ? '#000000' : 'var(--text-secondary)',
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Lab A (Ref)
+                    </button>
+                    <button
+                      onClick={() => setActiveCompareTab('B')}
+                      style={{
+                        flex: 1,
+                        minHeight: 44,
+                        padding: '6px 8px',
+                        borderRadius: 'var(--radius-xs)',
+                        border: 'none',
+                        background: activeCompareTab === 'B' ? '#f59e0b' : 'transparent',
+                        color: activeCompareTab === 'B' ? '#000000' : 'var(--text-secondary)',
+                        fontSize: '0.76rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Lab B (Hyp)
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+                    <button
+                      onClick={() => handleApplyComparePreset('sync')}
+                      className="btn btn-secondary btn-xs"
+                      style={{ fontSize: '0.70rem', minHeight: 44, padding: '0 10px', whiteSpace: 'nowrap' }}
+                    >
+                      Sync A → B
+                    </button>
+                    <button
+                      onClick={() => handleApplyComparePreset('boost')}
+                      className="btn btn-secondary btn-xs"
+                      style={{ fontSize: '0.70rem', minHeight: 44, padding: '0 10px', whiteSpace: 'nowrap' }}
+                    >
+                      +50% Primary
+                    </button>
+                    <button
+                      onClick={() => handleApplyComparePreset('extremes')}
+                      className="btn btn-secondary btn-xs"
+                      style={{ fontSize: '0.70rem', minHeight: 44, padding: '0 10px', whiteSpace: 'nowrap' }}
+                    >
+                      Min vs Max
                     </button>
                   </div>
                 </div>
               )}
-            </div>
+
+              {currentSim.controls.map((ctrl) => {
+                const isTabB = isDualCompare && activeCompareTab === 'B';
+                const val = isTabB ? (paramsB[ctrl.id] ?? ctrl.defaultValue) : (params[ctrl.id] ?? ctrl.defaultValue);
+                const onValChange = isTabB ? (v: number) => handleControlChangeB(ctrl.id, v) : (v: number) => handleControlChange(ctrl.id, v);
+                const activeAccent = isTabB ? '#f59e0b' : accentColor;
+
+                return (
+                  <NumericControlItem
+                    key={ctrl.id}
+                    control={ctrl}
+                    value={val}
+                    onChange={onValChange}
+                    accentColor={activeAccent}
+                    isHighlighted={highlightedParamId === ctrl.id}
+                    highlightLabel={highlightedFormulaLatex ? `Governs: ${highlightedFormulaLatex}` : undefined}
+                  />
+                );
+              })}
+            </BottomSheet>
           ) : (
             /* Desktop Persistent Left Parameter Drawer */
             leftDrawerOpen ? (
@@ -1487,8 +1276,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             )
           )}
 
-          {/* Floating Collapsible Right Telemetry Drawer */}
-          {rightDrawerOpen ? (
+          {/* Floating Collapsible Right Telemetry Drawer (Hidden on Mobile) */}
+          {!isMobile && (rightDrawerOpen ? (
             <div
               className="throughline-hud-panel"
               style={{
@@ -1678,7 +1467,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               <Activity size={14} color="#38BDF8" />
               <span>Metrics ({currentSim.telemetryLabels.length})</span>
             </button>
-          )}
+          ))}
 
           {/* Floating Bottom Timeline / Scrubber Pill */}
           <div
