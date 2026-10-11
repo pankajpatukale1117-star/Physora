@@ -79,6 +79,7 @@ export const FeaturedExperiments: React.FC<FeaturedExperimentsProps> = ({
 
         {/* 8 Digital Experiments Grid */}
         <div
+          className="featured-experiments-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',

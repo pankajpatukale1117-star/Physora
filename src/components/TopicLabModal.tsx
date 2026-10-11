@@ -593,7 +593,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsReportModalOpen(true)}
-                className="btn btn-sm"
+                className="btn btn-sm hide-mobile"
                 style={{
                   background: 'rgba(16, 185, 129, 0.15)',
                   border: '1px solid rgba(16, 185, 129, 0.4)',
@@ -613,7 +613,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               <button
                 type="button"
                 onClick={handleOpenPresenter}
-                className="btn btn-sm"
+                className="btn btn-sm hide-mobile"
                 style={{
                   background: 'rgba(239, 68, 68, 0.15)',
                   border: '1px solid rgba(239, 68, 68, 0.4)',

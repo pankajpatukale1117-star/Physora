@@ -19,6 +19,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 }) => {
   return (
     <section
+      className="hero-section"
       style={{
         position: 'relative',
         padding: '110px 0 50px',
@@ -51,7 +52,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 alt="Physora Emblem"
                 style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover' }}
               />
-              <span>RESEARCH-BASED STEM EDUCATION • 100% FREE &amp; ACCESSIBLE</span>
+              <span>RESEARCH-BASED STEM EDUCATION<span className="hide-mobile"> • 100% FREE &amp; ACCESSIBLE</span></span>
             </span>
           </div>
 
@@ -86,6 +87,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
           {/* Primary Action Buttons */}
           <div
+            className="hero-actions-group"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -96,7 +98,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
           >
             <button
               onClick={onExploreSimulations}
-              className="btn btn-lg"
+              className="btn btn-lg hero-action-btn"
               style={{
                 minWidth: 200,
                 background: '#FF6600',
@@ -116,7 +118,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {onOpenAnatomy && (
               <button
                 onClick={onOpenAnatomy}
-                className="btn btn-lg"
+                className="btn btn-lg hero-action-btn"
                 style={{
                   minWidth: 200,
                   background: 'rgba(16, 185, 129, 0.15)',
@@ -137,7 +139,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             <button
               onClick={onExploreExperiments}
-              className="btn btn-secondary btn-lg"
+              className="btn btn-secondary btn-lg hero-action-btn"
               style={{ minWidth: 190, borderRadius: 'var(--radius-pill)', fontWeight: 700 }}
             >
               <FlaskConical size={18} color="var(--accent-teal)" />
@@ -146,7 +148,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             <button
               onClick={onOpenFormulas}
-              className="btn btn-tertiary"
+              className="btn btn-tertiary hero-action-btn"
               style={{
                 gap: 6,
                 fontSize: '0.88rem',

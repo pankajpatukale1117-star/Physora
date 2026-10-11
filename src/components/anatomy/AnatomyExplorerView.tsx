@@ -961,6 +961,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       {/* 3. ANATOMICAL LAYERS & TRANSPARENCY DRAWER (Docked Left) */}
       {isLayersPanelOpen && (
         <div
+          className="anatomy-layers-drawer"
           style={{
             position: 'absolute',
             top: 72,
@@ -1154,6 +1155,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       {/* 4. FLOATING ORGAN INFORMATION CARD / DOSSIER (Docked Right) */}
       {selectedStructure ? (
         <aside
+          className="anatomy-aside-drawer"
           style={{
             position: 'absolute',
             top: 72,

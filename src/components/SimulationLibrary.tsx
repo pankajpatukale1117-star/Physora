@@ -109,6 +109,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
 
         {/* PhET Subject Category Cards (The Subject Bar) */}
         <div
+          className="phet-subject-grid"
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
@@ -528,6 +529,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
         {/* FEATURED: 3D HUMAN ANATOMY EXPLORER HERO CARD (Core of Physora Biology) */}
         {(selectedSubject === 'Biology' || selectedSubject === 'All') && onOpenAnatomy && (
           <div
+            className="anatomy-featured-banner"
             style={{
               marginBottom: 32,
               padding: '28px 32px',
@@ -710,6 +712,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
           </div>
         ) : (
           <div
+            className="simulation-library-grid"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',

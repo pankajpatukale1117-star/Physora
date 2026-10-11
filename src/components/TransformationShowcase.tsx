@@ -454,7 +454,7 @@ export const TransformationShowcase: React.FC<TransformationShowcaseProps> = ({
 
         {/* Dynamic Interactive Stage Spotlight */}
         <div
-          className="glass-card"
+          className="glass-card transformation-spotlight-card"
           style={{
             maxWidth: 1040,
             margin: '0 auto 40px',

@@ -330,7 +330,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="show-mobile-only nav-hamburger-btn"
-            style={{ color: '#FFFFFF', background: 'transparent', border: 'none', cursor: 'pointer' }}
+            style={{
+              color: '#FFFFFF',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              width: 44,
+              height: 44,
+              minWidth: 44,
+              minHeight: 44,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
             aria-label={isMobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
             aria-expanded={isMobileMenuOpen}
           >
@@ -346,9 +358,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           style={{
             flexDirection: 'column',
             width: '100%',
+            maxHeight: 'calc(100dvh - 64px)',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
             background: 'var(--bg-surface)',
             borderTop: '1px solid var(--border-subtle)',
-            padding: '16px 20px 24px',
+            padding: '16px 20px calc(24px + env(safe-area-inset-bottom, 0px))',
             boxShadow: 'var(--shadow-lg)'
           }}
         >

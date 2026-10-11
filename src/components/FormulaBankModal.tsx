@@ -743,7 +743,7 @@ export const FormulaBankModal: React.FC<FormulaBankModalProps> = ({ onClose, onS
           }}
         >
           {/* Category Tabs */}
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div className="mobile-horizontal-scroll" style={{ display: 'flex', gap: 6 }}>
             {(['All', 'Physics', 'Chemistry', 'Mathematics', 'Biology'] as const).map((cat) => (
               <button
                 key={cat}

@@ -204,6 +204,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       }}
     >
       <div
+        className="pricing-modal-window"
         style={{
           width: '100%',
           maxWidth: '1060px',
@@ -348,7 +349,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         )}
 
         {/* Content Area */}
-        <div style={{ padding: '24px 32px 32px', overflowY: 'auto', flex: 1 }}>
+        <div className="pricing-modal-content" style={{ padding: '24px 32px 32px', overflowY: 'auto', flex: 1 }}>
           {/* Controls Bar: Currency + Billing Cycle + Tabs */}
           <div
             style={{
@@ -559,6 +560,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           {/* TAB 1: STANDARD TIER CARDS */}
           {activeTab === 'plans' && (
             <div
+              className="pricing-plans-grid"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))',
