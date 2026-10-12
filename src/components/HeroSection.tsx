@@ -1,6 +1,7 @@
 import React from 'react';
-import { ArrowRight, FlaskConical, Atom, BookOpen, CheckCircle2, Dna } from 'lucide-react';
+import { ArrowRight, FlaskConical, Atom, BookOpen, CheckCircle2, Dna, Lock } from 'lucide-react';
 import { HeroLiveSandbox } from './HeroLiveSandbox';
+import { useSubscription } from '../context/SubscriptionContext';
 
 interface HeroSectionProps {
   onEnterLabClick: () => void;
@@ -17,6 +18,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onOpenFormulas,
   onOpenAnatomy
 }) => {
+  const { canAccessAnatomy, triggerPaywall } = useSubscription();
   return (
     <section
       className="hero-section"
@@ -117,13 +119,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             {onOpenAnatomy && (
               <button
-                onClick={onOpenAnatomy}
+                onClick={() => {
+                  if (!canAccessAnatomy()) {
+                    triggerPaywall('anatomy_explorer', 'PRO');
+                  } else {
+                    onOpenAnatomy();
+                  }
+                }}
                 className="btn btn-lg hero-action-btn"
                 style={{
                   minWidth: 200,
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  border: '1px solid rgba(16, 185, 129, 0.35)',
-                  color: '#059669',
+                  background: !canAccessAnatomy() ? 'linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(124, 58, 237, 0.12))' : 'rgba(16, 185, 129, 0.15)',
+                  border: !canAccessAnatomy() ? '1px solid rgba(59, 130, 246, 0.35)' : '1px solid rgba(16, 185, 129, 0.35)',
+                  color: !canAccessAnatomy() ? '#2563EB' : '#059669',
                   fontWeight: 800,
                   borderRadius: 'var(--radius-pill)',
                   cursor: 'pointer',
@@ -132,8 +140,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   gap: 8
                 }}
               >
-                <Dna size={18} />
+                {!canAccessAnatomy() ? <Lock size={17} /> : <Dna size={18} />}
                 <span>3D Human Anatomy</span>
+                {!canAccessAnatomy() && (
+                  <span
+                    style={{
+                      fontSize: '0.62rem',
+                      fontWeight: 800,
+                      padding: '1px 6px',
+                      borderRadius: 10,
+                      background: '#2563EB',
+                      color: '#FFFFFF'
+                    }}
+                  >
+                    PRO
+                  </span>
+                )}
               </button>
             )}
 

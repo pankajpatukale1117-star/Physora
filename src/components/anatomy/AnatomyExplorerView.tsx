@@ -49,7 +49,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   onClose,
   initialStructureId = null
 }) => {
-  const { canUseEcorcheModel, triggerPaywall } = useSubscription();
+  const { canAccessAnatomy, canUseEcorcheModel, triggerPaywall } = useSubscription();
   // Selected Structure & Isolation
   const [selectedStructureId, setSelectedStructureId] = useState<string | null>(() => {
     if (initialStructureId && ANATOMY_STRUCTURES[initialStructureId]) {
@@ -249,6 +249,118 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       lymphatic: true
     });
   };
+
+  if (!canAccessAnatomy()) {
+    return (
+      <div
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 200,
+          backgroundColor: '#070B14',
+          color: '#FFFFFF',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '24px',
+          textAlign: 'center',
+          fontFamily: 'var(--font-sans)'
+        }}
+      >
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 24,
+            right: 24,
+            background: 'rgba(255, 255, 255, 0.08)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+            color: '#FFFFFF',
+            borderRadius: '50%',
+            width: 40,
+            height: 40,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s ease'
+          }}
+          title="Close"
+        >
+          <X size={20} />
+        </button>
+
+        <div
+          style={{
+            width: 72,
+            height: 72,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(124, 58, 237, 0.2))',
+            border: '2px solid rgba(96, 165, 250, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 24,
+            color: '#60A5FA',
+            boxShadow: '0 8px 32px rgba(37, 99, 235, 0.3)'
+          }}
+        >
+          <Lock size={36} />
+        </div>
+
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '4px 12px',
+            borderRadius: 20,
+            background: 'rgba(37, 99, 235, 0.15)',
+            border: '1px solid rgba(96, 165, 250, 0.3)',
+            color: '#60A5FA',
+            fontSize: '0.75rem',
+            fontWeight: 800,
+            letterSpacing: '0.04em',
+            marginBottom: 12
+          }}
+        >
+          <span>PHYSORA PRO EXCLUSIVE</span>
+        </div>
+
+        <h2 style={{ fontSize: '1.85rem', fontWeight: 900, margin: '0 0 12px', color: '#FFFFFF', letterSpacing: '-0.02em' }}>
+          Interactive 3D Human Anatomy Explorer
+        </h2>
+
+        <p style={{ maxWidth: '520px', fontSize: '0.94rem', color: '#94A3B8', margin: '0 0 28px', lineHeight: 1.6 }}>
+          The complete real-time 3D human body theater, organ dissections, full Écorché muscular/skeletal layers, and live biological hemodynamics are exclusive to Physora Pro.
+        </p>
+
+        <button
+          type="button"
+          onClick={() => triggerPaywall('anatomy_explorer', 'PRO')}
+          style={{
+            padding: '14px 36px',
+            borderRadius: 'var(--radius-pill)',
+            border: 'none',
+            background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+            color: '#FFFFFF',
+            fontSize: '0.98rem',
+            fontWeight: 800,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 10,
+            boxShadow: '0 6px 24px rgba(37, 99, 235, 0.45)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <Sparkles size={18} />
+          <span>Unlock with Physora Pro</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div

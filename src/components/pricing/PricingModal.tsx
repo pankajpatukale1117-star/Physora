@@ -94,6 +94,12 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           desc: 'Advanced problem sets for JEE Advanced, NEET-UG, and AP Physics are exclusive to Physora Pro subscribers.',
           badge: 'Physora Pro Required'
         };
+      case 'anatomy_explorer':
+        return {
+          title: 'Interactive 3D Human Anatomy Explorer',
+          desc: 'The complete 3D interactive human body theater, organ dissection, multi-scale biological systems, and live physiological processes are exclusive to Physora Pro.',
+          badge: 'Physora Pro Required'
+        };
       case 'ecorche_anatomy':
         return {
           title: 'Full 3D Écorché Muscular & Skeletal Model',

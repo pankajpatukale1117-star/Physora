@@ -5,6 +5,7 @@ import type { MembershipTier } from '../types/auth';
 export type SubscriptionTier = 'FREE' | 'PRO' | 'EDUCATOR';
 
 export type PaywallReason =
+  | 'anatomy_explorer'
   | 'pro_simulation'
   | 'pdf_export'
   | 'ai_tutor'
@@ -35,6 +36,7 @@ export interface SubscriptionContextType {
   daysRemaining: number | null;
   // Feature Access & Gating Checks
   canAccessTopic: (topicId: string) => boolean;
+  canAccessAnatomy: () => boolean;
   canExportPdf: () => boolean;
   canUseAiTutor: () => boolean;
   canAccessChallenge: (challengeIndex: number) => boolean;
@@ -195,6 +197,11 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     return Boolean(auth.isFounder || tier === 'EDUCATOR');
   };
 
+  // 8. 3D Human Anatomy Explorer: Pro & School only (Locked for Free users)
+  const canAccessAnatomy = (): boolean => {
+    return Boolean(auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR');
+  };
+
   const triggerPaywall = (
     reason: PaywallReason,
     targetTier: 'PRO' | 'EDUCATOR' = 'PRO'
@@ -232,6 +239,7 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
         isSubscriptionActive: auth.isSubscriptionActive,
         daysRemaining: auth.daysRemaining,
         canAccessTopic,
+        canAccessAnatomy,
         canExportPdf,
         canUseAiTutor,
         canAccessChallenge,

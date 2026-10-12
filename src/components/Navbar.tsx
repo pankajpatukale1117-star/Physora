@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass, Dna, User, Sparkles } from 'lucide-react';
+import { Atom, ArrowRight, Sun, Moon, BookOpen, Menu, X, Search, FlaskConical, Compass, Dna, User, Sparkles, Lock } from 'lucide-react';
 import { PhysoraLogo } from './PhysoraLogo';
 import { useAuth } from '../context/AuthContext';
+import { useSubscription } from '../context/SubscriptionContext';
 
 interface NavbarProps {
   onEnterLabClick: () => void;
@@ -35,6 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isLabActive = false
 }) => {
   const { user, profile, isAuthenticated, isPro, membershipTier, isFounder } = useAuth();
+  const { canAccessAnatomy, triggerPaywall } = useSubscription();
 
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -137,24 +139,53 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </button>
 
-          <button onClick={onOpenAnatomy} className="nav-link">
+          <button
+            onClick={() => {
+              if (!canAccessAnatomy()) {
+                triggerPaywall('anatomy_explorer', 'PRO');
+              } else {
+                onOpenAnatomy();
+              }
+            }}
+            className="nav-link"
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Dna size={15} color="#10B981" />
+              <Dna size={15} color={!canAccessAnatomy() ? '#60A5FA' : '#10B981'} />
               <span>3D Anatomy</span>
-              <span
-                style={{
-                  fontSize: '0.62rem',
-                  fontWeight: 800,
-                  padding: '1px 5px',
-                  borderRadius: 10,
-                  background: 'rgba(16, 185, 129, 0.2)',
-                  color: '#34D399',
-                  border: '1px solid rgba(52, 211, 153, 0.35)',
-                  letterSpacing: '0.04em'
-                }}
-              >
-                3D
-              </span>
+              {!canAccessAnatomy() ? (
+                <span
+                  style={{
+                    fontSize: '0.60rem',
+                    fontWeight: 800,
+                    padding: '1px 5px',
+                    borderRadius: 10,
+                    background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+                    color: '#FFFFFF',
+                    letterSpacing: '0.04em',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 3
+                  }}
+                >
+                  <Lock size={9} />
+                  <span>PRO</span>
+                </span>
+              ) : (
+                <span
+                  style={{
+                    fontSize: '0.62rem',
+                    fontWeight: 800,
+                    padding: '1px 5px',
+                    borderRadius: 10,
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    color: '#34D399',
+                    border: '1px solid rgba(52, 211, 153, 0.35)',
+                    letterSpacing: '0.04em'
+                  }}
+                >
+                  3D
+                </span>
+              )}
             </div>
           </button>
 
@@ -468,31 +499,58 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* 3. 3D Anatomy */}
             <button
-              onClick={() => handleMobileNavClick(onOpenAnatomy)}
+              onClick={() => {
+                if (!canAccessAnatomy()) {
+                  triggerPaywall('anatomy_explorer', 'PRO');
+                  setIsMobileMenuOpen(false);
+                } else {
+                  handleMobileNavClick(onOpenAnatomy);
+                }
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '12px 14px',
                 borderRadius: 'var(--radius-md)',
-                background: 'rgba(16, 185, 129, 0.08)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
+                background: !canAccessAnatomy() ? 'rgba(37, 99, 235, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+                border: !canAccessAnatomy() ? '1px solid rgba(59, 130, 246, 0.25)' : '1px solid rgba(16, 185, 129, 0.25)',
                 cursor: 'pointer',
                 textAlign: 'left'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Dna size={18} color="#10B981" />
+                <Dna size={18} color={!canAccessAnatomy() ? '#60A5FA' : '#10B981'} />
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '0.95rem' }}>
-                    3D Human Anatomy
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: '#34D399' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontWeight: 700, color: '#FFFFFF', fontSize: '0.95rem' }}>
+                      3D Human Anatomy
+                    </span>
+                    {!canAccessAnatomy() && (
+                      <span
+                        style={{
+                          fontSize: '0.60rem',
+                          fontWeight: 800,
+                          padding: '1px 5px',
+                          borderRadius: 8,
+                          background: '#2563EB',
+                          color: '#FFFFFF',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 2
+                        }}
+                      >
+                        <Lock size={9} />
+                        <span>PRO</span>
+                      </span>
+                    )}
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: !canAccessAnatomy() ? '#93C5FD' : '#34D399' }}>
                     Interactive 3D Body &amp; 8 Systems
                   </span>
                 </div>
               </div>
-              <ArrowRight size={15} color="#10B981" />
+              <ArrowRight size={15} color={!canAccessAnatomy() ? '#60A5FA' : '#10B981'} />
             </button>
 
             {/* 4. Experiments */}
@@ -755,7 +813,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             type="button"
-            onClick={onOpenAnatomy}
+            onClick={() => {
+              if (!canAccessAnatomy()) {
+                triggerPaywall('anatomy_explorer', 'PRO');
+              } else {
+                onOpenAnatomy();
+              }
+            }}
             className="mobile-bottom-nav-btn"
             style={{
               display: 'flex',
@@ -769,10 +833,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               cursor: 'pointer',
               flex: 1,
               padding: '6px 0',
-              touchAction: 'manipulation'
+              touchAction: 'manipulation',
+              position: 'relative'
             }}
           >
-            <Dna size={19} color="#10B981" />
+            <div style={{ position: 'relative' }}>
+              <Dna size={19} color={!canAccessAnatomy() ? '#60A5FA' : '#10B981'} />
+              {!canAccessAnatomy() && (
+                <div style={{ position: 'absolute', top: -3, right: -6 }}>
+                  <Lock size={10} color="#60A5FA" />
+                </div>
+              )}
+            </div>
             <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>3D Anatomy</span>
           </button>
 

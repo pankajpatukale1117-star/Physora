@@ -32,7 +32,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
   onOpenFormulas,
   onOpenAnatomy
 }) => {
-  const { canAccessTopic, triggerPaywall } = useSubscription();
+  const { canAccessTopic, canAccessAnatomy, triggerPaywall } = useSubscription();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<'All' | 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology'>('All');
@@ -549,20 +549,40 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
               <div style={{ maxWidth: 650 }}>
                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                  <span
-                    style={{
-                      fontSize: '0.70rem',
-                      fontWeight: 800,
-                      padding: '2px 8px',
-                      borderRadius: 12,
-                      background: 'rgba(16, 185, 129, 0.25)',
-                      color: '#059669',
-                      border: '1px solid rgba(16, 185, 129, 0.4)',
-                      letterSpacing: '0.05em'
-                    }}
-                  >
-                    PHYSORA BIOLOGY CORE EXPERIENCE
-                  </span>
+                  {!canAccessAnatomy() ? (
+                    <span
+                      style={{
+                        fontSize: '0.70rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+                        color: '#FFFFFF',
+                        letterSpacing: '0.04em',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
+                    >
+                      <Lock size={10} />
+                      <span>PHYSORA PRO EXCLUSIVE</span>
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        fontSize: '0.70rem',
+                        fontWeight: 800,
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        background: 'rgba(16, 185, 129, 0.25)',
+                        color: '#059669',
+                        border: '1px solid rgba(16, 185, 129, 0.4)',
+                        letterSpacing: '0.05em'
+                      }}
+                    >
+                      PHYSORA BIOLOGY CORE EXPERIENCE
+                    </span>
+                  )}
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>• Full Real-Time WebGL 3D</span>
                 </div>
                 <h3 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 8px 0' }}>
@@ -574,26 +594,50 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignSelf: 'center' }}>
-                <button
-                  onClick={() => onOpenAnatomy()}
-                  className="btn btn-primary btn-lg"
-                  style={{
-                    background: '#10B981',
-                    borderColor: '#10B981',
-                    color: '#000000',
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    padding: '12px 24px',
-                    borderRadius: 'var(--radius-pill)',
-                    boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}
-                >
-                  <Dna size={18} />
-                  <span>Enter 3D Human Body</span>
-                </button>
+                {!canAccessAnatomy() ? (
+                  <button
+                    onClick={() => triggerPaywall('anatomy_explorer', 'PRO')}
+                    className="btn btn-primary btn-lg"
+                    style={{
+                      background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+                      borderColor: 'transparent',
+                      color: '#FFFFFF',
+                      fontWeight: 800,
+                      fontSize: '0.95rem',
+                      padding: '12px 24px',
+                      borderRadius: 'var(--radius-pill)',
+                      boxShadow: '0 8px 24px rgba(37, 99, 235, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <Lock size={18} />
+                    <span>Unlock with Physora Pro</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onOpenAnatomy()}
+                    className="btn btn-primary btn-lg"
+                    style={{
+                      background: '#10B981',
+                      borderColor: '#10B981',
+                      color: '#000000',
+                      fontWeight: 800,
+                      fontSize: '0.95rem',
+                      padding: '12px 24px',
+                      borderRadius: 'var(--radius-pill)',
+                      boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8
+                    }}
+                  >
+                    <Dna size={18} />
+                    <span>Enter 3D Human Body</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -612,20 +656,30 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               ].map((org) => (
                 <button
                   key={org.id}
-                  onClick={() => onOpenAnatomy(org.id)}
+                  onClick={() => {
+                    if (!canAccessAnatomy()) {
+                      triggerPaywall('anatomy_explorer', 'PRO');
+                    } else {
+                      onOpenAnatomy(org.id);
+                    }
+                  }}
                   style={{
                     padding: '4px 10px',
                     borderRadius: 20,
                     background: 'var(--bg-surface)',
-                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    border: !canAccessAnatomy() ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(16, 185, 129, 0.25)',
                     color: 'var(--text-primary)',
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     cursor: 'pointer',
-                    transition: 'all 0.15s ease'
+                    transition: 'all 0.15s ease',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5
                   }}
                 >
-                  {org.name}
+                  {!canAccessAnatomy() && <Lock size={10} color="#60A5FA" />}
+                  <span>{org.name}</span>
                 </button>
               ))}
             </div>

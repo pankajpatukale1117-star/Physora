@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Atom, FlaskConical, ArrowRight, BookOpen, Dna } from 'lucide-react';
+import { Search, X, Atom, FlaskConical, ArrowRight, BookOpen, Dna, Lock } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { EXPERIMENTS_DATA } from '../data/experimentsData';
 import { FORMULAS_DATA } from './FormulaBankModal';
 import { ANATOMY_STRUCTURES } from '../data/anatomyData';
+import { useSubscription } from '../context/SubscriptionContext';
 
 interface SearchResultItem {
   id: string;
@@ -34,6 +35,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   onOpenFormulas,
   onOpenAnatomy
 }) => {
+  const { canAccessAnatomy, triggerPaywall } = useSubscription();
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -325,13 +327,17 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             <button
               onClick={() => {
                 onClose();
-                onOpenAnatomy();
+                if (!canAccessAnatomy()) {
+                  triggerPaywall('anatomy_explorer', 'PRO');
+                } else {
+                  onOpenAnatomy();
+                }
               }}
               className="btn btn-sm"
               style={{
-                background: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.35)',
-                color: '#059669',
+                background: !canAccessAnatomy() ? 'rgba(37, 99, 235, 0.12)' : 'rgba(16, 185, 129, 0.15)',
+                border: !canAccessAnatomy() ? '1px solid rgba(59, 130, 246, 0.35)' : '1px solid rgba(16, 185, 129, 0.35)',
+                color: !canAccessAnatomy() ? '#2563EB' : '#059669',
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 padding: '3px 8px',
@@ -340,8 +346,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                 gap: 4
               }}
             >
-              <Dna size={12} />
+              {!canAccessAnatomy() ? <Lock size={11} /> : <Dna size={12} />}
               <span>3D Anatomy</span>
+              {!canAccessAnatomy() && (
+                <span style={{ fontSize: '0.58rem', background: '#2563EB', color: '#FFF', padding: '1px 4px', borderRadius: 6, fontWeight: 800 }}>PRO</span>
+              )}
             </button>
           )}
         </div>
