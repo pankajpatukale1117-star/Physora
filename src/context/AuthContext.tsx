@@ -507,8 +507,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
 
   const isFounderEmail = Boolean(
-    user?.email?.toLowerCase().includes('pankaj') || 
-    user?.email?.toLowerCase().includes('admin')
+    (user?.email && (
+      user.email.toLowerCase().includes('pankaj') || 
+      user.email.toLowerCase().includes('admin') ||
+      ['pankajpatukale1117@gmail.com', 'pankaj@physora.com'].includes(user.email.toLowerCase())
+    )) ||
+    (profile?.username && (
+      profile.username.toLowerCase() === 'voidwalker007' ||
+      profile.username.toLowerCase().includes('pankaj')
+    )) ||
+    (profile?.display_name && (
+      profile.display_name.toLowerCase().includes('pankaj')
+    ))
   );
   const effectiveTier: MembershipTier = isFounderEmail ? 'institution' : (profile?.membership_tier || localTier);
   const isPro = effectiveTier === 'pro' || effectiveTier === 'institution';
@@ -683,6 +693,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     membershipTier: effectiveTier,
     isPro,
     isInstitution,
+    isFounder: isFounderEmail,
     subscriptionPeriodEnd: effectivePeriodEnd,
     isSubscriptionActive,
     daysRemaining,

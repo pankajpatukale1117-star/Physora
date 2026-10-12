@@ -76,6 +76,7 @@ export interface AuthContextType {
   membershipTier: MembershipTier;
   isPro: boolean;
   isInstitution: boolean;
+  isFounder: boolean;
   subscriptionPeriodEnd: string | null;
   isSubscriptionActive: boolean;
   daysRemaining: number | null;

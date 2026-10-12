@@ -14,7 +14,8 @@ import {
   Lock,
   CreditCard,
   CheckCircle2,
-  QrCode
+  QrCode,
+  Crown
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useSubscription } from '../../context/SubscriptionContext';
@@ -43,7 +44,8 @@ export const PricingModal: React.FC<PricingModalProps> = ({
     refreshProfile,
     isSubscriptionActive,
     subscriptionPeriodEnd,
-    daysRemaining
+    daysRemaining,
+    isFounder
   } = useAuth();
   const { setTier } = useSubscription();
 
@@ -114,9 +116,28 @@ export const PricingModal: React.FC<PricingModalProps> = ({
     setErrorMessage(null);
     setSuccessMessage(null);
 
+    // 0. Founder special: Classroom & School plan is 100% FREE exclusively for the creator/founder account!
+    if (tier === 'institution' && isFounder) {
+      setIsProcessing(true);
+      const res = await upgradeTier('institution', 'Physora Creator (Owner)', new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString());
+      setIsProcessing(false);
+      if (res.success) {
+        setTier('EDUCATOR');
+        setSuccessMessage('👑 Classroom & School Plan activated 100% Free exclusively for your account! Lifetime institutional privileges active.');
+        try {
+          audioFX.playSuccessChime();
+        } catch {
+          // Ignore
+        }
+      } else {
+        setErrorMessage(res.error || 'Failed to activate Classroom & School plan.');
+      }
+      return;
+    }
+
     // 1. Free plan downgrade check: blocked if user has an active paid subscription that has not ended
     if (tier === 'free') {
-      if (isSubscriptionActive && membershipTier !== 'free') {
+      if (isSubscriptionActive && membershipTier !== 'free' && !isFounder) {
         const formatted = subscriptionPeriodEnd
           ? new Date(subscriptionPeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
           : 'the end of your current cycle';
@@ -278,6 +299,11 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               </span>
               <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                 Current plan: <strong style={{ textTransform: 'capitalize' }}>{membershipTier}</strong>
+                {isFounder && membershipTier === 'institution' && (
+                  <span style={{ marginLeft: '6px', color: '#7C3AED', fontWeight: 800 }}>
+                    (👑 Free for Your Account)
+                  </span>
+                )}
               </span>
             </div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
@@ -542,49 +568,59 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <CheckCircle2 size={24} color="#2563EB" />
+                {isFounder && membershipTier === 'institution' ? (
+                  <Crown size={24} color="#7C3AED" />
+                ) : (
+                  <CheckCircle2 size={24} color="#2563EB" />
+                )}
                 <div>
                   <div style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-                    Your {membershipTier.toUpperCase()} Subscription is Active
+                    {isFounder && membershipTier === 'institution'
+                      ? '👑 Classroom & School Plan: Active & Free for Your Account'
+                      : `Your ${membershipTier.toUpperCase()} Subscription is Active`}
                   </div>
                   <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    {formattedEndDate
+                    {isFounder && membershipTier === 'institution'
+                      ? 'Full institutional educator license unlocked with lifetime privileges exclusively for your account.'
+                      : formattedEndDate
                       ? `Valid until ${formattedEndDate} (${daysRemaining ?? 0} days remaining). Update payment methods or view invoices in Stripe.`
                       : 'Update payment methods, view official VAT receipts, or manage your renewal in Stripe.'}
                   </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={handleOpenBillingPortal}
-                disabled={isOpeningPortal}
-                style={{
-                  padding: '9px 18px',
-                  borderRadius: '10px',
-                  background: 'var(--bg-card)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--border-medium)',
-                  fontWeight: 700,
-                  fontSize: '0.85rem',
-                  cursor: isOpeningPortal ? 'wait' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
-                }}
-              >
-                {isOpeningPortal ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>Opening Stripe Portal...</span>
-                  </>
-                ) : (
-                  <>
-                    <ExternalLink size={16} />
-                    <span>Manage Billing & Invoices (Stripe)</span>
-                  </>
-                )}
-              </button>
+              {!isFounder && (
+                <button
+                  type="button"
+                  onClick={handleOpenBillingPortal}
+                  disabled={isOpeningPortal}
+                  style={{
+                    padding: '9px 18px',
+                    borderRadius: '10px',
+                    background: 'var(--bg-card)',
+                    color: 'var(--text-primary)',
+                    border: '1px solid var(--border-medium)',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: isOpeningPortal ? 'wait' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.06)'
+                  }}
+                >
+                  {isOpeningPortal ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Opening Stripe Portal...</span>
+                    </>
+                  ) : (
+                    <>
+                      <ExternalLink size={16} />
+                      <span>Manage Billing & Invoices (Stripe)</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           )}
 
@@ -868,28 +904,87 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               <div
                 style={{
                   borderRadius: '18px',
-                  border: '1px solid var(--border-medium)',
+                  border: isFounder ? '2px solid #8B5CF6' : '1px solid var(--border-medium)',
                   padding: '24px',
                   display: 'flex',
                   flexDirection: 'column',
-                  background: 'var(--bg-card)'
+                  background: isFounder ? 'linear-gradient(180deg, rgba(124, 58, 237, 0.05) 0%, var(--bg-card) 100%)' : 'var(--bg-card)',
+                  position: 'relative'
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                  <Building2 size={20} color="#7C3AED" />
-                  <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>Classroom & School</h3>
+                {isFounder && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-12px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                      color: '#FFFFFF',
+                      padding: '4px 14px',
+                      borderRadius: '12px',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      letterSpacing: '0.04em',
+                      boxShadow: '0 4px 10px rgba(124, 58, 237, 0.35)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <Crown size={13} />
+                    <span>FREE EXCLUSIVELY FOR YOUR ACCOUNT</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Building2 size={20} color="#7C3AED" />
+                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0 }}>Classroom & School</h3>
+                  </div>
+                  {isFounder && (
+                    <span
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        color: '#7C3AED',
+                        background: '#EDE9FE',
+                        padding: '2px 8px',
+                        borderRadius: '6px'
+                      }}
+                    >
+                      👑 Owner Free
+                    </span>
+                  )}
                 </div>
                 <p style={{ fontSize: '0.84rem', color: 'var(--text-secondary)', marginBottom: '16px', minHeight: '38px' }}>
                   For schools, junior colleges, coaching institutes & universities.
                 </p>
 
-                <div style={{ marginBottom: '20px' }}>
-                  <span style={{ fontSize: '2.2rem', fontWeight: 900, fontFamily: 'var(--font-mono)' }}>
-                    {symbol}
-                    {currentPrices.instAnnual}
-                  </span>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}> / year</span>
-                </div>
+                {isFounder ? (
+                  <div style={{ marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                      <span style={{ fontSize: '2.2rem', fontWeight: 900, fontFamily: 'var(--font-mono)', color: '#10B981' }}>
+                        Free
+                      </span>
+                      <span style={{ fontSize: '0.88rem', textDecoration: 'line-through', color: 'var(--text-tertiary)' }}>
+                        {symbol}{currentPrices.instAnnual}/yr
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.78rem', color: '#7C3AED', fontWeight: 700 }}>
+                      👑 100% Free for your account only (Regular users: {symbol}{currentPrices.instAnnual}/yr)
+                    </span>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: '20px' }}>
+                    <span style={{ fontSize: '2.2rem', fontWeight: 900, fontFamily: 'var(--font-mono)' }}>
+                      {symbol}
+                      {currentPrices.instAnnual}
+                    </span>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}> / year</span>
+                  </div>
+                )}
 
                 {membershipTier === 'institution' ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
@@ -897,40 +992,78 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                       style={{
                         padding: '10px 16px',
                         borderRadius: '10px',
-                        background: '#F5F3FF',
-                        color: '#6D28D9',
+                        background: isFounder ? 'linear-gradient(135deg, #7C3AED, #6D28D9)' : '#F5F3FF',
+                        color: isFounder ? '#FFFFFF' : '#6D28D9',
                         fontWeight: 800,
                         fontSize: '0.88rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '6px'
+                        gap: '6px',
+                        boxShadow: isFounder ? '0 4px 12px rgba(124, 58, 237, 0.25)' : 'none'
                       }}
                     >
-                      <Check size={16} /> Institution Active
+                      {isFounder ? <Crown size={16} /> : <Check size={16} />}
+                      <span>{isFounder ? '👑 Classroom & School: Active (Free)' : 'Institution Active'}</span>
                     </div>
-                    <button
-                      type="button"
-                      disabled={isOpeningPortal}
-                      onClick={handleOpenBillingPortal}
-                      style={{
-                        padding: '8px 14px',
-                        borderRadius: '8px',
-                        border: '1px solid #DDD6FE',
-                        background: '#FFFFFF',
-                        color: '#6D28D9',
-                        fontWeight: 700,
-                        fontSize: '0.82rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <ExternalLink size={14} /> Stripe Billing Portal
-                    </button>
+                    {!isFounder && (
+                      <button
+                        type="button"
+                        disabled={isOpeningPortal}
+                        onClick={handleOpenBillingPortal}
+                        style={{
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid #DDD6FE',
+                          background: '#FFFFFF',
+                          color: '#6D28D9',
+                          fontWeight: 700,
+                          fontSize: '0.82rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <ExternalLink size={14} /> Stripe Billing Portal
+                      </button>
+                    )}
                   </div>
+                ) : isFounder ? (
+                  <button
+                    type="button"
+                    disabled={isProcessing}
+                    onClick={() => handleSelectPlan('institution')}
+                    style={{
+                      padding: '12px 18px',
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                      color: '#FFFFFF',
+                      fontWeight: 800,
+                      fontSize: '0.90rem',
+                      cursor: isProcessing ? 'wait' : 'pointer',
+                      marginBottom: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      boxShadow: '0 4px 12px rgba(124, 58, 237, 0.35)'
+                    }}
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>Activating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Crown size={16} />
+                        <span>👑 Activate Free Classroom & School Plan</span>
+                      </>
+                    )}
+                  </button>
                 ) : (
                   <button
                     type="button"
@@ -1015,6 +1148,27 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                   Volume pricing for schools, universities, school districts, and coaching centers.
                 </p>
               </div>
+
+              {isFounder && (
+                <div
+                  style={{
+                    marginBottom: '20px',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    background: 'rgba(124, 58, 237, 0.08)',
+                    border: '1px solid #DDD6FE',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    color: '#6D28D9',
+                    fontSize: '0.86rem',
+                    fontWeight: 700
+                  }}
+                >
+                  <Crown size={18} />
+                  <span>Your account (Creator / Owner) has lifetime complimentary Classroom & School access already enabled.</span>
+                </div>
+              )}
 
               {quoteSubmitted ? (
                 <div style={{ textAlign: 'center', padding: '32px 16px' }}>

@@ -39,7 +39,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
     isInstitution, 
     upgradeTier,
     subscriptionPeriodEnd,
-    daysRemaining
+    daysRemaining,
+    isFounder
   } = useAuth();
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
@@ -422,54 +423,64 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                 </span>
                 <div style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   {membershipTier === 'institution'
-                    ? 'Classroom & School License'
+                    ? isFounder
+                      ? 'Classroom & School (👑 Free for Your Account)'
+                      : 'Classroom & School License'
                     : membershipTier === 'pro'
-                    ? 'Physora Pro (Active)'
+                    ? isFounder
+                      ? 'Physora Pro (👑 Founder Free Pass)'
+                      : 'Physora Pro (Active)'
                     : 'Free Explorer Plan'}
                 </div>
                 {isPro && subscriptionPeriodEnd && (
                   <div style={{ fontSize: '0.73rem', color: 'var(--text-secondary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Lock size={11} color="#2563EB" />
-                    <span>Active until {new Date(subscriptionPeriodEnd).toLocaleDateString()} ({daysRemaining ?? 0} days left)</span>
+                    <span>
+                      {isFounder
+                        ? '👑 Lifetime Founder Access Unlocked'
+                        : `Active until ${new Date(subscriptionPeriodEnd).toLocaleDateString()} (${daysRemaining ?? 0} days left)`}
+                    </span>
                   </div>
                 )}
               </div>
             </div>
 
             {isPro ? (
-              <button
-                type="button"
-                disabled={isOpeningPortal}
-                onClick={async () => {
-                  setPortalError(null);
-                  setIsOpeningPortal(true);
-                  const res = await openStripeCustomerPortal();
-                  if (!res.success) {
-                    setIsOpeningPortal(false);
-                    setPortalError(res.error || 'Unable to open Stripe portal.');
-                  }
-                }}
-                style={{
-                  padding: '7px 12px',
-                  borderRadius: 'var(--radius-md)',
-                  background: 'var(--bg-card)',
-                  border: '1px solid var(--border-medium)',
-                  color: '#2563EB',
-                  fontSize: '0.8rem',
-                  fontWeight: 700,
-                  cursor: isOpeningPortal ? 'wait' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6
-                }}
-              >
-                {isOpeningPortal ? (
-                  <Loader2 size={13} className="animate-spin" />
-                ) : (
-                  <ExternalLink size={13} />
-                )}
-                <span>Manage in Stripe</span>
-              </button>
+              !isFounder && (
+                <button
+                  type="button"
+                  disabled={isOpeningPortal}
+                  onClick={async () => {
+                    setPortalError(null);
+                    setIsOpeningPortal(true);
+                    const res = await openStripeCustomerPortal();
+                    if (!res.success) {
+                      setIsOpeningPortal(false);
+                      setPortalError(res.error || 'Unable to open Stripe portal.');
+                    }
+                  }}
+                  style={{
+                    padding: '7px 12px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'var(--bg-card)',
+                    border: '1px solid var(--border-medium)',
+                    color: '#2563EB',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: isOpeningPortal ? 'wait' : 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                >
+                  {isOpeningPortal ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <ExternalLink size={13} />
+                  )}
+                  <span>Manage in Stripe</span>
+                </button>
+              )
             ) : (
               <button
                 type="button"
@@ -509,34 +520,36 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
             </div>
           )}
 
-          {/* Founder Master Access Control */}
-          <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed var(--border-subtle)', paddingTop: 8 }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
-              Founder & Creator Override:
-            </span>
-            <button
-              type="button"
-              onClick={async () => {
-                await upgradeTier(isPro ? 'free' : 'institution');
-              }}
-              style={{
-                background: isPro ? 'rgba(16, 185, 129, 0.1)' : 'rgba(37, 99, 235, 0.08)',
-                border: isPro ? '1px solid #10B981' : '1px dashed #2563EB',
-                borderRadius: '8px',
-                padding: '4px 10px',
-                color: isPro ? '#059669' : '#2563EB',
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5
-              }}
-            >
-              <Crown size={12} color={isPro ? '#059669' : '#F59E0B'} />
-              <span>{isPro ? '👑 Founder Mode: Unlocked' : '👑 1-Click Founder Unlock'}</span>
-            </button>
-          </div>
+          {/* Founder Master Access Control (Visible strictly to founder account) */}
+          {isFounder && (
+            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed var(--border-subtle)', paddingTop: 8 }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-tertiary)' }}>
+                Founder Privileges:
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  await upgradeTier('institution', 'Physora Creator (Owner)', new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString());
+                }}
+                style={{
+                  background: 'rgba(124, 58, 237, 0.1)',
+                  border: '1px solid #7C3AED',
+                  borderRadius: '8px',
+                  padding: '4px 10px',
+                  color: '#6D28D9',
+                  fontSize: '0.74rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 5
+                }}
+              >
+                <Crown size={12} color="#7C3AED" />
+                <span>👑 Classroom & School: Active (Free for You)</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Divider */}

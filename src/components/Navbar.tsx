@@ -34,7 +34,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleTheme,
   isLabActive = false
 }) => {
-  const { user, profile, isAuthenticated, isPro, membershipTier } = useAuth();
+  const { user, profile, isAuthenticated, isPro, membershipTier, isFounder } = useAuth();
 
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -241,7 +241,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Commercial Edition & Institutional Plans"
           >
             <Sparkles size={13} />
-            <span>{isPro ? `${membershipTier.toUpperCase()} PASS` : 'UPGRADE TO PRO'}</span>
+            <span>
+              {isPro
+                ? isFounder && membershipTier === 'institution'
+                  ? '👑 SCHOOL PASS (FREE)'
+                  : `${membershipTier.toUpperCase()} PASS`
+                : 'UPGRADE TO PRO'}
+            </span>
           </button>
 
           {/* User Account / Profile Button (Desktop) */}
@@ -562,7 +568,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Sparkles size={18} color={isPro ? '#10B981' : '#2563EB'} />
                 <span style={{ fontWeight: 800, color: isPro ? '#10B981' : '#2563EB', fontSize: '0.95rem' }}>
-                  {isPro ? `${membershipTier.toUpperCase()} PASS ACTIVE` : 'UPGRADE TO PRO'}
+                  {isPro
+                    ? isFounder && membershipTier === 'institution'
+                      ? '👑 SCHOOL PASS ACTIVE (FREE)'
+                      : `${membershipTier.toUpperCase()} PASS ACTIVE`
+                    : 'UPGRADE TO PRO'}
                 </span>
               </div>
               <ArrowRight size={15} color="var(--text-tertiary)" />
