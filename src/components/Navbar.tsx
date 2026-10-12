@@ -16,6 +16,7 @@ interface NavbarProps {
   onOpenPricing: () => void;
   theme: 'dark' | 'light';
   onToggleTheme: () => void;
+  isLabActive?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -30,7 +31,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenProfile,
   onOpenPricing,
   theme,
-  onToggleTheme
+  onToggleTheme,
+  isLabActive = false
 }) => {
   const { user, profile, isAuthenticated, isPro, membershipTier } = useAuth();
 
@@ -77,7 +79,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <header className={`physora-header ${scrolled ? 'physora-header-scrolled' : ''}`}>
+    <>
+      <header className={`physora-header ${scrolled ? 'physora-header-scrolled' : ''}`}>
       <div
         className="section-container"
         style={{
@@ -669,6 +672,147 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
       )}
-    </header>
+      </header>
+
+      {/* Mobile Sticky Bottom Navigation Bar (Accessible by thumb when exploring) */}
+      {!isLabActive && (
+        <nav
+          className="show-mobile-only physora-mobile-bottom-nav"
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: 60,
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+            background: 'rgba(11, 17, 32, 0.96)',
+            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            zIndex: 90,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            boxShadow: '0 -6px 24px rgba(0, 0, 0, 0.6)'
+          }}
+          aria-label="Mobile Navigation"
+        >
+          <button
+            type="button"
+            onClick={onExploreClick}
+            className="mobile-bottom-nav-btn"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary, #cbd5e1)',
+              cursor: 'pointer',
+              flex: 1,
+              padding: '6px 0',
+              touchAction: 'manipulation'
+            }}
+          >
+            <Compass size={19} color="var(--brand-primary, #0077c8)" />
+            <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>Explore</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onSimulationsClick}
+            className="mobile-bottom-nav-btn"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary, #cbd5e1)',
+              cursor: 'pointer',
+              flex: 1,
+              padding: '6px 0',
+              touchAction: 'manipulation'
+            }}
+          >
+            <Atom size={19} color="#38BDF8" />
+            <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>Sims</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenAnatomy}
+            className="mobile-bottom-nav-btn"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary, #cbd5e1)',
+              cursor: 'pointer',
+              flex: 1,
+              padding: '6px 0',
+              touchAction: 'manipulation'
+            }}
+          >
+            <Dna size={19} color="#10B981" />
+            <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>3D Anatomy</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onExperimentsClick}
+            className="mobile-bottom-nav-btn"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary, #cbd5e1)',
+              cursor: 'pointer',
+              flex: 1,
+              padding: '6px 0',
+              touchAction: 'manipulation'
+            }}
+          >
+            <FlaskConical size={19} color="#C084FC" />
+            <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>Labs</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenSearch}
+            className="mobile-bottom-nav-btn"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 3,
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-secondary, #cbd5e1)',
+              cursor: 'pointer',
+              flex: 1,
+              padding: '6px 0',
+              touchAction: 'manipulation'
+            }}
+          >
+            <Search size={19} color="#FFC72C" />
+            <span style={{ fontSize: '0.68rem', fontWeight: 700 }}>Search</span>
+          </button>
+        </nav>
+      )}
+    </>
   );
 };

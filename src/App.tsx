@@ -307,6 +307,7 @@ export function App() {
         }}
         theme={theme}
         onToggleTheme={toggleTheme}
+        isLabActive={Boolean(selectedTopicId || selectedExperimentId || isAnatomyOpen)}
       />
 
       {/* 3. Main Educational Application Structure */}

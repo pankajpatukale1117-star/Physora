@@ -148,23 +148,40 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        maxWidth: '450px',
-        zIndex: 10001,
-        background: 'var(--bg-card, #FFFFFF)',
-        borderLeft: '1px solid var(--border-medium, #E2E8F0)',
-        boxShadow: '-12px 0 45px rgba(0, 0, 0, 0.35)',
-        display: 'flex',
-        flexDirection: 'column',
-        animation: 'physoraDrawerIn 0.24s cubic-bezier(0.16, 1, 0.3, 1)'
-      }}
-    >
+    <>
+      {/* Mobile & Desktop Dimmed Backdrop Overlay */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.65)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          zIndex: 10000,
+          animation: 'physoraFadeIn 0.2s ease'
+        }}
+        aria-label="Dismiss AI Tutor"
+      />
+
+      <div
+        className="ai-mentor-drawer-sheet"
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%',
+          maxWidth: '450px',
+          zIndex: 10001,
+          background: 'var(--bg-card, #FFFFFF)',
+          borderLeft: '1px solid var(--border-medium, #E2E8F0)',
+          boxShadow: '-12px 0 45px rgba(0, 0, 0, 0.45)',
+          display: 'flex',
+          flexDirection: 'column',
+          animation: 'physoraDrawerIn 0.24s cubic-bezier(0.16, 1, 0.3, 1)'
+        }}
+      >
       {/* Header */}
       <div
         style={{
@@ -480,10 +497,10 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Gamified Sim Mission Quick Buttons */}
+      {/* Gamified Sim Mission Quick Buttons (Horizontal Swipeable Chip Tray) */}
       <div
         style={{
-          padding: '10px 16px',
+          padding: '8px 16px',
           borderTop: '1px solid var(--border-subtle)',
           display: 'flex',
           flexDirection: 'column',
@@ -492,11 +509,20 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.70rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--text-tertiary)', letterSpacing: '0.04em' }}>
+          <span style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--text-tertiary)', letterSpacing: '0.04em' }}>
             ⚡ Socratic Power Prompts:
           </span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '6px' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 6,
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch',
+            paddingBottom: 2
+          }}
+        >
           {addictivePrompts.map((item, i) => (
             <button
               key={i}
@@ -504,34 +530,33 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
               disabled={isLoading}
               onClick={() => handleSendMessage(item.prompt)}
               style={{
-                textAlign: 'left',
-                padding: '7px 10px',
-                borderRadius: '8px',
+                padding: '6px 12px',
+                borderRadius: 'var(--radius-pill)',
                 border: '1px solid var(--border-medium)',
                 background: 'var(--bg-card)',
                 color: 'var(--text-primary)',
-                fontSize: '0.72rem',
+                fontSize: '0.74rem',
                 fontWeight: 700,
                 cursor: isLoading ? 'wait' : 'pointer',
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                gap: 6,
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
                 transition: 'all 0.15s ease'
               }}
             >
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {item.label}
-              </span>
+              <span>{item.label}</span>
               <ArrowRight size={11} color="var(--text-tertiary)" />
             </button>
           ))}
         </div>
       </div>
 
-      {/* Input Field Bar */}
+      {/* Input Field Bar with Safe Area Insets */}
       <div
         style={{
-          padding: '14px 16px',
+          padding: '12px 16px calc(18px + env(safe-area-inset-bottom, 0px))',
           borderTop: '1px solid var(--border-medium)',
           display: 'flex',
           flexDirection: 'column',
@@ -610,7 +635,7 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
                 borderRadius: '12px',
                 border: '1px solid var(--border-medium)',
                 background: 'var(--bg-subtle)',
-                fontSize: '0.85rem',
+                fontSize: '16px',
                 color: 'var(--text-primary)',
                 outline: 'none',
                 boxSizing: 'border-box'
@@ -640,5 +665,6 @@ export const AiMentorDrawer: React.FC<AiMentorDrawerProps> = ({
         )}
       </div>
     </div>
-  );
+  </>
+);
 };

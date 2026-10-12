@@ -148,36 +148,53 @@ export const ChallengeModalWidget: React.FC<ChallengeModalWidgetProps> = ({
 
       {/* 2. Floating Mission Card & Target Progress HUD */}
       {isOpen && (
-        <div
-          className="throughline-hud-panel"
-          style={{
-            position: 'absolute',
-            top: 76,
-            right: 20,
-            width: 340,
-            maxWidth: 'calc(100vw - 40px)',
-            maxHeight: 'calc(100vh - 160px)',
-            background: 'rgba(10, 15, 28, 0.94)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.14)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.6)',
-            zIndex: 70,
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Header */}
+        <>
           <div
+            onClick={() => setIsOpen(false)}
             style={{
-              padding: '12px 14px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.55)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              zIndex: 140,
+              animation: 'physoraFadeIn 0.2s ease'
+            }}
+            aria-label="Dismiss missions modal"
+          />
+
+          <div
+            className="challenge-hud-panel"
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 360,
+              maxWidth: 'calc(100vw - 24px)',
+              maxHeight: 'min(580px, calc(100dvh - 40px))',
+              background: 'rgba(10, 15, 28, 0.96)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1.5px solid rgba(255, 255, 255, 0.18)',
+              borderRadius: 'var(--radius-lg, 16px)',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(251, 191, 36, 0.15)',
+              zIndex: 145,
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
+              flexDirection: 'column',
+              overflow: 'hidden'
             }}
           >
+            {/* Header */}
+            <div
+              style={{
+                padding: '12px 14px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}
+            >
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <Award size={15} color="#fbbf24" />
               <span style={{ fontSize: '0.80rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.02em' }}>
@@ -442,7 +459,8 @@ export const ChallengeModalWidget: React.FC<ChallengeModalWidgetProps> = ({
             </div>
           </div>
         </div>
-      )}
-    </>
-  );
+      </>
+    )}
+  </>
+);
 };

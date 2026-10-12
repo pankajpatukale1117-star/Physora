@@ -1409,26 +1409,45 @@ input[type="range"]::-moz-range-thumb {
     overflow-y: auto !important;
   }
 
-  /* Anchored Simulation Canvas: stays at top and occupies at least 60% vertical viewport */
-  .modal-canvas-box,
-  #sim-stage-viewport,
-  .simulation-canvas-wrapper,
-  .sim-stage-canvas-container {
-    order: 1 !important;
-    height: 60vh !important;
-    min-height: 60vh !important;
+  /* Anchored Simulation Canvas: fills viewport cleanly with zero dead letterboxing */
+  #sim-stage-viewport {
+    flex: 1 1 auto !important;
     width: 100% !important;
-    flex: 0 0 60vh !important;
+    height: auto !important;
+    min-height: 0 !important;
     touch-action: none !important;
   }
 
-  /* Hide left and right sidebars on mobile screens */
-  .throughline-hud-panel,
+  .modal-canvas-box,
+  .simulation-canvas-wrapper,
+  .sim-stage-canvas-container {
+    order: 1 !important;
+    width: 100% !important;
+    touch-action: none !important;
+  }
+
+  /* Hide desktop-only sidebars on mobile screens (without hiding mobile modals) */
   .sidebar-left,
   .sidebar-right,
   .desktop-controls-drawer,
   .desktop-telemetry-drawer {
     display: none !important;
+  }
+
+  /* AI Mentor Sheet presentation on mobile */
+  .ai-mentor-drawer-sheet {
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    height: 90dvh !important;
+    max-height: 90dvh !important;
+    border-radius: 24px 24px 0 0 !important;
+    border-left: none !important;
+    border-top: 1.5px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.75) !important;
   }
 
   /* Minimum 44px by 44px Touch Targets for all interactive buttons and toggles */
@@ -1713,4 +1732,52 @@ input[type="range"]::-moz-range-thumb {
   .phet-category-card {
     padding: 10px 12px !important;
   }
+}
+
+/* ==========================================================================
+   Mobile-First High-Craft UX Micro-Interactions & Animations
+   ========================================================================== */
+@keyframes physoraFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes physoraSheetUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.mobile-bottom-nav-btn {
+  transition: transform 0.12s ease, opacity 0.15s ease;
+  user-select: none;
+}
+
+.mobile-bottom-nav-btn:active {
+  transform: scale(0.92);
+  opacity: 0.8;
+}
+
+.mobile-stage-floating-hud {
+  user-select: none;
+}
+
+.mobile-stage-floating-hud button {
+  transition: transform 0.12s ease, opacity 0.15s ease;
+}
+
+.mobile-stage-floating-hud button:active {
+  transform: scale(0.93);
+}
+
+.challenge-hud-panel {
+  user-select: none;
+  animation: physoraFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }

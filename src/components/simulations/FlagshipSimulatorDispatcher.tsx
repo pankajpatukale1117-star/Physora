@@ -31,6 +31,28 @@ interface FlagshipSimulatorDispatcherProps {
   isCompact?: boolean;
 }
 
+export const isFlagshipSimulator = (simId: string): boolean => {
+  const flagshipSet = new Set([
+    'physics_projectile_lab',
+    'physics_wave_lab',
+    'physics_orbital_lab', 'orbital_mechanics_3d',
+    'physics_atomic_orbitals_lab', 'atomic_orbitals_3d',
+    'physics_em_wave_lab', 'em_wave_3d',
+    'black_hole_relativity_3d', 'grav_black_hole',
+    'quantum_double_slit_3d', 'physics_quantum_slit',
+    'chem_vsepr_lab',
+    'chem_kinetics_lab',
+    'crystallography_3d', 'chem_crystallography',
+    'bio_cardiac_lab',
+    'bio_osmosis_lab',
+    'bio_dna_helix_lab', 'dna_helix_3d',
+    'neuron_synapse_3d', 'bio_neuron_synapse',
+    'math_vector3d_lab',
+    'math_calculus_lab'
+  ]);
+  return flagshipSet.has(simId);
+};
+
 export const FlagshipSimulatorDispatcher: React.FC<FlagshipSimulatorDispatcherProps> = (props) => {
   const { simId } = props;
 

@@ -11,6 +11,8 @@ import {
   CheckCircle2,
   ChevronRight,
   ChevronLeft,
+  ChevronUp,
+  ChevronDown,
   HelpCircle,
   Award,
   Maximize2,
@@ -29,7 +31,7 @@ import {
 } from 'lucide-react';
 import { TOPICS_DATA, isSimulationAnimated, type EditorialTeaching } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
-import { FlagshipSimulatorDispatcher } from './simulations/FlagshipSimulatorDispatcher';
+import { FlagshipSimulatorDispatcher, isFlagshipSimulator } from './simulations/FlagshipSimulatorDispatcher';
 import { MathView } from './MathView';
 import { ChallengeModalWidget } from './challenges/ChallengeModalWidget';
 import { getTopicChallenges } from '../data/challengesData';
@@ -185,6 +187,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [prevSimId, setPrevSimId] = useState<string | null>(null);
 
   const currentSim = topic ? topic.simulations[activeSimIndex] || topic.simulations[0] : null;
+  const isFlagshipSim = useMemo(() => isFlagshipSimulator(currentSim?.id || ''), [currentSim?.id]);
   const isAnimated = isSimulationAnimated(currentSim?.id);
 
   const handleStepForward = () => {
@@ -533,14 +536,12 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 whiteSpace: 'nowrap'
               }}
             >
-              <div className="hide-mobile">
-                <ChallengeModalWidget
-                  challenges={topicChallenges}
-                  currentParams={params}
-                  onApplyInitialParams={handleApplyChallengeParams}
-                  accentColor={accentColor}
-                />
-              </div>
+              <ChallengeModalWidget
+                challenges={topicChallenges}
+                currentParams={params}
+                onApplyInitialParams={handleApplyChallengeParams}
+                accentColor={accentColor}
+              />
 
               <button
                 onClick={() => setIsDualCompare(prev => !prev)}
@@ -597,7 +598,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 title="Open Context-Aware AI Science Tutor"
               >
                 <Sparkles size={12} />
-                <span className="hide-mobile">AI Tutor</span>
+                <span>AI Tutor</span>
               </button>
 
               <button
@@ -659,6 +660,65 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               </button>
             </div>
           </header>
+
+          {/* Mobile Simulation Sub-Tab Carousel */}
+          {topic.simulations.length > 1 && (
+            <div
+              className="show-mobile-only"
+              style={{
+                display: isMobile ? 'flex' : 'none',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 12px',
+                background: '#0B1120',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                overflowX: 'auto',
+                scrollbarWidth: 'none',
+                WebkitOverflowScrolling: 'touch',
+                flexShrink: 0,
+                zIndex: 40
+              }}
+            >
+              {topic.simulations.map((sim, idx) => {
+                const isActive = idx === activeSimIndex;
+                return (
+                  <button
+                    key={sim.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveSimIndex(idx);
+                      window.location.hash = `#sim/${sim.id}`;
+                    }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '5px 12px',
+                      borderRadius: 'var(--radius-pill)',
+                      border: isActive ? `1.5px solid ${accentColor}` : '1px solid rgba(255, 255, 255, 0.12)',
+                      background: isActive ? `${accentColor}25` : 'rgba(255, 255, 255, 0.05)',
+                      color: isActive ? '#FFFFFF' : 'var(--text-secondary)',
+                      fontSize: '0.74rem',
+                      fontWeight: isActive ? 800 : 600,
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      flexShrink: 0
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: isActive ? accentColor : 'var(--text-muted)'
+                      }}
+                    />
+                    <span>{sim.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* Wall-to-Wall Simulation Stage Viewport */}
           <div
@@ -935,14 +995,194 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
             )}
           </div>
 
-          {/* Left Controls: Draggable Bottom Sheet for Mobile, Left Drawer for Desktop */}
-          {isMobile ? (
-            <BottomSheet
-              snap={bottomSheetSnap}
-              onSnapChange={setBottomSheetSnap}
-              title="Controls & Telemetry"
-              badgeCount={currentSim.controls.length}
-              accentColor={accentColor}
+          {/* Left Controls: Draggable Bottom Sheet for Mobile, Left Drawer for Desktop (Standard Sims Only) */}
+          {!isFlagshipSim && (isMobile ? (
+            <>
+              {/* Mobile Direct Playback & Telemetry Floating HUD (Thumb-Reachable) */}
+              <div
+                className="mobile-stage-floating-hud"
+                style={{
+                  position: 'fixed',
+                  bottom: bottomSheetSnap === 'peek' ? 66 : 'calc(46vh + 10px)',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: 110,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  background: 'rgba(11, 17, 32, 0.94)',
+                  border: '1.5px solid rgba(255, 255, 255, 0.18)',
+                  borderRadius: 'var(--radius-pill)',
+                  padding: '6px 10px',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 240, 255, 0.15)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  maxWidth: 'calc(100vw - 16px)',
+                  width: 'max-content',
+                  transition: 'bottom 0.26s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}
+              >
+                {/* Play / Pause Button */}
+                {isAnimated && (
+                  <button
+                    type="button"
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 42,
+                      height: 42,
+                      minWidth: 42,
+                      minHeight: 42,
+                      borderRadius: '50%',
+                      background: isPlaying ? 'linear-gradient(135deg, #DC2626, #B91C1C)' : 'linear-gradient(135deg, #059669, #047857)',
+                      border: isPlaying ? '1.5px solid #EF4444' : '1.5px solid #10B981',
+                      color: '#FFFFFF',
+                      cursor: 'pointer',
+                      boxShadow: isPlaying ? '0 0 12px rgba(220, 38, 38, 0.5)' : '0 0 12px rgba(5, 150, 105, 0.5)',
+                      flexShrink: 0
+                    }}
+                    aria-label={isPlaying ? 'Pause Simulation' : 'Play Simulation'}
+                  >
+                    {isPlaying ? <Pause size={17} fill="#FFFFFF" /> : <Play size={17} fill="#FFFFFF" style={{ marginLeft: 2 }} />}
+                  </button>
+                )}
+
+                {/* Step Forward Button */}
+                {isAnimated && (
+                  <button
+                    type="button"
+                    onClick={handleStepForward}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 36,
+                      height: 36,
+                      minWidth: 36,
+                      minHeight: 36,
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      color: '#F8FAFC',
+                      cursor: 'pointer',
+                      flexShrink: 0
+                    }}
+                    title="Step Forward (1 Frame)"
+                    aria-label="Step Forward"
+                  >
+                    <StepForward size={15} />
+                  </button>
+                )}
+
+                {/* Reset Button */}
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 36,
+                    height: 36,
+                    minWidth: 36,
+                    minHeight: 36,
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#94A3B8',
+                    cursor: 'pointer',
+                    flexShrink: 0
+                  }}
+                  title="Reset Parameters"
+                  aria-label="Reset Parameters"
+                >
+                  <RotateCcw size={15} />
+                </button>
+
+                {/* Speed Toggle (1x / 0.25x) */}
+                {isAnimated && (
+                  <button
+                    type="button"
+                    onClick={() => setSpeed(prev => (prev === 1 ? 0.25 : 1))}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 3,
+                      padding: '5px 9px',
+                      minHeight: 36,
+                      borderRadius: 'var(--radius-pill)',
+                      background: speed < 1 ? 'rgba(245, 158, 11, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                      border: speed < 1 ? '1px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.15)',
+                      color: speed < 1 ? '#FBBF24' : '#E2E8F0',
+                      fontSize: '0.74rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                    title="Toggle Playback Speed"
+                  >
+                    <Gauge size={13} />
+                    <span>{speed === 1 ? '1×' : '0.25×'}</span>
+                  </button>
+                )}
+
+                {/* Primary Live Telemetry Chip (if available) */}
+                {currentSim.telemetryLabels.length > 0 && telemetry[currentSim.telemetryLabels[0].key] && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '4px 8px',
+                      borderRadius: 'var(--radius-pill)',
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      color: '#38BDF8',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <Activity size={11} />
+                    <span>{telemetry[currentSim.telemetryLabels[0].key]}</span>
+                  </div>
+                )}
+
+                {/* Sliders Drawer Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => setBottomSheetSnap(prev => (prev === 'peek' ? 'half' : 'peek'))}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '6px 11px',
+                    minHeight: 36,
+                    borderRadius: 'var(--radius-pill)',
+                    background: bottomSheetSnap !== 'peek' ? 'rgba(0, 240, 255, 0.25)' : 'rgba(255, 255, 255, 0.1)',
+                    border: bottomSheetSnap !== 'peek' ? '1px solid var(--electric-blue)' : '1px solid rgba(255, 255, 255, 0.18)',
+                    color: bottomSheetSnap !== 'peek' ? '#00f0ff' : '#FFFFFF',
+                    fontSize: '0.76rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  <Sliders size={13} color={accentColor} />
+                  <span>Sliders ({currentSim.controls.length})</span>
+                  {bottomSheetSnap === 'peek' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+              </div>
+
+              <BottomSheet
+                snap={bottomSheetSnap}
+                onSnapChange={setBottomSheetSnap}
+                title="Controls & Telemetry"
+                badgeCount={currentSim.controls.length}
+                accentColor={accentColor}
               telemetrySection={
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 8 }}>
                   {currentSim.telemetryLabels.map((tLabel) => (
@@ -985,7 +1225,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     <RotateCcw size={14} />
                     <span>Reset Controls</span>
                   </button>
-                  <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Throughline Engine</span>
                 </div>
               }
             >
@@ -1073,6 +1312,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 );
               })}
             </BottomSheet>
+            </>
           ) : (
             /* Desktop Persistent Left Parameter Drawer */
             leftDrawerOpen ? (
@@ -1256,7 +1496,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     <RotateCcw size={12} />
                     <span>Reset Controls</span>
                   </button>
-                  <span style={{ fontSize: '0.70rem', color: 'var(--text-muted)' }}>Throughline Engine</span>
                 </div>
               </div>
             ) : (
@@ -1284,10 +1523,10 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 <ChevronRight size={14} />
               </button>
             )
-          )}
+          ))}
 
-          {/* Floating Collapsible Right Telemetry Drawer (Hidden on Mobile) */}
-          {!isMobile && (rightDrawerOpen ? (
+          {/* Floating Collapsible Right Telemetry Drawer (Hidden on Mobile, Standard Sims Only) */}
+          {!isFlagshipSim && !isMobile && (rightDrawerOpen ? (
             <div
               className="throughline-hud-panel"
               style={{
@@ -1478,187 +1717,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
               <span>Metrics ({currentSim.telemetryLabels.length})</span>
             </button>
           ))}
-
-          {/* Floating Bottom Timeline / Scrubber Pill */}
-          <div
-            className="throughline-timeline-bar"
-            style={{
-              position: 'absolute',
-              bottom: 24,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 70,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              background: 'var(--bg-surface-elevated)',
-              border: '1px solid var(--border-medium)',
-              borderRadius: 'var(--radius-pill)',
-              padding: '6px 14px',
-              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.35), 0 3px 10px rgba(0, 0, 0, 0.2)',
-              backdropFilter: 'blur(16px)',
-              WebkitBackdropFilter: 'blur(16px)',
-              maxWidth: 'calc(100vw - 32px)',
-              flexWrap: 'nowrap'
-            }}
-          >
-            {isAnimated && (
-              <button
-                type="button"
-                onClick={() => setIsPlaying(!isPlaying)}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  background: isPlaying ? '#DC2626' : '#059669',
-                  border: isPlaying ? '1px solid #EF4444' : '1px solid #10B981',
-                  color: '#FFFFFF',
-                  borderRadius: 'var(--radius-pill)',
-                  padding: '7px 16px',
-                  cursor: 'pointer',
-                  fontWeight: 800,
-                  fontSize: '0.82rem',
-                  boxShadow: isPlaying ? '0 2px 8px rgba(220, 38, 38, 0.45)' : '0 2px 8px rgba(5, 150, 105, 0.45)',
-                  transition: 'all 0.15s ease',
-                  whiteSpace: 'nowrap'
-                }}
-              >
-                {isPlaying ? (
-                  <Pause size={14} color="#FFFFFF" strokeWidth={2.6} />
-                ) : (
-                  <Play size={14} color="#FFFFFF" strokeWidth={2.6} fill="#FFFFFF" />
-                )}
-                <span style={{ color: '#FFFFFF', fontWeight: 800 }}>{isPlaying ? 'Pause' : 'Play'}</span>
-              </button>
-            )}
-
-            {isAnimated && (
-              <button
-                type="button"
-                onClick={handleStepForward}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  background: 'var(--bg-subtle)',
-                  border: '1px solid var(--border-medium)',
-                  borderRadius: 'var(--radius-pill)',
-                  padding: '7px 12px',
-                  color: 'var(--text-primary)',
-                  cursor: 'pointer',
-                  fontSize: '0.80rem',
-                  fontWeight: 700,
-                  transition: 'all 0.15s ease',
-                  whiteSpace: 'nowrap'
-                }}
-                title="Step forward 1 frame"
-                aria-label="Step forward 1 frame"
-              >
-                <StepForward size={14} color="currentColor" strokeWidth={2.2} />
-                <span style={{ color: 'var(--text-primary)', fontWeight: 700 }}>Step</span>
-              </button>
-            )}
-
-            {isAnimated && (
-              <button
-                type="button"
-                onClick={() => setSpeed((prev) => (prev === 1 ? 0.25 : 1))}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  background: speed === 0.25 ? 'var(--brand-primary-soft)' : 'var(--bg-subtle)',
-                  border: speed === 0.25 ? '1px solid var(--brand-primary)' : '1px solid var(--border-medium)',
-                  borderRadius: 'var(--radius-pill)',
-                  padding: '7px 12px',
-                  color: speed === 0.25 ? 'var(--brand-primary)' : 'var(--text-primary)',
-                  cursor: 'pointer',
-                  fontSize: '0.80rem',
-                  fontWeight: 800,
-                  transition: 'all 0.15s ease',
-                  whiteSpace: 'nowrap'
-                }}
-                title="Toggle speed (1x Normal vs 0.25x Slow Motion)"
-              >
-                <Gauge size={14} color="currentColor" strokeWidth={2.2} />
-                <span style={{ fontWeight: 800 }}>{speed === 1 ? '1x Normal' : '0.25x Slow'}</span>
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleReset}
-              className="phet-reset-btn"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                background: '#FF6600',
-                border: '2px solid #FFFFFF',
-                color: '#FFFFFF',
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(255, 102, 0, 0.45)',
-                flexShrink: 0
-              }}
-              title="Reset simulation and clock"
-              aria-label="Reset simulation"
-            >
-              <RotateCcw size={15} strokeWidth={2.6} color="#FFFFFF" />
-            </button>
-
-            <div style={{ height: 18, width: 1, background: 'var(--border-medium)' }} />
-
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: '0.74rem',
-                fontWeight: 800,
-                color: isPlaying ? 'var(--accent-success)' : 'var(--accent-amber)',
-                letterSpacing: '0.04em',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: isPlaying ? '#10B981' : '#F59E0B',
-                  boxShadow: isPlaying ? '0 0 8px #10B981' : '0 0 8px #F59E0B'
-                }}
-              />
-              <span>{isPlaying ? 'LIVE' : 'PAUSED'}</span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                document.getElementById('sim-teaching')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 4,
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                fontSize: '0.76rem',
-                fontWeight: 650,
-                cursor: 'pointer',
-                padding: '4px 6px',
-                borderRadius: 'var(--radius-pill)',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              <span style={{ fontStyle: 'italic' }}>Guide</span>
-              <ArrowDown size={12} />
-            </button>
-          </div>
         </div>
 
         {/* VIEWPORT 2: Editorial Teaching Deconstruction Section */}
@@ -1699,7 +1757,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     borderRadius: 'var(--radius-pill)'
                   }}
                 >
-                  Throughline Pedagogical Breakdown
+                  Interactive Pedagogical Breakdown
                 </span>
                 <span style={{ color: 'var(--text-tertiary)', fontSize: '0.80rem' }}>
                   • First Principles Deconstruction
@@ -2216,7 +2274,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
-              title="Launch Throughline Stage View & Narrative"
+              title="Launch Stage View & Narrative"
             >
               <Maximize2 size={13} />
               <span>Stage Studio</span>
