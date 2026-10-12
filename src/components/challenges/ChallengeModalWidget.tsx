@@ -9,10 +9,12 @@ import {
   Volume2,
   VolumeX,
   X,
-  Award
+  Award,
+  Lock
 } from 'lucide-react';
 import { type TopicChallenge } from '../../data/challengesData';
 import { audioFX } from '../../utils/audioEffects';
+import { useSubscription } from '../../context/SubscriptionContext';
 
 interface ChallengeModalWidgetProps {
   challenges: TopicChallenge[];
@@ -27,6 +29,7 @@ export const ChallengeModalWidget: React.FC<ChallengeModalWidgetProps> = ({
   onApplyInitialParams,
   accentColor
 }) => {
+  const { canAccessChallenge, triggerPaywall } = useSubscription();
   const [isOpen, setIsOpen] = useState(false);
   const [activeChallengeId, setActiveChallengeId] = useState<string | null>(null);
   const [completedIds, setCompletedIds] = useState<string[]>(() => {
@@ -44,13 +47,13 @@ export const ChallengeModalWidget: React.FC<ChallengeModalWidgetProps> = ({
 
   const activeChallenge = challenges.find((c) => c.id === activeChallengeId);
 
-  // Auto-select first uncompleted challenge or first challenge on mount
+  // Auto-select first uncompleted accessible challenge or first challenge on mount
   useEffect(() => {
     if (challenges.length > 0 && !activeChallengeId) {
-      const firstUncompleted = challenges.find((c) => !completedIds.includes(c.id));
-      setActiveChallengeId(firstUncompleted ? firstUncompleted.id : challenges[0].id);
+      const firstAccessible = challenges.find((c, idx) => canAccessChallenge(idx) && !completedIds.includes(c.id)) || challenges[0];
+      setActiveChallengeId(firstAccessible.id);
     }
-  }, [challenges, completedIds, activeChallengeId]);
+  }, [challenges, completedIds, activeChallengeId, canAccessChallenge]);
 
   // Track real-time parameter accuracy toward active challenge goal
   const currentValue = activeChallenge ? (currentParams[activeChallenge.targetParamId] ?? 0) : 0;
@@ -98,7 +101,11 @@ export const ChallengeModalWidget: React.FC<ChallengeModalWidgetProps> = ({
 
   if (challenges.length === 0) return null;
 
-  const handleStartChallenge = (c: TopicChallenge) => {
+  const handleStartChallenge = (c: TopicChallenge, index: number) => {
+    if (!canAccessChallenge(index)) {
+      triggerPaywall('exam_challenge', 'PRO');
+      return;
+    }
     setActiveChallengeId(c.id);
     setShowHint(false);
     setJustSolved(false);
@@ -421,14 +428,15 @@ export const ChallengeModalWidget: React.FC<ChallengeModalWidgetProps> = ({
                 All Missions ({challenges.length})
               </span>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 6 }}>
-                {challenges.map((c) => {
+                {challenges.map((c, idx) => {
                   const isDone = completedIds.includes(c.id);
                   const isCur = activeChallengeId === c.id;
+                  const isLocked = !canAccessChallenge(idx);
                   return (
                     <button
                       key={c.id}
                       type="button"
-                      onClick={() => handleStartChallenge(c)}
+                      onClick={() => handleStartChallenge(c, idx)}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -449,8 +457,17 @@ export const ChallengeModalWidget: React.FC<ChallengeModalWidgetProps> = ({
                         <span>{c.title}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        {isDone && <CheckCircle2 size={13} color="#4ade80" />}
-                        <ChevronRight size={13} style={{ opacity: 0.5 }} />
+                        {isLocked ? (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span style={{ fontSize: '0.60rem', background: '#2563EB', color: '#FFF', padding: '1px 5px', borderRadius: 4, fontWeight: 800 }}>PRO</span>
+                            <Lock size={12} color="#94a3b8" />
+                          </div>
+                        ) : (
+                          <>
+                            {isDone && <CheckCircle2 size={13} color="#4ade80" />}
+                            <ChevronRight size={13} style={{ opacity: 0.5 }} />
+                          </>
+                        )}
                       </div>
                     </button>
                   );

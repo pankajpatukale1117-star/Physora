@@ -36,7 +36,7 @@ export const LabReportModal: React.FC<LabReportModalProps> = ({
   onOpenPricing
 }) => {
   const { profile } = useAuth();
-  const { canExportPdf, triggerPaywall, tier } = useSubscription();
+  const { canExportPdf, canUseSchoolBranding, triggerPaywall, tier } = useSubscription();
 
   const [studentName, setStudentName] = useState(
     profile?.display_name || profile?.username || 'Student Investigator'
@@ -79,7 +79,7 @@ export const LabReportModal: React.FC<LabReportModalProps> = ({
         params,
         telemetry,
         studentName,
-        institutionName,
+        institutionName: canUseSchoolBranding() ? institutionName : 'Physora Open STEM Laboratory',
         labNotes,
         reportId,
         reportDate,
@@ -320,24 +320,53 @@ ${labNotes}
                   PHYSORA STEM LABORATORY REPORT
                 </span>
               </div>
-              <input
-                type="text"
-                className="report-input-field"
-                value={institutionName}
-                onChange={(e) => setInstitutionName(e.target.value)}
-                placeholder="Institution / School Name"
-                style={{
-                  fontSize: '0.90rem',
-                  color: '#475569',
-                  fontWeight: 600,
-                  border: 'none',
-                  borderBottom: '1px dashed #CBD5E1',
-                  background: 'transparent',
-                  width: '380px',
-                  outline: 'none',
-                  padding: '2px 0'
-                }}
-              />
+              {canUseSchoolBranding() ? (
+                <input
+                  type="text"
+                  className="report-input-field"
+                  value={institutionName}
+                  onChange={(e) => setInstitutionName(e.target.value)}
+                  placeholder="Institution / School Name"
+                  style={{
+                    fontSize: '0.90rem',
+                    color: '#475569',
+                    fontWeight: 600,
+                    border: 'none',
+                    borderBottom: '1px dashed #CBD5E1',
+                    background: 'transparent',
+                    width: '380px',
+                    outline: 'none',
+                    padding: '2px 0'
+                  }}
+                />
+              ) : (
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                  <span style={{ fontSize: '0.88rem', color: '#475569', fontWeight: 600 }}>
+                    Physora Open STEM Laboratory
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => triggerPaywall('school_branding', 'EDUCATOR')}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-pill)',
+                      background: 'rgba(168, 85, 247, 0.1)',
+                      border: '1px solid rgba(168, 85, 247, 0.3)',
+                      color: '#9333EA',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      cursor: 'pointer'
+                    }}
+                    title="Custom School/Institution Branding requires Classroom & School plan"
+                  >
+                    <Lock size={10} />
+                    <span>School Branding</span>
+                  </button>
+                </div>
+              )}
             </div>
 
             <div style={{ textAlign: 'right', fontSize: '0.80rem', color: '#64748B' }}>

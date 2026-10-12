@@ -7,10 +7,12 @@ import {
   Play,
   Target,
   Dna,
-  FlaskConical
+  FlaskConical,
+  Lock
 } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { SimulationPoster } from './SimulationPoster';
+import { useSubscription } from '../context/SubscriptionContext';
 
 interface SimulationLibraryProps {
   onSelectTopic: (topicId: string) => void;
@@ -30,6 +32,8 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
   onOpenFormulas,
   onOpenAnatomy
 }) => {
+  const { canAccessTopic, triggerPaywall } = useSubscription();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<'All' | 'Physics' | 'Chemistry' | 'Mathematics' | 'Biology'>('All');
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -721,12 +725,17 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
           >
             {filteredTopics.map((topic) => {
               const isFlagship = FLAGSHIP_TOPIC_IDS.has(topic.id);
+              const isAccessible = canAccessTopic(topic.id);
 
               return (
                 <div
                   key={topic.id}
                   className="scientific-card scientific-card-interactive"
                   onClick={() => {
+                    if (!isAccessible) {
+                      triggerPaywall('pro_simulation', 'PRO');
+                      return;
+                    }
                     onSelectTopic(topic.id);
                   }}
                   style={{
@@ -821,17 +830,47 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                       )}
                     </div>
 
+                    {/* Pro Lock Badge at top-right if locked for Free tier */}
+                    {!isAccessible && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 10,
+                          right: 12,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 4,
+                          padding: '3px 9px',
+                          borderRadius: 'var(--radius-pill)',
+                          background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+                          color: '#FFFFFF',
+                          fontSize: '0.68rem',
+                          fontWeight: 800,
+                          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.4)',
+                          letterSpacing: '0.04em'
+                        }}
+                      >
+                        <Lock size={11} />
+                        <span>PRO</span>
+                      </div>
+                    )}
+
                     {/* Iconic PhET Circular Play Button at bottom-right */}
                     <div
                       className="phet-play-badge"
-                      title={`Launch ${topic.title}`}
+                      title={!isAccessible ? `Unlock ${topic.title} with Physora Pro` : `Launch ${topic.title}`}
                       style={{
                         position: 'absolute',
                         bottom: 10,
-                        right: 12
+                        right: 12,
+                        background: !isAccessible ? 'linear-gradient(135deg, #2563EB, #7C3AED)' : undefined
                       }}
                     >
-                      <Play size={20} fill="#FFFFFF" style={{ marginLeft: 2 }} />
+                      {!isAccessible ? (
+                        <Lock size={16} color="#FFFFFF" />
+                      ) : (
+                        <Play size={20} fill="#FFFFFF" style={{ marginLeft: 2 }} />
+                      )}
                     </div>
                   </div>
 
@@ -900,7 +939,35 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                         borderTop: '1px solid var(--border-subtle)'
                       }}
                     >
-                      {isFlagship ? (
+                      {!isAccessible ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            triggerPaywall('pro_simulation', 'PRO');
+                          }}
+                          className="btn"
+                          style={{
+                            width: '100%',
+                            padding: '10px 16px',
+                            borderRadius: 'var(--radius-pill)',
+                            background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(124, 58, 237, 0.15))',
+                            color: '#60A5FA',
+                            border: '1px solid rgba(96, 165, 250, 0.35)',
+                            justifyContent: 'center',
+                            fontWeight: 800,
+                            fontSize: '0.86rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.1)'
+                          }}
+                        >
+                          <Lock size={15} />
+                          <span>Unlock with Physora Pro</span>
+                        </button>
+                      ) : isFlagship ? (
                         <button
                           type="button"
                           onClick={(e) => {

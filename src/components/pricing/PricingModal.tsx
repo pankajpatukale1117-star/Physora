@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   X,
   Check,
@@ -47,7 +47,68 @@ export const PricingModal: React.FC<PricingModalProps> = ({
     daysRemaining,
     isFounder
   } = useAuth();
-  const { setTier } = useSubscription();
+  const { setTier, paywallReason, paywallTargetTier, closePaywall } = useSubscription();
+
+  const paywallInfo = useMemo(() => {
+    if (!paywallReason) return null;
+    switch (paywallReason) {
+      case 'presenter_mode':
+        return {
+          title: 'Smartboard Presenter Mode & Laser Pointer',
+          desc: 'Interactive presenter dual-pointer, blackboard drawing, and student reveal masks are exclusive to Classroom & School.',
+          badge: 'Classroom & School Plan Required'
+        };
+      case 'school_branding':
+        return {
+          title: 'Custom School Branding & Official Reports',
+          desc: 'School crests, verified faculty evaluator seals, and institution branding on exported reports require the Classroom & School plan.',
+          badge: 'Classroom & School Plan Required'
+        };
+      case 'lms_embed':
+        return {
+          title: 'Canvas & Google Classroom LMS Embeds',
+          desc: 'Direct LMS assignment integration and classroom embeds are exclusive to the Classroom & School plan.',
+          badge: 'Classroom & School Plan Required'
+        };
+      case 'pro_simulation':
+        return {
+          title: 'Precision Simulation Laboratory',
+          desc: 'This lab is part of the 76+ precision simulation catalog. Upgrade to Physora Pro to unlock all precision models.',
+          badge: 'Physora Pro Required'
+        };
+      case 'pdf_export':
+        return {
+          title: '1-Click Academic Lab Report PDF Exporter',
+          desc: 'Exporting official, watermark-free academic lab reports with complete parameter snapshots and observational logs requires Physora Pro.',
+          badge: 'Physora Pro Required'
+        };
+      case 'ai_tutor':
+        return {
+          title: 'Physora AI Science Tutor Daily Limit Reached',
+          desc: 'You have used your 3 free AI questions for today. Upgrade to Physora Pro for unlimited 24/7 AI Science Mentorship.',
+          badge: 'Physora Pro Required'
+        };
+      case 'exam_challenge':
+        return {
+          title: 'Curated Visual Exam Challenges',
+          desc: 'Advanced problem sets for JEE Advanced, NEET-UG, and AP Physics are exclusive to Physora Pro subscribers.',
+          badge: 'Physora Pro Required'
+        };
+      case 'ecorche_anatomy':
+        return {
+          title: 'Full 3D Écorché Muscular & Skeletal Model',
+          desc: 'Dissecting muscular layers, isolating skeletal axes, and multi-scale physiological toggles require Physora Pro.',
+          badge: 'Physora Pro Required'
+        };
+      default:
+        return null;
+    }
+  }, [paywallReason]);
+
+  const handleModalClose = () => {
+    closePaywall();
+    onClose();
+  };
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
   const [currency, setCurrencyState] = useState<'USD' | 'INR'>(() => {
@@ -313,7 +374,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleModalClose}
             style={{
               background: 'var(--bg-subtle, #F1F5F9)',
               border: 'none',
@@ -331,6 +392,50 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             <X size={20} />
           </button>
         </div>
+
+        {/* Feature Lock Paywall Context Banner */}
+        {paywallInfo && (
+          <div
+            style={{
+              padding: '14px 24px',
+              background: paywallTargetTier === 'EDUCATOR'
+                ? 'linear-gradient(135deg, #7C3AED, #6D28D9)'
+                : 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '12px',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <Lock size={20} />
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '0.94rem' }}>
+                  {paywallInfo.title}
+                </div>
+                <div style={{ fontSize: '0.82rem', opacity: 0.9 }}>
+                  {paywallInfo.desc}
+                </div>
+              </div>
+            </div>
+            <span
+              style={{
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                background: 'rgba(255, 255, 255, 0.22)',
+                padding: '4px 10px',
+                borderRadius: '999px',
+                letterSpacing: '0.04em',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {paywallInfo.badge}
+            </span>
+          </div>
+        )}
 
         {/* Success Alert Banner */}
         {successMessage && (

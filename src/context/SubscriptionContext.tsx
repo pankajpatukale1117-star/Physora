@@ -4,27 +4,54 @@ import type { MembershipTier } from '../types/auth';
 
 export type SubscriptionTier = 'FREE' | 'PRO' | 'EDUCATOR';
 
+export type PaywallReason =
+  | 'pro_simulation'
+  | 'pdf_export'
+  | 'ai_tutor'
+  | 'exam_challenge'
+  | 'ecorche_anatomy'
+  | 'presenter_mode'
+  | 'school_branding'
+  | 'lms_embed';
+
+export const FREE_TOPIC_IDS = new Set<string>([
+  'algebra',
+  'trigonometry',
+  'motion',
+  'units_dimensions',
+  'newtons_laws',
+  'work_energy_power',
+  'gravitation',
+  'waves',
+  'optics',
+  'functions'
+]);
+
 export interface SubscriptionContextType {
   tier: SubscriptionTier;
   setTier: (tier: SubscriptionTier) => void;
   subscriptionPeriodEnd: string | null;
   isSubscriptionActive: boolean;
   daysRemaining: number | null;
+  // Feature Access & Gating Checks
+  canAccessTopic: (topicId: string) => boolean;
+  canExportPdf: () => boolean;
+  canUseAiTutor: () => boolean;
+  canAccessChallenge: (challengeIndex: number) => boolean;
+  canUseEcorcheModel: () => boolean;
+  canUsePresenterMode: () => boolean;
+  canUseSchoolBranding: () => boolean;
   // AI Tutor Limits
   aiQueriesUsed: number;
   maxFreeAiQueries: number;
   remainingAiQueries: number;
-  canUseAiTutor: () => boolean;
   incrementAiQueries: () => boolean;
   resetAiQueries: () => void;
-  // Feature Gating Checks
-  canExportPdf: () => boolean;
-  canUsePresenterMode: () => boolean;
   // Paywall Modal State
   isPaywallOpen: boolean;
-  paywallReason: 'pdf_export' | 'ai_tutor' | 'presenter_mode' | null;
+  paywallReason: PaywallReason | null;
   paywallTargetTier: 'PRO' | 'EDUCATOR';
-  triggerPaywall: (reason: 'pdf_export' | 'ai_tutor' | 'presenter_mode', targetTier?: 'PRO' | 'EDUCATOR') => void;
+  triggerPaywall: (reason: PaywallReason, targetTier?: 'PRO' | 'EDUCATOR') => void;
   closePaywall: () => void;
   upgradeTier: (targetTier: SubscriptionTier, periodEnd?: string) => Promise<void>;
 }
@@ -82,12 +109,12 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   // Paywall Modal Management
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
-  const [paywallReason, setPaywallReason] = useState<'pdf_export' | 'ai_tutor' | 'presenter_mode' | null>(null);
+  const [paywallReason, setPaywallReason] = useState<PaywallReason | null>(null);
   const [paywallTargetTier, setPaywallTargetTier] = useState<'PRO' | 'EDUCATOR'>('PRO');
 
   const setTier = (newTier: SubscriptionTier) => {
     // If user has an active paid subscription, prevent switching to FREE mode until it ends
-    if (newTier === 'FREE' && auth.isSubscriptionActive && auth.membershipTier !== 'free') {
+    if (newTier === 'FREE' && auth.isSubscriptionActive && auth.membershipTier !== 'free' && !auth.isFounder) {
       console.warn('[SubscriptionContext] User has an active paid subscription; cannot switch to FREE until period ends.');
       return;
     }
@@ -99,15 +126,24 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
-  const remainingAiQueries = tier === 'FREE' ? Math.max(0, maxFreeAiQueries - aiQueriesUsed) : 9999;
+  const remainingAiQueries = (auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR')
+    ? 9999
+    : Math.max(0, maxFreeAiQueries - aiQueriesUsed);
 
+  // 1. Topic Access Check: 10 Core Foundation Topics are Free, rest are Pro
+  const canAccessTopic = (topicId: string): boolean => {
+    if (auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR') return true;
+    return FREE_TOPIC_IDS.has(topicId);
+  };
+
+  // 2. AI Tutor: 3 queries per day for Free, unlimited for Pro & School
   const canUseAiTutor = (): boolean => {
-    if (tier === 'PRO' || tier === 'EDUCATOR') return true;
+    if (auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR') return true;
     return aiQueriesUsed < maxFreeAiQueries;
   };
 
   const incrementAiQueries = (): boolean => {
-    if (tier === 'PRO' || tier === 'EDUCATOR') {
+    if (auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR') {
       return true;
     }
     if (aiQueriesUsed >= maxFreeAiQueries) {
@@ -133,16 +169,34 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
+  // 3. PDF Lab Report Export: Pro & School only
   const canExportPdf = (): boolean => {
-    return tier === 'PRO' || tier === 'EDUCATOR';
+    return Boolean(auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR');
   };
 
+  // 4. Exam Challenges: Challenge 1 is free, Challenge 2+ require Pro
+  const canAccessChallenge = (challengeIndex: number): boolean => {
+    if (challengeIndex === 0) return true;
+    return Boolean(auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR');
+  };
+
+  // 5. 3D Human Anatomy Full Écorché Layer (Muscular & Skeletal Solo systems): Pro & School only
+  const canUseEcorcheModel = (): boolean => {
+    return Boolean(auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR');
+  };
+
+  // 6. Smartboard Presenter Mode & Laser Pointer: Classroom & School (EDUCATOR) ONLY! Locked for Free AND Pro!
   const canUsePresenterMode = (): boolean => {
-    return tier === 'EDUCATOR';
+    return Boolean(auth.isFounder || tier === 'EDUCATOR');
+  };
+
+  // 7. Custom School Branding on Reports: Classroom & School (EDUCATOR) ONLY! Locked for Free AND Pro!
+  const canUseSchoolBranding = (): boolean => {
+    return Boolean(auth.isFounder || tier === 'EDUCATOR');
   };
 
   const triggerPaywall = (
-    reason: 'pdf_export' | 'ai_tutor' | 'presenter_mode',
+    reason: PaywallReason,
     targetTier: 'PRO' | 'EDUCATOR' = 'PRO'
   ) => {
     setPaywallReason(reason);
@@ -177,14 +231,18 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
         subscriptionPeriodEnd: auth.subscriptionPeriodEnd,
         isSubscriptionActive: auth.isSubscriptionActive,
         daysRemaining: auth.daysRemaining,
+        canAccessTopic,
+        canExportPdf,
+        canUseAiTutor,
+        canAccessChallenge,
+        canUseEcorcheModel,
+        canUsePresenterMode,
+        canUseSchoolBranding,
         aiQueriesUsed,
         maxFreeAiQueries,
         remainingAiQueries,
-        canUseAiTutor,
         incrementAiQueries,
         resetAiQueries,
-        canExportPdf,
-        canUsePresenterMode,
         isPaywallOpen,
         paywallReason,
         paywallTargetTier,

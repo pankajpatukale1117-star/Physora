@@ -23,7 +23,8 @@ import {
   SkipForward,
   ChevronLeft,
   ChevronRight,
-  Compass
+  Compass,
+  Lock
 } from 'lucide-react';
 import type {
   AnatomicalSystemId,
@@ -37,6 +38,7 @@ import {
 import { Anatomy3DCanvas } from './Anatomy3DCanvas';
 import { MultiLevelScaleModal } from './MultiLevelScaleModal';
 import { AnatomySearchModal } from './AnatomySearchModal';
+import { useSubscription } from '../../context/SubscriptionContext';
 
 interface AnatomyExplorerViewProps {
   onClose: () => void;
@@ -47,6 +49,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   onClose,
   initialStructureId = null
 }) => {
+  const { canUseEcorcheModel, triggerPaywall } = useSubscription();
   // Selected Structure & Isolation
   const [selectedStructureId, setSelectedStructureId] = useState<string | null>(() => {
     if (initialStructureId && ANATOMY_STRUCTURES[initialStructureId]) {
@@ -175,10 +178,15 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   // Step through 10-layer clinical anatomical stack
   const handleSelectLayer = (index: number) => {
     const clamped = Math.max(0, Math.min(ANATOMICAL_LAYER_STACK.length - 1, index));
-    setActiveLayerIndex(clamped);
     const layer = ANATOMICAL_LAYER_STACK[clamped];
     if (!layer) return;
 
+    if (!canUseEcorcheModel() && (layer.id === 'muscles' || layer.id === 'skeleton')) {
+      triggerPaywall('ecorche_anatomy', 'PRO');
+      return;
+    }
+
+    setActiveLayerIndex(clamped);
     setSkinOpacity(layer.skinOpacity);
     setSkinVisible(layer.skinVisible);
     setLayerSeparation(layer.layerSeparation);
@@ -209,6 +217,10 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
 
   // Solo System helper
   const handleSoloSystem = (sysId: AnatomicalSystemId) => {
+    if (!canUseEcorcheModel() && (sysId === 'muscular' || sysId === 'skeletal')) {
+      triggerPaywall('ecorche_anatomy', 'PRO');
+      return;
+    }
     const next: Record<AnatomicalSystemId, boolean> = {
       skeletal: false,
       muscular: false,
@@ -932,6 +944,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               >
                 {ANATOMICAL_LAYER_STACK.map((layer, idx) => {
                   const isActive = activeLayerIndex === idx;
+                  const isEcorcheLocked = !canUseEcorcheModel() && (layer.id === 'muscles' || layer.id === 'skeleton');
                   return (
                     <button
                       key={layer.id}
@@ -941,17 +954,21 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                         flexShrink: 0,
                         padding: '4px 8px',
                         borderRadius: 8,
-                        background: isActive ? '#10B981' : 'rgba(255, 255, 255, 0.06)',
-                        color: isActive ? '#000000' : '#CBD5E1',
-                        border: isActive ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: isActive ? '#10B981' : isEcorcheLocked ? 'rgba(37, 99, 235, 0.08)' : 'rgba(255, 255, 255, 0.06)',
+                        color: isActive ? '#000000' : isEcorcheLocked ? '#60A5FA' : '#CBD5E1',
+                        border: isActive ? '1px solid #10B981' : isEcorcheLocked ? '1px solid rgba(96, 165, 250, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
                         fontSize: '0.67rem',
                         fontWeight: isActive ? 800 : 600,
                         cursor: 'pointer',
-                        transition: 'all 0.15s ease'
+                        transition: 'all 0.15s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 3
                       }}
-                      title={`${layer.name} (${layer.latinName})`}
+                      title={`${layer.name} (${layer.latinName})${isEcorcheLocked ? ' - Physora Pro Feature' : ''}`}
                     >
-                      {idx + 1}. {layer.shortName}
+                      <span>{idx + 1}. {layer.shortName}</span>
+                      {isEcorcheLocked && <Lock size={10} />}
                     </button>
                   );
                 })}
@@ -1063,6 +1080,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             {Object.values(ANATOMICAL_SYSTEMS).map((sys) => {
               const isVisible = systemVisibility[sys.id] ?? true;
               const opacity = systemOpacity[sys.id] ?? 1.0;
+              const isSysLocked = !canUseEcorcheModel() && (sys.id === 'muscular' || sys.id === 'skeletal');
 
               return (
                 <div
@@ -1079,6 +1097,10 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <button
                         onClick={() => {
+                          if (isSysLocked) {
+                            triggerPaywall('ecorche_anatomy', 'PRO');
+                            return;
+                          }
                           setSystemVisibility((prev) => ({ ...prev, [sys.id]: !prev[sys.id] }));
                         }}
                         style={{
@@ -1109,6 +1131,9 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                       >
                         {sys.name}
                       </span>
+                      {isSysLocked && (
+                        <span style={{ fontSize: '0.60rem', background: '#2563EB', color: '#FFF', padding: '1px 5px', borderRadius: 4, fontWeight: 800 }}>PRO</span>
+                      )}
                     </div>
 
                     <button
@@ -1119,11 +1144,15 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                         borderRadius: 4,
                         background: 'rgba(255, 255, 255, 0.06)',
                         border: '1px solid rgba(255, 255, 255, 0.1)',
-                        color: '#94A3B8',
-                        cursor: 'pointer'
+                        color: isSysLocked ? '#60A5FA' : '#94A3B8',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 3
                       }}
                     >
-                      Solo
+                      {isSysLocked && <Lock size={9} />}
+                      <span>Solo</span>
                     </button>
                   </div>
 

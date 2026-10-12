@@ -27,7 +27,8 @@ import {
   Sparkles,
   Ghost,
   FileText,
-  Radio
+  Radio,
+  Lock
 } from 'lucide-react';
 import { TOPICS_DATA, isSimulationAnimated, type EditorialTeaching } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';
@@ -137,8 +138,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [activeCompareTab, setActiveCompareTab] = useState<'A' | 'B'>('B');
 
   // Commercial & Classroom Upgrades & Subscription Paywall
-  const { canUsePresenterMode, triggerPaywall } = useSubscription();
-  const { isPro, user, profile } = useAuth();
+  const { canUsePresenterMode, canAccessTopic, triggerPaywall } = useSubscription();
+  const { user, profile } = useAuth();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isPresenterModeActive, setIsPresenterModeActive] = useState(false);
   const [isAiMentorOpen, setIsAiMentorOpen] = useState(false);
@@ -174,8 +175,10 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
     (profile?.username && profile.username.toLowerCase() === 'voidwalker007')
   );
 
+  const isTopicLocked = Boolean(topicId && !canAccessTopic(topicId));
+
   const handleOpenPresenter = () => {
-    if (canUsePresenterMode() || isPro || isFounder) {
+    if (canUsePresenterMode() || isFounder) {
       setIsPresenterModeActive(true);
       return;
     }
@@ -2244,18 +2247,21 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                 gap: 5,
                 padding: '6px 12px',
                 borderRadius: 'var(--radius-pill)',
-                border: '1.5px solid rgba(239, 68, 68, 0.4)',
-                background: 'rgba(239, 68, 68, 0.1)',
-                color: '#EF4444',
+                border: (!canUsePresenterMode() && !isFounder) ? '1.5px solid rgba(168, 85, 247, 0.4)' : '1.5px solid rgba(239, 68, 68, 0.4)',
+                background: (!canUsePresenterMode() && !isFounder) ? 'rgba(168, 85, 247, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                color: (!canUsePresenterMode() && !isFounder) ? '#C084FC' : '#EF4444',
                 fontSize: '0.76rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'all 0.2s ease'
               }}
-              title="Open Smartboard Classroom Presenter Mode"
+              title={(!canUsePresenterMode() && !isFounder) ? "Classroom & School Plan Feature: Smartboard Presenter Mode" : "Open Smartboard Classroom Presenter Mode"}
             >
-              <Radio size={13} />
+              {(!canUsePresenterMode() && !isFounder) ? <Lock size={12} /> : <Radio size={13} />}
               <span>Presenter</span>
+              {(!canUsePresenterMode() && !isFounder) && (
+                <span style={{ fontSize: '0.62rem', background: '#9333EA', color: '#FFF', padding: '1px 5px', borderRadius: 4, fontWeight: 800 }}>SCHOOL</span>
+              )}
             </button>
 
             <button
@@ -2427,6 +2433,70 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                   marginBottom: 16
                 }}
               >
+                {isTopicLocked && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      zIndex: 50,
+                      background: 'rgba(10, 15, 30, 0.88)',
+                      backdropFilter: 'blur(12px)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '24px',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 56,
+                        height: 56,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(124, 58, 237, 0.2))',
+                        border: '1.5px solid rgba(96, 165, 250, 0.4)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 16,
+                        color: '#60A5FA'
+                      }}
+                    >
+                      <Lock size={26} />
+                    </div>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: '0 0 8px' }}>
+                      Physora Pro Simulation
+                    </h3>
+                    <p style={{ maxWidth: '440px', fontSize: '0.88rem', color: '#94A3B8', margin: '0 0 20px', lineHeight: 1.5 }}>
+                      This interactive 3D WebGL laboratory is an exclusive Physora Pro feature. Upgrade to unlock all 75+ simulations, unlimited AI tutor queries, and academic PDF reports.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        triggerPaywall('pro_simulation', 'PRO');
+                        setIsPricingModalOpen(true);
+                      }}
+                      style={{
+                        padding: '12px 28px',
+                        borderRadius: 'var(--radius-pill)',
+                        border: 'none',
+                        background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+                        color: '#FFFFFF',
+                        fontSize: '0.92rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        boxShadow: '0 4px 16px rgba(37, 99, 235, 0.4)'
+                      }}
+                    >
+                      <Sparkles size={16} />
+                      <span>Upgrade to Physora Pro</span>
+                    </button>
+                  </div>
+                )}
                 {isDualCompare ? (
                   <div
                     style={{

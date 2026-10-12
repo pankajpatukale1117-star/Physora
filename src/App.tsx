@@ -21,6 +21,7 @@ import { PricingModal } from './components/pricing/PricingModal';
 import type { AuthView } from './types/auth';
 import { ANATOMY_STRUCTURES } from './data/anatomyData';
 import { TOPICS_DATA } from './data/topicsData';
+import { useSubscription } from './context/SubscriptionContext';
 import { X } from 'lucide-react';
 
 // Helper to resolve either a topic ID or a nested simulation ID into { topicId, simId }
@@ -38,6 +39,8 @@ function resolveTopicAndSim(id: string): { topicId: string; simId?: string } {
 }
 
 export function App() {
+  const { isPaywallOpen, closePaywall } = useSubscription();
+
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash;
@@ -475,9 +478,10 @@ export function App() {
 
       {/* 12. Commercial Subscription & Institutional Pricing Modal */}
       <PricingModal
-        isOpen={isPricingOpen}
+        isOpen={isPricingOpen || isPaywallOpen}
         onClose={() => {
           setIsPricingOpen(false);
+          closePaywall();
           if (window.location.hash.startsWith('#pricing') || window.location.hash.startsWith('#upgrade')) {
             window.history.pushState(null, '', window.location.pathname);
           }
