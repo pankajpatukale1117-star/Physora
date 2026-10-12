@@ -139,7 +139,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
   // Commercial & Classroom Upgrades & Subscription Paywall
   const { canUsePresenterMode, canAccessTopic, triggerPaywall } = useSubscription();
-  const { user, profile } = useAuth();
+  const { isFounder } = useAuth();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isPresenterModeActive, setIsPresenterModeActive] = useState(false);
   const [isAiMentorOpen, setIsAiMentorOpen] = useState(false);
@@ -169,11 +169,6 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
 
   // Desktop Visual Diffing: Ghost Overlay toggle (Superimpose Reference at 30% opacity onto Hypothesis)
   const [isGhostOverlayEnabled, setIsGhostOverlayEnabled] = useState<boolean>(false);
-
-  const isFounder = Boolean(
-    (user?.email && ['pankajpatukale1117@gmail.com', 'pankaj@physora.com'].includes(user.email.toLowerCase())) ||
-    (profile?.username && profile.username.toLowerCase() === 'voidwalker007')
-  );
 
   const isTopicLocked = Boolean(topicId && !canAccessTopic(topicId));
 
