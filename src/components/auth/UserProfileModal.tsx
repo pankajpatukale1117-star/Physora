@@ -16,7 +16,8 @@ import {
   ExternalLink,
   Sparkles,
   CreditCard,
-  Crown
+  Crown,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { openStripeCustomerPortal } from '../../services/stripeService';
@@ -28,7 +29,18 @@ interface UserProfileModalProps {
 }
 
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onClose, onOpenPricing }) => {
-  const { user, profile, updateProfile, signOut, membershipTier, isPro, isInstitution, upgradeTier } = useAuth();
+  const { 
+    user, 
+    profile, 
+    updateProfile, 
+    signOut, 
+    membershipTier, 
+    isPro, 
+    isInstitution, 
+    upgradeTier,
+    subscriptionPeriodEnd,
+    daysRemaining
+  } = useAuth();
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const [portalError, setPortalError] = useState<string | null>(null);
 
@@ -415,6 +427,12 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                     ? 'Physora Pro (Active)'
                     : 'Free Explorer Plan'}
                 </div>
+                {isPro && subscriptionPeriodEnd && (
+                  <div style={{ fontSize: '0.73rem', color: 'var(--text-secondary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <Lock size={11} color="#2563EB" />
+                    <span>Active until {new Date(subscriptionPeriodEnd).toLocaleDateString()} ({daysRemaining ?? 0} days left)</span>
+                  </div>
+                )}
               </div>
             </div>
 

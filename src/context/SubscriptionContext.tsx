@@ -7,6 +7,9 @@ export type SubscriptionTier = 'FREE' | 'PRO' | 'EDUCATOR';
 export interface SubscriptionContextType {
   tier: SubscriptionTier;
   setTier: (tier: SubscriptionTier) => void;
+  subscriptionPeriodEnd: string | null;
+  isSubscriptionActive: boolean;
+  daysRemaining: number | null;
   // AI Tutor Limits
   aiQueriesUsed: number;
   maxFreeAiQueries: number;
@@ -23,7 +26,7 @@ export interface SubscriptionContextType {
   paywallTargetTier: 'PRO' | 'EDUCATOR';
   triggerPaywall: (reason: 'pdf_export' | 'ai_tutor' | 'presenter_mode', targetTier?: 'PRO' | 'EDUCATOR') => void;
   closePaywall: () => void;
-  upgradeTier: (targetTier: SubscriptionTier) => Promise<void>;
+  upgradeTier: (targetTier: SubscriptionTier, periodEnd?: string) => Promise<void>;
 }
 
 const STORAGE_KEY_TIER = 'physora_sub_tier_v2';
@@ -48,12 +51,14 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     return 'FREE';
   });
 
-  // Keep in sync with AuthContext if user logs in with existing plan
+  // Keep in sync with AuthContext if user logs in with existing plan or expires
   useEffect(() => {
     if (auth.membershipTier === 'institution') {
       setTierState('EDUCATOR');
     } else if (auth.membershipTier === 'pro') {
       setTierState('PRO');
+    } else if (auth.membershipTier === 'free') {
+      setTierState('FREE');
     }
   }, [auth.membershipTier]);
 
@@ -81,6 +86,11 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [paywallTargetTier, setPaywallTargetTier] = useState<'PRO' | 'EDUCATOR'>('PRO');
 
   const setTier = (newTier: SubscriptionTier) => {
+    // If user has an active paid subscription, prevent switching to FREE mode until it ends
+    if (newTier === 'FREE' && auth.isSubscriptionActive && auth.membershipTier !== 'free') {
+      console.warn('[SubscriptionContext] User has an active paid subscription; cannot switch to FREE until period ends.');
+      return;
+    }
     setTierState(newTier);
     try {
       localStorage.setItem(STORAGE_KEY_TIER, newTier);
@@ -145,14 +155,18 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     setPaywallReason(null);
   };
 
-  const upgradeTier = async (targetTier: SubscriptionTier) => {
-    setTier(targetTier);
+  const upgradeTier = async (targetTier: SubscriptionTier, periodEnd?: string) => {
     const authTier: MembershipTier = targetTier === 'EDUCATOR' ? 'institution' : targetTier === 'PRO' ? 'pro' : 'free';
     try {
-      await auth.upgradeTier(authTier);
+      const res = await auth.upgradeTier(authTier, undefined, periodEnd);
+      if (!res.success && res.error) {
+        console.warn('[SubscriptionContext] Upgrade blocked:', res.error);
+        return;
+      }
     } catch {
       // Auth might not be configured, local tier persists
     }
+    setTier(targetTier);
   };
 
   return (
@@ -160,6 +174,9 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
       value={{
         tier,
         setTier,
+        subscriptionPeriodEnd: auth.subscriptionPeriodEnd,
+        isSubscriptionActive: auth.isSubscriptionActive,
+        daysRemaining: auth.daysRemaining,
         aiQueriesUsed,
         maxFreeAiQueries,
         remainingAiQueries,

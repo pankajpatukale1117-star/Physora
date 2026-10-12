@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase, isSupabaseConfigured, formatAuthError } from '../lib/supabase';
 import type { 
@@ -481,10 +481,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Commercial Membership Tier State
+  // Commercial Membership Tier & Subscription Period State
+  const STORAGE_KEY_ACTIVE_TIER = 'physora_active_tier';
+  const STORAGE_KEY_SUB_PERIOD_END = 'physora_subscription_period_end';
+  const STORAGE_KEY_SUB_STATUS = 'physora_subscription_status';
+
   const [localTier, setLocalTier] = useState<MembershipTier>(() => {
     try {
-      const stored = localStorage.getItem('physora_active_tier');
+      const stored = localStorage.getItem(STORAGE_KEY_ACTIVE_TIER);
       if (stored === 'pro' || stored === 'institution' || stored === 'free') {
         return stored as MembershipTier;
       }
@@ -494,6 +498,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return 'free';
   });
 
+  const [localPeriodEnd, setLocalPeriodEnd] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(STORAGE_KEY_SUB_PERIOD_END);
+    } catch {
+      return null;
+    }
+  });
+
   const isFounderEmail = Boolean(
     user?.email?.toLowerCase().includes('pankaj') || 
     user?.email?.toLowerCase().includes('admin')
@@ -501,12 +513,87 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const effectiveTier: MembershipTier = isFounderEmail ? 'institution' : (profile?.membership_tier || localTier);
   const isPro = effectiveTier === 'pro' || effectiveTier === 'institution';
   const isInstitution = effectiveTier === 'institution';
+  const effectivePeriodEnd = isFounderEmail
+    ? new Date(Date.now() + 3650 * 24 * 60 * 60 * 1000).toISOString() // 10 years for founder
+    : (profile?.subscription_period_end || localPeriodEnd);
+
+  // Check whether user currently has an unexpired, active paid subscription
+  const isSubscriptionActive = useMemo(() => {
+    if (isFounderEmail) return true;
+    if (effectiveTier === 'free') return false;
+    if (!effectivePeriodEnd) {
+      // If user has a paid tier but periodEnd was not recorded yet, default to active
+      return true;
+    }
+    const endMs = new Date(effectivePeriodEnd).getTime();
+    return !isNaN(endMs) && endMs > Date.now();
+  }, [isFounderEmail, effectiveTier, effectivePeriodEnd]);
+
+  // Days remaining until active subscription cycle ends
+  const daysRemaining = useMemo(() => {
+    if (!effectivePeriodEnd || effectiveTier === 'free') return null;
+    const diffMs = new Date(effectivePeriodEnd).getTime() - Date.now();
+    if (diffMs <= 0) return 0;
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  }, [effectivePeriodEnd, effectiveTier]);
+
+  // Automatically revert to free mode when subscription period has ended
+  useEffect(() => {
+    if (isFounderEmail) return;
+    if (effectiveTier !== 'free' && effectivePeriodEnd) {
+      const endMs = new Date(effectivePeriodEnd).getTime();
+      if (!isNaN(endMs) && endMs <= Date.now()) {
+        console.info('[Physora Auth] Subscription period ended at', effectivePeriodEnd, 'reverting account to Free tier.');
+        setLocalTier('free');
+        setLocalPeriodEnd(null);
+        try {
+          localStorage.setItem(STORAGE_KEY_ACTIVE_TIER, 'free');
+          localStorage.removeItem(STORAGE_KEY_SUB_PERIOD_END);
+          localStorage.setItem(STORAGE_KEY_SUB_STATUS, 'inactive');
+        } catch {
+          // Ignore
+        }
+        if (profile && profile.membership_tier !== 'free') {
+          updateProfile({
+            membership_tier: 'free',
+            subscription_status: 'inactive'
+          });
+        }
+      }
+    }
+  }, [effectiveTier, effectivePeriodEnd, profile, isFounderEmail]);
 
   // Upgrade or switch commercial tier
-  const upgradeTier = async (tier: MembershipTier, institutionName?: string) => {
+  const upgradeTier = async (tier: MembershipTier, institutionName?: string, periodEnd?: string) => {
+    // CRITICAL RULE: Once user buys PRO or any paid plan, they CANNOT switch to free mode
+    // until the subscription period has officially ended.
+    if (tier === 'free' && isSubscriptionActive && !isFounderEmail) {
+      const formatted = effectivePeriodEnd
+        ? new Date(effectivePeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+        : 'the end of your billing cycle';
+      return {
+        success: false,
+        error: `Your subscription is active until ${formatted}. You cannot switch to the free plan until your active subscription period ends.`
+      };
+    }
+
+    const nextEnd =
+      tier === 'pro' || tier === 'institution'
+        ? (periodEnd || effectivePeriodEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString())
+        : null;
+
     try {
-      localStorage.setItem('physora_active_tier', tier);
+      localStorage.setItem(STORAGE_KEY_ACTIVE_TIER, tier);
       setLocalTier(tier);
+      if (nextEnd) {
+        localStorage.setItem(STORAGE_KEY_SUB_PERIOD_END, nextEnd);
+        localStorage.setItem(STORAGE_KEY_SUB_STATUS, 'active');
+        setLocalPeriodEnd(nextEnd);
+      } else {
+        localStorage.removeItem(STORAGE_KEY_SUB_PERIOD_END);
+        localStorage.setItem(STORAGE_KEY_SUB_STATUS, 'inactive');
+        setLocalPeriodEnd(null);
+      }
     } catch {
       // Ignore
     }
@@ -515,7 +602,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return await updateProfile({
         membership_tier: tier,
         institution_name: institutionName || profile.institution_name,
-        role: tier === 'institution' ? 'teacher' : (profile.role || 'student')
+        role: tier === 'institution' ? 'teacher' : (profile.role || 'student'),
+        subscription_status: tier === 'free' ? 'inactive' : 'active',
+        subscription_period_end: nextEnd
       });
     }
 
@@ -523,7 +612,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   // Update Profile details
-  const updateProfile = async (updates: Partial<Pick<PhysoraProfile, 'display_name' | 'username' | 'bio' | 'avatar_url' | 'membership_tier' | 'institution_name' | 'role'>>) => {
+  const updateProfile = async (updates: Partial<Pick<PhysoraProfile, 'display_name' | 'username' | 'bio' | 'avatar_url' | 'membership_tier' | 'institution_name' | 'role' | 'subscription_status' | 'subscription_period_end' | 'stripe_subscription_id'>>) => {
     if (!user) {
       if (updates.membership_tier) {
         setLocalTier(updates.membership_tier);
@@ -594,6 +683,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     membershipTier: effectiveTier,
     isPro,
     isInstitution,
+    subscriptionPeriodEnd: effectivePeriodEnd,
+    isSubscriptionActive,
+    daysRemaining,
     signIn,
     signUp,
     signOut,

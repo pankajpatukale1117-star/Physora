@@ -35,7 +35,16 @@ export const PricingModal: React.FC<PricingModalProps> = ({
   onClose,
   onOpenAuthModal
 }) => {
-  const { user, membershipTier, upgradeTier, profile, refreshProfile } = useAuth();
+  const { 
+    user, 
+    membershipTier, 
+    upgradeTier, 
+    profile, 
+    refreshProfile,
+    isSubscriptionActive,
+    subscriptionPeriodEnd,
+    daysRemaining
+  } = useAuth();
   const { setTier } = useSubscription();
 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual');
@@ -78,9 +87,13 @@ export const PricingModal: React.FC<PricingModalProps> = ({
     const href = window.location.href;
     if (href.includes('payment=success')) {
       audioFX.playSuccessChime();
+      const isAnnual = billingCycle === 'annual';
+      const days = isAnnual ? 365 : 30;
+      const periodEnd = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
       setSuccessMessage('🎉 Payment successfully verified with Stripe! Your account is upgraded to Physora Pro.');
-      refreshProfile().then(() => {
+      upgradeTier('pro', undefined, periodEnd).then(() => {
         setTier('PRO');
+        refreshProfile();
       });
       // Clean up URL query
       if (window.history && window.history.replaceState) {
@@ -92,7 +105,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
         window.history.replaceState(null, '', window.location.pathname + '#pricing');
       }
     }
-  }, [isOpen, refreshProfile, setTier]);
+  }, [isOpen, refreshProfile, setTier, billingCycle, upgradeTier]);
 
   if (!isOpen) return null;
 
@@ -101,8 +114,17 @@ export const PricingModal: React.FC<PricingModalProps> = ({
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    // 1. Free plan downgrade
+    // 1. Free plan downgrade check: blocked if user has an active paid subscription that has not ended
     if (tier === 'free') {
+      if (isSubscriptionActive && membershipTier !== 'free') {
+        const formatted = subscriptionPeriodEnd
+          ? new Date(subscriptionPeriodEnd).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+          : 'the end of your current cycle';
+        setErrorMessage(
+          `Your ${membershipTier.toUpperCase()} subscription is active until ${formatted}. You cannot switch to the Free plan until your active subscription period has ended.`
+        );
+        return;
+      }
       await upgradeTier('free');
       setTier('FREE');
       setSuccessMessage('You are now on the Free Explorer plan.');
@@ -183,7 +205,14 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
   const currentPrices = prices[currency];
   const symbol = currency === 'USD' ? '$' : '₹';
-  const isPaidSubscriber = membershipTier === 'pro' || membershipTier === 'institution';
+  const isPaidSubscriber = (membershipTier === 'pro' || membershipTier === 'institution') && isSubscriptionActive;
+  const formattedEndDate = subscriptionPeriodEnd
+    ? new Date(subscriptionPeriodEnd).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    : null;
 
   return (
     <div
@@ -519,7 +548,9 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                     Your {membershipTier.toUpperCase()} Subscription is Active
                   </div>
                   <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                    Update payment methods, view official VAT receipts, or manage your renewal in Stripe.
+                    {formattedEndDate
+                      ? `Valid until ${formattedEndDate} (${daysRemaining ?? 0} days remaining). Update payment methods or view invoices in Stripe.`
+                      : 'Update payment methods, view official VAT receipts, or manage your renewal in Stripe.'}
                   </div>
                 </div>
               </div>
@@ -594,22 +625,68 @@ export const PricingModal: React.FC<PricingModalProps> = ({
 
                 <button
                   type="button"
-                  disabled={membershipTier === 'free'}
+                  disabled={membershipTier === 'free' || isSubscriptionActive}
                   onClick={() => handleSelectPlan('free')}
                   style={{
                     padding: '10px 16px',
                     borderRadius: '10px',
                     border: '1px solid var(--border-medium)',
-                    background: membershipTier === 'free' ? 'var(--bg-subtle)' : 'var(--bg-card)',
-                    color: 'var(--text-primary)',
+                    background:
+                      membershipTier === 'free'
+                        ? 'var(--bg-subtle)'
+                        : isSubscriptionActive
+                        ? 'rgba(148, 163, 184, 0.12)'
+                        : 'var(--bg-card)',
+                    color: isSubscriptionActive ? 'var(--text-muted)' : 'var(--text-primary)',
                     fontWeight: 700,
                     fontSize: '0.88rem',
-                    cursor: membershipTier === 'free' ? 'default' : 'pointer',
-                    marginBottom: '20px'
+                    cursor: membershipTier === 'free' || isSubscriptionActive ? 'not-allowed' : 'pointer',
+                    marginBottom: isSubscriptionActive ? '10px' : '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
                   }}
+                  title={
+                    isSubscriptionActive
+                      ? `Your paid plan is locked until ${formattedEndDate || 'end of cycle'}. You cannot downgrade until your subscription period ends.`
+                      : undefined
+                  }
                 >
-                  {membershipTier === 'free' ? 'Current Plan' : 'Downgrade to Free'}
+                  {isSubscriptionActive ? (
+                    <>
+                      <Lock size={14} color="#64748B" />
+                      <span>Active Paid Plan (Locked)</span>
+                    </>
+                  ) : membershipTier === 'free' ? (
+                    'Current Plan'
+                  ) : (
+                    'Downgrade to Free'
+                  )}
                 </button>
+
+                {isSubscriptionActive && (
+                  <div
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      background: 'rgba(37, 99, 235, 0.08)',
+                      border: '1px solid rgba(37, 99, 235, 0.22)',
+                      fontSize: '0.74rem',
+                      color: 'var(--text-secondary)',
+                      lineHeight: 1.35,
+                      marginBottom: '16px',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: '6px'
+                    }}
+                  >
+                    <Lock size={13} color="#2563EB" style={{ marginTop: 2, flexShrink: 0 }} />
+                    <span>
+                      Active {membershipTier.toUpperCase()} plan until <strong>{formattedEndDate || 'end of cycle'}</strong> ({daysRemaining ?? 30} days left). Cannot switch to Free mode until this subscription period ends.
+                    </span>
+                  </div>
+                )}
 
                 <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', flex: 1 }}>
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>
@@ -1164,11 +1241,15 @@ export const PricingModal: React.FC<PricingModalProps> = ({
           userEmail={user?.email || undefined}
           userId={user?.id || undefined}
           onSuccess={async (targetTier) => {
+            const isAnnual = upiModalPlanId?.includes('annual') ?? true;
+            const days = isAnnual ? 365 : 30;
+            const periodEnd = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
             setUpiModalPlanId(null);
-            await upgradeTier(targetTier);
+            await upgradeTier(targetTier, undefined, periodEnd);
             setTier(targetTier === 'institution' ? 'EDUCATOR' : 'PRO');
+            const formatted = new Date(periodEnd).toLocaleDateString();
             setSuccessMessage(
-              `🎉 UPI Payment successfully verified! Your account is upgraded to Physora ${targetTier.toUpperCase()}.`
+              `🎉 UPI Payment successfully verified! Your account is upgraded to Physora ${targetTier.toUpperCase()} (Active until ${formatted}).`
             );
             refreshProfile();
           }}

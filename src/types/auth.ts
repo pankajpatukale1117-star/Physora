@@ -76,12 +76,15 @@ export interface AuthContextType {
   membershipTier: MembershipTier;
   isPro: boolean;
   isInstitution: boolean;
+  subscriptionPeriodEnd: string | null;
+  isSubscriptionActive: boolean;
+  daysRemaining: number | null;
   signIn: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   signUp: (data: SignUpFormData) => Promise<{ success: boolean; requiresVerification?: boolean; error?: string }>;
   signOut: () => Promise<void>;
   resetPasswordForEmail: (email: string) => Promise<{ success: boolean; error?: string }>;
   updatePassword: (password: string) => Promise<{ success: boolean; error?: string }>;
-  updateProfile: (updates: Partial<Pick<PhysoraProfile, 'display_name' | 'username' | 'bio' | 'avatar_url' | 'membership_tier' | 'institution_name' | 'role'>>) => Promise<{ success: boolean; error?: string }>;
-  upgradeTier: (tier: MembershipTier, institutionName?: string) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (updates: Partial<Pick<PhysoraProfile, 'display_name' | 'username' | 'bio' | 'avatar_url' | 'membership_tier' | 'institution_name' | 'role' | 'subscription_status' | 'subscription_period_end' | 'stripe_subscription_id'>>) => Promise<{ success: boolean; error?: string }>;
+  upgradeTier: (tier: MembershipTier, institutionName?: string, periodEnd?: string) => Promise<{ success: boolean; error?: string }>;
   refreshProfile: () => Promise<void>;
 }
