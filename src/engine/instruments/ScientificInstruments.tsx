@@ -6,12 +6,14 @@ interface InstrumentProps {
   containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-/**
+﻿/**
  * Interactive Draggable & Rotatable Metric Ruler
+ * Calibrated to True Physical Metric Standards (W3C CSS 1 cm = 37.795 px, 1 mm = 3.78 px)
  */
 export const VirtualRuler: React.FC<InstrumentProps> = ({ onClose }) => {
-  const [pos, setPos] = useState({ x: 60, y: 120 });
+  const [pos, setPos] = useState({ x: 40, y: 100 });
   const [angle, setAngle] = useState(0); // in degrees
+  const [mode, setMode] = useState<'30cm' | '15cm'>('30cm');
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, initX: 0, initY: 0 });
 
@@ -40,23 +42,32 @@ export const VirtualRuler: React.FC<InstrumentProps> = ({ onClose }) => {
     setIsDragging(false);
   };
 
+  // Physical calibration: W3C Standard CSS 1cm = 96px / 2.54 = 37.79527559px
+  const pxPerCm = 37.79527559;
+  const pxPerMm = pxPerCm / 10;
+  const leadMargin = 16;
+  const totalCm = mode === '30cm' ? 30 : 15;
+  const totalMm = totalCm * 10;
+  const rulerW = leadMargin * 2 + totalCm * pxPerCm;
+  const rulerH = 74;
+
   return (
     <div
       style={{
         position: 'absolute',
         left: pos.x,
         top: pos.y,
-        width: 320,
-        height: 54,
-        background: 'rgba(240, 249, 255, 0.88)',
-        border: '1.5px solid rgba(14, 165, 233, 0.6)',
-        borderRadius: 4,
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)',
-        backdropFilter: 'blur(4px)',
+        width: rulerW,
+        height: rulerH,
+        background: 'rgba(240, 249, 255, 0.94)',
+        border: '1.5px solid rgba(14, 165, 233, 0.7)',
+        borderRadius: 6,
+        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.32)',
+        backdropFilter: 'blur(6px)',
         transform: `rotate(${angle}deg)`,
         transformOrigin: 'top left',
         userSelect: 'none',
-        zIndex: 40,
+        zIndex: 50,
         touchAction: 'none'
       }}
     >
@@ -67,8 +78,9 @@ export const VirtualRuler: React.FC<InstrumentProps> = ({ onClose }) => {
         onPointerUp={handlePointerUp}
         style={{
           width: '100%',
-          height: 20,
-          background: 'rgba(14, 165, 233, 0.2)',
+          height: 22,
+          background: 'rgba(14, 165, 233, 0.22)',
+          borderBottom: '1px solid rgba(14, 165, 233, 0.3)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -76,16 +88,87 @@ export const VirtualRuler: React.FC<InstrumentProps> = ({ onClose }) => {
           cursor: isDragging ? 'grabbing' : 'grab'
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '0.65rem', fontWeight: 700, color: '#0369a1' }}>
-          <Move size={10} />
-          <span>RULER (30 cm)</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.66rem', fontWeight: 700, color: '#0369a1' }}>
+          <Move size={11} />
+          <span>PHYSORA METRIC RULER ({mode === '30cm' ? '30 cm • 1 mm Div' : '15 cm • 1 mm Div'})</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          {/* 15 cm / 30 cm Mode Switcher */}
+          <div style={{ display: 'flex', alignItems: 'center', background: '#e0f2fe', borderRadius: 4, padding: 1, border: '1px solid #7dd3fc' }}>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setMode('15cm'); }}
+              style={{
+                fontSize: '0.62rem',
+                padding: '1px 5px',
+                borderRadius: 3,
+                border: 'none',
+                background: mode === '15cm' ? '#0284c7' : 'transparent',
+                color: mode === '15cm' ? '#ffffff' : '#0369a1',
+                fontWeight: mode === '15cm' ? 700 : 500,
+                cursor: 'pointer'
+              }}
+              title="Compact 15 cm Ruler"
+            >
+              15 cm
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setMode('30cm'); }}
+              style={{
+                fontSize: '0.62rem',
+                padding: '1px 5px',
+                borderRadius: 3,
+                border: 'none',
+                background: mode === '30cm' ? '#0284c7' : 'transparent',
+                color: mode === '30cm' ? '#ffffff' : '#0369a1',
+                fontWeight: mode === '30cm' ? 700 : 500,
+                cursor: 'pointer'
+              }}
+              title="Full 30 cm Desk Ruler"
+            >
+              30 cm
+            </button>
+          </div>
+
+          {/* Quick Snap Rotation */}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setAngle(0); }}
+            style={{
+              fontSize: '0.62rem',
+              padding: '1px 4px',
+              borderRadius: 3,
+              background: '#e0f2fe',
+              border: '1px solid #7dd3fc',
+              color: '#0369a1',
+              cursor: 'pointer'
+            }}
+            title="Snap to Horizontal (0°)"
+          >
+            0°
+          </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setAngle(90); }}
+            style={{
+              fontSize: '0.62rem',
+              padding: '1px 4px',
+              borderRadius: 3,
+              background: '#e0f2fe',
+              border: '1px solid #7dd3fc',
+              color: '#0369a1',
+              cursor: 'pointer'
+            }}
+            title="Snap to Vertical (90°)"
+          >
+            90°
+          </button>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setAngle((a) => (a + 15) % 360); }}
             style={{
-              fontSize: '0.65rem',
+              fontSize: '0.62rem',
               padding: '1px 5px',
               borderRadius: 3,
               background: '#e0f2fe',
@@ -108,44 +191,82 @@ export const VirtualRuler: React.FC<InstrumentProps> = ({ onClose }) => {
         </div>
       </div>
 
-      {/* Metric Tick Marks (0 - 30 cm scale) */}
-      <div style={{ width: '100%', height: 34, position: 'relative', overflow: 'hidden' }}>
-        {Array.from({ length: 31 }).map((_, cm) => {
-          const leftPercent = (cm / 30) * 100;
-          return (
-            <div
-              key={cm}
-              style={{
-                position: 'absolute',
-                left: `${leftPercent}%`,
-                bottom: 0,
-                width: 1,
-                height: cm % 5 === 0 ? 22 : 12,
-                background: '#0284c7'
-              }}
-            >
-              {cm % 5 === 0 && (
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: -14,
-                    left: -6,
-                    fontSize: '0.6rem',
-                    fontWeight: 700,
-                    color: '#0369a1',
-                    fontFamily: 'monospace'
-                  }}
-                >
-                  {cm}
-                </span>
-              )}
-            </div>
-          );
-        })}
+      {/* Metric Tick Marks (0 - 30 cm scale with 1mm increments) */}
+      <div style={{ width: '100%', height: 50, position: 'relative' }}>
+        <svg width={rulerW} height={50} style={{ position: 'absolute', top: 0, left: 0 }}>
+          {/* Zero Red Alignment Hairline */}
+          <line
+            x1={leadMargin}
+            y1={0}
+            x2={leadMargin}
+            y2={50}
+            stroke="#ef4444"
+            strokeWidth={1.2}
+            strokeDasharray="2,2"
+          />
+          <polygon
+            points={`${leadMargin},50 ${leadMargin - 3},45 ${leadMargin + 3},45`}
+            fill="#ef4444"
+          />
+
+          {/* End Red Alignment Hairline */}
+          <line
+            x1={leadMargin + totalCm * pxPerCm}
+            y1={0}
+            x2={leadMargin + totalCm * pxPerCm}
+            y2={50}
+            stroke="#ef4444"
+            strokeWidth={1.2}
+            strokeDasharray="2,2"
+          />
+          <polygon
+            points={`${leadMargin + totalCm * pxPerCm},50 ${leadMargin + totalCm * pxPerCm - 3},45 ${leadMargin + totalCm * pxPerCm + 3},45`}
+            fill="#ef4444"
+          />
+
+          {/* Precision 1mm, 5mm, and 10mm (1cm) Markings */}
+          {Array.from({ length: totalMm + 1 }).map((_, mm) => {
+            const x = leadMargin + mm * pxPerMm;
+            const isCm = mm % 10 === 0;
+            const isHalfCm = mm % 5 === 0 && !isCm;
+            const h = isCm ? 22 : isHalfCm ? 14 : 7;
+            const strokeColor = isCm ? '#0369a1' : isHalfCm ? '#0284c7' : 'rgba(2, 132, 199, 0.45)';
+            const strokeW = isCm ? 1.2 : 0.8;
+            const cmVal = mm / 10;
+            const isMajor = cmVal % 5 === 0;
+
+            return (
+              <g key={mm}>
+                <line
+                  x1={x}
+                  y1={50 - h}
+                  x2={x}
+                  y2={50}
+                  stroke={strokeColor}
+                  strokeWidth={strokeW}
+                />
+                {isCm && (
+                  <text
+                    x={x}
+                    y={22}
+                    fontSize={isMajor ? 11 : 9}
+                    fontWeight={isMajor ? 800 : 600}
+                    fill={isMajor ? '#0369a1' : '#0284c7'}
+                    fontFamily="monospace"
+                    textAnchor="middle"
+                  >
+                    {cmVal}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
       </div>
     </div>
   );
 };
+
 
 /**
  * Interactive Draggable Protractor (0 - 180 degrees)
