@@ -3457,10 +3457,10 @@ function renderKinematicCar(
     }
   }
 
-  // 2. High-Tech Aerodynamic Electric Hyper-EV Lab Vehicle
+    // 2. High-Tech Aerodynamic Electric Hyper-EV Lab Vehicle (Forward-Facing Stance)
   const carX = Math.min(w - 85, 60 + s * 10);
   const carY = roadY - 7;
-  const carW = 76;
+  const carW = 82;
   const carH = 22;
 
   // Neon Underglow Halo on Asphalt
@@ -3469,95 +3469,127 @@ function renderKinematicCar(
   ctx.shadowBlur = 18;
   ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';
   ctx.beginPath();
-  ctx.ellipse(carX, roadY + 10, 36, 6, 0, 0, Math.PI * 2);
+  ctx.ellipse(carX, roadY + 10, 42, 6, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 
-  // Wind-Tunnel Aerodynamic Streamlines trailing the vehicle
-  if (v > 1) {
+  // Wind-Tunnel Aerodynamic Streamlines trailing the vehicle off the rear spoiler (Left)
+  if (v > 0.2) {
     ctx.save();
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.22)';
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.28)';
     ctx.lineWidth = 1.2;
     for (let i = 0; i < 3; i++) {
-      const offY = -12 + i * 9;
-      const trailLen = Math.min(65, v * 4.5);
+      const offY = -12 + i * 8;
+      const trailLen = Math.min(65, v * 4.8);
       ctx.beginPath();
-      ctx.moveTo(carX - carW / 2 - 4, carY + offY);
-      ctx.lineTo(carX - carW / 2 - 4 - trailLen, carY + offY);
+      ctx.moveTo(carX - 42, carY + offY);
+      ctx.lineTo(carX - 42 - trailLen, carY + offY);
       ctx.stroke();
     }
     ctx.restore();
   }
 
-  // Aerodynamic Carbon-Composite Body Gradient
+  // Aerodynamic Carbon-Composite Body Gradient (Dark rear at left to luminous electric cyan/white at nose)
   const carGrad = ctx.createLinearGradient(carX - carW / 2, carY - carH, carX + carW / 2, carY);
-  carGrad.addColorStop(0, '#00F0FF');
-  carGrad.addColorStop(0.35, '#0284C7');
-  carGrad.addColorStop(0.85, '#0F172A');
-  carGrad.addColorStop(1, '#020617');
+  carGrad.addColorStop(0, '#030a1c');
+  carGrad.addColorStop(0.25, '#0284C7');
+  carGrad.addColorStop(0.7, '#00F0FF');
+  carGrad.addColorStop(1, '#FFFFFF');
 
+  // Forward-Facing Hyper-EV Body Contour (Direction of travel: Right)
   ctx.beginPath();
-  ctx.moveTo(carX - carW / 2, carY - 2); // Rear diffuser
-  ctx.lineTo(carX - carW / 2 + 5, carY - 10); // Rear spoiler wing
-  ctx.lineTo(carX - carW / 2 + 20, carY - 11); // Rear deck
-  ctx.lineTo(carX - carW / 2 + 32, carY - carH); // Roof rake
-  ctx.lineTo(carX + carW / 2 - 20, carY - carH); // Roof line
-  ctx.lineTo(carX + carW / 2 - 6, carY - 8); // Windshield slope
-  ctx.lineTo(carX + carW / 2 + 2, carY - 3); // Front nose aero splitter
-  ctx.lineTo(carX + carW / 2 - 2, carY); // Front bumper
+  ctx.moveTo(carX - 40, carY - 2); // Rear diffuser
+  ctx.lineTo(carX - 41, carY - 7); // Rear bumper
+  ctx.lineTo(carX - 38, carY - 12); // Raised aero ducktail spoiler
+  ctx.lineTo(carX - 30, carY - 11); // Spoiler deck
+  ctx.lineTo(carX - 16, carY - carH); // Sloping fastback rear window up to roof
+  ctx.lineTo(carX + 2, carY - carH); // Low aerodynamic roofline
+  ctx.lineTo(carX + 16, carY - 8.5); // Steeply raked forward windshield
+  ctx.lineTo(carX + 32, carY - 6.5); // Sleek low-drag front hood
+  ctx.lineTo(carX + 41, carY - 3); // Low-slung front nose splitter
+  ctx.lineTo(carX + 39, carY); // Front air dam
   ctx.closePath();
   ctx.fillStyle = carGrad;
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.7)';
-  ctx.lineWidth = 1.2;
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.85)';
+  ctx.lineWidth = 1.3;
   ctx.stroke();
 
-  // Polarized Tint Glass Canopy
+  // Polarized Cyber Tint Glass Canopy (Raked forward cockpit)
   ctx.beginPath();
-  ctx.moveTo(carX - carW / 2 + 22, carY - 11);
-  ctx.lineTo(carX - carW / 2 + 32, carY - carH + 2.5);
-  ctx.lineTo(carX + carW / 2 - 22, carY - carH + 2.5);
-  ctx.lineTo(carX + carW / 2 - 8, carY - 9);
+  ctx.moveTo(carX - 26, carY - 10.5);
+  ctx.lineTo(carX - 14, carY - carH + 2.5);
+  ctx.lineTo(carX + 1, carY - carH + 2.5);
+  ctx.lineTo(carX + 14, carY - 8);
   ctx.closePath();
   ctx.fillStyle = 'rgba(2, 6, 23, 0.95)';
   ctx.fill();
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Glass Specular Sheen
+  // Specular Glass Sheen on Windshield
   ctx.save();
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.lineWidth = 1.2;
   ctx.beginPath();
-  ctx.moveTo(carX - 2, carY - carH + 4);
-  ctx.lineTo(carX + 16, carY - 10);
+  ctx.moveTo(carX, carY - carH + 4);
+  ctx.lineTo(carX + 12, carY - 8.5);
   ctx.stroke();
   ctx.restore();
 
-  // Laser Projector Headlight Beam
-  const hlX = carX + carW / 2 + 2;
-  const hlY = carY - 3;
+  // Luminous Red Cyber Taillight (Definitive Rear Indicator on LEFT)
   ctx.save();
-  const beamGrad = ctx.createLinearGradient(hlX, hlY, hlX + 85, hlY);
-  beamGrad.addColorStop(0, 'rgba(0, 240, 255, 0.55)');
+  ctx.shadowColor = '#FF0055';
+  ctx.shadowBlur = 10;
+  ctx.fillStyle = '#FF1744';
+  ctx.beginPath();
+  ctx.roundRect(carX - 41, carY - 9, 3.5, 3.5, 1);
+  ctx.fill();
+  // Ambient red rear halo
+  const tailGlow = ctx.createRadialGradient(carX - 41, carY - 7.5, 1, carX - 47, carY - 7.5, 14);
+  tailGlow.addColorStop(0, 'rgba(255, 23, 68, 0.55)');
+  tailGlow.addColorStop(1, 'rgba(255, 23, 68, 0)');
+  ctx.fillStyle = tailGlow;
+  ctx.beginPath();
+  ctx.arc(carX - 44, carY - 7.5, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // High-Intensity Projector LED Headlight (Front Nose on RIGHT)
+  const hlX = carX + 40;
+  const hlY = carY - 4;
+  ctx.save();
+  ctx.fillStyle = '#FFFFFF';
+  ctx.shadowColor = '#00F0FF';
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.arc(hlX - 2, hlY, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Laser Projector High-Beam Cone shining Forward (Right)
+  ctx.save();
+  const beamGrad = ctx.createLinearGradient(hlX, hlY, hlX + 90, hlY);
+  beamGrad.addColorStop(0, 'rgba(0, 240, 255, 0.7)');
+  beamGrad.addColorStop(0.35, 'rgba(0, 240, 255, 0.3)');
   beamGrad.addColorStop(1, 'rgba(0, 240, 255, 0)');
   ctx.fillStyle = beamGrad;
   ctx.beginPath();
   ctx.moveTo(hlX, hlY - 2);
-  ctx.lineTo(hlX + 85, hlY - 12);
-  ctx.lineTo(hlX + 85, hlY + 14);
-  ctx.lineTo(hlX, hlY + 2);
+  ctx.lineTo(hlX + 90, hlY - 14);
+  ctx.lineTo(hlX + 90, hlY + 16);
+  ctx.lineTo(hlX, hlY + 3);
   ctx.closePath();
   ctx.fill();
   ctx.restore();
 
-  // Alloy Wheels with Rotating Spokes
-  const wheelR = 7.5;
+  // Alloy Wheels with Rotating Turbine Spokes
+  const wheelR = 8;
   const wheelDist = s * 10;
   const wheelAngle = wheelDist / wheelR;
 
-  [-20, 20].forEach(ox => {
+  [-23, 23].forEach(ox => {
     const wx = carX + ox;
     const wy = carY + 3;
 
@@ -3566,20 +3598,20 @@ function renderKinematicCar(
     ctx.arc(wx, wy, wheelR, 0, Math.PI * 2);
     ctx.fillStyle = '#020617';
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.55)';
+    ctx.lineWidth = 1.3;
     ctx.stroke();
 
     // Cyan Neon Wheel Core
     ctx.beginPath();
-    ctx.arc(wx, wy, wheelR - 3, 0, Math.PI * 2);
+    ctx.arc(wx, wy, wheelR - 3.5, 0, Math.PI * 2);
     ctx.fillStyle = '#0B132B';
     ctx.fill();
 
-    // Rotating Spokes
+    // Rotating Spokes (Clockwise forward rotation)
     ctx.save();
     ctx.strokeStyle = '#00F0FF';
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1.3;
     ctx.beginPath();
     ctx.moveTo(wx - Math.cos(wheelAngle) * (wheelR - 3), wy - Math.sin(wheelAngle) * (wheelR - 3));
     ctx.lineTo(wx + Math.cos(wheelAngle) * (wheelR - 3), wy + Math.sin(wheelAngle) * (wheelR - 3));
@@ -3592,8 +3624,10 @@ function renderKinematicCar(
   // Dynamic Velocity Vector HUD Ribbon
   if (v > 0) {
     const vArrowLen = Math.min(80, v * 5.2);
-    drawArrow(ctx, carX + carW / 2 + 5, carY - 14, carX + carW / 2 + 5 + vArrowLen, carY - 14, '#00F0FF', `v=${v.toFixed(1)} m/s`);
+    drawArrow(ctx, carX + 44, carY - 14, carX + 44 + vArrowLen, carY - 14, '#00F0FF', `v=${v.toFixed(1)} m/s`);
   }
+
+
 
   // 3. Synchronized Dual Cyber Oscilloscope Graphs (s-t and v-t)
   const graphW = 325;
