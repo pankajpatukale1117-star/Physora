@@ -20,6 +20,43 @@ export interface RealAnatomySceneProps {
   zoomDirection?: 'in' | 'out' | null;
 }
 
+/**
+ * Procedural micro-dermal normal map generator.
+ * Creates authentic high-frequency epidermal micro-relief (pores, cellular tension grain).
+ */
+function createMicroDermalNormalTexture(): T.CanvasTexture {
+  const size = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return new T.CanvasTexture(canvas);
+
+  const imgData = ctx.createImageData(size, size);
+  const data = imgData.data;
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const idx = (y * size + x) * 4;
+      const dx = (Math.cos(x * 0.45) * 0.35 + Math.cos(x * 0.95 + y * 0.8) * 0.25) * 42;
+      const dy = (-Math.sin(y * 0.45) * 0.35 + Math.cos(y * 0.95 - x * 0.8) * 0.25) * 42;
+
+      data[idx] = Math.min(255, Math.max(0, 128 + Math.round(dx)));
+      data[idx + 1] = Math.min(255, Math.max(0, 128 + Math.round(dy)));
+      data[idx + 2] = 245;
+      data[idx + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(imgData, 0, 0);
+  const tex = new T.CanvasTexture(canvas);
+  tex.wrapS = T.RepeatWrapping;
+  tex.wrapT = T.RepeatWrapping;
+  tex.repeat.set(36, 36);
+  tex.needsUpdate = true;
+  return tex;
+}
+
 export function RealAnatomyScene({
   atlas,
   state,
@@ -154,6 +191,8 @@ export function RealAnatomyScene({
     ring.position.y = 0.001;
     scene.add(ring);
 
+    const skinNormalTexture = createMicroDermalNormalTexture();
+
     const innerRing = new T.Mesh(
       new T.RingGeometry(0.38, 0.383, 96),
       new T.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.25, side: T.DoubleSide })
@@ -246,10 +285,13 @@ export function RealAnatomyScene({
       const isSkin = system === 'integumentary';
       const effectiveSys = system === 'borrowed' ? 'skeletal' : system === 'donor-muscle' ? 'muscular' : system;
       const initialSkinOpacity = latest.current.skinOpacity ?? 0.85;
+      const isFemale = atlas.sex === 'female';
       const m = new T.MeshStandardMaterial({
-        color: SYSTEMS.find((s) => s.id === effectiveSys)?.color ?? '#aebbb8',
+        color: isSkin ? (isFemale ? '#d8ab95' : '#cb9d85') : (SYSTEMS.find((s) => s.id === effectiveSys)?.color ?? '#aebbb8'),
         metalness: isSkin ? 0.02 : 0.08,
-        roughness: isSkin ? 0.55 : 0.5,
+        roughness: isSkin ? 0.44 : 0.5,
+        normalMap: isSkin ? skinNormalTexture : null,
+        normalScale: isSkin ? new T.Vector2(0.40, 0.40) : new T.Vector2(1, 1),
         side: T.DoubleSide,
         transparent: isSkin,
         opacity: isSkin ? initialSkinOpacity : 1,
@@ -268,6 +310,7 @@ export function RealAnatomyScene({
           'uniform float stateWidth;\n' +
           'varying float partVisible;\n' +
           'varying float partSelected;\n' +
+          (isSkin ? 'varying vec3 vSkinWorldPos;\nvarying vec3 vSkinWorldNorm;\n' : '') +
           shader.vertexShader;
 
         shader.vertexShader = shader.vertexShader.replace(
@@ -277,12 +320,17 @@ export function RealAnatomyScene({
             'vec4 state = texture2D(partState, stateUv);\n' +
             'transformed += state.xyz;\n' +
             'partVisible = state.w;\n' +
-            'partSelected = texture2D(selectionState, stateUv).r;\n'
+            'partSelected = texture2D(selectionState, stateUv).r;\n' +
+            (isSkin
+              ? 'vSkinWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\n' +
+                'vSkinWorldNorm = normalize((modelMatrix * vec4(normal, 0.0)).xyz);\n'
+              : '')
         );
 
         shader.fragmentShader =
           'varying float partVisible;\n' +
           'varying float partSelected;\n' +
+          (isSkin ? 'varying vec3 vSkinWorldPos;\nvarying vec3 vSkinWorldNorm;\n' : '') +
           shader.fragmentShader;
 
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -294,7 +342,32 @@ export function RealAnatomyScene({
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <color_fragment>',
           '#include <color_fragment>\n' +
-            'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.2, 0.95, 0.75), partSelected * 0.8);\n'
+            'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.2, 0.95, 0.75), partSelected * 0.8);\n' +
+            (isSkin
+              ? 'vec3 skinViewDir = normalize(cameraPosition - vSkinWorldPos);\n' +
+                'float fresnel = pow(1.0 - max(dot(vSkinWorldNorm, skinViewDir), 0.0), 3.0);\n' +
+                'vec3 sssWarmth = vec3(0.92, 0.42, 0.32);\n' +
+                'diffuseColor.rgb = mix(diffuseColor.rgb, sssWarmth, fresnel * 0.32);\n' +
+                (isFemale
+                  ? 'if (vSkinWorldPos.z > 0.04 && vSkinWorldPos.y > 1.13 && vSkinWorldPos.y < 1.28) {\n' +
+                    '  float dL = length(vSkinWorldPos.xy - vec2(0.095, 1.205));\n' +
+                    '  float dR = length(vSkinWorldPos.xy - vec2(-0.095, 1.205));\n' +
+                    '  float dAreola = min(dL, dR);\n' +
+                    '  if (dAreola < 0.025) {\n' +
+                    '    float aFactor = smoothstep(0.025, 0.007, dAreola);\n' +
+                    '    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.74, 0.44, 0.42), aFactor * 0.72);\n' +
+                    '    if (dAreola < 0.0075) {\n' +
+                    '      float pFactor = smoothstep(0.0075, 0.0, dAreola);\n' +
+                    '      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.68, 0.38, 0.36), pFactor * 0.85);\n' +
+                    '    }\n' +
+                    '  }\n' +
+                    '}\n'
+                  : '') +
+                'if (abs(vSkinWorldPos.x) < 0.012 && vSkinWorldPos.y > 0.88 && vSkinWorldPos.y < 1.05 && vSkinWorldPos.z > 0.02) {\n' +
+                '  float shadow = 1.0 - smoothstep(0.0, 0.012, abs(vSkinWorldPos.x)) * 0.15;\n' +
+                '  diffuseColor.rgb *= shadow;\n' +
+                '}\n'
+              : '')
         );
       };
 
@@ -317,11 +390,118 @@ export function RealAnatomyScene({
       atlas.parts.forEach((p, i) => {
         if (p.chunk !== ci) return;
         const g = new T.BufferGeometry();
-        g.setAttribute('position', new T.BufferAttribute(new Float32Array(buffer, p.positions, p.vertexCount * 3), 3));
-        g.setAttribute('normal', new T.BufferAttribute(new Int16Array(buffer, p.normals, p.vertexCount * 3), 3, true));
+        const posView = new Float32Array(buffer, p.positions, p.vertexCount * 3);
+        const normView = new Int16Array(buffer, p.normals, p.vertexCount * 3);
+        const posArray = new Float32Array(posView);
+        const normArray = new Int16Array(normView);
+
+        // Female anatomical shaping: spine posture normalization, toned abdomen, fuller breasts
+        if (atlas.sex === 'female') {
+          const isSpine = /vertebra|intervertebral disk|nucleus pulposus|spinal cord/i.test(p.name);
+          const isRib = /rib/i.test(p.name) && p.system === 'borrowed';
+          const isFemaleSkin = p.id === 'HRAF0003';
+          const isAbdominalFat = p.id === 'HRAF0000' || p.id === 'HRAF0001' || p.id === 'HRAF0002';
+          const isMammary = /mammary|lactiferous|areol|nipple|suspensory ligaments.*breast|fat \((left|right)\)/i.test(p.name);
+
+          // 1. Posture correction for bent spine: smooth standing alignment
+          if (isSpine) {
+            for (let v = 0; v < p.vertexCount; v++) {
+              const y = posArray[v * 3 + 1];
+              if (y >= 0.88 && y <= 1.44) {
+                const t = (y - 0.88) / (1.44 - 0.88);
+                posArray[v * 3 + 2] += Math.sin(t * Math.PI) * 0.048;
+              }
+            }
+          } else if (isRib) {
+            for (let v = 0; v < p.vertexCount; v++) {
+              const y = posArray[v * 3 + 1];
+              const z = posArray[v * 3 + 2];
+              if (z < -0.05 && y >= 0.95 && y <= 1.40) {
+                const t = (y - 0.95) / (1.40 - 0.95);
+                const zWeight = Math.min(1, Math.max(0, (-z - 0.05) / 0.08));
+                posArray[v * 3 + 2] += Math.sin(t * Math.PI) * 0.048 * zWeight;
+              }
+            }
+          }
+
+          // 2. Toned abdominal wall (slims the bulging belly fat)
+          if (isAbdominalFat) {
+            for (let v = 0; v < p.vertexCount; v++) {
+              posArray[v * 3 + 2] -= 0.022;
+            }
+          }
+
+          // 3. Female skin shaping: toned abdomen + natural, fuller breast projection
+          if (isFemaleSkin) {
+            for (let v = 0; v < p.vertexCount; v++) {
+              const x = posArray[v * 3];
+              const y = posArray[v * 3 + 1];
+              let z = posArray[v * 3 + 2];
+
+              // Abdominal wall slimming (flattens and tones the belly)
+              if (y >= 0.85 && y <= 1.07 && Math.abs(x) < 0.16 && z > 0.02) {
+                const yFactor = Math.sin(((y - 0.85) / (1.07 - 0.85)) * Math.PI);
+                const xFactor = Math.cos((x / 0.16) * (Math.PI / 2));
+                const zExcess = Math.max(0, z - 0.02);
+                const tuck = Math.min(zExcess, 0.025 * yFactor * xFactor);
+                z -= tuck;
+              }
+
+              // Natural, fuller breast contours ("normal but a bit big breasts")
+              if (y >= 1.10 && y <= 1.30 && z > 0.015) {
+                const isLeft = x > 0.02;
+                const isRight = x < -0.02;
+                if (isLeft || isRight) {
+                  const cx = isLeft ? 0.095 : -0.095;
+                  const cy = 1.205;
+                  const dx = (x - cx) / 0.078;
+                  const dy = (y - cy) / (y < cy ? 0.090 : 0.082);
+                  const r2 = dx * dx + dy * dy;
+                  if (r2 < 1.0) {
+                    const bell = Math.cos(Math.sqrt(r2) * (Math.PI / 2));
+                    z += 0.038 * Math.pow(bell, 1.4);
+                  }
+                }
+              }
+
+              posArray[v * 3 + 2] = z;
+            }
+          }
+
+          // 4. Internal mammary structures follow the natural breast volume
+          if (isMammary) {
+            for (let v = 0; v < p.vertexCount; v++) {
+              const x = posArray[v * 3];
+              const y = posArray[v * 3 + 1];
+              const isLeft = x > 0.01;
+              const isRight = x < -0.01;
+              if (isLeft || isRight) {
+                const cx = isLeft ? 0.095 : -0.095;
+                const cy = 1.205;
+                const dx = (x - cx) / 0.078;
+                const dy = (y - cy) / (y < cy ? 0.090 : 0.082);
+                const r2 = dx * dx + dy * dy;
+                if (r2 < 1.0) {
+                  const bell = Math.cos(Math.sqrt(r2) * (Math.PI / 2));
+                  posArray[v * 3 + 2] += 0.034 * Math.pow(bell, 1.4);
+                }
+              }
+            }
+          }
+        }
+
+        g.setAttribute('position', new T.BufferAttribute(posArray, 3));
+        g.setAttribute('normal', new T.BufferAttribute(normArray, 3, true));
         g.setIndex(new T.BufferAttribute(new Uint32Array(buffer, p.indices, p.indexCount), 1));
-        g.boundingBox = bounds[i].clone();
+
+        if (atlas.sex === 'female') {
+          g.computeVertexNormals();
+        }
+        g.computeBoundingBox();
         g.computeBoundingSphere();
+        bounds[i].copy(g.boundingBox!);
+        centers[i].copy(bounds[i].getCenter(new T.Vector3()));
+        offsets[i].copy(centers[i]);
 
         const pick = new T.Mesh(g);
         pick.matrixAutoUpdate = false;
@@ -760,6 +940,7 @@ export function RealAnatomyScene({
         }
       });
       env.dispose();
+      skinNormalTexture.dispose();
       partTexture.dispose();
       selectionTexture.dispose();
       markerGeometry.dispose();
