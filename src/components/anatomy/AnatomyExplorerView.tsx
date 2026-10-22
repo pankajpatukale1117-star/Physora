@@ -76,6 +76,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isScaleModalOpen, setIsScaleModalOpen] = useState<boolean>(false);
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState<boolean>(false);
+  const [skinOpacity, setSkinOpacity] = useState<number>(0.85);
   const [hoveredPartName, setHoveredPartName] = useState<string | null>(null);
   const [visiblePiecesCount, setVisiblePiecesCount] = useState<number>(0);
 
@@ -253,15 +254,23 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     }
   };
 
-  // Toggle single system visibility
+  // Toggle single system visibility with linked donor/borrowed systems
   const toggleSystem = (sysId: SystemId) => {
-    setVisibleSystems((prev) =>
-      prev.includes(sysId) ? prev.filter((id) => id !== sysId) : [...prev, sysId]
-    );
+    setVisibleSystems((prev) => {
+      const isCurrentlyVisible = prev.includes(sysId);
+      let next = isCurrentlyVisible ? prev.filter((id) => id !== sysId) : [...prev, sysId];
+      if (sysId === 'skeletal') {
+        next = isCurrentlyVisible ? next.filter((id) => id !== ('borrowed' as SystemId)) : [...next, 'borrowed' as SystemId];
+      }
+      if (sysId === 'muscular') {
+        next = isCurrentlyVisible ? next.filter((id) => id !== ('donor-muscle' as SystemId)) : [...next, 'donor-muscle' as SystemId];
+      }
+      return Array.from(new Set(next)) as SystemId[];
+    });
   };
 
-  // Quick View Presets
-  const applyQuickView = (preset: 'all' | 'skeleton' | 'muscles' | 'organs') => {
+  // Quick View Presets: Organs, Skeleton, Muscles, Reproductive, Surface, All
+  const applyQuickView = (preset: 'all' | 'skeleton' | 'muscles' | 'organs' | 'reproductive' | 'surface') => {
     setIsIsolated(false);
     setSelectedPartIds([]);
     if (preset === 'all') {
@@ -270,6 +279,10 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       setVisibleSystems(['skeletal', 'borrowed' as SystemId]);
     } else if (preset === 'muscles') {
       setVisibleSystems(['muscular', 'donor-muscle' as SystemId]);
+    } else if (preset === 'reproductive') {
+      setVisibleSystems(['reproductive', 'pregnancy' as SystemId, 'urinary']);
+    } else if (preset === 'surface') {
+      setVisibleSystems(['integumentary']);
     } else if (preset === 'organs') {
       setVisibleSystems([
         'cardiac',
@@ -304,7 +317,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       view: activeView,
       rotate: isAutoRotating,
       reset: cameraResetCounter,
-      inspectorOpen: selectedPartIds.length > 0
+      inspectorOpen: selectedPartIds.length > 0,
+      skinOpacity
     };
   }, [
     explode,
@@ -313,7 +327,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     isIsolated,
     activeView,
     isAutoRotating,
-    cameraResetCounter
+    cameraResetCounter,
+    skinOpacity
   ]);
 
   return (
@@ -840,8 +855,10 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             >
               {[
                 { id: 'organs', label: 'Organs', icon: <Heart size={14} color="#EF4444" /> },
-                { id: 'skeleton', label: 'Skeleton', icon: <span style={{ fontSize: '0.9rem' }}>🦴</span> },
+                { id: 'skeleton', label: 'Skeleton', icon: <span style={{ fontSize: '0.85rem' }}>??</span> },
                 { id: 'muscles', label: 'Muscles', icon: <Activity size={14} color="#F59E0B" /> },
+                { id: 'reproductive', label: 'Reproductive', icon: <span style={{ fontSize: '0.85rem' }}>??</span> },
+                { id: 'surface', label: 'Body Surface', icon: <Eye size={14} color="#38BDF8" /> },
                 { id: 'all', label: 'All systems', icon: <Layers size={14} color="#10B981" /> }
               ].map((item) => (
                 <button
@@ -863,11 +880,66 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     {item.icon}
-                    <span style={{ fontSize: '0.74rem', fontWeight: 700 }}>{item.label}</span>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>{item.label}</span>
                   </div>
                 </button>
               ))}
             </div>
+
+            {/* Body Surface / Skin Opacity Slider (When Surface is Active) */}
+            {visibleSystems.includes('integumentary') && (
+              <div
+                style={{
+                  marginTop: 10,
+                  padding: '10px 12px',
+                  borderRadius: 10,
+                  background: 'rgba(56, 189, 248, 0.06)',
+                  border: '1px solid rgba(56, 189, 248, 0.2)'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: '0.70rem', fontWeight: 800, color: '#38BDF8', letterSpacing: '0.02em' }}>
+                    Surface Opacity
+                  </span>
+                  <strong style={{ fontSize: '0.70rem', color: '#38BDF8' }}>
+                    {Math.round(skinOpacity * 100)}%
+                  </strong>
+                </div>
+                <input
+                  type="range"
+                  min="0.10"
+                  max="1.0"
+                  step="0.05"
+                  value={skinOpacity}
+                  onChange={(e) => setSkinOpacity(parseFloat(e.target.value))}
+                  style={{ width: '100%', accentColor: '#38BDF8', cursor: 'pointer' }}
+                  title="Adjust skin opacity to reveal underlying muscles, skeleton, and organs"
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                  <button
+                    type="button"
+                    onClick={() => setSkinOpacity(0.25)}
+                    style={{ background: 'none', border: 'none', color: skinOpacity <= 0.3 ? '#38BDF8' : '#94A3B8', fontSize: '0.62rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                  >
+                    Ghost (25%)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSkinOpacity(0.60)}
+                    style={{ background: 'none', border: 'none', color: skinOpacity > 0.3 && skinOpacity < 0.8 ? '#38BDF8' : '#94A3B8', fontSize: '0.62rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                  >
+                    Translucent (60%)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSkinOpacity(0.95)}
+                    style={{ background: 'none', border: 'none', color: skinOpacity >= 0.8 ? '#38BDF8' : '#94A3B8', fontSize: '0.62rem', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                  >
+                    Solid (95%)
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Segmented Triple-Pill: [ Systems | Regions | Layers ] */}
@@ -986,8 +1058,16 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          // Solo this system on click
-                          setVisibleSystems([sys.id]);
+                          // Solo this system on click with coordinated donor/borrowed systems
+                          const targetSystems: SystemId[] =
+                            sys.id === 'skeletal'
+                              ? ['skeletal', 'borrowed' as SystemId]
+                              : sys.id === 'muscular'
+                              ? ['muscular', 'donor-muscle' as SystemId]
+                              : sys.id === 'reproductive'
+                              ? ['reproductive', 'pregnancy' as SystemId]
+                              : [sys.id];
+                          setVisibleSystems(targetSystems);
                           setIsIsolated(false);
                           setSelectedPartIds([]);
                         }}
@@ -1340,6 +1420,21 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                 <span style={{ fontSize: '0.62rem', color: '#64748B', fontFamily: 'monospace' }}>
                   {selectedDetails.latinOrConcept}
                 </span>
+                {selectedDetails.primaryPart.id.startsWith('BM') && (
+                  <span style={{ fontSize: '0.60rem', padding: '1px 6px', borderRadius: 4, background: 'rgba(226, 217, 186, 0.2)', color: '#E2D9BA', fontWeight: 700 }}>
+                    Calibrated Bone
+                  </span>
+                )}
+                {selectedDetails.primaryPart.system === 'donor-muscle' && (
+                  <span style={{ fontSize: '0.60rem', padding: '1px 6px', borderRadius: 4, background: 'rgba(248, 113, 113, 0.2)', color: '#F87171', fontWeight: 700 }}>
+                    VHF Donor Muscle
+                  </span>
+                )}
+                {selectedDetails.system?.id === 'reproductive' && (
+                  <span style={{ fontSize: '0.60rem', padding: '1px 6px', borderRadius: 4, background: 'rgba(253, 164, 175, 0.2)', color: '#FDA4AF', fontWeight: 700 }}>
+                    3D Reproductive Organ
+                  </span>
+                )}
               </div>
 
               {/* Structure Title */}

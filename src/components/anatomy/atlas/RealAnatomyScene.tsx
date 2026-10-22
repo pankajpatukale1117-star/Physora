@@ -244,14 +244,16 @@ export function RealAnatomyScene({
     // PBR Shader Injection per Anatomical System
     const materialFor = (system: string) => {
       const isSkin = system === 'integumentary';
+      const effectiveSys = system === 'borrowed' ? 'skeletal' : system === 'donor-muscle' ? 'muscular' : system;
+      const initialSkinOpacity = latest.current.skinOpacity ?? 0.85;
       const m = new T.MeshStandardMaterial({
-        color: SYSTEMS.find((s) => s.id === system)?.color ?? '#aebbb8',
+        color: SYSTEMS.find((s) => s.id === effectiveSys)?.color ?? '#aebbb8',
         metalness: isSkin ? 0.02 : 0.08,
         roughness: isSkin ? 0.55 : 0.5,
         side: T.DoubleSide,
         transparent: isSkin,
-        opacity: isSkin ? 0.12 : 1,
-        depthWrite: !isSkin
+        opacity: isSkin ? initialSkinOpacity : 1,
+        depthWrite: !isSkin || initialSkinOpacity > 0.65
       });
 
       m.onBeforeCompile = (shader) => {
@@ -509,6 +511,20 @@ export function RealAnatomyScene({
         dirty = true;
       }
 
+      // Dynamically update skin opacity & fade skin during explosion
+      const skinMat = mats.get('integumentary');
+      if (skinMat) {
+        const baseOpacity = s.skinOpacity ?? 0.85;
+        const targetOpacity = amount > 0.05 ? baseOpacity * Math.max(0, 1 - (amount - 0.05) * 4) : baseOpacity;
+        if (Math.abs(skinMat.opacity - targetOpacity) > 0.005) {
+          skinMat.opacity = targetOpacity;
+          skinMat.transparent = targetOpacity < 0.99;
+          skinMat.depthWrite = targetOpacity > 0.65;
+          skinMat.needsUpdate = true;
+          dirty = true;
+        }
+      }
+
       if (changed || moving || lastExtent < 0) {
         const visible = new Set(s.visible);
         const selection = new Set(s.selected);
@@ -541,20 +557,27 @@ export function RealAnatomyScene({
           let dy = 0;
           let dz = 0;
 
-          if (amount <= 0.45) {
-            const t = amount / 0.45;
-            const group = SYSTEMS.findIndex((sys) => sys.id === p.system);
-            const angle = (group / SYSTEMS.length) * Math.PI * 2;
-            dx = Math.sin(angle) * t * 0.48;
-            dy = (c.y - 0.85) * t * 0.28;
-            dz = Math.cos(angle) * t * 0.48;
+          if (p.system === 'integumentary') {
+            // Skin does not break or fly into space; stays aligned with body
+            dx = 0;
+            dy = 0;
+            dz = 0;
           } else {
-            const t = (amount - 0.45) / 0.55;
-            const group = SYSTEMS.findIndex((sys) => sys.id === p.system);
+            const effectiveSys = p.system === 'borrowed' ? 'skeletal' : p.system === 'donor-muscle' ? 'muscular' : p.system;
+            const group = SYSTEMS.findIndex((sys) => sys.id === effectiveSys);
             const angle = (group / SYSTEMS.length) * Math.PI * 2;
-            dx = T.MathUtils.lerp(Math.sin(angle) * 0.48, destination.x - c.x, t);
-            dy = T.MathUtils.lerp((c.y - 0.85) * 0.28, destination.y - c.y, t);
-            dz = T.MathUtils.lerp(Math.cos(angle) * 0.48, -c.z, t);
+
+            if (amount <= 0.45) {
+              const t = amount / 0.45;
+              dx = Math.sin(angle) * t * 0.48;
+              dy = (c.y - 0.85) * t * 0.28;
+              dz = Math.cos(angle) * t * 0.48;
+            } else {
+              const t = (amount - 0.45) / 0.55;
+              dx = T.MathUtils.lerp(Math.sin(angle) * 0.48, destination.x - c.x, t);
+              dy = T.MathUtils.lerp((c.y - 0.85) * 0.28, destination.y - c.y, t);
+              dz = T.MathUtils.lerp(Math.cos(angle) * 0.48, -c.z, t);
+            }
           }
 
           const selected = selection.has(p.id);
