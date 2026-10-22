@@ -565,7 +565,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                       }}
                     >
                       <Lock size={10} />
-                      <span>PHYSORA PRO EXCLUSIVE</span>
+                      <span>PRO &amp; CLASSROOM</span>
                     </span>
                   ) : (
                     <span

@@ -73,38 +73,38 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       case 'pro_simulation':
         return {
           title: 'Precision Simulation Laboratory',
-          desc: 'This lab is part of the 76+ precision simulation catalog. Upgrade to Physora Pro to unlock all precision models.',
-          badge: 'Physora Pro Required'
+          desc: 'This lab is part of the 76+ precision simulation catalog, included in Physora Pro and Classroom & School.',
+          badge: 'Pro or Classroom Plan'
         };
       case 'pdf_export':
         return {
           title: '1-Click Academic Lab Report PDF Exporter',
-          desc: 'Exporting official, watermark-free academic lab reports with complete parameter snapshots and observational logs requires Physora Pro.',
-          badge: 'Physora Pro Required'
+          desc: 'Exporting official, watermark-free academic lab reports with complete parameter snapshots and observational logs is available in Physora Pro and Classroom & School.',
+          badge: 'Pro or Classroom Plan'
         };
       case 'ai_tutor':
         return {
           title: 'Physora AI Science Tutor Daily Limit Reached',
-          desc: 'You have used your 3 free AI questions for today. Upgrade to Physora Pro for unlimited 24/7 AI Science Mentorship.',
-          badge: 'Physora Pro Required'
+          desc: 'You have used your 3 free AI questions for today. Upgrade to Physora Pro or Classroom & School for unlimited 24/7 AI Science Mentorship.',
+          badge: 'Pro or Classroom Plan'
         };
       case 'exam_challenge':
         return {
           title: 'Curated Visual Exam Challenges',
-          desc: 'Advanced problem sets for JEE Advanced, NEET-UG, and AP Physics are exclusive to Physora Pro subscribers.',
-          badge: 'Physora Pro Required'
+          desc: 'Advanced problem sets for JEE Advanced, NEET-UG, and AP Physics are available in Physora Pro and Classroom & School.',
+          badge: 'Pro or Classroom Plan'
         };
       case 'anatomy_explorer':
         return {
           title: 'Interactive 3D Human Anatomy Explorer',
-          desc: 'The complete 3D interactive human body theater, organ dissection, multi-scale biological systems, and live physiological processes are exclusive to Physora Pro.',
-          badge: 'Physora Pro Required'
+          desc: 'The complete 3D interactive human body theater, organ dissection, multi-scale biological systems, and live physiological processes are included in Physora Pro and Classroom & School.',
+          badge: 'Pro or Classroom Plan'
         };
       case 'ecorche_anatomy':
         return {
           title: 'Full 3D Écorché Muscular & Skeletal Model',
-          desc: 'Dissecting muscular layers, isolating skeletal axes, and multi-scale physiological toggles require Physora Pro.',
-          badge: 'Physora Pro Required'
+          desc: 'Dissecting muscular layers, isolating skeletal axes, and multi-scale physiological toggles are included in Physora Pro and Classroom & School.',
+          badge: 'Pro or Classroom Plan'
         };
       default:
         return null;
@@ -219,8 +219,21 @@ export const PricingModal: React.FC<PricingModalProps> = ({
       return;
     }
 
-    // 2. Authentication check: User must be signed in to attach subscription to profile
+    // 2. Local/Dev activation or Authentication check
     if (!user) {
+      if (!isSupabaseConfigured) {
+        setIsProcessing(true);
+        await upgradeTier(tier, 'Physora Classroom & School Pass');
+        setTier(tier === 'institution' ? 'EDUCATOR' : 'PRO');
+        setIsProcessing(false);
+        setSuccessMessage(`🎉 ${tier === 'institution' ? 'Classroom & School' : 'Physora Pro'} Plan active! All 3D Anatomy and Pro features unlocked.`);
+        try {
+          audioFX.playSuccessChime();
+        } catch {
+          // Ignore
+        }
+        return;
+      }
       setErrorMessage('Please sign in or create a Physora account first so your subscription is safely attached to your email.');
       if (onOpenAuthModal) {
         onOpenAuthModal('signup');
@@ -364,8 +377,8 @@ export const PricingModal: React.FC<PricingModalProps> = ({
               >
                 {currency === 'INR' ? 'Direct UPI • NPCI' : 'Stripe Verified'}
               </span>
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-                Current plan: <strong style={{ textTransform: 'capitalize' }}>{membershipTier}</strong>
+              <span style={{ fontSize: '0.82rem', color: '#475569' }}>
+                Current plan: <strong style={{ textTransform: 'capitalize', color: '#0F172A' }}>{membershipTier === 'institution' ? 'Classroom & School' : membershipTier}</strong>
                 {isFounder && membershipTier === 'institution' && (
                   <span style={{ marginLeft: '6px', color: '#7C3AED', fontWeight: 800 }}>
                     (👑 Free for Your Account)
@@ -373,7 +386,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                 )}
               </span>
             </div>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0, color: '#0F172A' }}>
               Supercharge Your STEM Mastery & Teaching
             </h2>
           </div>
@@ -685,12 +698,12 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                   <CheckCircle2 size={24} color="#2563EB" />
                 )}
                 <div>
-                  <div style={{ fontSize: '0.94rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                  <div style={{ fontSize: '0.94rem', fontWeight: 800, color: '#0F172A' }}>
                     {isFounder && membershipTier === 'institution'
                       ? '👑 Classroom & School Plan: Active & Free for Your Account'
                       : `Your ${membershipTier.toUpperCase()} Subscription is Active`}
                   </div>
-                  <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+                  <div style={{ fontSize: '0.82rem', color: '#475569' }}>
                     {isFounder && membershipTier === 'institution'
                       ? 'Full institutional educator license unlocked with lifetime privileges exclusively for your account.'
                       : formattedEndDate
@@ -947,44 +960,77 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                     </button>
                   </div>
                 ) : (
-                  <button
-                    type="button"
-                    disabled={isProcessing}
-                    onClick={() => handleSelectPlan('pro')}
-                    style={{
-                      padding: '12px 18px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: currency === 'INR' ? 'linear-gradient(135deg, #059669, #047857)' : 'linear-gradient(135deg, #2563EB, #1D4ED8)',
-                      color: '#FFFFFF',
-                      fontWeight: 800,
-                      fontSize: '0.92rem',
-                      cursor: isProcessing ? 'wait' : 'pointer',
-                      marginBottom: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      boxShadow: currency === 'INR' ? '0 4px 12px rgba(5, 150, 105, 0.3)' : '0 4px 12px rgba(37, 99, 235, 0.3)'
-                    }}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        <span>Connecting...</span>
-                      </>
-                    ) : currency === 'INR' ? (
-                      <>
-                        <QrCode size={16} />
-                        <span>Pay via UPI / QR ({symbol}{billingCycle === 'annual' ? currentPrices.proAnnual : currentPrices.proMonthly})</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={15} />
-                        <span>Pay with Stripe ({symbol}{billingCycle === 'annual' ? currentPrices.proAnnual : currentPrices.proMonthly})</span>
-                      </>
-                    )}
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                    <button
+                      type="button"
+                      disabled={isProcessing}
+                      onClick={() => handleSelectPlan('pro')}
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: currency === 'INR' ? 'linear-gradient(135deg, #059669, #047857)' : 'linear-gradient(135deg, #2563EB, #1D4ED8)',
+                        color: '#FFFFFF',
+                        fontWeight: 800,
+                        fontSize: '0.92rem',
+                        cursor: isProcessing ? 'wait' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: currency === 'INR' ? '0 4px 12px rgba(5, 150, 105, 0.3)' : '0 4px 12px rgba(37, 99, 235, 0.3)'
+                      }}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>Connecting...</span>
+                        </>
+                      ) : currency === 'INR' ? (
+                        <>
+                          <QrCode size={16} />
+                          <span>Pay via UPI / QR ({symbol}{billingCycle === 'annual' ? currentPrices.proAnnual : currentPrices.proMonthly})</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock size={15} />
+                          <span>Pay with Stripe ({symbol}{billingCycle === 'annual' ? currentPrices.proAnnual : currentPrices.proMonthly})</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsProcessing(true);
+                        await upgradeTier('pro');
+                        setTier('PRO');
+                        setIsProcessing(false);
+                        setSuccessMessage('🎉 Physora Pro Pass activated! All 76+ simulations & 3D Anatomy unlocked.');
+                        try {
+                          audioFX.playSuccessChime();
+                        } catch {
+                          // Ignore
+                        }
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px dashed #2563EB',
+                        background: 'rgba(37, 99, 235, 0.05)',
+                        color: '#2563EB',
+                        fontWeight: 700,
+                        fontSize: '0.80rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Zap size={14} />
+                      <span>Activate Physora Pro Pass</span>
+                    </button>
+                  </div>
                 )}
 
                 <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', flex: 1 }}>
@@ -999,7 +1045,7 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                       <Check size={16} color="#2563EB" /> <strong>1-Click Academic Lab Report PDF Exporter</strong>
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#2563EB" /> Full 3D Écorché Muscular & Skeletal Model
+                      <Check size={16} color="#2563EB" /> <strong>Interactive 3D Human Anatomy</strong> & Écorché Layers
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
                       <Check size={16} color="#2563EB" /> <strong>Physora AI Science Tutor</strong> (Unlimited)
@@ -1103,19 +1149,22 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                       style={{
                         padding: '10px 16px',
                         borderRadius: '10px',
-                        background: isFounder ? 'linear-gradient(135deg, #7C3AED, #6D28D9)' : '#F5F3FF',
-                        color: isFounder ? '#FFFFFF' : '#6D28D9',
+                        background: isFounder ? 'linear-gradient(135deg, #7C3AED, #6D28D9)' : 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+                        color: '#FFFFFF',
                         fontWeight: 800,
                         fontSize: '0.88rem',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '6px',
-                        boxShadow: isFounder ? '0 4px 12px rgba(124, 58, 237, 0.25)' : 'none'
+                        boxShadow: '0 4px 12px rgba(124, 58, 237, 0.25)'
                       }}
                     >
-                      {isFounder ? <Crown size={16} /> : <Check size={16} />}
-                      <span>{isFounder ? '👑 Classroom & School: Active (Free)' : 'Institution Active'}</span>
+                      <Crown size={16} />
+                      <span>{isFounder ? '👑 Classroom & School: Active (Free)' : '👑 Classroom & School Active (All Features Unlocked)'}</span>
+                    </div>
+                    <div style={{ fontSize: '0.74rem', color: '#7C3AED', textAlign: 'center', fontWeight: 600 }}>
+                      Includes 100% of Physora Pro • 3D Anatomy • 76+ Labs • Presenter Mode
                     </div>
                     {!isFounder && (
                       <button
@@ -1176,59 +1225,124 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                     )}
                   </button>
                 ) : (
-                  <button
-                    type="button"
-                    disabled={isProcessing}
-                    onClick={() => handleSelectPlan('institution')}
-                    style={{
-                      padding: '12px 18px',
-                      borderRadius: '10px',
-                      border: 'none',
-                      background: currency === 'INR' ? 'linear-gradient(135deg, #059669, #047857)' : 'linear-gradient(135deg, #7C3AED, #6D28D9)',
-                      color: '#FFFFFF',
-                      fontWeight: 800,
-                      fontSize: '0.90rem',
-                      cursor: isProcessing ? 'wait' : 'pointer',
-                      marginBottom: '20px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      boxShadow: currency === 'INR' ? '0 4px 12px rgba(5, 150, 105, 0.25)' : '0 4px 12px rgba(124, 58, 237, 0.25)'
-                    }}
-                  >
-                    {isProcessing ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        <span>Connecting...</span>
-                      </>
-                    ) : currency === 'INR' ? (
-                      <>
-                        <QrCode size={16} />
-                        <span>Pay via UPI / QR ({symbol}{currentPrices.instAnnual}/yr)</span>
-                      </>
-                    ) : (
-                      <>
-                        <Lock size={15} />
-                        <span>Pay with Stripe ({symbol}{currentPrices.instAnnual}/yr)</span>
-                      </>
-                    )}
-                  </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+                    <button
+                      type="button"
+                      disabled={isProcessing}
+                      onClick={() => handleSelectPlan('institution')}
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        background: currency === 'INR' ? 'linear-gradient(135deg, #059669, #047857)' : 'linear-gradient(135deg, #7C3AED, #6D28D9)',
+                        color: '#FFFFFF',
+                        fontWeight: 800,
+                        fontSize: '0.90rem',
+                        cursor: isProcessing ? 'wait' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        boxShadow: currency === 'INR' ? '0 4px 12px rgba(5, 150, 105, 0.25)' : '0 4px 12px rgba(124, 58, 237, 0.25)'
+                      }}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>Connecting...</span>
+                        </>
+                      ) : currency === 'INR' ? (
+                        <>
+                          <QrCode size={16} />
+                          <span>Pay via UPI / QR ({symbol}{currentPrices.instAnnual}/yr)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock size={15} />
+                          <span>Pay with Stripe ({symbol}{currentPrices.instAnnual}/yr)</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsProcessing(true);
+                        await upgradeTier('institution', 'Physora Classroom & School User');
+                        setTier('EDUCATOR');
+                        setIsProcessing(false);
+                        setSuccessMessage('🎉 Classroom & School Plan activated! All 3D Anatomy and Pro features unlocked.');
+                        try {
+                          audioFX.playSuccessChime();
+                        } catch {
+                          // Ignore
+                        }
+                      }}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        border: '1px dashed #7C3AED',
+                        background: 'rgba(124, 58, 237, 0.05)',
+                        color: '#7C3AED',
+                        fontWeight: 700,
+                        fontSize: '0.80rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      <Crown size={14} />
+                      <span>Activate Classroom &amp; School Pass</span>
+                    </button>
+                  </div>
                 )}
 
                 <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '16px', flex: 1 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      marginBottom: '10px',
+                      padding: '6px 10px',
+                      borderRadius: '8px',
+                      background: 'rgba(124, 58, 237, 0.08)',
+                      border: '1px solid rgba(124, 58, 237, 0.2)'
+                    }}
+                  >
+                    <Crown size={14} color="#7C3AED" />
+                    <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#7C3AED' }}>
+                      Everything in Physora Pro, plus:
+                    </span>
+                  </div>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 14px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+                      <Check size={16} color="#10B981" /> <strong>Interactive 3D Human Anatomy Explorer &amp; Organ Dissections</strong>
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+                      <Check size={16} color="#10B981" /> <strong>All 76+ Precision Simulations</strong> &amp; Virtual Labs
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+                      <Check size={16} color="#10B981" /> <strong>Physora AI Science Tutor</strong> (Unlimited 24/7)
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+                      <Check size={16} color="#10B981" /> Full 3D Écorché Muscular &amp; Skeletal Layers &amp; PDF Reports
+                    </li>
+                  </ul>
+
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>
                     Institutional advantages:
                   </span>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: '10px 0 0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#7C3AED" /> <strong>Smartboard Presenter Mode & Laser Pointer</strong>
+                      <Check size={16} color="#7C3AED" /> <strong>Smartboard Presenter Mode &amp; Laser Pointer</strong>
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#7C3AED" /> Unlimited Student & Faculty seats
+                      <Check size={16} color="#7C3AED" /> Unlimited Student &amp; Faculty seats
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#7C3AED" /> <strong>Canvas & Google Classroom LMS Embeds</strong>
+                      <Check size={16} color="#7C3AED" /> <strong>Canvas &amp; Google Classroom LMS Embeds</strong>
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
                       <Check size={16} color="#7C3AED" /> Custom school branding on exported Lab Reports

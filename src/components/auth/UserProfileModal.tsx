@@ -425,7 +425,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({ isOpen, onCl
                   {membershipTier === 'institution'
                     ? isFounder
                       ? 'Classroom & School (👑 Free for Your Account)'
-                      : 'Classroom & School License'
+                      : 'Classroom & School License (All Features Unlocked)'
                     : membershipTier === 'pro'
                     ? isFounder
                       ? 'Physora Pro (👑 Founder Free Pass)'

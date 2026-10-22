@@ -37,13 +37,22 @@ export interface Anatomy3DCanvasProps {
   processSpeed: number; // 0.5 to 2.0
   processStepTick?: number; // discrete step
   detailLevel: DetailLevel;
-  presetView: 'front' | 'back' | 'left' | 'right' | 'top' | 'reset' | null;
+  presetView: 'front' | 'back' | 'left' | 'right' | 'top' | 'reset' | 'zoom_in' | 'zoom_out' | null;
   onPresetViewHandled: () => void;
+  onVisibleCountChange?: (count: number) => void;
   activeLayerId?: string;
   skinOpacity?: number;
   skinMode?: 'natural' | 'translucent' | 'xray';
   skinVisible?: boolean;
   biologicalSex?: 'female' | 'male';
+  peelDepth?: number; // 0 (deepest) to 100 (surface skin)
+  isXrayActive?: boolean;
+  focusedRegion?: 'all' | 'head' | 'chest' | 'abdomen' | 'arms' | 'legs' | null;
+  pinnedStructureIds?: string[];
+  showSmartLabels?: boolean;
+  hideInternalCameraWidget?: boolean;
+  isChallengeActive?: boolean;
+  activeTourKey?: string | null;
 }
 
 interface MeshUserData {
@@ -112,10 +121,19 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   detailLevel: _detailLevel,
   presetView,
   onPresetViewHandled,
+  onVisibleCountChange,
   skinOpacity = 1.0,
   skinMode = 'natural',
   skinVisible = true,
-  biologicalSex = 'female'
+  biologicalSex = 'female',
+  peelDepth,
+  isXrayActive = false,
+  focusedRegion = null,
+  pinnedStructureIds = [],
+  showSmartLabels = true,
+  hideInternalCameraWidget = false,
+  isChallengeActive = false,
+  activeTourKey = null
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [loadingProgress, setLoadingProgress] = useState<number>(0);
@@ -130,6 +148,15 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   } | null>(null);
   const [selectedScreenPos, setSelectedScreenPos] = useState<{ x: number; y: number } | null>(null);
   const lastScreenPosRef = useRef<{ x: number; y: number } | null>(null);
+  const [pinnedScreenPositions, setPinnedScreenPositions] = useState<Record<string, { x: number; y: number }>>({});
+  const pinnedStructureIdsRef = useRef<string[]>(pinnedStructureIds);
+  useEffect(() => {
+    pinnedStructureIdsRef.current = pinnedStructureIds;
+  }, [pinnedStructureIds]);
+  const showSmartLabelsRef = useRef<boolean>(showSmartLabels);
+  useEffect(() => {
+    showSmartLabelsRef.current = showSmartLabels;
+  }, [showSmartLabels]);
 
   // Synchronized refs to avoid stale closures in Three.js animate() loop
 
@@ -145,6 +172,16 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     processSpeedRef.current = processSpeed;
   }, [isProcessPlaying, processSpeed]);
 
+  const systemVisibilityRef = useRef(systemVisibility);
+  useEffect(() => {
+    systemVisibilityRef.current = systemVisibility;
+  }, [systemVisibility]);
+
+  const isIsolatedRef = useRef(isIsolated);
+  useEffect(() => {
+    isIsolatedRef.current = isIsolated;
+  }, [isIsolated]);
+
   const showInternalRef = useRef<boolean>(showInternal);
   useEffect(() => {
     showInternalRef.current = showInternal;
@@ -158,10 +195,10 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   const circulationGroupRef = useRef<THREE.Group | null>(null);
 
   // Camera Target & Cinematic Spring State
-  const cameraTargetRef = useRef(new THREE.Vector3(0, 0.0, 0));
-  const cameraDesiredTargetRef = useRef(new THREE.Vector3(0, 0.0, 0));
-  const cameraSphericalRef = useRef({ radius: 10.5, theta: 0, phi: Math.PI / 2 });
-  const cameraDesiredSphericalRef = useRef({ radius: 10.5, theta: 0, phi: Math.PI / 2 });
+  const cameraTargetRef = useRef(new THREE.Vector3(0, -0.22, 0));
+  const cameraDesiredTargetRef = useRef(new THREE.Vector3(0, -0.22, 0));
+  const cameraSphericalRef = useRef({ radius: 14.8, theta: 0, phi: Math.PI / 2 });
+  const cameraDesiredSphericalRef = useRef({ radius: 14.8, theta: 0, phi: Math.PI / 2 });
 
   const isDraggingRef = useRef(false);
   const isPanningRef = useRef(false);
@@ -206,7 +243,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
 
     // Camera (Telephoto-style 34 deg FOV removes wide-angle game distortion)
     const camera = new THREE.PerspectiveCamera(34, width / height, 0.1, 100);
-    camera.position.set(0, 0.0, 11.2);
+    camera.position.set(0, -0.22, 14.8);
     cameraRef.current = camera;
 
     // Renderer
@@ -363,21 +400,74 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         cam.position.set(x, y, z);
         cam.lookAt(currentTarget);
 
-        // Project current target to 2D screen coordinates for 3D holographic callout
+        // Compute true 3D world center of an anatomical structure for holographic callouts
+        const getStructureWorldCenter = (structId: string): THREE.Vector3 => {
+          const meshes = meshMapRef.current.get(structId);
+          if (meshes && meshes.length > 0) {
+            const box = new THREE.Box3();
+            let hasValidMesh = false;
+            meshes.forEach((m) => {
+              if (m.geometry) {
+                m.updateWorldMatrix(true, false);
+                box.expandByObject(m);
+                hasValidMesh = true;
+              }
+            });
+            if (hasValidMesh && !box.isEmpty()) {
+              const center = new THREE.Vector3();
+              box.getCenter(center);
+              return center;
+            }
+          }
+
+          if (structId.startsWith('heart_')) {
+            const heartMeshes = meshMapRef.current.get('heart');
+            if (heartMeshes && heartMeshes.length > 0) {
+              const box = new THREE.Box3();
+              let hasValid = false;
+              heartMeshes.forEach((m) => {
+                if (m.geometry) {
+                  m.updateWorldMatrix(true, false);
+                  box.expandByObject(m);
+                  hasValid = true;
+                }
+              });
+              if (hasValid && !box.isEmpty()) {
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+                return center;
+              }
+            }
+          }
+
+          const struct = ANATOMY_STRUCTURES[structId];
+          if (struct?.center) {
+            return new THREE.Vector3(struct.center[0], struct.center[1], struct.center[2]);
+          }
+
+          return new THREE.Vector3(0, 1.8, 0.1);
+        };
+
+        // Project exact 3D world structure position to 2D screen coordinates for callout
         const currentActiveId = selectedStructureIdRef.current;
         if (currentActiveId && containerRef.current) {
-          const p = currentTarget.clone().project(cam);
+          const worldPos = getStructureWorldCenter(currentActiveId);
+          const p = worldPos.clone().project(cam);
           if (p.z < 1.0) {
             const rect = containerRef.current.getBoundingClientRect();
-            const sx = ((p.x + 1) * 0.5) * rect.width;
-            const sy = ((-p.y + 1) * 0.5) * rect.height;
-            if (
-              !lastScreenPosRef.current ||
-              Math.abs(lastScreenPosRef.current.x - sx) > 1.5 ||
-              Math.abs(lastScreenPosRef.current.y - sy) > 1.5
-            ) {
-              lastScreenPosRef.current = { x: sx, y: sy };
-              setSelectedScreenPos({ x: sx, y: sy });
+            if (rect.width > 0 && rect.height > 0) {
+              const sx = ((p.x + 1) * 0.5) * rect.width;
+              const sy = ((-p.y + 1) * 0.5) * rect.height;
+              if (Number.isFinite(sx) && Number.isFinite(sy)) {
+                if (
+                  !lastScreenPosRef.current ||
+                  Math.abs(lastScreenPosRef.current.x - sx) > 1.0 ||
+                  Math.abs(lastScreenPosRef.current.y - sy) > 1.0
+                ) {
+                  lastScreenPosRef.current = { x: sx, y: sy };
+                  setSelectedScreenPos({ x: sx, y: sy });
+                }
+              }
             }
           } else {
             if (lastScreenPosRef.current !== null) {
@@ -390,6 +480,35 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
             lastScreenPosRef.current = null;
             setSelectedScreenPos(null);
           }
+        }
+
+        // Project pinned structures to screen coordinates for smart 3D labels
+        if (showSmartLabelsRef.current && !isChallengeActive && !activeTourKey && pinnedStructureIdsRef.current.length > 0 && containerRef.current) {
+          const rect = containerRef.current.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            const newPinnedPos: Record<string, { x: number; y: number }> = {};
+            pinnedStructureIdsRef.current.forEach((id) => {
+              if (id === currentActiveId) return; // Skip currently active callout
+              if (isIsolatedRef.current) return; // In isolated organ mode, only active callout is relevant
+              const struct = ANATOMY_STRUCTURES[id];
+              if (struct && systemVisibilityRef.current && systemVisibilityRef.current[struct.system] === false) return;
+              const meshes = meshMapRef.current.get(id);
+              if (meshes && meshes.length > 0 && !meshes.some((m) => m.visible)) return;
+
+              const posVec = getStructureWorldCenter(id);
+              const proj = posVec.clone().project(cam);
+              if (proj.z < 1.0) {
+                const sx = ((proj.x + 1) * 0.5) * rect.width;
+                const sy = ((-proj.y + 1) * 0.5) * rect.height;
+                if (Number.isFinite(sx) && Number.isFinite(sy)) {
+                  newPinnedPos[id] = { x: sx, y: sy };
+                }
+              }
+            });
+            setPinnedScreenPositions(newPinnedPos);
+          }
+        } else {
+          setPinnedScreenPositions({});
         }
       }
 
@@ -475,8 +594,22 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     if (!presetView) return;
 
     if (presetView === 'reset') {
-      cameraDesiredSphericalRef.current = { radius: 10.5, theta: 0, phi: Math.PI / 2 };
-      cameraDesiredTargetRef.current.set(0, 0.0, 0);
+      const isMobileView = containerRef.current ? containerRef.current.clientWidth < 1024 : false;
+      const fitRadius = isMobileView ? 17.5 : 14.8;
+      cameraDesiredSphericalRef.current = { radius: fitRadius, theta: 0, phi: Math.PI / 2 };
+      cameraDesiredTargetRef.current.set(0, -0.22, 0);
+    } else if (presetView === 'zoom_in') {
+      cameraDesiredSphericalRef.current.radius = THREE.MathUtils.clamp(
+        cameraDesiredSphericalRef.current.radius - 2.0,
+        1.2,
+        25.0
+      );
+    } else if (presetView === 'zoom_out') {
+      cameraDesiredSphericalRef.current.radius = THREE.MathUtils.clamp(
+        cameraDesiredSphericalRef.current.radius + 2.0,
+        1.2,
+        25.0
+      );
     } else if (presetView === 'front') {
       cameraDesiredSphericalRef.current.theta = 0;
       cameraDesiredSphericalRef.current.phi = Math.PI / 2;
@@ -502,8 +635,9 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
   useEffect(() => {
     if (!selectedStructureId) {
       if (!isIsolated) {
-        cameraDesiredTargetRef.current.set(0, 0.0, 0);
-        cameraDesiredSphericalRef.current.radius = 10.5;
+        const isMobileView = containerRef.current ? containerRef.current.clientWidth < 1024 : false;
+        cameraDesiredTargetRef.current.set(0, -0.22, 0);
+        cameraDesiredSphericalRef.current.radius = isMobileView ? 17.5 : 14.8;
       }
       return;
     }
@@ -512,7 +646,10 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     const meshes = meshMapRef.current.get(selectedStructureId);
     if (meshes && meshes.length > 0) {
       const box = new THREE.Box3();
-      meshes.forEach((m) => box.expandByObject(m));
+      meshes.forEach((m) => {
+        m.updateWorldMatrix(true, false);
+        box.expandByObject(m);
+      });
       const center = new THREE.Vector3();
       box.getCenter(center);
       const size = new THREE.Vector3();
@@ -541,62 +678,157 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     }
   }, [selectedStructureId, isIsolated]);
 
+  // 5b. REGIONAL CAMERA FOCUS (Astra AI 6 Regions framing)
+  useEffect(() => {
+    if (!focusedRegion || selectedStructureId) return;
+    if (focusedRegion === 'head') {
+      cameraDesiredTargetRef.current.set(0, 3.2, 0.1);
+      cameraDesiredSphericalRef.current.radius = 4.2;
+    } else if (focusedRegion === 'chest') {
+      cameraDesiredTargetRef.current.set(0, 1.8, 0.1);
+      cameraDesiredSphericalRef.current.radius = 4.5;
+    } else if (focusedRegion === 'abdomen') {
+      cameraDesiredTargetRef.current.set(0, 0.2, 0.1);
+      cameraDesiredSphericalRef.current.radius = 4.8;
+    } else if (focusedRegion === 'arms') {
+      cameraDesiredTargetRef.current.set(0, 1.5, 0.1);
+      cameraDesiredSphericalRef.current.radius = 6.2;
+    } else if (focusedRegion === 'legs') {
+      cameraDesiredTargetRef.current.set(0, -2.2, 0.1);
+      cameraDesiredSphericalRef.current.radius = 6.8;
+    } else if (focusedRegion === 'all') {
+      const isMobileView = containerRef.current ? containerRef.current.clientWidth < 1024 : false;
+      cameraDesiredTargetRef.current.set(0, -0.22, 0);
+      cameraDesiredSphericalRef.current.radius = isMobileView ? 17.5 : 14.8;
+    }
+  }, [focusedRegion, selectedStructureId]);
+
   // --------------------------------------------------------------------------
   // 6. UPDATE VISIBILITY, HIGHLIGHTS & DIMMING IN 3D
   // --------------------------------------------------------------------------
   useEffect(() => {
-    const meshMap = meshMapRef.current;
+    const master = anatomyMasterGroupRef.current;
+    if (!master) return;
 
-    meshMap.forEach((meshes, id) => {
-      const struct = ANATOMY_STRUCTURES[id];
-      const isSelected = selectedStructureId === id;
+    let visibleCount = 0;
 
-      // Determine system visibility
-      const meshSystem = (meshes[0]?.userData as MeshUserData)?.system;
-      const systemId = (meshSystem && meshSystem !== 'integumentary' ? meshSystem : (struct?.system || 'skeletal')) as AnatomicalSystemId;
-      let isSystemVisible = systemVisibility[systemId] ?? true;
-      const systemAlpha = systemOpacity[systemId] ?? 1.0;
+    master.traverse((child) => {
+      if (!(child as THREE.Mesh).isMesh) return;
+      const mesh = child as THREE.Mesh;
+      const userData = (mesh.userData || {}) as MeshUserData;
+      const meshId = userData.id || '';
+      const systemId = (userData.system && userData.system !== 'integumentary' ? userData.system : 'skeletal') as AnatomicalSystemId;
+      const isSkin = meshId === 'skin' || userData.system === 'integumentary';
 
-      // When on Layer 1 (Surface), somatic muscles remain hidden beneath the anatomical skin envelope
-      if (activeLayerId === 'surface' && systemId === 'muscular') {
-        isSystemVisible = false;
+      // 1. Base system visibility from toggle panel
+      let isSystemVisible = isSkin ? true : (systemVisibility[systemId] ?? true);
+      let systemAlpha = isSkin ? skinOpacity : (systemOpacity[systemId] ?? 1.0);
+      let currentSkinOpacity = skinOpacity;
+      let currentSkinVisible = skinVisible;
+
+      // 2. Continuous peel depth modulation (only for enabled systems)
+      if (peelDepth !== undefined) {
+        const p = Math.max(0, Math.min(100, peelDepth));
+        if (isSkin) {
+          if (p >= 75) {
+            currentSkinVisible = true;
+            currentSkinOpacity = ((p - 75) / 25) * Math.min(0.25, skinOpacity ?? 0.20);
+          } else {
+            currentSkinVisible = false;
+            currentSkinOpacity = 0;
+          }
+        } else if (systemId === 'muscular' && isSystemVisible) {
+          if (p >= 75) {
+            systemAlpha = 0.85 + ((p - 75) / 25) * 0.15;
+          } else if (p >= 50) {
+            systemAlpha = 0.20 + ((p - 50) / 25) * 0.65;
+          } else {
+            systemAlpha = 0.08;
+          }
+        } else if ((systemId === 'respiratory' || systemId === 'digestive' || systemId === 'urinary' || systemId === 'endocrine') && isSystemVisible) {
+          if (p >= 40) {
+            systemAlpha = 0.95;
+          } else if (p >= 20) {
+            systemAlpha = 0.25 + ((p - 20) / 20) * 0.70;
+          } else {
+            systemAlpha = 0.08;
+          }
+        } else if (systemId === 'skeletal' && isSystemVisible) {
+          if (p >= 75) {
+            systemAlpha = 0.85;
+          } else if (p >= 25) {
+            systemAlpha = 0.92;
+          } else {
+            systemAlpha = 1.0;
+          }
+        } else if ((systemId === 'cardiovascular' || systemId === 'nervous') && isSystemVisible) {
+          if (p >= 35) {
+            systemAlpha = 1.0;
+          } else if (p >= 15) {
+            systemAlpha = 0.35 + ((p - 15) / 20) * 0.65;
+          } else {
+            systemAlpha = 0.10;
+          }
+        }
+      }
+
+      // 3. Selection target identification
+      const struct = ANATOMY_STRUCTURES[meshId];
+      const isTargetStructure = Boolean(
+        selectedStructureId &&
+        (meshId === selectedStructureId ||
+         meshId.startsWith(selectedStructureId) ||
+         selectedStructureId.startsWith(meshId) ||
+         (selectedStructureId === 'skeleton' && systemId === 'skeletal') ||
+         (selectedStructureId === 'muscles' && systemId === 'muscular') ||
+         (selectedStructureId === 'aorta' && systemId === 'cardiovascular'))
+      );
+
+      if (isTargetStructure) {
+        isSystemVisible = true;
       }
 
       let shouldBeVisible = isSystemVisible;
       if (isIsolated) {
-        shouldBeVisible = isSelected;
+        shouldBeVisible = isTargetStructure;
       }
 
-      // Update circulation particle system visibility: active when Blood Vessels layer is active, or when heart/aorta/vasculature is inspected
-      if (circulationGroupRef.current) {
-        const isVesselsActive = activeLayerId === 'vessels' || selectedStructureId === 'aorta' || selectedStructureId === 'heart' || selectedStructureId === 'vasculature';
-        const isConcealedBySkin = skinVisible && skinOpacity >= 0.90 && !showInternal && !isIsolated;
-        circulationGroupRef.current.visible = isVesselsActive && !isConcealedBySkin;
-      }
-
-      // Skin represents outer anatomical boundary (realistic medical anatomical skin)
-      if (id === 'skin') {
+      if (isSkin) {
         const isMuscularLayer = activeLayerId === 'muscles';
-        const isVisible = skinVisible && !isMuscularLayer && skinOpacity > 0.01 && !isIsolated;
+        const isInternalTargetActive = (selectedStructureId && selectedStructureId !== 'skin') || isChallengeActive || !!activeTourKey;
+        if (isInternalTargetActive) {
+          currentSkinOpacity = Math.min(currentSkinOpacity, 0.10);
+        }
 
-        meshes.forEach((mesh) => {
-          mesh.visible = isVisible;
-          if (!isVisible) return;
+        const isVisible = currentSkinVisible && !isMuscularLayer && currentSkinOpacity > 0.01 && !isIsolated;
+        mesh.visible = isVisible;
+        if (isVisible) visibleCount++;
 
-          const mat = mesh.material as THREE.MeshPhysicalMaterial;
-          if (!mat) return;
-
-          if (isSelected) {
-            mat.emissive.set(new THREE.Color(0x10B981));
+        const mat = mesh.material as THREE.MeshPhysicalMaterial;
+        if (mat) {
+          if (isTargetStructure) {
+            mat.emissive.setHex(0x10B981);
             mat.emissiveIntensity = 0.55;
-            mat.opacity = Math.max(0.75, skinOpacity);
+            mat.opacity = Math.max(0.75, currentSkinOpacity);
             mat.transparent = true;
-            mat.depthWrite = skinOpacity >= 0.95;
+            mat.depthWrite = false;
+            mat.needsUpdate = true;
+          } else if (isXrayActive || skinMode === 'xray') {
+            mat.map = null;
+            mat.color.setHex(0x0284C7);
+            mat.roughness = 0.12;
+            mat.metalness = 0.1;
+            mat.clearcoat = 0.5;
+            mat.clearcoatRoughness = 0.2;
+            mat.emissive.setHex(0x0369A1);
+            mat.emissiveIntensity = 0.35;
+            mat.transparent = true;
+            mat.opacity = 0.18;
+            mat.depthWrite = false;
             mat.needsUpdate = true;
           } else {
-            // Realistic medical PBR human skin rendering
             mat.map = null;
-            const skinColor = skinMode === 'natural' ? 0xDE9F7E : (skinMode === 'xray' ? 0x38BDF8 : 0xDCE1E6);
+            const skinColor = skinMode === 'natural' ? 0xDE9F7E : 0xDCE1E6;
             mat.color.setHex(skinColor);
             mat.roughness = 0.52;
             mat.metalness = 0.0;
@@ -607,60 +839,81 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
             mat.sheenRoughness = 0.45;
             mat.emissive.setHex(0x0A0F1D);
             mat.emissiveIntensity = 0.02;
-            if (skinOpacity >= 0.95) {
+            if (currentSkinOpacity >= 0.95 && !isInternalTargetActive) {
               mat.transparent = false;
               mat.opacity = 1.0;
               mat.depthWrite = true;
             } else {
               mat.transparent = true;
-              mat.opacity = skinOpacity;
+              mat.opacity = currentSkinOpacity;
               mat.depthWrite = false;
             }
             mat.needsUpdate = true;
           }
-        });
+        }
         return;
       }
 
-      meshes.forEach((mesh) => {
-        mesh.visible = shouldBeVisible;
-        if (!shouldBeVisible) return;
+      mesh.visible = shouldBeVisible;
+      if (shouldBeVisible) visibleCount++;
 
-        const mat = mesh.material as THREE.MeshStandardMaterial;
-        if (!mat) return;
+      const mat = mesh.material as THREE.MeshStandardMaterial;
+      if (!mat) return;
 
-        if (isSelected) {
-          // Vibrant scientific selection highlight
-          mat.emissive.set(struct?.accentColor ? new THREE.Color(struct.accentColor) : new THREE.Color(0x10B981));
-          mat.emissiveIntensity = 0.55;
-          if (showInternal) {
-            // Cutaway / translucent internal cavity inspection mode
-            mat.opacity = 0.38;
-            mat.transparent = true;
-            mat.depthWrite = false;
-          } else {
-            mat.opacity = 1.0;
-            mat.transparent = false;
-            mat.depthWrite = true;
-          }
-        } else if (selectedStructureId && ANATOMY_STRUCTURES[selectedStructureId] && !isIsolated) {
-          // Keep surrounding anatomy as spatial context: dim into subtle translucent silhouette
-          mat.emissive.setHex(0x000000);
-          mat.emissiveIntensity = 0;
-          mat.opacity = Math.min(systemAlpha * 0.18, 0.20);
+      if (isTargetStructure) {
+        mat.emissive.set(struct?.accentColor ? new THREE.Color(struct.accentColor) : new THREE.Color(0x10B981));
+        mat.emissiveIntensity = 0.75;
+        if (showInternal) {
+          mat.opacity = 0.45;
           mat.transparent = true;
           mat.depthWrite = false;
         } else {
-          // Normal state with system opacity
-          mat.emissive.setHex(0x000000);
-          mat.emissiveIntensity = 0;
-          mat.opacity = systemAlpha;
-          mat.transparent = systemAlpha < 0.95;
-          mat.depthWrite = systemAlpha >= 0.95;
+          mat.opacity = 1.0;
+          mat.transparent = false;
+          mat.depthWrite = true;
         }
-      });
+        mat.needsUpdate = true;
+      } else if (isXrayActive) {
+        if (systemId === 'skeletal') {
+          mat.emissive.setHex(0x38BDF8);
+          mat.emissiveIntensity = 0.45;
+          mat.opacity = 0.95;
+          mat.transparent = false;
+          mat.depthWrite = true;
+        } else {
+          mat.emissive.setHex(0x0284C7);
+          mat.emissiveIntensity = 0.20;
+          mat.opacity = 0.40;
+          mat.transparent = true;
+          mat.depthWrite = false;
+        }
+        mat.needsUpdate = true;
+      } else if (selectedStructureId && ANATOMY_STRUCTURES[selectedStructureId] && !isIsolated) {
+        mat.emissive.setHex(0x000000);
+        mat.emissiveIntensity = 0;
+        mat.opacity = Math.min(systemAlpha * 0.25, 0.28);
+        mat.transparent = true;
+        mat.depthWrite = false;
+        mat.needsUpdate = true;
+      } else {
+        mat.emissive.setHex(0x000000);
+        mat.emissiveIntensity = 0;
+        mat.opacity = systemAlpha;
+        mat.transparent = systemAlpha < 0.95;
+        mat.depthWrite = systemAlpha >= 0.95;
+        mat.needsUpdate = true;
+      }
     });
-  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated, showInternal, layerSeparation, skinOpacity, skinMode, skinVisible, biologicalSex, loadedVersion, activeLayerId]);
+
+    if (circulationGroupRef.current) {
+      const isVesselsActive = activeLayerId === 'vessels' || selectedStructureId === 'aorta' || selectedStructureId === 'heart' || selectedStructureId === 'vasculature' || (peelDepth !== undefined && peelDepth < 50);
+      circulationGroupRef.current.visible = isVesselsActive;
+    }
+
+    if (onVisibleCountChange) {
+      onVisibleCountChange(visibleCount);
+    }
+  }, [selectedStructureId, systemVisibility, systemOpacity, isIsolated, showInternal, layerSeparation, skinOpacity, skinMode, skinVisible, biologicalSex, loadedVersion, activeLayerId, peelDepth, isXrayActive, isChallengeActive, activeTourKey, onVisibleCountChange]);
 
   // --------------------------------------------------------------------------
   // 7. MOUSE & TOUCH ORBIT / ZOOM / PAN INTERACTIONS
@@ -787,8 +1040,9 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
     );
   };
   const handleResetCamera = () => {
-    cameraDesiredSphericalRef.current = { radius: 10.5, theta: 0, phi: Math.PI / 2 };
-    cameraDesiredTargetRef.current.set(0, 0, 0);
+    const isMobileView = containerRef.current ? containerRef.current.clientWidth < 1024 : false;
+    cameraDesiredSphericalRef.current = { radius: isMobileView ? 17.5 : 14.8, theta: 0, phi: Math.PI / 2 };
+    cameraDesiredTargetRef.current.set(0, -0.22, 0);
   };
   const handlePreset = (view: 'front' | 'back' | 'left' | 'right' | 'top') => {
     if (view === 'front') {
@@ -825,19 +1079,44 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
 
     const intersects = raycaster.intersectObjects(anatomyMasterGroupRef.current.children, true);
     if (intersects.length > 0) {
-      for (const hit of intersects) {
-        // Find closest hit that is visible
-        if (hit.object.visible && hit.object.userData?.id) {
-          const ud = hit.object.userData as MeshUserData;
-          if (ud.id === 'skin') {
-            if (skinVisible && skinOpacity >= 0.85 && activeLayerId !== 'muscles') {
-              onSelectStructure('skin');
-              return;
-            }
-          } else {
-            onSelectStructure(ud.id);
-            return;
-          }
+      // 1. Look for internal visible organs/muscles/bones first, even through skin
+      const nonSkinHit = intersects.find(
+        (hit) =>
+          hit.object.visible &&
+          hit.object.userData?.id &&
+          hit.object.userData.id !== 'skin' &&
+          hit.object.userData.id in ANATOMY_STRUCTURES
+      );
+      if (nonSkinHit) {
+        onSelectStructure((nonSkinHit.object.userData as MeshUserData).id);
+        return;
+      }
+
+      // 2. If hitting outer boundary, intelligently map 3D point to anatomical structure so user NEVER gets "nothing"
+      const skinHit = intersects.find((hit) => hit.object.visible);
+      if (skinHit) {
+        const pt = skinHit.point;
+        let mappedId = 'heart';
+        if (pt.y > 2.8) {
+          mappedId = 'brain';
+        } else if (pt.y > 2.1) {
+          mappedId = 'skull';
+        } else if (Math.abs(pt.x) > 1.2 && pt.y > 0.8) {
+          mappedId = Math.abs(pt.x) > 1.8 ? 'limbs_upper' : 'deltoids';
+        } else if (pt.y > 1.2) {
+          mappedId = pt.z > 0 ? (Math.abs(pt.x) < 0.5 ? 'heart' : 'lungs') : 'spine';
+        } else if (pt.y > 0.4) {
+          mappedId = pt.z > 0 ? (pt.x > 0 ? 'liver' : 'stomach') : 'spine';
+        } else if (pt.y > -0.5) {
+          mappedId = pt.z < -0.2 ? 'gluteus_maximus' : 'pelvis';
+        } else if (pt.y > -2.2) {
+          mappedId = 'quadriceps_femoris';
+        } else {
+          mappedId = 'gastrocnemius';
+        }
+        if (mappedId in ANATOMY_STRUCTURES) {
+          onSelectStructure(mappedId);
+          return;
         }
       }
     } else {
@@ -861,30 +1140,48 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
 
     const intersects = raycaster.intersectObjects(anatomyMasterGroupRef.current.children, true);
     if (intersects.length > 0) {
-      for (const hit of intersects) {
-        if (hit.object.visible && hit.object.userData?.id) {
-          const ud = hit.object.userData as MeshUserData;
-          if (ud.id === 'skin') {
-            if (skinVisible && skinOpacity >= 0.85 && activeLayerId !== 'muscles') {
-              setHoveredStructure({
-                id: 'skin',
-                name: 'Human Body Surface (Skin & Involucre)',
-                system: 'integumentary',
-                x: clientX,
-                y: clientY
-              });
-              return;
-            }
-          } else {
-            setHoveredStructure({
-              id: ud.id,
-              name: ud.name,
-              system: ud.system,
-              x: clientX,
-              y: clientY
-            });
-            return;
-          }
+      const nonSkinHit = intersects.find(
+        (hit) =>
+          hit.object.visible &&
+          hit.object.userData?.id &&
+          hit.object.userData.id !== 'skin' &&
+          hit.object.userData.id in ANATOMY_STRUCTURES
+      );
+      if (nonSkinHit) {
+        const ud = nonSkinHit.object.userData as MeshUserData;
+        setHoveredStructure({
+          id: ud.id,
+          name: ud.name,
+          system: ud.system,
+          x: clientX,
+          y: clientY
+        });
+        return;
+      }
+
+      const skinHit = intersects.find((hit) => hit.object.visible);
+      if (skinHit) {
+        const pt = skinHit.point;
+        let mappedId = 'heart';
+        if (pt.y > 2.8) mappedId = 'brain';
+        else if (pt.y > 2.1) mappedId = 'skull';
+        else if (Math.abs(pt.x) > 1.2 && pt.y > 0.8) mappedId = Math.abs(pt.x) > 1.8 ? 'limbs_upper' : 'deltoids';
+        else if (pt.y > 1.2) mappedId = pt.z > 0 ? (Math.abs(pt.x) < 0.5 ? 'heart' : 'lungs') : 'spine';
+        else if (pt.y > 0.4) mappedId = pt.z > 0 ? (pt.x > 0 ? 'liver' : 'stomach') : 'spine';
+        else if (pt.y > -0.5) mappedId = pt.z < -0.2 ? 'gluteus_maximus' : 'pelvis';
+        else if (pt.y > -2.2) mappedId = 'quadriceps_femoris';
+        else mappedId = 'gastrocnemius';
+
+        const struct = ANATOMY_STRUCTURES[mappedId];
+        if (struct) {
+          setHoveredStructure({
+            id: struct.id,
+            name: struct.name,
+            system: struct.system,
+            x: clientX,
+            y: clientY
+          });
+          return;
         }
       }
     }
@@ -969,8 +1266,8 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
         </div>
       )}
 
-      {/* Floating Hover Tooltip */}
-      {hoveredStructure && (
+      {/* Floating Hover Tooltip (Suppressed when structure already selected or during Quiz Challenge) */}
+      {hoveredStructure && hoveredStructure.id !== selectedStructureId && !isChallengeActive && (
         <div
           style={{
             position: 'fixed',
@@ -997,7 +1294,7 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
       )}
 
       {/* 3D Anatomical Pin / Holographic Leader Line Callout */}
-      {selectedScreenPos && selectedStructureId && ANATOMY_STRUCTURES[selectedStructureId] && (
+      {selectedScreenPos && Number.isFinite(selectedScreenPos.x) && Number.isFinite(selectedScreenPos.y) && selectedStructureId && ANATOMY_STRUCTURES[selectedStructureId] && (
         <div
           style={{
             position: 'absolute',
@@ -1007,206 +1304,263 @@ export const Anatomy3DCanvas: React.FC<Anatomy3DCanvasProps> = ({
             overflow: 'hidden'
           }}
         >
-          {/* SVG Leader Line connecting 3D structure center to Floating Callout */}
-          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-            <line
-              x1={selectedScreenPos.x}
-              y1={selectedScreenPos.y}
-              x2={selectedScreenPos.x + 36}
-              y2={selectedScreenPos.y - 36}
-              stroke={ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981'}
-              strokeWidth={1.5}
-              strokeDasharray="4,2"
-            />
-            <circle
-              cx={selectedScreenPos.x}
-              cy={selectedScreenPos.y}
-              r={4}
-              fill={ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981'}
-            />
-            <circle
-              cx={selectedScreenPos.x}
-              cy={selectedScreenPos.y}
-              r={8}
-              fill="none"
-              stroke={ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981'}
-              strokeWidth={1}
-              opacity={0.6}
-            />
-          </svg>
+          {(() => {
+            const containerW = typeof window !== 'undefined' ? window.innerWidth : 1200;
+            const containerH = typeof window !== 'undefined' ? window.innerHeight : 800;
+            const isFlipped = selectedScreenPos.x > (containerW - 190);
+            const lineX2 = isFlipped ? selectedScreenPos.x - 30 : selectedScreenPos.x + 30;
+            const badgeLeft = isFlipped ? Math.max(12, selectedScreenPos.x - 170) : Math.min(containerW - 175, selectedScreenPos.x + 36);
+            const badgeTop = Math.max(68, Math.min(containerH - 70, selectedScreenPos.y - 48));
 
-          {/* Floating Organ Callout Badge */}
-          <div
-            style={{
-              position: 'absolute',
-              left: selectedScreenPos.x + 40,
-              top: selectedScreenPos.y - 62,
-              background: 'rgba(11, 17, 32, 0.92)',
-              backdropFilter: 'blur(12px)',
-              border: `1px solid ${ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || 'rgba(16, 185, 129, 0.5)'}`,
-              padding: '4px 10px',
-              borderRadius: 20,
-              boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              whiteSpace: 'nowrap'
-            }}
-          >
-            <div
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981',
-                boxShadow: `0 0 8px ${ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981'}`
-              }}
-            />
-            <div>
-              <div style={{ fontSize: '0.76rem', fontWeight: 800, color: '#FFFFFF' }}>
-                {ANATOMY_STRUCTURES[selectedStructureId]?.name}
-              </div>
-              <div style={{ fontSize: '0.62rem', color: '#94A3B8', fontStyle: 'italic' }}>
-                {ANATOMY_STRUCTURES[selectedStructureId]?.latinName}
-              </div>
-            </div>
-          </div>
+            return (
+              <>
+                {/* SVG Leader Line connecting 3D structure center to Floating Callout */}
+                <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+                  <line
+                    x1={selectedScreenPos.x}
+                    y1={selectedScreenPos.y}
+                    x2={lineX2}
+                    y2={selectedScreenPos.y - 28}
+                    stroke={ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981'}
+                    strokeWidth={1.5}
+                    strokeDasharray="4,2"
+                  />
+                  <circle
+                    cx={selectedScreenPos.x}
+                    cy={selectedScreenPos.y}
+                    r={4}
+                    fill={ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981'}
+                  />
+                  <circle
+                    cx={selectedScreenPos.x}
+                    cy={selectedScreenPos.y}
+                    r={8}
+                    fill="none"
+                    stroke={ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981'}
+                    strokeWidth={1}
+                    opacity={0.6}
+                  />
+                </svg>
+
+                {/* Floating Organ Callout Badge */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: badgeLeft,
+                    top: badgeTop,
+                    background: 'rgba(11, 17, 32, 0.94)',
+                    backdropFilter: 'blur(12px)',
+                    border: `1px solid ${ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || 'rgba(16, 185, 129, 0.5)'}`,
+                    padding: '4px 10px',
+                    borderRadius: 20,
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.65)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    whiteSpace: 'nowrap',
+                    maxWidth: 200
+                  }}
+                >
+                  <div
+                    style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981',
+                      boxShadow: `0 0 8px ${ANATOMY_STRUCTURES[selectedStructureId]?.accentColor || '#10B981'}`,
+                      flexShrink: 0
+                    }}
+                  />
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ fontSize: '0.74rem', fontWeight: 800, color: '#FFFFFF', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {ANATOMY_STRUCTURES[selectedStructureId]?.name}
+                    </div>
+                    <div style={{ fontSize: '0.60rem', color: '#94A3B8', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {ANATOMY_STRUCTURES[selectedStructureId]?.latinName}
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
-      {/* Floating 3D Medical Camera Controls Widget (Desktop only; on mobile, direct touch gestures are used) */}
-      <div
-        className="anatomy-camera-controls hide-mobile"
-        style={{
-          position: 'absolute',
-          top: 72,
-          right: 16,
-          zIndex: 45,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 6,
-          background: 'rgba(11, 17, 32, 0.88)',
-          backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255, 255, 255, 0.16)',
-          borderRadius: 14,
-          padding: '8px 10px',
-          boxShadow: '0 12px 32px rgba(0, 0, 0, 0.65)',
-          userSelect: 'none'
-        }}
-        onClick={(e) => e.stopPropagation()}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <div style={{ fontSize: '0.66rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          3D View Controls
-        </div>
+      {/* Pinned Smart 3D Labels (Suppressed during Quiz Challenge or active Guided Tour) */}
+      {showSmartLabels && !isChallengeActive && !activeTourKey && Object.entries(pinnedScreenPositions).map(([pinnedId, pos]) => {
+        if (!pos || !Number.isFinite(pos.x) || !Number.isFinite(pos.y)) return null;
+        if (pinnedId === selectedStructureId) return null; // already shown by main callout
+        const struct = ANATOMY_STRUCTURES[pinnedId];
+        if (!struct) return null;
+        return (
+          <div
+            key={pinnedId}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectStructure(pinnedId);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            style={{
+              position: 'absolute',
+              left: Math.max(10, pos.x - 60),
+              top: Math.max(50, pos.y - 32),
+              pointerEvents: 'auto',
+              cursor: 'pointer',
+              zIndex: 55,
+              background: 'rgba(11, 17, 32, 0.92)',
+              backdropFilter: 'blur(10px)',
+              border: `1px solid ${struct.accentColor || '#38BDF8'}`,
+              borderRadius: 16,
+              padding: '3px 8px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+              transition: 'transform 0.15s ease'
+            }}
+            title={`Inspect ${struct.name}`}
+          >
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: struct.accentColor || '#38BDF8' }} />
+            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#FFFFFF' }}>{struct.name}</span>
+          </div>
+        );
+      })}
 
-        {/* Orbit D-Pad */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 28px)', gridTemplateRows: 'repeat(3, 28px)', gap: 3, alignItems: 'center', justifyItems: 'center' }}>
-          <div />
-          <button
-            type="button"
-            onClick={handleTiltUp}
-            title="Tilt Camera Up"
-            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <ChevronUp size={15} />
-          </button>
-          <div />
+      {/* Floating 3D Medical Camera Controls Widget (conditionally hidden when managed by parent dock) */}
+      {!hideInternalCameraWidget && (
+        <div
+          className="anatomy-camera-controls hide-mobile"
+          style={{
+            position: 'absolute',
+            top: 72,
+            right: 16,
+            zIndex: 45,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 6,
+            background: 'rgba(11, 17, 32, 0.88)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.16)',
+            borderRadius: 14,
+            padding: '8px 10px',
+            boxShadow: '0 12px 32px rgba(0, 0, 0, 0.65)',
+            userSelect: 'none'
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div style={{ fontSize: '0.66rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            3D View Controls
+          </div>
 
-          <button
-            type="button"
-            onClick={handleRotateLeft}
-            title="Rotate Left"
-            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <ChevronLeft size={15} />
-          </button>
-          <button
-            type="button"
-            onClick={handleResetCamera}
-            title="Reset to Neutral Front View"
-            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <Compass size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={handleRotateRight}
-            title="Rotate Right"
-            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <ChevronRight size={15} />
-          </button>
-
-          <div />
-          <button
-            type="button"
-            onClick={handleTiltDown}
-            title="Tilt Camera Down"
-            style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-          >
-            <ChevronDown size={15} />
-          </button>
-          <div />
-        </div>
-
-        {/* Zoom & Auto-Spin Action Strip */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, width: '100%', justifyContent: 'center' }}>
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            title="Zoom In (+)"
-            style={{ flex: 1, height: 26, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2, fontSize: '0.68rem', fontWeight: 700 }}
-          >
-            <ZoomIn size={12} />
-            <span>+</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            title="Zoom Out (−)"
-            style={{ flex: 1, height: 26, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2, fontSize: '0.68rem', fontWeight: 700 }}
-          >
-            <ZoomOut size={12} />
-            <span>−</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsAutoRotating(!isAutoRotating)}
-            title={isAutoRotating ? 'Pause 360° Auto-Spin' : 'Start 360° Auto-Spin'}
-            style={{ height: 26, padding: '0 8px', borderRadius: 6, background: isAutoRotating ? '#10B981' : 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: isAutoRotating ? '#000000' : '#CBD5E1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 4, fontSize: '0.68rem', fontWeight: 800 }}
-          >
-            {isAutoRotating ? <Pause size={11} /> : <Play size={11} />}
-            <span>Spin</span>
-          </button>
-        </div>
-
-        {/* Quick Orientation Presets */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 3, marginTop: 2, width: '100%' }}>
-          {(['front', 'back', 'left', 'right', 'top'] as const).map((view) => (
+          {/* Orbit D-Pad */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 28px)', gridTemplateRows: 'repeat(3, 28px)', gap: 3, alignItems: 'center', justifyItems: 'center' }}>
+            <div />
             <button
-              key={view}
               type="button"
-              onClick={() => handlePreset(view)}
-              style={{
-                padding: '3px 0',
-                borderRadius: 4,
-                background: 'rgba(255, 255, 255, 0.06)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#CBD5E1',
-                fontSize: '0.60rem',
-                fontWeight: 700,
-                textTransform: 'capitalize',
-                cursor: 'pointer'
-              }}
-              title={`Preset view: ${view}`}
+              onClick={handleTiltUp}
+              title="Tilt Camera Up"
+              style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
             >
-              {view}
+              <ChevronUp size={15} />
             </button>
-          ))}
+            <div />
+
+            <button
+              type="button"
+              onClick={handleRotateLeft}
+              title="Rotate Left"
+              style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <ChevronLeft size={15} />
+            </button>
+            <button
+              type="button"
+              onClick={handleResetCamera}
+              title="Reset to Neutral Front View"
+              style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(16, 185, 129, 0.2)', border: '1px solid rgba(16, 185, 129, 0.4)', color: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <Compass size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={handleRotateRight}
+              title="Rotate Right"
+              style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <ChevronRight size={15} />
+            </button>
+
+            <div />
+            <button
+              type="button"
+              onClick={handleTiltDown}
+              title="Tilt Camera Down"
+              style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <ChevronDown size={15} />
+            </button>
+            <div />
+          </div>
+
+          {/* Zoom & Auto-Spin Action Strip */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, width: '100%', justifyContent: 'center' }}>
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              title="Zoom In (+)"
+              style={{ flex: 1, height: 26, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2, fontSize: '0.68rem', fontWeight: 700 }}
+            >
+              <ZoomIn size={12} />
+              <span>+</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              title="Zoom Out (−)"
+              style={{ flex: 1, height: 26, borderRadius: 6, background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 2, fontSize: '0.68rem', fontWeight: 700 }}
+            >
+              <ZoomOut size={12} />
+              <span>−</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsAutoRotating(!isAutoRotating)}
+              title={isAutoRotating ? 'Pause 360° Auto-Spin' : 'Start 360° Auto-Spin'}
+              style={{ height: 26, padding: '0 8px', borderRadius: 6, background: isAutoRotating ? '#10B981' : 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.12)', color: isAutoRotating ? '#000000' : '#CBD5E1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 4, fontSize: '0.68rem', fontWeight: 800 }}
+            >
+              {isAutoRotating ? <Pause size={11} /> : <Play size={11} />}
+              <span>Spin</span>
+            </button>
+          </div>
+
+          {/* Quick Orientation Presets */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 3, marginTop: 2, width: '100%' }}>
+            {(['front', 'back', 'left', 'right', 'top'] as const).map((view) => (
+              <button
+                key={view}
+                type="button"
+                onClick={() => handlePreset(view)}
+                style={{
+                  padding: '3px 0',
+                  borderRadius: 4,
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#CBD5E1',
+                  fontSize: '0.60rem',
+                  fontWeight: 700,
+                  textTransform: 'capitalize',
+                  cursor: 'pointer'
+                }}
+                title={`Preset view: ${view}`}
+              >
+                {view}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

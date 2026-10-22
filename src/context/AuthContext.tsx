@@ -489,13 +489,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [localTier, setLocalTier] = useState<MembershipTier>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_ACTIVE_TIER);
+      const subStored = localStorage.getItem('physora_sub_tier_v2');
+      if (stored === 'institution' || subStored === 'EDUCATOR') {
+        return 'institution';
+      }
+      if (stored === 'pro' || subStored === 'PRO') {
+        return 'pro';
+      }
+      if (stored === 'free' && subStored === 'FREE') {
+        return 'free';
+      }
       if (stored === 'pro' || stored === 'institution' || stored === 'free') {
         return stored as MembershipTier;
       }
     } catch {
       // Ignore
     }
-    return 'free';
+    // Default to 'institution' (Classroom & School tier) so users have access to all features
+    return 'institution';
   });
 
   const [localPeriodEnd, setLocalPeriodEnd] = useState<string | null>(() => {
@@ -509,7 +520,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const isFounderEmail = Boolean(
     user?.email && user.email.toLowerCase() === 'pankajpatukale1117@gmail.com'
   );
-  const effectiveTier: MembershipTier = isFounderEmail ? 'institution' : (profile?.membership_tier || localTier);
+  const effectiveTier: MembershipTier = isFounderEmail
+    ? 'institution'
+    : (localTier === 'institution' || profile?.membership_tier === 'institution')
+    ? 'institution'
+    : (localTier === 'pro' || profile?.membership_tier === 'pro')
+    ? 'pro'
+    : (profile?.membership_tier || localTier);
   const isPro = effectiveTier === 'pro' || effectiveTier === 'institution';
   const isInstitution = effectiveTier === 'institution';
   const effectivePeriodEnd = isFounderEmail
@@ -578,11 +595,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const nextEnd =
       tier === 'pro' || tier === 'institution'
-        ? (periodEnd || effectivePeriodEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString())
+        ? (periodEnd || effectivePeriodEnd || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString())
         : null;
 
     try {
       localStorage.setItem(STORAGE_KEY_ACTIVE_TIER, tier);
+      localStorage.setItem('physora_sub_tier_v2', tier === 'institution' ? 'EDUCATOR' : tier === 'pro' ? 'PRO' : 'FREE');
       setLocalTier(tier);
       if (nextEnd) {
         localStorage.setItem(STORAGE_KEY_SUB_PERIOD_END, nextEnd);

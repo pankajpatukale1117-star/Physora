@@ -1781,3 +1781,119 @@ input[type="range"]::-moz-range-thumb {
   user-select: none;
   animation: physoraFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
+/* ThreeUI Shader Frame */
+.shader-frame {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 500px;
+  overflow: hidden;
+  background: #000;
+}
+
+/* ==========================================================================
+   Physora 3D Human Anatomy Responsive Theater System
+   ========================================================================== */
+
+@media (max-width: 1023px) {
+  .anatomy-hide-mobile,
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .anatomy-hide-desktop {
+    display: none !important;
+  }
+}
+
+/* Smooth Touch-Friendly Range Sliders */
+.anatomy-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+  transition: background 0.15s ease;
+}
+
+.anatomy-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #10B981;
+  cursor: pointer;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 10px rgba(16, 185, 129, 0.5);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.anatomy-slider::-webkit-slider-thumb:active {
+  transform: scale(1.15);
+  box-shadow: 0 2px 12px rgba(16, 185, 129, 0.8);
+}
+
+.anatomy-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #10B981;
+  cursor: pointer;
+  border: 2px solid #FFFFFF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 10px rgba(16, 185, 129, 0.5);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+/* Mobile Bottom Sheet Animations */
+@keyframes anatomySlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes anatomyFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.anatomy-sheet-anim {
+  animation: anatomySlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.anatomy-fade-anim {
+  animation: anatomyFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Glassmorphism scrollbar */
+.anatomy-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.anatomy-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.anatomy-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.anatomy-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}

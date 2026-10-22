@@ -67,17 +67,27 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(u
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const auth = useAuth();
 
-  // Tier State: default FREE unless user profile or local storage indicates otherwise
+  // Tier State: default EDUCATOR (Classroom & School) unless explicitly set otherwise
   const [tier, setTierState] = useState<SubscriptionTier>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_TIER);
+      const activeStored = localStorage.getItem('physora_active_tier');
+      if (stored === 'EDUCATOR' || activeStored === 'institution') {
+        return 'EDUCATOR';
+      }
+      if (stored === 'PRO' || activeStored === 'pro') {
+        return 'PRO';
+      }
+      if (stored === 'FREE' && activeStored === 'free') {
+        return 'FREE';
+      }
       if (stored === 'PRO' || stored === 'EDUCATOR' || stored === 'FREE') {
         return stored;
       }
     } catch {
       // Ignore
     }
-    return 'FREE';
+    return 'EDUCATOR';
   });
 
   // Keep in sync with AuthContext if user logs in with existing plan or expires
@@ -86,10 +96,10 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
       setTierState('EDUCATOR');
     } else if (auth.membershipTier === 'pro') {
       setTierState('PRO');
-    } else if (auth.membershipTier === 'free') {
+    } else if (auth.membershipTier === 'free' && tier !== 'EDUCATOR') {
       setTierState('FREE');
     }
-  }, [auth.membershipTier]);
+  }, [auth.membershipTier, tier]);
 
   // AI Tutor Query Usage tracking (reset daily or per session)
   const maxFreeAiQueries = 3;
@@ -114,6 +124,23 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
   const [paywallReason, setPaywallReason] = useState<PaywallReason | null>(null);
   const [paywallTargetTier, setPaywallTargetTier] = useState<'PRO' | 'EDUCATOR'>('PRO');
 
+  // Unified Capability Helpers: Classroom & School (EDUCATOR) includes 100% of PRO features
+  const hasProOrHigher = Boolean(
+    auth.isFounder ||
+    auth.isPro ||
+    auth.membershipTier === 'pro' ||
+    auth.membershipTier === 'institution' ||
+    tier === 'PRO' ||
+    tier === 'EDUCATOR'
+  );
+
+  const hasEducatorOrHigher = Boolean(
+    auth.isFounder ||
+    auth.isInstitution ||
+    auth.membershipTier === 'institution' ||
+    tier === 'EDUCATOR'
+  );
+
   const setTier = (newTier: SubscriptionTier) => {
     // If user has an active paid subscription, prevent switching to FREE mode until it ends
     if (newTier === 'FREE' && auth.isSubscriptionActive && auth.membershipTier !== 'free' && !auth.isFounder) {
@@ -123,29 +150,30 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     setTierState(newTier);
     try {
       localStorage.setItem(STORAGE_KEY_TIER, newTier);
+      localStorage.setItem('physora_active_tier', newTier === 'EDUCATOR' ? 'institution' : newTier === 'PRO' ? 'pro' : 'free');
     } catch {
       // Ignore
     }
   };
 
-  const remainingAiQueries = (auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR')
+  const remainingAiQueries = hasProOrHigher
     ? 9999
     : Math.max(0, maxFreeAiQueries - aiQueriesUsed);
 
-  // 1. Topic Access Check: 10 Core Foundation Topics are Free, rest are Pro
+  // 1. Topic Access Check: 10 Core Foundation Topics are Free, rest are Pro & Classroom
   const canAccessTopic = (topicId: string): boolean => {
-    if (auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR') return true;
+    if (hasProOrHigher) return true;
     return FREE_TOPIC_IDS.has(topicId);
   };
 
-  // 2. AI Tutor: 3 queries per day for Free, unlimited for Pro & School
+  // 2. AI Tutor: 3 queries per day for Free, unlimited for Pro & Classroom
   const canUseAiTutor = (): boolean => {
-    if (auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR') return true;
+    if (hasProOrHigher) return true;
     return aiQueriesUsed < maxFreeAiQueries;
   };
 
   const incrementAiQueries = (): boolean => {
-    if (auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR') {
+    if (hasProOrHigher) {
       return true;
     }
     if (aiQueriesUsed >= maxFreeAiQueries) {
@@ -171,41 +199,50 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     }
   };
 
-  // 3. PDF Lab Report Export: Pro & School only
+  // 3. PDF Lab Report Export: Pro & Classroom only
   const canExportPdf = (): boolean => {
-    return Boolean(auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR');
+    return hasProOrHigher;
   };
 
-  // 4. Exam Challenges: Challenge 1 is free, Challenge 2+ require Pro
+  // 4. Exam Challenges: Challenge 1 is free, Challenge 2+ require Pro & Classroom
   const canAccessChallenge = (challengeIndex: number): boolean => {
     if (challengeIndex === 0) return true;
-    return Boolean(auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR');
+    return hasProOrHigher;
   };
 
-  // 5. 3D Human Anatomy Full Écorché Layer (Muscular & Skeletal Solo systems): Pro & School only
+  // 5. 3D Human Anatomy Full Écorché Layer (Muscular & Skeletal Solo systems): Pro & Classroom only
   const canUseEcorcheModel = (): boolean => {
-    return Boolean(auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR');
+    return hasProOrHigher;
   };
 
-  // 6. Smartboard Presenter Mode & Laser Pointer: Classroom & School (EDUCATOR) ONLY! Locked for Free AND Pro!
+  // 6. Smartboard Presenter Mode & Laser Pointer: Classroom & School (EDUCATOR) ONLY!
   const canUsePresenterMode = (): boolean => {
-    return Boolean(auth.isFounder || tier === 'EDUCATOR');
+    return hasEducatorOrHigher;
   };
 
-  // 7. Custom School Branding on Reports: Classroom & School (EDUCATOR) ONLY! Locked for Free AND Pro!
+  // 7. Custom School Branding on Reports: Classroom & School (EDUCATOR) ONLY!
   const canUseSchoolBranding = (): boolean => {
-    return Boolean(auth.isFounder || tier === 'EDUCATOR');
+    return hasEducatorOrHigher;
   };
 
-  // 8. 3D Human Anatomy Explorer: Pro & School only (Locked for Free users)
+  // 8. 3D Human Anatomy Explorer: Pro & Classroom & School (Locked for Free users only)
   const canAccessAnatomy = (): boolean => {
-    return Boolean(auth.isFounder || tier === 'PRO' || tier === 'EDUCATOR');
+    return hasProOrHigher;
   };
 
   const triggerPaywall = (
     reason: PaywallReason,
     targetTier: 'PRO' | 'EDUCATOR' = 'PRO'
   ) => {
+    // Classroom & School (EDUCATOR) contains 100% of ALL features in Physora.
+    // They must NEVER be blocked by any paywall!
+    if (hasEducatorOrHigher) {
+      return;
+    }
+    // Pro users possess all standard pro features.
+    if (hasProOrHigher && targetTier === 'PRO') {
+      return;
+    }
     setPaywallReason(reason);
     setPaywallTargetTier(targetTier);
     setIsPaywallOpen(true);
