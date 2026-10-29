@@ -20,43 +20,6 @@ export interface RealAnatomySceneProps {
   zoomDirection?: 'in' | 'out' | null;
 }
 
-/**
- * Procedural micro-dermal normal map generator.
- * Creates authentic high-frequency epidermal micro-relief (pores, cellular tension grain).
- */
-function createMicroDermalNormalTexture(): T.CanvasTexture {
-  const size = 512;
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return new T.CanvasTexture(canvas);
-
-  const imgData = ctx.createImageData(size, size);
-  const data = imgData.data;
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      const idx = (y * size + x) * 4;
-      const dx = (Math.cos(x * 0.45) * 0.35 + Math.cos(x * 0.95 + y * 0.8) * 0.25) * 42;
-      const dy = (-Math.sin(y * 0.45) * 0.35 + Math.cos(y * 0.95 - x * 0.8) * 0.25) * 42;
-
-      data[idx] = Math.min(255, Math.max(0, 128 + Math.round(dx)));
-      data[idx + 1] = Math.min(255, Math.max(0, 128 + Math.round(dy)));
-      data[idx + 2] = 245;
-      data[idx + 3] = 255;
-    }
-  }
-
-  ctx.putImageData(imgData, 0, 0);
-  const tex = new T.CanvasTexture(canvas);
-  tex.wrapS = T.RepeatWrapping;
-  tex.wrapT = T.RepeatWrapping;
-  tex.repeat.set(36, 36);
-  tex.needsUpdate = true;
-  return tex;
-}
-
 export function RealAnatomyScene({
   atlas,
   state,
@@ -103,6 +66,7 @@ export function RealAnatomyScene({
     let ready = false;
     let lastView = '';
     let lastReset = -1;
+    let lastPreset: string | null = null;
     let lastIsolate = '';
     let layoutKey = '';
     let amount = 0;
@@ -125,7 +89,7 @@ export function RealAnatomyScene({
     renderer.setClearColor('#080D1A'); // Clinical deep slate matching Astra AI
     renderer.outputColorSpace = T.SRGBColorSpace;
     renderer.toneMapping = T.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 0.95;
     el.appendChild(renderer.domElement);
     renderer.domElement.setAttribute(
       'aria-label',
@@ -157,14 +121,18 @@ export function RealAnatomyScene({
     room.dispose();
     pmrem.dispose();
 
-    // Medical PBR Lighting Rig
-    scene.add(new T.HemisphereLight(0xffffff, 0x1e293b, 1.15));
-    const keyLight = new T.DirectionalLight(0xfffaf4, 2.5);
-    keyLight.position.set(-2, 4, 3);
+    // Medical PBR 4-Point Studio Lighting Rig (Balanced for authentic skin tone & specular roll-off)
+    scene.add(new T.HemisphereLight(0xfff5eb, 0x1a2233, 0.55));
+    const keyLight = new T.DirectionalLight(0xffefe0, 1.2);
+    keyLight.position.set(-2.2, 3.2, 2.8);
     scene.add(keyLight);
 
-    const rimLight = new T.DirectionalLight(0x38bdf8, 1.4);
-    rimLight.position.set(2, 2, -3);
+    const fillLight = new T.DirectionalLight(0xffe6d6, 0.6);
+    fillLight.position.set(2.2, 1.4, 2.4);
+    scene.add(fillLight);
+
+    const rimLight = new T.DirectionalLight(0x38bdf8, 0.45);
+    rimLight.position.set(1.8, 1.8, -2.8);
     scene.add(rimLight);
 
     // Anatomical studio platform (sleek slate pedestal)
@@ -190,8 +158,6 @@ export function RealAnatomyScene({
     ring.rotation.x = -Math.PI / 2;
     ring.position.y = 0.001;
     scene.add(ring);
-
-    const skinNormalTexture = createMicroDermalNormalTexture();
 
     const innerRing = new T.Mesh(
       new T.RingGeometry(0.38, 0.383, 96),
@@ -287,11 +253,9 @@ export function RealAnatomyScene({
       const initialSkinOpacity = latest.current.skinOpacity ?? 0.85;
       const isFemale = atlas.sex === 'female';
       const m = new T.MeshStandardMaterial({
-        color: isSkin ? (isFemale ? '#d8ab95' : '#cb9d85') : (SYSTEMS.find((s) => s.id === effectiveSys)?.color ?? '#aebbb8'),
-        metalness: isSkin ? 0.02 : 0.08,
-        roughness: isSkin ? 0.44 : 0.5,
-        normalMap: isSkin ? skinNormalTexture : null,
-        normalScale: isSkin ? new T.Vector2(0.40, 0.40) : new T.Vector2(1, 1),
+        color: isSkin ? (isFemale ? '#cf8e76' : '#b87c64') : (SYSTEMS.find((s) => s.id === effectiveSys)?.color ?? '#aebbb8'),
+        metalness: 0.0,
+        roughness: isSkin ? 0.55 : 0.5,
         side: T.DoubleSide,
         transparent: isSkin,
         opacity: isSkin ? initialSkinOpacity : 1,
@@ -310,27 +274,24 @@ export function RealAnatomyScene({
           'uniform float stateWidth;\n' +
           'varying float partVisible;\n' +
           'varying float partSelected;\n' +
-          (isSkin ? 'varying vec3 vSkinWorldPos;\nvarying vec3 vSkinWorldNorm;\n' : '') +
+          'varying float vPartIndex;\n' +
           shader.vertexShader;
 
         shader.vertexShader = shader.vertexShader.replace(
           '#include <begin_vertex>',
           '#include <begin_vertex>\n' +
+            'vPartIndex = partIndex;\n' +
             'vec2 stateUv = vec2((partIndex + 0.5) / stateWidth, 0.5);\n' +
             'vec4 state = texture2D(partState, stateUv);\n' +
             'transformed += state.xyz;\n' +
             'partVisible = state.w;\n' +
-            'partSelected = texture2D(selectionState, stateUv).r;\n' +
-            (isSkin
-              ? 'vSkinWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\n' +
-                'vSkinWorldNorm = normalize((modelMatrix * vec4(normal, 0.0)).xyz);\n'
-              : '')
+            'partSelected = texture2D(selectionState, stateUv).r;\n'
         );
 
         shader.fragmentShader =
           'varying float partVisible;\n' +
           'varying float partSelected;\n' +
-          (isSkin ? 'varying vec3 vSkinWorldPos;\nvarying vec3 vSkinWorldNorm;\n' : '') +
+          'varying float vPartIndex;\n' +
           shader.fragmentShader;
 
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -342,32 +303,32 @@ export function RealAnatomyScene({
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <color_fragment>',
           '#include <color_fragment>\n' +
-            'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.2, 0.95, 0.75), partSelected * 0.8);\n' +
-            (isSkin
-              ? 'vec3 skinViewDir = normalize(cameraPosition - vSkinWorldPos);\n' +
-                'float fresnel = pow(1.0 - max(dot(vSkinWorldNorm, skinViewDir), 0.0), 3.0);\n' +
-                'vec3 sssWarmth = vec3(0.92, 0.42, 0.32);\n' +
-                'diffuseColor.rgb = mix(diffuseColor.rgb, sssWarmth, fresnel * 0.32);\n' +
-                (isFemale
-                  ? 'if (vSkinWorldPos.z > 0.04 && vSkinWorldPos.y > 1.13 && vSkinWorldPos.y < 1.28) {\n' +
-                    '  float dL = length(vSkinWorldPos.xy - vec2(0.095, 1.205));\n' +
-                    '  float dR = length(vSkinWorldPos.xy - vec2(-0.095, 1.205));\n' +
-                    '  float dAreola = min(dL, dR);\n' +
-                    '  if (dAreola < 0.025) {\n' +
-                    '    float aFactor = smoothstep(0.025, 0.007, dAreola);\n' +
-                    '    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.74, 0.44, 0.42), aFactor * 0.72);\n' +
-                    '    if (dAreola < 0.0075) {\n' +
-                    '      float pFactor = smoothstep(0.0075, 0.0, dAreola);\n' +
-                    '      diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.68, 0.38, 0.36), pFactor * 0.85);\n' +
-                    '    }\n' +
-                    '  }\n' +
-                    '}\n'
-                  : '') +
-                'if (abs(vSkinWorldPos.x) < 0.012 && vSkinWorldPos.y > 0.88 && vSkinWorldPos.y < 1.05 && vSkinWorldPos.z > 0.02) {\n' +
-                '  float shadow = 1.0 - smoothstep(0.0, 0.012, abs(vSkinWorldPos.x)) * 0.15;\n' +
-                '  diffuseColor.rgb *= shadow;\n' +
+            (system === 'reproductive'
+              ? 'if (vPartIndex >= 1219.5 && vPartIndex < 1220.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.88, 0.36, 0.44);\n' +
+                '} else if (vPartIndex >= 1220.5 && vPartIndex < 1221.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.72, 0.22, 0.38);\n' +
+                '} else if (vPartIndex >= 1221.5 && vPartIndex < 1222.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.78, 0.48, 0.42);\n' +
+                '} else if (vPartIndex >= 1222.5 && vPartIndex < 1223.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.92, 0.42, 0.52);\n' +
+                '} else if (vPartIndex >= 1223.5 && vPartIndex < 1224.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.80, 0.28, 0.36);\n' +
+                '} else if (vPartIndex >= 405.5 && vPartIndex < 406.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.75, 0.25, 0.38);\n' +
+                '} else if (vPartIndex >= 434.5 && vPartIndex < 440.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.76, 0.26, 0.35);\n' +
+                '} else if (vPartIndex >= 440.5 && vPartIndex < 443.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.82, 0.35, 0.45);\n' +
+                '} else if (vPartIndex >= 431.5 && vPartIndex < 433.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.92, 0.65, 0.55);\n' +
+                '} else if (vPartIndex >= 407.5 && vPartIndex < 415.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.84, 0.42, 0.45);\n' +
+                '} else if (vPartIndex >= 3.5 && vPartIndex < 19.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.85, 0.55, 0.50);\n' +
                 '}\n'
-              : '')
+              : '') +
+            'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.2, 0.95, 0.75), partSelected * 0.8);\n'
         );
       };
 
@@ -390,118 +351,17 @@ export function RealAnatomyScene({
       atlas.parts.forEach((p, i) => {
         if (p.chunk !== ci) return;
         const g = new T.BufferGeometry();
-        const posView = new Float32Array(buffer, p.positions, p.vertexCount * 3);
-        const normView = new Int16Array(buffer, p.normals, p.vertexCount * 3);
-        const posArray = new Float32Array(posView);
-        const normArray = new Int16Array(normView);
 
-        // Female anatomical shaping: spine posture normalization, toned abdomen, fuller breasts
-        if (atlas.sex === 'female') {
-          const isSpine = /vertebra|intervertebral disk|nucleus pulposus|spinal cord/i.test(p.name);
-          const isRib = /rib/i.test(p.name) && p.system === 'borrowed';
-          const isFemaleSkin = p.id === 'HRAF0003';
-          const isAbdominalFat = p.id === 'HRAF0000' || p.id === 'HRAF0001' || p.id === 'HRAF0002';
-          const isMammary = /mammary|lactiferous|areol|nipple|suspensory ligaments.*breast|fat \((left|right)\)/i.test(p.name);
+        const positions = new Float32Array(buffer, p.positions, p.vertexCount * 3);
 
-          // 1. Posture correction for bent spine: smooth standing alignment
-          if (isSpine) {
-            for (let v = 0; v < p.vertexCount; v++) {
-              const y = posArray[v * 3 + 1];
-              if (y >= 0.88 && y <= 1.44) {
-                const t = (y - 0.88) / (1.44 - 0.88);
-                posArray[v * 3 + 2] += Math.sin(t * Math.PI) * 0.048;
-              }
-            }
-          } else if (isRib) {
-            for (let v = 0; v < p.vertexCount; v++) {
-              const y = posArray[v * 3 + 1];
-              const z = posArray[v * 3 + 2];
-              if (z < -0.05 && y >= 0.95 && y <= 1.40) {
-                const t = (y - 0.95) / (1.40 - 0.95);
-                const zWeight = Math.min(1, Math.max(0, (-z - 0.05) / 0.08));
-                posArray[v * 3 + 2] += Math.sin(t * Math.PI) * 0.048 * zWeight;
-              }
-            }
-          }
 
-          // 2. Toned abdominal wall (slims the bulging belly fat)
-          if (isAbdominalFat) {
-            for (let v = 0; v < p.vertexCount; v++) {
-              posArray[v * 3 + 2] -= 0.022;
-            }
-          }
-
-          // 3. Female skin shaping: toned abdomen + natural, fuller breast projection
-          if (isFemaleSkin) {
-            for (let v = 0; v < p.vertexCount; v++) {
-              const x = posArray[v * 3];
-              const y = posArray[v * 3 + 1];
-              let z = posArray[v * 3 + 2];
-
-              // Abdominal wall slimming (flattens and tones the belly)
-              if (y >= 0.85 && y <= 1.07 && Math.abs(x) < 0.16 && z > 0.02) {
-                const yFactor = Math.sin(((y - 0.85) / (1.07 - 0.85)) * Math.PI);
-                const xFactor = Math.cos((x / 0.16) * (Math.PI / 2));
-                const zExcess = Math.max(0, z - 0.02);
-                const tuck = Math.min(zExcess, 0.025 * yFactor * xFactor);
-                z -= tuck;
-              }
-
-              // Natural, fuller breast contours ("normal but a bit big breasts")
-              if (y >= 1.10 && y <= 1.30 && z > 0.015) {
-                const isLeft = x > 0.02;
-                const isRight = x < -0.02;
-                if (isLeft || isRight) {
-                  const cx = isLeft ? 0.095 : -0.095;
-                  const cy = 1.205;
-                  const dx = (x - cx) / 0.078;
-                  const dy = (y - cy) / (y < cy ? 0.090 : 0.082);
-                  const r2 = dx * dx + dy * dy;
-                  if (r2 < 1.0) {
-                    const bell = Math.cos(Math.sqrt(r2) * (Math.PI / 2));
-                    z += 0.038 * Math.pow(bell, 1.4);
-                  }
-                }
-              }
-
-              posArray[v * 3 + 2] = z;
-            }
-          }
-
-          // 4. Internal mammary structures follow the natural breast volume
-          if (isMammary) {
-            for (let v = 0; v < p.vertexCount; v++) {
-              const x = posArray[v * 3];
-              const y = posArray[v * 3 + 1];
-              const isLeft = x > 0.01;
-              const isRight = x < -0.01;
-              if (isLeft || isRight) {
-                const cx = isLeft ? 0.095 : -0.095;
-                const cy = 1.205;
-                const dx = (x - cx) / 0.078;
-                const dy = (y - cy) / (y < cy ? 0.090 : 0.082);
-                const r2 = dx * dx + dy * dy;
-                if (r2 < 1.0) {
-                  const bell = Math.cos(Math.sqrt(r2) * (Math.PI / 2));
-                  posArray[v * 3 + 2] += 0.034 * Math.pow(bell, 1.4);
-                }
-              }
-            }
-          }
-        }
-
-        g.setAttribute('position', new T.BufferAttribute(posArray, 3));
-        g.setAttribute('normal', new T.BufferAttribute(normArray, 3, true));
+        g.setAttribute('position', new T.BufferAttribute(positions, 3));
+        // Use authentic pre-baked author normals directly from model buffer (prevents black spots / inverted normal artifacts)
+        g.setAttribute('normal', new T.BufferAttribute(new Int16Array(buffer, p.normals, p.vertexCount * 3), 3, true));
         g.setIndex(new T.BufferAttribute(new Uint32Array(buffer, p.indices, p.indexCount), 1));
-
-        if (atlas.sex === 'female') {
-          g.computeVertexNormals();
-        }
-        g.computeBoundingBox();
+        g.boundingBox = bounds[i].clone();
         g.computeBoundingSphere();
-        bounds[i].copy(g.boundingBox!);
         centers[i].copy(bounds[i].getCenter(new T.Vector3()));
-        offsets[i].copy(centers[i]);
 
         const pick = new T.Mesh(g);
         pick.matrixAutoUpdate = false;
@@ -524,6 +384,7 @@ export function RealAnatomyScene({
       });
 
       lastState = null;
+      layoutKey = '';
       loaded++;
       onProgress(Math.round((loaded / atlas.chunks.length) * 100));
       dirty = true;
@@ -693,24 +554,33 @@ export function RealAnatomyScene({
 
       // Dynamically update skin opacity & fade skin during explosion
       const skinMat = mats.get('integumentary');
+      const visible = new Set(s.visible);
+      const selection = new Set(s.selected);
+      const hasSolid = atlas.parts.some(
+        (p) => p.system !== 'integumentary' && (s.isolate ? selection.has(p.id) : visible.has(p.system) || selection.has(p.id))
+      );
+
       if (skinMat) {
         const baseOpacity = s.skinOpacity ?? 0.85;
-        const targetOpacity = amount > 0.05 ? baseOpacity * Math.max(0, 1 - (amount - 0.05) * 4) : baseOpacity;
+        const targetOpacity =
+          amount > 0.05 && hasSolid ? baseOpacity * Math.max(0, 1 - (amount - 0.05) * 4) : baseOpacity;
         if (Math.abs(skinMat.opacity - targetOpacity) > 0.005) {
           skinMat.opacity = targetOpacity;
           skinMat.transparent = targetOpacity < 0.99;
           skinMat.depthWrite = targetOpacity > 0.65;
+          skinMat.visible = targetOpacity > 0.01;
           skinMat.needsUpdate = true;
           dirty = true;
         }
       }
 
       if (changed || moving || lastExtent < 0) {
-        const visible = new Set(s.visible);
-        const selection = new Set(s.selected);
-        const visibleParts = atlas.parts.filter((p) =>
-          s.isolate ? selection.has(p.id) : visible.has(p.system) || selection.has(p.id)
-        );
+        const visibleParts = atlas.parts.filter((p) => {
+          const isVis = s.isolate ? selection.has(p.id) : visible.has(p.system) || selection.has(p.id);
+          if (!isVis) return false;
+          if (hasSolid && p.system === 'integumentary') return false;
+          return true;
+        });
 
         if (visibleCountCb.current) {
           visibleCountCb.current(visibleParts.length);
@@ -787,10 +657,11 @@ export function RealAnatomyScene({
         dirty = true;
       }
 
-      if (s.view !== lastView || s.reset !== lastReset) {
+      if (s.view !== lastView ||(s.reset !== lastReset) || (s.activePreset !== lastPreset)) {
         fit(s.view, amount);
         lastView = s.view;
         lastReset = s.reset;
+        lastPreset = s.activePreset ?? null;
       }
 
       if (moving && !s.isolate) {
@@ -940,7 +811,6 @@ export function RealAnatomyScene({
         }
       });
       env.dispose();
-      skinNormalTexture.dispose();
       partTexture.dispose();
       selectionTexture.dispose();
       markerGeometry.dispose();

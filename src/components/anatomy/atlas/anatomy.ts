@@ -42,13 +42,13 @@ export const EDITIONS:Edition[] = [
   suggestions:['heart','brain','liver','stomach','spleen','pancreas','urinary bladder','trachea','prostate','testis','penis'],
   hidden:[]},
  {sex:'female',label:'Female',caption:'ADULT HUMAN � FEMALE',manifest:'/models/atlas-female.json',dataset:'Human Reference Atlas female v1.10',
-  summary:'1,220 individual meshes and 1,439 named concepts from an adult female reference assembly, including complete female reproductive organs, calibrated reference skeletal bones, and donor leg muscles.',
+  summary:'1,225 individual meshes and 1,445 named concepts from an adult female reference assembly, including complete female reproductive organs, calibrated reference skeletal bones, and donor leg muscles.',
   limits:'A comprehensive reference assembly with body surface, brain, visceral organs, and complete female reproductive anatomy (uterus, ovaries, fallopian tubes, cervix, vagina, and supporting ligaments). Calibrated reference bones provide complete cranial, rib, and arm articulation matching the female spine and pelvis.',
   credit:'3D Reference Organ Set for Female v1.10 by Kristen Browne and Heidi Schlehlein, HuBMAP Human Reference Atlas, built on the Visible Human Dataset of the U.S. National Library of Medicine. Its leg muscles come from the Visible Human Female lower-extremity set of Andreassen and colleagues. Both are licensed under CC Attribution 4.0 International.',
   licence:'https://creativecommons.org/licenses/by/4.0/',
   download:'https://humanatlas.io/3d-reference-library',
   publication:'https://doi.org/10.1038/s41597-022-01905-2',
-  suggestions:['heart','brain','uterus','ovary','liver','kidney','tongue','mammary gland','fallopian tube','cervix','vagina'],
+  suggestions:['heart','brain','uterus','ovary','clitoris','vulva','labia minora','vagina','fallopian tube','cervix','mammary gland','kidney'],
   hidden:[]},
 ];
 export const edition = (sex:Sex) => EDITIONS.find(e=>e.sex===sex) ?? EDITIONS[0];
@@ -56,7 +56,7 @@ export const edition = (sex:Sex) => EDITIONS.find(e=>e.sex===sex) ?? EDITIONS[0]
  * DEFAULT_VISIBLE for every body. They stay listed, so a reader can switch them on. */
 export const defaultVisible = (sex:Sex):SystemId[] => {const off=edition(sex).hidden;return DEFAULT_VISIBLE.filter(id=>!off.includes(id));};
 export type View = 'three-quarter'|'front'|'back'|'side';
-export interface SceneState {inspectorOpen?:boolean;explode:number;visible:SystemId[];selected:string[];isolate:boolean;view:View;rotate:boolean;reset:number;skinOpacity?:number}
+export interface SceneState {inspectorOpen?:boolean;explode:number;visible:SystemId[];selected:string[];isolate:boolean;view:View;rotate:boolean;reset:number;skinOpacity?:number;activePreset?:'all'|'skeleton'|'muscles'|'organs'|'reproductive'|'surface'|null}
 export const DEFAULT_VISIBLE:SystemId[] = ['cardiac','sensory','skeletal','muscular','arterial','venous','nervous','brain','respiratory','digestive','urinary','lymphatic','endocrine','reproductive','connective','borrowed','donor-muscle'];
 export const EXPLANATIONS:Record<string,string> = {
  'heart':'A muscular pump in the chest. Its right side sends blood to the lungs; its left side sends blood through the systemic circulation.',
@@ -88,10 +88,16 @@ export const EXPLANATIONS:Record<string,string> = {
  'isthmus of fallopian tube':'The narrow, muscular medial third of the fallopian tube connecting directly to the uterine cornu.',
  'uterine tube infundibulum':'The distal funnel-shaped extremity of the fallopian tube opening near the ovary via the abdominal ostium.',
  'uterovesical pouch':'The peritoneal fold separating the anterior uterine surface from the posterior bladder wall.',
+ 'glans clitoridis and prepuce':'The visible external component of the clitoris, situated beneath the anterior junction of the labia minora and enclosed by the clitoral prepuce (hood). Richly innervated with specialized sensory receptors.',
+ 'clitoris (crura, body, and vestibular bulbs)':'The deep erectile complex of the clitoris, comprising the paired corpora cavernosa, body, bilateral crura attaching to the inferior pubic rami, and bilateral vestibular bulbs flanking the vaginal orifice.',
+ 'labia majora and mons pubis':'The prominent paired cutaneous folds rich in adipose tissue extending from the mons pubis over the pubic symphysis to the posterior commissure, shielding the urogenital cleft.',
+ 'labia majora':'Prominent longitudinal folds of pigmented skin and subcutaneous fat extending from the mons pubis, enclosing and shielding the pudendal cleft.',
+ 'labia minora':'Paired delicate cutaneous folds bounding the vestibule of the vagina, rich in sebaceous glands and sensory receptors.',
+ 'vestibule of vagina & urethral opening':'The anatomical cleft between the labia minora containing the external urethral orifice anteriorly, the vaginal introitus posteriorly, and the openings of the greater vestibular (Bartholin) glands.',
+ 'vestibule of vagina':'The anatomical space enclosed by the labia minora, containing the external urethral orifice, vaginal introitus, and vestibular gland ducts.',
+ 'mons pubis':'The rounded anatomical prominence of subcutaneous adipose tissue overlying the pubic symphysis and pubic bones, covered by skin.',
  'clitoris':'The primary female erectile organ beneath the anterior labial commissure, featuring paired corpora cavernosa, crura, body, and an innervated glans.',
  'vulva':'The female external genitalia, including the mons pubis, labia majora, labia minora, clitoral hood, vestibule, and external urethral and vaginal orifices.',
- 'labia majora':'Prominent longitudinal folds of pigmented skin and subcutaneous fat enclosing and shielding the urogenital cleft.',
- 'labia minora':'Paired delicate cutaneous folds bounding the vestibule of the vagina, rich in sebaceous glands and sensory receptors.',
  'mammary gland':'The glandular tissue of the female breast, organized into 15-20 lobes containing secretory alveoli and lactiferous ducts.',
  'placenta':'The fetomaternal vascular organ coordinating nutrient delivery, gas exchange, waste removal, and hormone synthesis (hCG, progesterone) throughout pregnancy.',
  'umbilical cord':'The vascular lifeline connecting the fetal umbilicus to the placenta, carrying two umbilical arteries, one umbilical vein, and Wharton jelly.',

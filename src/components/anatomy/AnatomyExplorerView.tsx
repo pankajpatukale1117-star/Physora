@@ -66,6 +66,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   const [isIsolated, setIsIsolated] = useState<boolean>(false);
   const [activeView, setActiveView] = useState<View>('front');
   const [isAutoRotating, setIsAutoRotating] = useState<boolean>(false);
+  const [activePreset, setActivePreset] = useState<'all' | 'skeleton' | 'muscles' | 'organs' | 'reproductive' | 'surface' | null>(null);
   const [cameraResetCounter, setCameraResetCounter] = useState<number>(0);
   const [zoomTrigger, setZoomTrigger] = useState<number>(0);
   const [zoomDirection, setZoomDirection] = useState<'in' | 'out' | null>(null);
@@ -273,6 +274,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   const applyQuickView = (preset: 'all' | 'skeleton' | 'muscles' | 'organs' | 'reproductive' | 'surface') => {
     setIsIsolated(false);
     setSelectedPartIds([]);
+    setActivePreset(preset);
+    setCameraResetCounter((c) => c + 1);
     if (preset === 'all') {
       setVisibleSystems(defaultVisible(sex));
     } else if (preset === 'skeleton') {
@@ -299,6 +302,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
 
   // Assemble / Reset Action
   const handleReset = () => {
+    setActivePreset(null);
     setExplode(0);
     setIsIsolated(false);
     setSelectedPartIds([]);
@@ -318,7 +322,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       rotate: isAutoRotating,
       reset: cameraResetCounter,
       inspectorOpen: selectedPartIds.length > 0,
-      skinOpacity
+      skinOpacity,
+      activePreset
     };
   }, [
     explode,
@@ -328,7 +333,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     activeView,
     isAutoRotating,
     cameraResetCounter,
-    skinOpacity
+    skinOpacity,
+    activePreset
   ]);
 
   return (
@@ -416,7 +422,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                     border: '1px solid rgba(16, 185, 129, 0.3)'
                   }}
                 >
-                  {sex === 'male' ? 'BodyParts3D • 2,234 Meshes' : 'HRA v1.10 • 1,220 Meshes'}
+                  {sex === 'male' ? 'BodyParts3D • 2,234 Meshes' : 'HRA v1.10 • 1,225 Meshes'}
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.68rem', color: '#94A3B8' }}>
