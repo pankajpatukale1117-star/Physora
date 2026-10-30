@@ -89,7 +89,7 @@ export function RealAnatomyScene({
     renderer.setClearColor('#080D1A'); // Clinical deep slate matching Astra AI
     renderer.outputColorSpace = T.SRGBColorSpace;
     renderer.toneMapping = T.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 0.95;
+    renderer.toneMappingExposure = 1.02;
     el.appendChild(renderer.domElement);
     renderer.domElement.setAttribute(
       'aria-label',
@@ -105,6 +105,10 @@ export function RealAnatomyScene({
 
     camera.position.set(1.4, 1.05, 3.6);
     controls.target.set(0, 0.85, 0);
+    if (typeof window !== 'undefined') {
+      (window as any).__physoraAnatomyCamera = camera;
+      (window as any).__physoraAnatomyControls = controls;
+    }
     controls.enableDamping = true;
     controls.dampingFactor = 0.085;
     controls.minDistance = 0.07;
@@ -123,17 +127,21 @@ export function RealAnatomyScene({
 
     // Medical PBR 4-Point Studio Lighting Rig (Balanced for authentic skin tone & specular roll-off)
     scene.add(new T.HemisphereLight(0xfff5eb, 0x1a2233, 0.55));
-    const keyLight = new T.DirectionalLight(0xffefe0, 1.2);
+    const keyLight = new T.DirectionalLight(0xffefe0, 1.25);
     keyLight.position.set(-2.2, 3.2, 2.8);
     scene.add(keyLight);
 
-    const fillLight = new T.DirectionalLight(0xffe6d6, 0.6);
+    const fillLight = new T.DirectionalLight(0xffe6d6, 0.65);
     fillLight.position.set(2.2, 1.4, 2.4);
     scene.add(fillLight);
 
     const rimLight = new T.DirectionalLight(0x38bdf8, 0.45);
     rimLight.position.set(1.8, 1.8, -2.8);
     scene.add(rimLight);
+
+    const backRimLight = new T.DirectionalLight(0xffeedd, 0.40);
+    backRimLight.position.set(-1.8, 2.0, -2.6);
+    scene.add(backRimLight);
 
     // Anatomical studio platform (sleek slate pedestal)
     const ground = new T.Mesh(
@@ -253,9 +261,9 @@ export function RealAnatomyScene({
       const initialSkinOpacity = latest.current.skinOpacity ?? 0.85;
       const isFemale = atlas.sex === 'female';
       const m = new T.MeshStandardMaterial({
-        color: isSkin ? (isFemale ? '#cf8e76' : '#b87c64') : (SYSTEMS.find((s) => s.id === effectiveSys)?.color ?? '#aebbb8'),
-        metalness: 0.0,
-        roughness: isSkin ? 0.55 : 0.5,
+        color: isSkin ? (isFemale ? '#dfb4a0' : '#c49680') : (SYSTEMS.find((s) => s.id === effectiveSys)?.color ?? '#aebbb8'),
+        metalness: isSkin ? 0.02 : 0.0,
+        roughness: isSkin ? (isFemale ? 0.44 : 0.48) : 0.5,
         side: T.DoubleSide,
         transparent: isSkin,
         opacity: isSkin ? initialSkinOpacity : 1,
@@ -275,6 +283,7 @@ export function RealAnatomyScene({
           'varying float partVisible;\n' +
           'varying float partSelected;\n' +
           'varying float vPartIndex;\n' +
+          'varying vec3 vModelPos;\n' +
           shader.vertexShader;
 
         shader.vertexShader = shader.vertexShader.replace(
@@ -285,13 +294,15 @@ export function RealAnatomyScene({
             'vec4 state = texture2D(partState, stateUv);\n' +
             'transformed += state.xyz;\n' +
             'partVisible = state.w;\n' +
-            'partSelected = texture2D(selectionState, stateUv).r;\n'
+            'partSelected = texture2D(selectionState, stateUv).r;\n' +
+            'vModelPos = transformed;\n'
         );
 
         shader.fragmentShader =
           'varying float partVisible;\n' +
           'varying float partSelected;\n' +
           'varying float vPartIndex;\n' +
+          'varying vec3 vModelPos;\n' +
           shader.fragmentShader;
 
         shader.fragmentShader = shader.fragmentShader.replace(
@@ -299,6 +310,21 @@ export function RealAnatomyScene({
           '#include <clipping_planes_fragment>\n' +
             'if (partVisible < 0.5) discard;\n'
         );
+
+        if (isSkin) {
+          shader.fragmentShader = shader.fragmentShader.replace(
+            '#include <normal_fragment_begin>',
+            '#include <normal_fragment_begin>\n' +
+              '// Micro-dermal pore relief & epidermal micro-texture\n' +
+              'vec3 pSkin = vModelPos * 380.0;\n' +
+              'vec3 dNorm = vec3(\n' +
+              '  sin(pSkin.y * 1.2 + cos(pSkin.z * 1.1)) * 0.04,\n' +
+              '  cos(pSkin.x * 1.2 + sin(pSkin.z * 1.1)) * 0.04,\n' +
+              '  sin(pSkin.x * 1.2 + cos(pSkin.y * 1.1)) * 0.04\n' +
+              ');\n' +
+              'normal = normalize(normal + dNorm);\n'
+          );
+        }
 
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <color_fragment>',
@@ -328,8 +354,41 @@ export function RealAnatomyScene({
                 '  diffuseColor.rgb = vec3(0.85, 0.55, 0.50);\n' +
                 '}\n'
               : '') +
+            (isSkin
+              ? '// Natural vascular undertone and subtle facial warmth\n' +
+                'float microPore = sin(vModelPos.y * 320.0 + cos(vModelPos.x * 200.0)) * cos(vModelPos.z * 260.0);\n' +
+                'diffuseColor.rgb += vec3(0.012, 0.006, 0.003) * microPore;\n' +
+                'if (vModelPos.y > 1.48 && vModelPos.y < 1.60 && vModelPos.z > 0.015) {\n' +
+                '  float cheekDist = length(vec2(abs(vModelPos.x) - 0.045, vModelPos.y - 1.555));\n' +
+                '  float cheekWarm = clamp(1.0 - cheekDist / 0.038, 0.0, 1.0);\n' +
+                '  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.50, 0.48), cheekWarm * 0.18);\n' +
+                '  if (vModelPos.y > 1.498 && vModelPos.y < 1.522 && abs(vModelPos.x) < 0.026 && vModelPos.z > 0.045) {\n' +
+                '    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.82, 0.42, 0.44), 0.28);\n' +
+                '  }\n' +
+                '}\n' +
+                'if (vModelPos.y > 1.15 && vModelPos.y < 1.22 && vModelPos.z > 0.09) {\n' +
+                '  float areolaDistL = length(vec2(vModelPos.x - 0.098, vModelPos.y - 1.185));\n' +
+                '  float areolaDistR = length(vec2(vModelPos.x + 0.098, vModelPos.y - 1.185));\n' +
+                '  float areolaDist = min(areolaDistL, areolaDistR);\n' +
+                '  if (areolaDist < 0.024) {\n' +
+                '    float areolaFactor = clamp(1.0 - areolaDist / 0.024, 0.0, 1.0);\n' +
+                '    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.78, 0.44, 0.42), areolaFactor * 0.35);\n' +
+                '  }\n' +
+                '}\n'
+              : '') +
             'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.2, 0.95, 0.75), partSelected * 0.8);\n'
         );
+
+        if (isSkin) {
+          shader.fragmentShader = shader.fragmentShader.replace(
+            '#include <dithering_fragment>',
+            '#include <dithering_fragment>\n' +
+              '// Subsurface Scattering (SSS) / Subcutaneous capillary light wrap\n' +
+              'float NdotV = clamp(dot(geometryNormal, geometryViewDir), 0.0, 1.0);\n' +
+              'float fresnel = pow(1.0 - NdotV, 3.2);\n' +
+              'gl_FragColor.rgb += vec3(0.92, 0.46, 0.38) * fresnel * 0.18;\n'
+          );
+        }
       };
 
       materials.push(m);

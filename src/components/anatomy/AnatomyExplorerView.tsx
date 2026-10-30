@@ -6,6 +6,8 @@ import {
   Layers,
   Heart,
   Activity,
+  Bone,
+  Dna,
   Sparkles,
   ArrowUpRight,
   ChevronRight,
@@ -861,9 +863,9 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             >
               {[
                 { id: 'organs', label: 'Organs', icon: <Heart size={14} color="#EF4444" /> },
-                { id: 'skeleton', label: 'Skeleton', icon: <span style={{ fontSize: '0.85rem' }}>??</span> },
+                { id: 'skeleton', label: 'Skeleton', icon: <Bone size={14} color="#E2D9BA" /> },
                 { id: 'muscles', label: 'Muscles', icon: <Activity size={14} color="#F59E0B" /> },
-                { id: 'reproductive', label: 'Reproductive', icon: <span style={{ fontSize: '0.85rem' }}>??</span> },
+                { id: 'reproductive', label: 'Reproductive', icon: <Dna size={14} color="#EC4899" /> },
                 { id: 'surface', label: 'Body Surface', icon: <Eye size={14} color="#38BDF8" /> },
                 { id: 'all', label: 'All systems', icon: <Layers size={14} color="#10B981" /> }
               ].map((item) => (
