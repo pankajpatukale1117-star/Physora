@@ -905,14 +905,14 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
                         }}
                       >
                         <Lock size={11} />
-                        <span>PRO</span>
+                        <span>PRO / SCHOOL</span>
                       </div>
                     )}
 
                     {/* Iconic PhET Circular Play Button at bottom-right */}
                     <div
                       className="phet-play-badge"
-                      title={!isAccessible ? `Unlock ${topic.title} with Physora Pro` : `Launch ${topic.title}`}
+                      title={!isAccessible ? `Unlock ${topic.title} with Physora Pro or School Pass` : `Launch ${topic.title}`}
                       style={{
                         position: 'absolute',
                         bottom: 10,

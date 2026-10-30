@@ -153,7 +153,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                       color: '#FFFFFF'
                     }}
                   >
-                    PRO
+                    PRO / SCHOOL
                   </span>
                 )}
               </button>

@@ -1313,39 +1313,48 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                   >
                     <Crown size={14} color="#7C3AED" />
                     <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#7C3AED' }}>
-                      Everything in Physora Pro, plus:
+                      Includes 100% of Physora Pro Features:
                     </span>
                   </div>
                   <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 14px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#10B981" /> <strong>Interactive 3D Human Anatomy Explorer &amp; Organ Dissections</strong>
+                      <Check size={16} color="#10B981" /> <strong>All 76+ Precision STEM Simulations</strong> &amp; 3D Interactive Labs
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#10B981" /> <strong>All 76+ Precision Simulations</strong> &amp; Virtual Labs
+                      <Check size={16} color="#10B981" /> <strong>Interactive 3D Human Anatomy Explorer</strong> (Male &amp; Female Atlas)
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#10B981" /> <strong>Physora AI Science Tutor</strong> (Unlimited 24/7)
+                      <Check size={16} color="#10B981" /> <strong>1-Click Academic Lab Report PDF Exporter</strong> (Watermark-free)
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#10B981" /> Full 3D Écorché Muscular &amp; Skeletal Layers &amp; PDF Reports
+                      <Check size={16} color="#10B981" /> <strong>Physora AI Science Tutor ("Arya")</strong> (Unlimited 24/7 Guidance)
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+                      <Check size={16} color="#10B981" /> <strong>All JEE Advanced, NEET-UG &amp; AP Physics</strong> Exam Challenges
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+                      <Check size={16} color="#10B981" /> <strong>Full 3D Écorché Muscular &amp; Skeletal Layers</strong> with Variable Opacity
+                    </li>
+                    <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
+                      <Check size={16} color="#10B981" /> <strong>Complete Interactive Formula Bank</strong> with KaTeX Math Rendering
                     </li>
                   </ul>
 
                   <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-tertiary)', letterSpacing: '0.05em' }}>
-                    Institutional advantages:
+                    Institutional School Advantages:
                   </span>
                   <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#7C3AED" /> <strong>Smartboard Presenter Mode &amp; Laser Pointer</strong>
+                      <Check size={16} color="#7C3AED" /> <strong>Smartboard Presenter Mode &amp; Laser Pointer</strong> with Drawing Tools
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#7C3AED" /> Unlimited Student &amp; Faculty seats
+                      <Check size={16} color="#7C3AED" /> <strong>Unlimited Student &amp; Faculty Seats</strong> with School Pass
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#7C3AED" /> <strong>Canvas &amp; Google Classroom LMS Embeds</strong>
+                      <Check size={16} color="#7C3AED" /> <strong>Canvas &amp; Google Classroom LMS Embeds</strong> &amp; Direct Assignments
                     </li>
                     <li style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.82rem' }}>
-                      <Check size={16} color="#7C3AED" /> Custom school branding on exported Lab Reports
+                      <Check size={16} color="#7C3AED" /> <strong>Custom School Branding &amp; Evaluation Seals</strong> on Exported Reports
                     </li>
                   </ul>
                 </div>

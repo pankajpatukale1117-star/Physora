@@ -168,7 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }}
                 >
                   <Lock size={9} />
-                  <span>PRO</span>
+                  <span>PRO / SCHOOL</span>
                 </span>
               ) : (
                 <span
@@ -277,7 +277,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 ? isFounder && membershipTier === 'institution'
                   ? '👑 SCHOOL PASS (FREE)'
                   : `${membershipTier.toUpperCase()} PASS`
-                : 'UPGRADE TO PRO'}
+                : 'UPGRADE TO PRO / SCHOOL'}
             </span>
           </button>
 
@@ -541,7 +541,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         }}
                       >
                         <Lock size={9} />
-                        <span>PRO</span>
+                        <span>PRO / SCHOOL</span>
                       </span>
                     )}
                   </div>
@@ -630,7 +630,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? isFounder && membershipTier === 'institution'
                       ? '👑 SCHOOL PASS ACTIVE (FREE)'
                       : `${membershipTier.toUpperCase()} PASS ACTIVE`
-                    : 'UPGRADE TO PRO'}
+                    : 'UPGRADE TO PRO / SCHOOL'}
                 </span>
               </div>
               <ArrowRight size={15} color="var(--text-tertiary)" />

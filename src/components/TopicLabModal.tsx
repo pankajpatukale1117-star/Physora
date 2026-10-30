@@ -2461,10 +2461,10 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                       <Lock size={26} />
                     </div>
                     <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#FFFFFF', margin: '0 0 8px' }}>
-                      Physora Pro Simulation
+                      Physora Pro &amp; Classroom Simulation
                     </h3>
                     <p style={{ maxWidth: '440px', fontSize: '0.88rem', color: '#94A3B8', margin: '0 0 20px', lineHeight: 1.5 }}>
-                      This interactive 3D WebGL laboratory is an exclusive Physora Pro feature. Upgrade to unlock all 75+ simulations, unlimited AI tutor queries, and academic PDF reports.
+                      This interactive 3D WebGL laboratory is included in Physora Pro and Classroom &amp; School plans. Unlock all 76+ simulations, interactive 3D anatomy, unlimited AI tutor queries, and academic PDF reports.
                     </p>
                     <button
                       type="button"
@@ -2488,7 +2488,7 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                       }}
                     >
                       <Sparkles size={16} />
-                      <span>Upgrade to Physora Pro</span>
+                      <span>Unlock with Pro or School Pass</span>
                     </button>
                   </div>
                 )}
