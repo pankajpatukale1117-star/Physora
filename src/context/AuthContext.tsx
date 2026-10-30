@@ -497,7 +497,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return 'pro';
       }
       if (stored === 'free' && subStored === 'FREE') {
-        return 'free';
+        localStorage.setItem(STORAGE_KEY_ACTIVE_TIER, 'institution');
+        localStorage.setItem('physora_sub_tier_v2', 'EDUCATOR');
+        return 'institution';
       }
       if (stored === 'pro' || stored === 'institution' || stored === 'free') {
         return stored as MembershipTier;
@@ -526,7 +528,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     ? 'institution'
     : (localTier === 'pro' || profile?.membership_tier === 'pro')
     ? 'pro'
-    : (profile?.membership_tier || localTier);
+    : 'institution';
   const isPro = effectiveTier === 'pro' || effectiveTier === 'institution';
   const isInstitution = effectiveTier === 'institution';
   const effectivePeriodEnd = isFounderEmail

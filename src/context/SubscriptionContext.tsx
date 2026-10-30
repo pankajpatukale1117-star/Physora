@@ -25,7 +25,25 @@ export const FREE_TOPIC_IDS = new Set<string>([
   'gravitation',
   'waves',
   'optics',
-  'functions'
+  'functions',
+  // 3D Flagship Simulation Laboratories (100% accessible to all learners)
+  'orbital_mechanics_3d',
+  'atomic_orbitals_3d',
+  'black_hole_3d',
+  'crystallography_3d',
+  'double_slit_quantum_3d',
+  'electromagnetic_wave_3d',
+  'vectors_3d',
+  'math_vector3d_lab',
+  'chem_vsepr_lab',
+  'molecular_vsepr_3d',
+  'chem_crystallography',
+  'bio_cardiac_lab',
+  'bio_osmosis_lab',
+  'bio_dna_helix_lab',
+  'dna_helix_3d',
+  'neuron_synapse_3d',
+  'bio_neuron_synapse'
 ]);
 
 export interface SubscriptionContextType {
@@ -67,23 +85,21 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(u
 export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const auth = useAuth();
 
-  // Tier State: default EDUCATOR (Classroom & School) unless explicitly set otherwise
+  // Tier State: default EDUCATOR (Classroom & School Pass) with 100% Pro & Institutional features
   const [tier, setTierState] = useState<SubscriptionTier>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_TIER);
       const activeStored = localStorage.getItem('physora_active_tier');
-      if (stored === 'EDUCATOR' || activeStored === 'institution') {
-        return 'EDUCATOR';
-      }
       if (stored === 'PRO' || activeStored === 'pro') {
         return 'PRO';
       }
-      if (stored === 'FREE' && activeStored === 'free') {
-        return 'FREE';
+      if (stored === 'EDUCATOR' || activeStored === 'institution') {
+        return 'EDUCATOR';
       }
-      if (stored === 'PRO' || stored === 'EDUCATOR' || stored === 'FREE') {
-        return stored;
-      }
+      // Auto-initialize default to EDUCATOR (Classroom & School Pass) for immediate full access
+      localStorage.setItem(STORAGE_KEY_TIER, 'EDUCATOR');
+      localStorage.setItem('physora_active_tier', 'institution');
+      return 'EDUCATOR';
     } catch {
       // Ignore
     }
@@ -96,10 +112,8 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
       setTierState('EDUCATOR');
     } else if (auth.membershipTier === 'pro') {
       setTierState('PRO');
-    } else if (auth.membershipTier === 'free' && tier !== 'EDUCATOR') {
-      setTierState('FREE');
     }
-  }, [auth.membershipTier, tier]);
+  }, [auth.membershipTier]);
 
   // AI Tutor Query Usage tracking (reset daily or per session)
   const maxFreeAiQueries = 3;
@@ -225,15 +239,19 @@ export const SubscriptionProvider: React.FC<{ children: ReactNode }> = ({ childr
     return hasEducatorOrHigher;
   };
 
-  // 8. 3D Human Anatomy Explorer: Pro & Classroom & School (Locked for Free users only)
+  // 8. 3D Human Anatomy Explorer: Always accessible across Classroom, School & Pro tiers
   const canAccessAnatomy = (): boolean => {
-    return hasProOrHigher;
+    return true;
   };
 
   const triggerPaywall = (
     reason: PaywallReason,
     targetTier: 'PRO' | 'EDUCATOR' = 'PRO'
   ) => {
+    // 3D Human Anatomy Explorer is 100% unlocked and never blocked
+    if (reason === 'anatomy_explorer') {
+      return;
+    }
     // Classroom & School (EDUCATOR) contains 100% of ALL features in Physora.
     // They must NEVER be blocked by any paywall!
     if (hasEducatorOrHigher) {

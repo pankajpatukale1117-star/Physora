@@ -327,17 +327,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             <button
               onClick={() => {
                 onClose();
-                if (!canAccessAnatomy()) {
-                  triggerPaywall('anatomy_explorer', 'PRO');
-                } else {
-                  onOpenAnatomy();
-                }
+                onOpenAnatomy();
               }}
               className="btn btn-sm"
               style={{
-                background: !canAccessAnatomy() ? 'rgba(37, 99, 235, 0.12)' : 'rgba(16, 185, 129, 0.15)',
-                border: !canAccessAnatomy() ? '1px solid rgba(59, 130, 246, 0.35)' : '1px solid rgba(16, 185, 129, 0.35)',
-                color: !canAccessAnatomy() ? '#2563EB' : '#059669',
+                background: 'rgba(16, 185, 129, 0.15)',
+                border: '1px solid rgba(16, 185, 129, 0.35)',
+                color: '#059669',
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 padding: '3px 8px',
@@ -346,11 +342,9 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                 gap: 4
               }}
             >
-              {!canAccessAnatomy() ? <Lock size={11} /> : <Dna size={12} />}
+              <Dna size={12} />
               <span>3D Anatomy</span>
-              {!canAccessAnatomy() && (
-                <span style={{ fontSize: '0.58rem', background: '#2563EB', color: '#FFF', padding: '1px 4px', borderRadius: 6, fontWeight: 800 }}>PRO</span>
-              )}
+              <span style={{ fontSize: '0.58rem', background: '#059669', color: '#FFF', padding: '1px 4px', borderRadius: 6, fontWeight: 800 }}>3D</span>
             </button>
           )}
         </div>

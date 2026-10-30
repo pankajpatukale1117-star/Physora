@@ -174,12 +174,6 @@ export function App() {
           setIsAnatomyOpen(false);
         }
       } else if (hash.startsWith('#anatomy') || hash.startsWith('#biology-3d')) {
-        if (!canAccessAnatomy()) {
-          setIsAnatomyOpen(false);
-          triggerPaywall('anatomy_explorer', 'PRO');
-          window.history.replaceState(null, '', window.location.pathname);
-          return;
-        }
         let organId: string | null = null;
         if (hash.startsWith('#anatomy/')) {
           const rawId = hash.replace('#anatomy/', '');
@@ -251,10 +245,6 @@ export function App() {
   };
 
   const handleOpenAnatomy = (organId?: string) => {
-    if (!canAccessAnatomy()) {
-      triggerPaywall('anatomy_explorer', 'PRO');
-      return;
-    }
     setIsAnatomyOpen(true);
     setInitialAnatomyOrganId(organId || null);
     setSelectedTopicId(null);

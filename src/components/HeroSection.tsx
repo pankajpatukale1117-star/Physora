@@ -119,43 +119,24 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
             {onOpenAnatomy && (
               <button
-                onClick={() => {
-                  if (!canAccessAnatomy()) {
-                    triggerPaywall('anatomy_explorer', 'PRO');
-                  } else {
-                    onOpenAnatomy();
-                  }
-                }}
+                onClick={onOpenAnatomy}
                 className="btn btn-lg hero-action-btn"
                 style={{
                   minWidth: 200,
-                  background: !canAccessAnatomy() ? 'linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(124, 58, 237, 0.12))' : 'rgba(16, 185, 129, 0.15)',
-                  border: !canAccessAnatomy() ? '1px solid rgba(59, 130, 246, 0.35)' : '1px solid rgba(16, 185, 129, 0.35)',
-                  color: !canAccessAnatomy() ? '#2563EB' : '#059669',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  border: '1px solid rgba(16, 185, 129, 0.4)',
+                  color: '#059669',
                   fontWeight: 800,
                   borderRadius: 'var(--radius-pill)',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 8
+                  gap: 8,
+                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.15)'
                 }}
               >
-                {!canAccessAnatomy() ? <Lock size={17} /> : <Dna size={18} />}
-                <span>3D Human Anatomy</span>
-                {!canAccessAnatomy() && (
-                  <span
-                    style={{
-                      fontSize: '0.62rem',
-                      fontWeight: 800,
-                      padding: '1px 6px',
-                      borderRadius: 10,
-                      background: '#2563EB',
-                      color: '#FFFFFF'
-                    }}
-                  >
-                    PRO / SCHOOL
-                  </span>
-                )}
+                <Dna size={18} />
+                <span>Enter 3D Human Anatomy Lab</span>
               </button>
             )}
 

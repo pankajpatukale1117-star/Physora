@@ -139,39 +139,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </button>
 
-          <button
-            onClick={() => {
-              if (!canAccessAnatomy()) {
-                triggerPaywall('anatomy_explorer', 'PRO');
-              } else {
-                onOpenAnatomy();
-              }
-            }}
-            className="nav-link"
-          >
+          <button onClick={onOpenAnatomy} className="nav-link">
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Dna size={15} color={!canAccessAnatomy() ? '#60A5FA' : '#10B981'} />
               <span>3D Anatomy</span>
-              {!canAccessAnatomy() ? (
-                <span
-                  style={{
-                    fontSize: '0.60rem',
-                    fontWeight: 800,
-                    padding: '1px 5px',
-                    borderRadius: 10,
-                    background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
-                    color: '#FFFFFF',
-                    letterSpacing: '0.04em',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 3
-                  }}
-                >
-                  <Lock size={9} />
-                  <span>PRO / SCHOOL</span>
-                </span>
-              ) : (
-                <span
+              <span
                   style={{
                     fontSize: '0.62rem',
                     fontWeight: 800,
@@ -183,9 +155,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     letterSpacing: '0.04em'
                   }}
                 >
-                  3D
+                  3D LAB
                 </span>
-              )}
             </div>
           </button>
 
@@ -499,14 +470,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* 3. 3D Anatomy */}
             <button
-              onClick={() => {
-                if (!canAccessAnatomy()) {
-                  triggerPaywall('anatomy_explorer', 'PRO');
-                  setIsMobileMenuOpen(false);
-                } else {
-                  handleMobileNavClick(onOpenAnatomy);
-                }
-              }}
+              onClick={() => handleMobileNavClick(onOpenAnatomy)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -813,13 +777,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             type="button"
-            onClick={() => {
-              if (!canAccessAnatomy()) {
-                triggerPaywall('anatomy_explorer', 'PRO');
-              } else {
-                onOpenAnatomy();
-              }
-            }}
+            onClick={onOpenAnatomy}
             className="mobile-bottom-nav-btn"
             style={{
               display: 'flex',

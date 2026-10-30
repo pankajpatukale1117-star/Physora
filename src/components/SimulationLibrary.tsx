@@ -594,50 +594,27 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignSelf: 'center' }}>
-                {!canAccessAnatomy() ? (
-                  <button
-                    onClick={() => triggerPaywall('anatomy_explorer', 'PRO')}
-                    className="btn btn-primary btn-lg"
-                    style={{
-                      background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
-                      borderColor: 'transparent',
-                      color: '#FFFFFF',
-                      fontWeight: 800,
-                      fontSize: '0.95rem',
-                      padding: '12px 24px',
-                      borderRadius: 'var(--radius-pill)',
-                      boxShadow: '0 8px 24px rgba(37, 99, 235, 0.35)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <Lock size={18} />
-                    <span>Unlock with Physora Pro</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => onOpenAnatomy()}
-                    className="btn btn-primary btn-lg"
-                    style={{
-                      background: '#10B981',
-                      borderColor: '#10B981',
-                      color: '#000000',
-                      fontWeight: 800,
-                      fontSize: '0.95rem',
-                      padding: '12px 24px',
-                      borderRadius: 'var(--radius-pill)',
-                      boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8
-                    }}
-                  >
-                    <Dna size={18} />
-                    <span>Enter 3D Human Body</span>
-                  </button>
-                )}
+                <button
+                  onClick={() => onOpenAnatomy()}
+                  className="btn btn-primary btn-lg"
+                  style={{
+                    background: '#10B981',
+                    borderColor: '#10B981',
+                    color: '#000000',
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    padding: '12px 24px',
+                    borderRadius: 'var(--radius-pill)',
+                    boxShadow: '0 8px 24px rgba(16, 185, 129, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Dna size={18} />
+                  <span>Enter 3D Human Anatomy Lab</span>
+                </button>
               </div>
             </div>
 
@@ -656,13 +633,7 @@ export const SimulationLibrary: React.FC<SimulationLibraryProps> = ({
               ].map((org) => (
                 <button
                   key={org.id}
-                  onClick={() => {
-                    if (!canAccessAnatomy()) {
-                      triggerPaywall('anatomy_explorer', 'PRO');
-                    } else {
-                      onOpenAnatomy(org.id);
-                    }
-                  }}
+                  onClick={() => onOpenAnatomy(org.id)}
                   style={{
                     padding: '4px 10px',
                     borderRadius: 20,

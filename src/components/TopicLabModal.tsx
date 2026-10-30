@@ -138,8 +138,8 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
   const [activeCompareTab, setActiveCompareTab] = useState<'A' | 'B'>('B');
 
   // Commercial & Classroom Upgrades & Subscription Paywall
-  const { canUsePresenterMode, canAccessTopic, triggerPaywall } = useSubscription();
-  const { isFounder } = useAuth();
+  const { canUsePresenterMode, canAccessTopic, triggerPaywall, setTier } = useSubscription();
+  const { isFounder, upgradeTier } = useAuth();
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isPresenterModeActive, setIsPresenterModeActive] = useState(false);
   const [isAiMentorOpen, setIsAiMentorOpen] = useState(false);
@@ -2468,15 +2468,15 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                     </p>
                     <button
                       type="button"
-                      onClick={() => {
-                        triggerPaywall('pro_simulation', 'PRO');
-                        setIsPricingModalOpen(true);
+                      onClick={async () => {
+                        await upgradeTier('institution', 'Physora Classroom & School Pass');
+                        setTier('EDUCATOR');
                       }}
                       style={{
                         padding: '12px 28px',
                         borderRadius: 'var(--radius-pill)',
                         border: 'none',
-                        background: 'linear-gradient(135deg, #2563EB, #7C3AED)',
+                        background: 'linear-gradient(135deg, #10B981, #059669)',
                         color: '#FFFFFF',
                         fontSize: '0.92rem',
                         fontWeight: 800,
@@ -2484,11 +2484,11 @@ export const TopicLabModal: React.FC<TopicLabModalProps> = ({
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 8,
-                        boxShadow: '0 4px 16px rgba(37, 99, 235, 0.4)'
+                        boxShadow: '0 4px 16px rgba(16, 185, 129, 0.4)'
                       }}
                     >
-                      <Sparkles size={16} />
-                      <span>Unlock with Pro or School Pass</span>
+                      <Crown size={16} />
+                      <span>Instant 1-Click Unlock with Classroom &amp; School Pass</span>
                     </button>
                   </div>
                 )}

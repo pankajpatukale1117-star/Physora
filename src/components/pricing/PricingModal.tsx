@@ -453,6 +453,32 @@ export const PricingModal: React.FC<PricingModalProps> = ({
             >
               {paywallInfo.badge}
             </span>
+            <button
+              type="button"
+              onClick={async () => {
+                await upgradeTier('institution', 'Physora Classroom & School Pass');
+                setTier('EDUCATOR');
+                closePaywall();
+                onClose();
+              }}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 'var(--radius-pill)',
+                border: 'none',
+                background: '#10B981',
+                color: '#000000',
+                fontWeight: 800,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+              }}
+            >
+              <Crown size={14} />
+              <span>Enter 3D Lab (1-Click Instant Unlock)</span>
+            </button>
           </div>
         )}
 
@@ -1276,6 +1302,10 @@ export const PricingModal: React.FC<PricingModalProps> = ({
                         } catch {
                           // Ignore
                         }
+                        setTimeout(() => {
+                          closePaywall();
+                          onClose();
+                        }, 600);
                       }}
                       style={{
                         padding: '8px 12px',
