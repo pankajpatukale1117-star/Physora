@@ -36,7 +36,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isLabActive = false
 }) => {
   const { user, profile, isAuthenticated, isPro, membershipTier, isFounder } = useAuth();
-  const { canAccessAnatomy, triggerPaywall } = useSubscription();
+  const { canAccessAnatomy } = useSubscription();
 
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

@@ -1,7 +1,7 @@
 import React from 'react';
-import { ArrowRight, FlaskConical, Atom, BookOpen, CheckCircle2, Dna, Lock } from 'lucide-react';
+import { ArrowRight, FlaskConical, Atom, BookOpen, CheckCircle2, Dna } from 'lucide-react';
 import { HeroLiveSandbox } from './HeroLiveSandbox';
-import { useSubscription } from '../context/SubscriptionContext';
+// Subscription context unneeded in HeroSection
 
 interface HeroSectionProps {
   onEnterLabClick: () => void;
@@ -18,7 +18,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   onOpenFormulas,
   onOpenAnatomy
 }) => {
-  const { canAccessAnatomy, triggerPaywall } = useSubscription();
+// 3D Human Anatomy Lab is open directly
   return (
     <section
       className="hero-section"

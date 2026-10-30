@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, X, Atom, FlaskConical, ArrowRight, BookOpen, Dna, Lock } from 'lucide-react';
+import { Search, X, Atom, FlaskConical, ArrowRight, BookOpen, Dna } from 'lucide-react';
 import { TOPICS_DATA } from '../data/topicsData';
 import { EXPERIMENTS_DATA } from '../data/experimentsData';
 import { FORMULAS_DATA } from './FormulaBankModal';
 import { ANATOMY_STRUCTURES } from '../data/anatomyData';
-import { useSubscription } from '../context/SubscriptionContext';
+// Subscription context unneeded in SearchModal
 
 interface SearchResultItem {
   id: string;
@@ -35,7 +35,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   onOpenFormulas,
   onOpenAnatomy
 }) => {
-  const { canAccessAnatomy, triggerPaywall } = useSubscription();
+// 3D Anatomy and all simulations open directly
   const [query, setQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 

@@ -528,7 +528,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     ? 'institution'
     : (localTier === 'pro' || profile?.membership_tier === 'pro')
     ? 'pro'
-    : 'institution';
+    : localTier;
   const isPro = effectiveTier === 'pro' || effectiveTier === 'institution';
   const isInstitution = effectiveTier === 'institution';
   const effectivePeriodEnd = isFounderEmail

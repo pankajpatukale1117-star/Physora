@@ -28,7 +28,8 @@ import {
   Ghost,
   FileText,
   Radio,
-  Lock
+  Lock,
+  Crown
 } from 'lucide-react';
 import { TOPICS_DATA, isSimulationAnimated, type EditorialTeaching } from '../data/topicsData';
 import { QUIZ_DATA } from '../data/quizData';

@@ -39,7 +39,7 @@ function resolveTopicAndSim(id: string): { topicId: string; simId?: string } {
 }
 
 export function App() {
-  const { isPaywallOpen, closePaywall, canAccessAnatomy, triggerPaywall } = useSubscription();
+  const { isPaywallOpen, closePaywall } = useSubscription();
 
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
