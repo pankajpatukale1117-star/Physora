@@ -214,6 +214,48 @@ export function RealAnatomyScene({
     const femaleMeshes = new Map<string, T.Mesh>();
     const femalePickables: { mesh: T.Mesh; partId: string; partIndex: number }[] = [];
 
+    // -------------------------------------------------------------------------
+    // HIERARCHICAL ANATOMICAL REGION GROUPS (Rule 1 & Rule 3: Coordinate Safety)
+    // -------------------------------------------------------------------------
+    const anatomyRoot = new T.Group();
+    anatomyRoot.name = 'AnatomyRoot';
+    scene.add(anatomyRoot);
+
+    const headGroup = new T.Group();
+    headGroup.name = 'headGroup';
+    const chestGroup = new T.Group();
+    chestGroup.name = 'chestGroup';
+    const abdomenGroup = new T.Group();
+    abdomenGroup.name = 'abdomenGroup';
+    const armsGroup = new T.Group();
+    armsGroup.name = 'armsGroup';
+    const legsGroup = new T.Group();
+    legsGroup.name = 'legsGroup';
+
+    anatomyRoot.add(headGroup);
+    anatomyRoot.add(chestGroup);
+    anatomyRoot.add(abdomenGroup);
+    anatomyRoot.add(armsGroup);
+    anatomyRoot.add(legsGroup);
+
+    const regionGroups: Record<string, T.Group> = {
+      head: headGroup,
+      chest: chestGroup,
+      abdomen: abdomenGroup,
+      arms: armsGroup,
+      legs: legsGroup
+    };
+
+    const getPartRegionKey = (p: { bounds: [number[], number[]] }): string => {
+      const avgY = (p.bounds[0][1] + p.bounds[1][1]) / 2;
+      const avgX = (Math.abs(p.bounds[0][0]) + Math.abs(p.bounds[1][0])) / 2;
+      if (avgY >= 1.36) return 'head';
+      if (avgX > 0.18 && avgY >= 0.70 && avgY <= 1.40) return 'arms';
+      if (avgY >= 1.10 && avgY < 1.36 && avgX <= 0.18) return 'chest';
+      if (avgY >= 0.75 && avgY < 1.10 && avgX <= 0.18) return 'abdomen';
+      return 'legs';
+    };
+
     // Exploded View Label Markers
     const markerPositions = new Float32Array(width * 3).fill(10000);
     const markerGeometry = new T.BufferGeometry();
@@ -424,7 +466,7 @@ export function RealAnatomyScene({
       const buffer = await decodeModelResponse(response, chunk.bytes, compressed);
       if (disposed) return;
 
-      const groups = new Map<string, T.BufferGeometry[]>();
+      const chunkGroups = new Map<string, { region: string; system: string; list: T.BufferGeometry[] }>();
       atlas.parts.forEach((p, i) => {
         if (p.chunk !== ci) return;
         // For female, skip superficial cadaver skin, subcutaneous adipose pads, and raw areola/nipple markers
@@ -434,14 +476,18 @@ export function RealAnatomyScene({
 
         const positions = new Float32Array(buffer, p.positions, p.vertexCount * 3);
 
-
         g.setAttribute('position', new T.BufferAttribute(positions, 3));
         // Use authentic pre-baked author normals directly from model buffer (prevents black spots / inverted normal artifacts)
         g.setAttribute('normal', new T.BufferAttribute(new Int16Array(buffer, p.normals, p.vertexCount * 3), 3, true));
         g.setIndex(new T.BufferAttribute(new Uint32Array(buffer, p.indices, p.indexCount), 1));
-        g.boundingBox = bounds[i].clone();
+        
+        // Compute bounding box & center geometry normalization (Rule 2)
+        g.computeBoundingBox();
+        if (g.boundingBox) {
+          bounds[i].copy(g.boundingBox);
+          centers[i].copy(g.boundingBox.getCenter(new T.Vector3()));
+        }
         g.computeBoundingSphere();
-        centers[i].copy(bounds[i].getCenter(new T.Vector3()));
 
         const pick = new T.Mesh(g);
         pick.matrixAutoUpdate = false;
@@ -449,19 +495,30 @@ export function RealAnatomyScene({
         geometries.push(g);
 
         g.setAttribute('partIndex', new T.BufferAttribute(new Float32Array(p.vertexCount).fill(i), 1));
-        const list = groups.get(p.system) ?? [];
-        list.push(g);
-        groups.set(p.system, list);
+        
+        // Hierarchical grouping by anatomical region & system (Rule 1)
+        const regionKey = getPartRegionKey(p);
+        const groupKey = `${regionKey}:${p.system}`;
+        let entry = chunkGroups.get(groupKey);
+        if (!entry) {
+          entry = { region: regionKey, system: p.system, list: [] };
+          chunkGroups.set(groupKey, entry);
+        }
+        entry.list.push(g);
       });
 
-      groups.forEach((gs, system) => {
-        const geometry = mergeGeometries(gs, false);
-        if (!geometry) throw new Error('Could not assemble anatomy geometry.');
+      chunkGroups.forEach((entry) => {
+        const geometry = mergeGeometries(entry.list, false);
+        if (!geometry) return;
         geometries.push(geometry);
-        const mesh = new T.Mesh(geometry, mats.get(system as never));
+        const mesh = new T.Mesh(geometry, mats.get(entry.system as never));
         mesh.frustumCulled = false;
-        scene.add(mesh);
+        const parentGroup = regionGroups[entry.region] || anatomyRoot;
+        parentGroup.add(mesh);
+        mesh.updateMatrixWorld(true);
       });
+
+      anatomyRoot.updateMatrixWorld(true);
 
       lastState = null;
       layoutKey = '';
@@ -506,14 +563,17 @@ export function RealAnatomyScene({
                         child.geometry.computeBoundingBox();
                         if (child.geometry.boundingBox) {
                           bounds[idx].copy(child.geometry.boundingBox);
-                          centers[idx].copy(bounds[idx].getCenter(new T.Vector3()));
+                          centers[idx].copy(child.geometry.boundingBox.getCenter(new T.Vector3()));
                         }
                       }
                     }
                   }
+                  child.updateMatrixWorld(true);
                 }
               });
-              scene.add(loadedScene);
+              anatomyRoot.add(loadedScene);
+              loadedScene.updateMatrixWorld(true);
+              anatomyRoot.updateMatrixWorld(true);
               dirty = true;
             }
           } catch (err) {
@@ -535,8 +595,8 @@ export function RealAnatomyScene({
     // Camera Fitting Logic
     const fit = (view: View | string, extent = 0) => {
       if (view === 'region-head') {
-        controls.target.set(0, 1.50, 0);
-        camera.position.set(0, 1.51, 0.68);
+        controls.target.set(0, 1.54, 0);
+        camera.position.set(0, 1.55, 0.65);
         controls.update();
         dirty = true;
         return;
@@ -766,7 +826,8 @@ export function RealAnatomyScene({
       );
 
       if (skinMat) {
-        const baseOpacity = s.skinOpacity ?? 0.85;
+        const isSkinVis = s.isolate ? selection.has('BP3D_skin') : visible.has('integumentary');
+        const baseOpacity = isSkinVis ? (s.skinOpacity ?? 0.85) : 0.0;
         const targetOpacity =
           amount > 0.05 && hasSolid ? baseOpacity * Math.max(0, 1 - (amount - 0.05) * 4) : baseOpacity;
         if (Math.abs(skinMat.opacity - targetOpacity) > 0.005 || skinMat.depthWrite !== (targetOpacity >= 0.99)) {
@@ -782,8 +843,8 @@ export function RealAnatomyScene({
 
       // Update beautified female 3D model meshes, materials & skin opacity
       if (femaleModel) {
-        const isSkinVis = visible.has('integumentary');
-        const baseOpacity = s.skinOpacity ?? 0.85;
+        const isSkinVis = s.isolate ? selection.has('HRAF0003') : visible.has('integumentary');
+        const baseOpacity = isSkinVis ? (s.skinOpacity ?? 0.85) : 0.0;
         const targetOpacity =
           amount > 0.05 && hasSolid ? baseOpacity * Math.max(0, 1 - (amount - 0.05) * 4) : baseOpacity;
 
@@ -914,6 +975,11 @@ export function RealAnatomyScene({
         partTexture.needsUpdate = true;
         selectionTexture.needsUpdate = true;
         markerGeometry.attributes.position.needsUpdate = true;
+        
+        // Matrix & Render Updates (Rule 3: Force instant world matrix and bound recalculation)
+        Object.values(regionGroups).forEach((grp) => grp.updateMatrixWorld(true));
+        anatomyRoot.updateMatrixWorld(true);
+
         lastState = s;
         lastExtent = amount;
         dirty = true;
@@ -930,7 +996,7 @@ export function RealAnatomyScene({
         fit(amount > 0.5 ? 'front' : s.view, Math.max(0, (amount - 0.3) / 0.7));
       }
 
-      // Smooth Camera Focus on Structure Isolation
+      // Smooth Camera Focus on Structure Isolation (Rule 4: Clean look-at without viewport distortion)
       const isolateKey = s.isolate ? s.selected.join(',') + ':' + s.reset + ':' + s.inspectorOpen + ':' + camera.aspect : '';
       if (isolateKey !== lastIsolate || (s.isolate && moving)) {
         if (s.isolate) {
@@ -944,44 +1010,18 @@ export function RealAnatomyScene({
           if (!box.isEmpty()) {
             const center = box.getCenter(new T.Vector3());
             const size = box.getSize(new T.Vector3());
-            const w = el.clientWidth;
-            const h = el.clientHeight;
-            const mobile = w < 768;
-            const landscape = w > h && h <= 600;
 
-            let left = 20;
-            let right = w - 20;
-            let top = mobile ? 175 : 110;
-            let bottom = h - 170;
-
-            if (s.inspectorOpen) {
-              if (landscape) {
-                right = w - 335;
-                top = 100;
-                bottom = h - 125;
-              } else if (mobile) {
-                top = 110;
-                bottom = h * 0.5;
-              } else {
-                right = w - 370;
-                left = w > 1100 ? 340 : 25;
-              }
-            }
-
-            const availableWidth = Math.max(150, right - left);
-            const availableHeight = Math.max(40, bottom - top);
-            camera.setViewOffset(w, h, w / 2 - (left + right) / 2, h / 2 - (top + bottom) / 2, w, h);
-
+            // Always maintain clean, unskewed camera projection (never distort via setViewOffset)
+            camera.clearViewOffset();
+            const maxDim = Math.max(size.x, size.y, size.z, 0.05);
             const distance = Math.max(
-              0.07,
-              (Math.max(size.y * (h / availableHeight), (size.x * (w / availableWidth)) / camera.aspect, size.z) /
-                (2 * Math.tan(T.MathUtils.degToRad(camera.fov / 2)))) *
-                1.35
+              0.08,
+              (maxDim / (2 * Math.tan(T.MathUtils.degToRad(camera.fov / 2)))) * 1.45
             );
 
-            controls.maxDistance = Math.max(40, distance * 2);
+            controls.maxDistance = Math.max(40, distance * 2.5);
             controls.target.copy(center);
-            camera.position.copy(center).add(new T.Vector3(0.2, 0.1, 1).normalize().multiplyScalar(distance));
+            camera.position.copy(center).add(new T.Vector3(0, 0.04, 1).normalize().multiplyScalar(distance));
             controls.update();
             dirty = true;
           }
