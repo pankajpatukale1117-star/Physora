@@ -35,6 +35,7 @@ import {
 import { RealAnatomyScene } from './atlas/RealAnatomyScene';
 import { MultiLevelScaleModal } from './MultiLevelScaleModal';
 import { AnatomyQuizEngine } from './AnatomyQuizEngine';
+import { FemaleAnatomyStudio } from '../FemaleAnatomyStudio';
 import { ANATOMY_STRUCTURES } from '../../data/anatomyData';
 
 export interface AnatomyExplorerViewProps {
@@ -79,6 +80,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isScaleModalOpen, setIsScaleModalOpen] = useState<boolean>(false);
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState<boolean>(false);
+  const [isFemaleStudioOpen, setIsFemaleStudioOpen] = useState<boolean>(false);
   const [skinOpacity, setSkinOpacity] = useState<number>(0.85);
   const [hoveredPartName, setHoveredPartName] = useState<string | null>(null);
   const [visiblePiecesCount, setVisiblePiecesCount] = useState<number>(0);
@@ -446,7 +448,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                     border: '1px solid rgba(16, 185, 129, 0.3)'
                   }}
                 >
-                  {sex === 'male' ? 'BodyParts3D • 2,234 Meshes' : 'HRA v1.10 • 1,260 Meshes'}
+                  {sex === 'male' ? 'BodyParts3D • 2,234 Meshes' : 'HRA v1.10 • 1,220 Meshes'}
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.68rem', color: '#94A3B8' }}>
@@ -539,6 +541,31 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             >
               /
             </kbd>
+          </button>
+
+          {/* Astra AI Style High-Detail 3D Female Anatomy Studio Button */}
+          <button
+            type="button"
+            onClick={() => setIsFemaleStudioOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '6px 12px',
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.22), rgba(190, 24, 93, 0.22))',
+              border: '1px solid rgba(236, 72, 153, 0.45)',
+              color: '#F472B6',
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 0 14px rgba(236, 72, 153, 0.25)',
+              transition: 'all 0.15s ease'
+            }}
+            title="Open Astra AI High-Detail 3D Female Anatomy Studio (Sketchfab Medical Scans)"
+          >
+            <Sparkles size={14} color="#F472B6" />
+            <span>3D Female Organs Studio</span>
           </button>
 
           <div
@@ -1964,6 +1991,11 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
           activeAnswerId={selectedPartIds[0] || null}
           onResetAnswer={() => setSelectedPartIds([])}
         />
+      )}
+
+      {/* Astra AI Style High-Detail 3D Female Anatomy Studio (Sketchfab Medical API) */}
+      {isFemaleStudioOpen && (
+        <FemaleAnatomyStudio onClose={() => setIsFemaleStudioOpen(false)} />
       )}
     </div>
   );
