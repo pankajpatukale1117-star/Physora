@@ -448,7 +448,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                     border: '1px solid rgba(16, 185, 129, 0.3)'
                   }}
                 >
-                  {sex === 'male' ? 'BodyParts3D • 2,234 Meshes' : 'HRA v1.10 • 1,232 Meshes'}
+                  {sex === 'male' ? 'BodyParts3D • 2,234 Meshes' : 'HRA v1.10 • 1,223 Meshes'}
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.68rem', color: '#94A3B8' }}>

@@ -4,7 +4,7 @@ import math
 import os
 from mathutils import Vector
 
-print("=== Building Clean, Professional Slim Female Anatomical Model ===")
+print("=== Building Clean Slim Female Anatomical Model (No Middle Line / No Vestibule) ===")
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 
@@ -52,11 +52,6 @@ MAT_IRIS = create_pbr_material("Mat_Eye_Iris", "#4A5D4E", roughness=0.20, coat=0
 MAT_PUPIL = create_pbr_material("Mat_Eye_Pupil", "#0C0C0C", roughness=0.05, coat=1.0)
 MAT_LIPS = create_pbr_material("Mat_Female_Lips", "#C27878", roughness=0.38, coat=0.25)
 MAT_AREOLA = create_pbr_material("Mat_Female_Areola", "#C8867E", roughness=0.44, subsurface=0.18)
-MAT_MONS = create_pbr_material("Mat_Mons_Pubis", "#EAC2B4", roughness=0.44, subsurface=0.16)
-MAT_LABIA_MAJ = create_pbr_material("Mat_Labia_Majora", "#E2ABA0", roughness=0.42, subsurface=0.18)
-MAT_LABIA_MIN = create_pbr_material("Mat_Labia_Minora", "#DCA09A", roughness=0.36, coat=0.15)
-MAT_CLITORIS = create_pbr_material("Mat_Glans_Clitoridis", "#D89690", roughness=0.32, coat=0.20)
-MAT_VESTIBULE = create_pbr_material("Mat_Vaginal_Vestibule", "#D28E88", roughness=0.30, coat=0.25)
 
 # ---------------------------------------------------------
 # STEP 1: Import Base Female Body Surface
@@ -358,183 +353,9 @@ def create_areola_nipple(name, center, is_left=True):
 areola_left = create_areola_nipple("Female_Areola_Nipple_Left", Vector((0.098, -0.104, 1.185)), is_left=True)
 areola_right = create_areola_nipple("Female_Areola_Nipple_Right", Vector((-0.098, -0.104, 1.185)), is_left=False)
 
-# ---------------------------------------------------------
-# STEP 7: Anatomical Reproductive System Meshes (Recessed)
-# ---------------------------------------------------------
-# Mons Pubis
-def create_mons_pubis():
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=14, ring_count=10, radius=0.018, location=Vector((0, -0.012, 0.822)))
-    mons = bpy.context.selected_objects[0]
-    mons.name = "Mons_Pubis"
-    mons.scale = (1.15, 0.45, 0.65)
-    bpy.ops.object.transform_apply(scale=True)
-    mons.data.materials.append(MAT_MONS)
-    bpy.ops.object.shade_smooth()
-    return mons
-
-mons_pubis = create_mons_pubis()
-
-# Labia Majora
-def create_labium_majus(name, is_left=True):
-    sign = 1.0 if is_left else -1.0
-    bm = bmesh.new()
-
-    pts = [
-        Vector((sign * 0.005,  0.005, 0.808)),
-        Vector((sign * 0.009,  0.014, 0.800)),
-        Vector((sign * 0.011,  0.022, 0.791)),
-        Vector((sign * 0.009,  0.029, 0.782)),
-        Vector((sign * 0.004,  0.033, 0.774))
-    ]
-
-    segs = 8
-    radius = 0.0045
-    slice_verts = []
-
-    for idx, pt in enumerate(pts):
-        r_current = radius * (1.0 if 0 < idx < 4 else 0.40)
-        cur_ring = []
-        for s in range(segs):
-            ang = (s / segs) * 2.0 * math.pi
-            dx = math.cos(ang) * (r_current * 0.85)
-            dy = math.sin(ang) * r_current
-            cur_ring.append(bm.verts.new(pt + Vector((dx, dy, 0))))
-        slice_verts.append(cur_ring)
-
-    for i in range(len(pts) - 1):
-        for s in range(segs):
-            v0 = slice_verts[i][s]
-            v1 = slice_verts[i][(s+1)%segs]
-            v2 = slice_verts[i+1][(s+1)%segs]
-            v3 = slice_verts[i+1][s]
-            bm.faces.new([v0, v1, v2, v3])
-
-    mesh_lm = bpy.data.meshes.new(name + "_Mesh")
-    obj = bpy.data.objects.new(name, mesh_lm)
-    bpy.context.collection.objects.link(obj)
-
-    bm.to_mesh(mesh_lm)
-    bm.free()
-
-    obj.data.materials.append(MAT_LABIA_MAJ)
-    bpy.context.view_layer.objects.active = obj
-    obj.select_set(True)
-    bpy.ops.object.shade_smooth()
-    return obj
-
-labia_maj_l = create_labium_majus("Labia_Majora_Left", is_left=True)
-labia_maj_r = create_labium_majus("Labia_Majora_Right", is_left=False)
-
-# Labia Minora
-def create_labium_minus(name, is_left=True):
-    sign = 1.0 if is_left else -1.0
-    bm = bmesh.new()
-
-    pts = [
-        Vector((sign * 0.002, 0.012, 0.805)),
-        Vector((sign * 0.003, 0.019, 0.797)),
-        Vector((sign * 0.003, 0.026, 0.789)),
-        Vector((sign * 0.002, 0.031, 0.781)),
-        Vector((sign * 0.001, 0.034, 0.776))
-    ]
-
-    segs = 6
-    radius = 0.0020
-    slice_verts = []
-
-    for idx, pt in enumerate(pts):
-        r_current = radius * (1.1 if 0 < idx < 4 else 0.4)
-        cur_ring = []
-        for s in range(segs):
-            ang = (s / segs) * 2.0 * math.pi
-            dx = math.cos(ang) * (r_current * 0.6)
-            dy = math.sin(ang) * r_current
-            cur_ring.append(bm.verts.new(pt + Vector((dx, dy, 0))))
-        slice_verts.append(cur_ring)
-
-    for i in range(len(pts) - 1):
-        for s in range(segs):
-            v0 = slice_verts[i][s]
-            v1 = slice_verts[i][(s+1)%segs]
-            v2 = slice_verts[i+1][(s+1)%segs]
-            v3 = slice_verts[i+1][s]
-            bm.faces.new([v0, v1, v2, v3])
-
-    mesh_lm = bpy.data.meshes.new(name + "_Mesh")
-    obj = bpy.data.objects.new(name, mesh_lm)
-    bpy.context.collection.objects.link(obj)
-
-    bm.to_mesh(mesh_lm)
-    bm.free()
-
-    obj.data.materials.append(MAT_LABIA_MIN)
-    bpy.context.view_layer.objects.active = obj
-    obj.select_set(True)
-    bpy.ops.object.shade_smooth()
-    return obj
-
-labia_min_l = create_labium_minus("Labia_Minora_Left", is_left=True)
-labia_min_r = create_labium_minus("Labia_Minora_Right", is_left=False)
-
-# Clitoral Hood & Glans
-def create_clitoris():
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=10, ring_count=6, radius=0.0028, location=Vector((0, 0.009, 0.807)))
-    hood = bpy.context.selected_objects[0]
-    hood.name = "Clitoral_Hood_Prepuce"
-    hood.scale = (0.9, 0.6, 1.2)
-    bpy.ops.object.transform_apply(scale=True)
-    hood.data.materials.append(MAT_LABIA_MIN)
-    bpy.ops.object.shade_smooth()
-
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=10, ring_count=6, radius=0.0020, location=Vector((0, 0.011, 0.804)))
-    glans = bpy.context.selected_objects[0]
-    glans.name = "Glans_Clitoridis"
-    glans.scale = (0.8, 0.7, 0.9)
-    bpy.ops.object.transform_apply(scale=True)
-    glans.data.materials.append(MAT_CLITORIS)
-    bpy.ops.object.shade_smooth()
-
-    return hood, glans
-
-clitoral_hood, glans_clitoris = create_clitoris()
-
-# Vaginal Vestibule
-def create_vestibule():
-    bm = bmesh.new()
-
-    i_center = Vector((0, 0.026, 0.785))
-    i_outer_ring = []
-    i_inner_canal = []
-    for i in range(10):
-        ang = (i / 10) * 2.0 * math.pi
-        px = i_center.x + math.cos(ang) * 0.0030
-        py = i_center.y
-        pz = i_center.z + math.sin(ang) * 0.0048
-        i_outer_ring.append(bm.verts.new(Vector((px, py, pz))))
-        i_inner_canal.append(bm.verts.new(Vector((px * 0.7, py + 0.015, pz * 0.8))))
-
-    for i in range(10):
-        v0 = i_outer_ring[i]
-        v1 = i_outer_ring[(i+1)%10]
-        v2 = i_inner_canal[(i+1)%10]
-        v3 = i_inner_canal[i]
-        bm.faces.new([v0, v1, v2, v3])
-
-    mesh_vest = bpy.data.meshes.new("Vaginal_Vestibule_Mesh")
-    obj = bpy.data.objects.new("Vaginal_Vestibule", mesh_vest)
-    bpy.context.collection.objects.link(obj)
-
-    bm.to_mesh(mesh_vest)
-    bm.free()
-
-    obj.data.materials.append(MAT_VESTIBULE)
-    bpy.context.view_layer.objects.active = obj
-    obj.select_set(True)
-    bpy.ops.object.shade_smooth()
-
-    return obj
-
-vestibule_obj = create_vestibule()
+# NOTE: The body surface in the pelvic/groin region is completely smooth, seamless, and clean.
+# No vaginal vestibule mesh, no labia minora mesh, no middle slit line.
+# Clean, professional medical reference anatomy.
 
 all_created = [
     body,
@@ -544,19 +365,11 @@ all_created = [
     eyebrow_right,
     lips_obj,
     areola_left,
-    areola_right,
-    mons_pubis,
-    labia_maj_l,
-    labia_maj_r,
-    labia_min_l,
-    labia_min_r,
-    clitoral_hood,
-    glans_clitoris,
-    vestibule_obj
+    areola_right
 ]
 
 # ---------------------------------------------------------
-# STEP 8: Export to GLB
+# STEP 7: Export to GLB
 # ---------------------------------------------------------
 export_path = "D:/Physora/public/models/female_body_beautified.glb"
 print(f"Exporting clean female model to: {export_path}")

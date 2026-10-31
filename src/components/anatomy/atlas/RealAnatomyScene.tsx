@@ -10,14 +10,6 @@ import { PointerTap } from './pointer-tap';
 import { SYSTEMS, type Atlas, type SceneState, type View } from './anatomy';
 
 const FEMALE_MESH_MAPPING: Record<string, string> = {
-  'Mons_Pubis': 'HRAF1220',
-  'Labia_Majora_Left': 'HRAF1221',
-  'Labia_Majora_Right': 'HRAF1222',
-  'Labia_Minora_Left': 'HRAF1223',
-  'Labia_Minora_Right': 'HRAF1224',
-  'Glans_Clitoridis': 'HRAF1225',
-  'Clitoral_Hood_Prepuce': 'HRAF1226',
-  'Vaginal_Vestibule': 'HRAF1227',
   'Female_Lips': 'HRAF1229',
   'Female_Eye_Left': 'HRAF1231',
   'Female_Eye_Right': 'HRAF1232',
@@ -777,31 +769,12 @@ export function RealAnatomyScene({
       // Update beautified female 3D model meshes, materials & skin opacity
       if (femaleModel) {
         const isSkinVis = visible.has('integumentary');
-        const isReproVis = visible.has('reproductive');
         const baseOpacity = s.skinOpacity ?? 0.85;
         const targetOpacity =
           amount > 0.05 && hasSolid ? baseOpacity * Math.max(0, 1 - (amount - 0.05) * 4) : baseOpacity;
 
         femaleMeshes.forEach((mesh, meshName) => {
-          const isVulva = [
-            'Mons_Pubis',
-            'Labia_Majora_Left',
-            'Labia_Majora_Right',
-            'Labia_Minora_Left',
-            'Labia_Minora_Right',
-            'Clitoral_Hood_Prepuce',
-            'Glans_Clitoridis',
-            'Vaginal_Vestibule'
-          ].includes(meshName);
-
-          if (isVulva) {
-            // Reproductive anatomy is visible when reproductive system is active, or when skin is translucent/ghosted
-            const shouldBeVis = isReproVis || (isSkinVis && targetOpacity < 0.90);
-            if (mesh.visible !== shouldBeVis) {
-              mesh.visible = shouldBeVis;
-              dirty = true;
-            }
-          } else if (meshName === 'Female_Body_Surface') {
+          if (meshName === 'Female_Body_Surface') {
             const shouldBeVis = isSkinVis && targetOpacity > 0.01;
             if (mesh.visible !== shouldBeVis) {
               mesh.visible = shouldBeVis;
