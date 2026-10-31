@@ -344,35 +344,7 @@ export function RealAnatomyScene({
           '#include <color_fragment>',
           '#include <color_fragment>\n' +
             (system === 'reproductive'
-              ? 'if (vPartIndex >= 1219.5 && vPartIndex < 1220.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.85, 0.27, 0.41);\n' + // Glans clitoridis - mucosal rose
-                '} else if (vPartIndex >= 1220.5 && vPartIndex < 1221.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.86, 0.42, 0.49);\n' + // Prepuce of clitoris - clitoral hood
-                '} else if (vPartIndex >= 1221.5 && vPartIndex < 1226.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.73, 0.20, 0.34);\n' + // Body, Crura L/R, Bulbs L/R - deep erectile crimson
-                '} else if (vPartIndex >= 1226.5 && vPartIndex < 1227.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.87, 0.53, 0.47);\n' + // Mons pubis - warm dermic cushion
-                '} else if (vPartIndex >= 1227.5 && vPartIndex < 1229.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.85, 0.49, 0.43);\n' + // Labia majora L/R - natural labial skin
-                '} else if (vPartIndex >= 1229.5 && vPartIndex < 1231.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.90, 0.42, 0.49);\n' + // Labia minora L/R - inner mucocutaneous pink
-                '} else if (vPartIndex >= 1231.5 && vPartIndex < 1232.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.91, 0.44, 0.51);\n' + // Vaginal vestibule & external urethral orifice
-                '} else if (vPartIndex >= 1232.5 && vPartIndex < 1233.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.83, 0.29, 0.39);\n' + // Vaginal introitus
-                '} else if (vPartIndex >= 1233.5 && vPartIndex < 1235.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.95, 0.62, 0.53);\n' + // Bartholin glands L/R - glandular peach
-                '} else if (vPartIndex >= 1235.5 && vPartIndex < 1239.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.62, 0.29, 0.26);\n' + // Bulbospongiosus & Ischiocavernosus muscles
-                '} else if (vPartIndex >= 1239.5 && vPartIndex < 1248.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.61, 0.27, 0.24);\n' + // Levator ani & Coccygeus muscles
-                '} else if (vPartIndex >= 1248.5 && vPartIndex < 1249.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.60, 0.26, 0.25);\n' + // External anal sphincter
-                '} else if (vPartIndex >= 1249.5 && vPartIndex < 1251.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.79, 0.83, 0.82);\n' + // Tendinous arch of levator ani
-                '} else if (vPartIndex >= 1251.5 && vPartIndex < 1252.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.63, 0.28, 0.26);\n' + // Superficial transverse perineal muscle
-                '} else if (vPartIndex >= 405.5 && vPartIndex < 406.5) {\n' +
+              ? 'if (vPartIndex >= 405.5 && vPartIndex < 406.5) {\n' +
                 '  diffuseColor.rgb = vec3(0.82, 0.40, 0.48);\n' + // Vagina
                 '} else if (vPartIndex >= 406.5 && vPartIndex < 407.5) {\n' +
                 '  diffuseColor.rgb = vec3(0.88, 0.44, 0.52);\n' + // Cervicovaginal junction
@@ -517,7 +489,7 @@ export function RealAnatomyScene({
           try {
             const gltfLoader = new GLTFLoader();
             const gltf = await new Promise<any>((resolve, reject) => {
-              gltfLoader.load('/models/female_body_beautified.glb', resolve, undefined, reject);
+              gltfLoader.load('/models/female_body_beautified.glb?v=1.10.3', resolve, undefined, reject);
             });
             if (!disposed && gltf && gltf.scene) {
               const loadedScene = gltf.scene as T.Group;
@@ -565,16 +537,58 @@ export function RealAnatomyScene({
 
     // Camera Fitting Logic
     const fit = (view: View | string, extent = 0) => {
-      if (view === 'anterior-pelvis') {
-        controls.target.set(0, 0.80, -0.01);
-        camera.position.set(0, 0.81, 0.52);
+      if (view === 'region-head') {
+        controls.target.set(0, 1.50, 0);
+        camera.position.set(0, 1.51, 0.68);
         controls.update();
         dirty = true;
         return;
       }
-      if (view === 'lithotomy' || view === 'inferior') {
+      if (view === 'region-chest') {
+        controls.target.set(0, 1.22, 0);
+        camera.position.set(0, 1.23, 0.85);
+        controls.update();
+        dirty = true;
+        return;
+      }
+      if (view === 'region-abdomen') {
+        controls.target.set(0, 0.98, 0);
+        camera.position.set(0, 0.99, 0.85);
+        controls.update();
+        dirty = true;
+        return;
+      }
+      if (view === 'region-pelvis' || view === 'anterior-pelvis') {
+        controls.target.set(0, 0.80, -0.01);
+        camera.position.set(0, 0.81, 0.55);
+        controls.update();
+        dirty = true;
+        return;
+      }
+      if (view === 'region-arms') {
+        controls.target.set(0, 1.15, 0);
+        camera.position.set(0, 1.16, 1.35);
+        controls.update();
+        dirty = true;
+        return;
+      }
+      if (view === 'region-legs') {
+        controls.target.set(0, 0.45, 0);
+        camera.position.set(0, 0.46, 1.25);
+        controls.update();
+        dirty = true;
+        return;
+      }
+      if (view === 'superior') {
+        controls.target.set(0, 0.85, 0);
+        camera.position.set(0, 3.4, 0.08);
+        controls.update();
+        dirty = true;
+        return;
+      }
+      if (view === 'inferior' || view === 'lithotomy') {
         controls.target.set(0, 0.785, -0.015);
-        camera.position.set(0, 0.60, 0.32);
+        camera.position.set(0, 0.58, 0.32);
         controls.update();
         dirty = true;
         return;
@@ -608,11 +622,13 @@ export function RealAnatomyScene({
       if (extent > 0.8) view = 'front';
 
       const direction =
-        view === 'front'
+        view === 'front' || view === 'anterior'
           ? new T.Vector3(0, 0.02, 1)
-          : view === 'back'
+          : view === 'back' || view === 'posterior'
           ? new T.Vector3(0, 0.02, -1)
-          : view === 'side'
+          : view === 'left'
+          ? new T.Vector3(-1, 0.02, 0)
+          : view === 'side' || view === 'right'
           ? new T.Vector3(1, 0.02, 0)
           : new T.Vector3(0.35, 0.06, 1).normalize();
 

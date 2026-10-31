@@ -55,7 +55,25 @@ export const edition = (sex:Sex) => EDITIONS.find(e=>e.sex===sex) ?? EDITIONS[0]
 /** Systems a reference body starts with switched off, on top of those left out of
  * DEFAULT_VISIBLE for every body. They stay listed, so a reader can switch them on. */
 export const defaultVisible = (sex:Sex):SystemId[] => {const off=edition(sex).hidden;return DEFAULT_VISIBLE.filter(id=>!off.includes(id));};
-export type View = 'three-quarter'|'front'|'back'|'side'|'lithotomy'|'anterior-pelvis'|'sagittal'|'internal-isolation';
+export type View =
+  | 'three-quarter'
+  | 'front'
+  | 'back'
+  | 'side'
+  | 'left'
+  | 'right'
+  | 'superior'
+  | 'inferior'
+  | 'lithotomy'
+  | 'anterior-pelvis'
+  | 'sagittal'
+  | 'internal-isolation'
+  | 'region-head'
+  | 'region-chest'
+  | 'region-abdomen'
+  | 'region-pelvis'
+  | 'region-arms'
+  | 'region-legs';
 export interface SceneState {inspectorOpen?:boolean;explode:number;visible:SystemId[];selected:string[];isolate:boolean;view:View;rotate:boolean;reset:number;skinOpacity?:number;activePreset?:'all'|'skeleton'|'muscles'|'organs'|'reproductive'|'surface'|null}
 export const DEFAULT_VISIBLE:SystemId[] = ['cardiac','sensory','skeletal','muscular','arterial','venous','nervous','brain','respiratory','digestive','urinary','lymphatic','endocrine','reproductive','connective','borrowed','donor-muscle'];
 export const EXPLANATIONS:Record<string,string> = {

@@ -16,7 +16,11 @@ import {
   EyeOff,
   Pause,
   RotateCw,
-  Info
+  Info,
+  MapPin,
+  Play,
+  BookOpen,
+  Navigation
 } from 'lucide-react';
 import {
   SYSTEMS,
@@ -32,6 +36,14 @@ import {
   type View,
   type SceneState
 } from './atlas/anatomy';
+import {
+  KEY_3D_ORGANS,
+  ANATOMICAL_REGIONS,
+  GUIDED_TOURS,
+  resolveOrganParts,
+  getRegionParts,
+  type AnatomicalRegionKey
+} from './atlas/guidedTours';
 import { RealAnatomyScene } from './atlas/RealAnatomyScene';
 import { MultiLevelScaleModal } from './MultiLevelScaleModal';
 import { AnatomyQuizEngine } from './AnatomyQuizEngine';
@@ -74,8 +86,16 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   const [zoomTrigger, setZoomTrigger] = useState<number>(0);
   const [zoomDirection, setZoomDirection] = useState<'in' | 'out' | null>(null);
 
+  // Astra AI Inspired Feature States
+  const [selectedOrganKey, setSelectedOrganKey] = useState<string | null>(null);
+  const [isSmartLabelsOn, setIsSmartLabelsOn] = useState<boolean>(false);
+  const [activeLayerIndex, setActiveLayerIndex] = useState<number | null>(null);
+  const [learnSubTab, setLearnSubTab] = useState<'guided' | 'quiz'>('guided');
+  const [activeTourId, setActiveTourId] = useState<string | null>(null);
+  const [activeTourStepIndex, setActiveTourStepIndex] = useState<number>(0);
+
   // UI Panels & Modals
-  const [activeDockTab, setActiveDockTab] = useState<DockTab>('systems');
+  const [activeDockTab, setActiveDockTab] = useState<DockTab>('regions');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isScaleModalOpen, setIsScaleModalOpen] = useState<boolean>(false);
@@ -328,6 +348,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   // Assemble / Reset Action
   const handleReset = () => {
     setActivePreset(null);
+    setSelectedOrganKey(null);
+    setActiveLayerIndex(null);
     setSkinOpacity(0.85);
     setExplode(0);
     setIsIsolated(false);
@@ -335,6 +357,157 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     setActiveView('front');
     setIsAutoRotating(false);
     setCameraResetCounter((c) => c + 1);
+  };
+
+  // Region structure counts calculated from 3D anatomical bounds
+  const regionCounts = useMemo(() => {
+    const counts: Record<AnatomicalRegionKey, number> = { head: 0, chest: 0, abdomen: 0, arms: 0, legs: 0 };
+    if (!atlas) return counts;
+    atlas.parts.forEach((p) => {
+      const minY = p.bounds[0][1];
+      const maxY = p.bounds[1][1];
+      const avgY = (minY + maxY) / 2;
+      const minX = Math.abs(p.bounds[0][0]);
+      const maxX = Math.abs(p.bounds[1][0]);
+      const avgX = (minX + maxX) / 2;
+
+      if (avgY >= 1.36) {
+        counts.head++;
+      } else if (avgX > 0.18 && avgY >= 0.70 && avgY <= 1.40) {
+        counts.arms++;
+      } else if (avgY >= 1.10 && avgY < 1.36 && avgX <= 0.18) {
+        counts.chest++;
+      } else if (avgY >= 0.75 && avgY < 1.10 && avgX <= 0.18) {
+        counts.abdomen++;
+      } else {
+        counts.legs++;
+      }
+    });
+    return counts;
+  }, [atlas]);
+
+  // Astra AI Inspired: Direct Selection of Any of the 10 Key 3D Organs
+  const handleSelectOrgan = (organKey: string) => {
+    if (!atlas) return;
+    setSelectedOrganKey(organKey);
+    const partIds = resolveOrganParts(organKey, atlas);
+    if (partIds.length > 0) {
+      setSelectedPartIds(partIds);
+      setIsIsolated(false);
+      const organDef = KEY_3D_ORGANS.find((o) => o.id === organKey);
+      if (organDef) {
+        if (organKey !== 'skin' && skinOpacity > 0.3) {
+          setSkinOpacity(0.15); // Auto-reveal internal visceral structure
+        } else if (organKey === 'skin') {
+          setSkinOpacity(0.95);
+        }
+        if (!visibleSystems.includes(organDef.systemId)) {
+          setVisibleSystems((prev) => [...prev, organDef.systemId]);
+        }
+        setActiveView(organDef.view);
+        setCameraResetCounter((c) => c + 1);
+      }
+    }
+  };
+
+  // Astra AI Inspired: Focus Camera to Anatomical Region
+  const handleFocusRegion = (regionKey: AnatomicalRegionKey) => {
+    const reg = ANATOMICAL_REGIONS.find((r) => r.key === regionKey);
+    if (reg) {
+      setActiveView(reg.view);
+      setCameraResetCounter((c) => c + 1);
+    }
+  };
+
+  // Astra AI Inspired: Isolate Anatomical Region
+  const handleIsolateRegion = (regionKey: AnatomicalRegionKey) => {
+    if (!atlas) return;
+    const partIds = getRegionParts(regionKey, atlas);
+    if (partIds.length > 0) {
+      setSelectedPartIds(partIds);
+      setIsIsolated(true);
+      handleFocusRegion(regionKey);
+    }
+  };
+
+  // Astra AI Inspired: Sequential Anatomical Depth Slicing (Layers)
+  const handleSelectLayer = (layerIdx: number) => {
+    setActiveLayerIndex(layerIdx);
+    setIsIsolated(false);
+    setSelectedPartIds([]);
+    switch (layerIdx) {
+      case 1: // Skin & Surface
+        setSkinOpacity(1.0);
+        setVisibleSystems(['integumentary']);
+        setActivePreset('surface');
+        break;
+      case 2: // Superficial Musculature
+        setSkinOpacity(0.0);
+        setVisibleSystems(['muscular', 'donor-muscle' as SystemId]);
+        setActivePreset('muscles');
+        break;
+      case 3: // Deep Muscles & Vasculature
+        setSkinOpacity(0.0);
+        setVisibleSystems(['muscular', 'donor-muscle' as SystemId, 'arterial', 'venous']);
+        setActivePreset(null);
+        break;
+      case 4: // Skeletal Framework
+        setSkinOpacity(0.0);
+        setVisibleSystems(['skeletal', 'borrowed' as SystemId]);
+        setActivePreset('skeleton');
+        break;
+      case 5: // Visceral Organs
+        setSkinOpacity(0.0);
+        setVisibleSystems(['cardiac', 'respiratory', 'digestive', 'urinary', 'endocrine', 'reproductive', 'sensory', 'brain']);
+        setActivePreset('organs');
+        break;
+    }
+    setCameraResetCounter((c) => c + 1);
+  };
+
+  // Guided Tour Navigation Helpers
+  const currentTour = useMemo(() => {
+    return GUIDED_TOURS.find((t) => t.id === activeTourId) || null;
+  }, [activeTourId]);
+
+  const currentTourStep = useMemo(() => {
+    if (!currentTour) return null;
+    return currentTour.steps[activeTourStepIndex] || null;
+  }, [currentTour, activeTourStepIndex]);
+
+  const handleStartTour = (tourId: string) => {
+    setActiveTourId(tourId);
+    setActiveTourStepIndex(0);
+    const tour = GUIDED_TOURS.find((t) => t.id === tourId);
+    if (tour && tour.steps.length > 0) {
+      const firstStep = tour.steps[0];
+      handleSelectOrgan(firstStep.organKey);
+      setActiveView(firstStep.view);
+    }
+  };
+
+  const handleNextTourStep = () => {
+    if (!currentTour) return;
+    const nextIdx = (activeTourStepIndex + 1) % currentTour.steps.length;
+    setActiveTourStepIndex(nextIdx);
+    const nextStep = currentTour.steps[nextIdx];
+    handleSelectOrgan(nextStep.organKey);
+    setActiveView(nextStep.view);
+  };
+
+  const handlePrevTourStep = () => {
+    if (!currentTour) return;
+    const prevIdx = (activeTourStepIndex - 1 + currentTour.steps.length) % currentTour.steps.length;
+    setActiveTourStepIndex(prevIdx);
+    const prevStep = currentTour.steps[prevIdx];
+    handleSelectOrgan(prevStep.organKey);
+    setActiveView(prevStep.view);
+  };
+
+  const handleExitTour = () => {
+    setActiveTourId(null);
+    setActiveTourStepIndex(0);
+    handleReset();
   };
 
   // Construct SceneState object for Three.js engine
@@ -613,6 +786,80 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       </header>
 
       {/* -------------------------------------------------------------------- */}
+      {/* 1.5. ASTRA AI STYLE: "ORGANS IN 3D" QUICK BAR (10 Key Organs) */}
+      {/* -------------------------------------------------------------------- */}
+      <div
+        style={{
+          height: 48,
+          background: 'rgba(8, 13, 26, 0.88)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '0 20px',
+          zIndex: 28,
+          overflowX: 'auto',
+          flexShrink: 0
+        }}
+        className="anatomy-scroll"
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            ORGANS IN 3D
+          </span>
+          <span
+            style={{
+              fontSize: '0.62rem',
+              fontWeight: 800,
+              padding: '1px 6px',
+              borderRadius: 10,
+              background: 'rgba(16, 185, 129, 0.2)',
+              color: '#34D399',
+              border: '1px solid rgba(16, 185, 129, 0.4)'
+            }}
+          >
+            10
+          </span>
+        </div>
+
+        <div style={{ width: 1, height: 20, background: 'rgba(255, 255, 255, 0.1)', flexShrink: 0 }} />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {KEY_3D_ORGANS.map((organ) => {
+            const isSelected = selectedOrganKey === organ.id;
+            return (
+              <button
+                key={organ.id}
+                type="button"
+                onClick={() => handleSelectOrgan(organ.id)}
+                title={`${organ.label} • ${organ.subtitle}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '5px 12px',
+                  borderRadius: 20,
+                  background: isSelected ? `${organ.color}25` : 'rgba(255, 255, 255, 0.04)',
+                  border: isSelected ? `1px solid ${organ.color}` : '1px solid rgba(255, 255, 255, 0.08)',
+                  color: isSelected ? '#FFFFFF' : '#CBD5E1',
+                  fontSize: '0.74rem',
+                  fontWeight: isSelected ? 800 : 600,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.18s ease',
+                  boxShadow: isSelected ? `0 0 12px ${organ.color}35` : 'none'
+                }}
+              >
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: organ.color, boxShadow: `0 0 6px ${organ.color}` }} />
+                <span>{organ.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* -------------------------------------------------------------------- */}
       {/* 2. MAIN 3D VIEWPORT WITH REAL GPU-TEXTURE ANATOMY ENGINE */}
       {/* -------------------------------------------------------------------- */}
       <div style={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
@@ -866,7 +1113,129 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
           >
             {isAutoRotating ? <Pause size={16} /> : <RotateCw size={16} />}
           </button>
+
+          <div style={{ width: 36, height: 1, background: 'rgba(255, 255, 255, 0.12)', margin: '2px 0' }} />
+
+          {/* Smart Labels Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsSmartLabelsOn(!isSmartLabelsOn)}
+            title={isSmartLabelsOn ? 'Hide Smart Labels' : 'Show Smart Labels'}
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              background: isSmartLabelsOn ? 'rgba(16, 185, 129, 0.25)' : 'rgba(15, 23, 42, 0.85)',
+              backdropFilter: 'blur(12px)',
+              border: isSmartLabelsOn ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.1)',
+              color: isSmartLabelsOn ? '#34D399' : '#CBD5E1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+            }}
+          >
+            <MapPin size={16} />
+          </button>
+
+          <div style={{ width: 36, height: 1, background: 'rgba(255, 255, 255, 0.12)', margin: '2px 0' }} />
+
+          {/* Astra AI Style Cardinal Orientation Compass Grid (A, P, L, R, S, I) */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: 4,
+              width: 36
+            }}
+          >
+            {[
+              { id: 'front', label: 'A', title: 'Anterior (Front view)' },
+              { id: 'back', label: 'P', title: 'Posterior (Back view)' },
+              { id: 'left', label: 'L', title: 'Left Lateral view' },
+              { id: 'side', label: 'R', title: 'Right Lateral view' },
+              { id: 'superior', label: 'S', title: 'Superior (Cranial view)' },
+              { id: 'inferior', label: 'I', title: 'Inferior (Caudal view)' }
+            ].map((cardinal) => {
+              const isCardActive = activeView === cardinal.id;
+              return (
+                <button
+                  key={cardinal.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveView(cardinal.id as View);
+                    setCameraResetCounter((c) => c + 1);
+                  }}
+                  title={cardinal.title}
+                  style={{
+                    width: 16,
+                    height: 18,
+                    borderRadius: 4,
+                    background: isCardActive ? '#10B981' : 'rgba(15, 23, 42, 0.85)',
+                    border: isCardActive ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.12)',
+                    color: isCardActive ? '#000000' : '#CBD5E1',
+                    fontSize: '0.60rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 0,
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {cardinal.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Smart Labels 3D Floating Landmark Overlay Badges */}
+        {isSmartLabelsOn && (
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 15 }}>
+            {[
+              { id: 'brain', label: 'Brain', top: '15%', left: '50%', color: '#A855F7' },
+              { id: 'heart', label: 'Heart', top: '34%', left: '52%', color: '#EF4444' },
+              { id: 'lungs', label: 'Lungs', top: '32%', left: '44%', color: '#06B6D4' },
+              { id: 'liver', label: 'Liver', top: '43%', left: '54%', color: '#F97316' },
+              { id: 'kidneys', label: 'Kidneys', top: '48%', left: '46%', color: '#3B82F6' },
+              { id: 'small-intestine', label: 'Small Intestine', top: '55%', left: '51%', color: '#EAB308' },
+              { id: 'large-intestine', label: 'Large Intestine', top: '59%', left: '48%', color: '#D97706' }
+            ].map((landmark) => (
+              <button
+                key={landmark.id}
+                type="button"
+                onClick={() => handleSelectOrgan(landmark.id)}
+                style={{
+                  position: 'absolute',
+                  top: landmark.top,
+                  left: landmark.left,
+                  transform: 'translate(-50%, -50%)',
+                  pointerEvents: 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px 10px',
+                  borderRadius: 20,
+                  background: 'rgba(15, 23, 42, 0.88)',
+                  backdropFilter: 'blur(12px)',
+                  border: `1px solid ${landmark.color}`,
+                  color: '#F8FAFC',
+                  fontSize: '0.70rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: `0 4px 16px rgba(0,0,0,0.4), 0 0 10px ${landmark.color}40`,
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: landmark.color }} />
+                <span>{landmark.label}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* ------------------------------------------------------------------ */}
         {/* OVERLAYS: LEFT FLOATING STUDIO DOCK (320px) */}
@@ -999,7 +1368,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             )}
           </div>
 
-          {/* Segmented Triple-Pill: [ Systems | Regions | Layers ] */}
+          {/* Segmented Triple-Tab: [ Regions | Systems | Layers ] */}
           <div style={{ padding: '0 14px 10px 14px' }}>
             <div
               style={{
@@ -1009,7 +1378,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                 padding: 2
               }}
             >
-              {(['systems', 'layers'] as const).map((tab) => {
+              {(['regions', 'systems', 'layers'] as const).map((tab) => {
                 const isActive = activeDockTab === tab;
                 return (
                   <button
@@ -1026,7 +1395,8 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                       fontSize: '0.72rem',
                       fontWeight: 800,
                       textTransform: 'capitalize',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease'
                     }}
                   >
                     {tab}
@@ -1036,7 +1406,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
             </div>
           </div>
 
-          {/* Systems Checklist Scroll Area */}
+          {/* Content Scroll Area */}
           <div
             className="anatomy-scroll"
             style={{
@@ -1045,10 +1415,86 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               padding: '0 14px 14px 14px',
               display: 'flex',
               flexDirection: 'column',
-              gap: 4
+              gap: 8
             }}
           >
-            {activeDockTab === 'systems' ? (
+            {/* 1. REGIONS TAB */}
+            {activeDockTab === 'regions' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.68rem', color: '#94A3B8' }}>
+                  Choose a body region to explore its anatomical structures.
+                </p>
+                {ANATOMICAL_REGIONS.map((region) => {
+                  const count = regionCounts[region.key] || 0;
+                  const isRegionViewActive = activeView === region.view;
+                  return (
+                    <div
+                      key={region.key}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 12,
+                        background: isRegionViewActive ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                        border: isRegionViewActive ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(255, 255, 255, 0.06)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 6
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: region.color }} />
+                          <strong style={{ fontSize: '0.76rem', color: '#F8FAFC' }}>{region.label}</strong>
+                        </div>
+                        <span style={{ fontSize: '0.66rem', color: '#94A3B8', fontWeight: 700 }}>
+                          {count} structures
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.64rem', color: '#94A3B8', lineHeight: 1.4 }}>
+                        {region.subtitle}
+                      </p>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                        <button
+                          type="button"
+                          onClick={() => handleFocusRegion(region.key)}
+                          style={{
+                            flex: 1,
+                            padding: '5px 8px',
+                            borderRadius: 6,
+                            background: isRegionViewActive ? '#10B981' : 'rgba(255, 255, 255, 0.06)',
+                            color: isRegionViewActive ? '#000000' : '#E2E8F0',
+                            border: 'none',
+                            fontSize: '0.66rem',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Focus Camera
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleIsolateRegion(region.key)}
+                          style={{
+                            padding: '5px 10px',
+                            borderRadius: 6,
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            color: '#CBD5E1',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            fontSize: '0.66rem',
+                            fontWeight: 700,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Isolate
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* 2. SYSTEMS TAB */}
+            {activeDockTab === 'systems' && (
               <>
                 <div
                   style={{
@@ -1115,7 +1561,6 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          // Solo this system on click with coordinated donor/borrowed systems
                           const targetSystems: SystemId[] =
                             sys.id === 'skeletal'
                               ? ['skeletal', 'borrowed' as SystemId]
@@ -1180,67 +1625,90 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                   );
                 })}
               </>
-            ) : (
-              /* Layers & Peeling Controls */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ padding: '8px 0' }}>
-                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#F8FAFC', marginBottom: 4 }}>
-                    Anatomical Exploded View
+            )}
+
+            {/* 3. LAYERS TAB */}
+            {activeDockTab === 'layers' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ margin: '0 0 2px 0', fontSize: '0.68rem', color: '#94A3B8' }}>
+                  Sequential anatomical depth slicing from outer body surface to deep viscera.
+                </p>
+                {[
+                  { index: 1, label: 'Skin & Surface', desc: 'Integumentary barrier & outer anatomical contours', color: '#BA9B7D' },
+                  { index: 2, label: 'Superficial Muscles', desc: 'Major skeletal muscles & facial expression', color: '#A85B50' },
+                  { index: 3, label: 'Deep Muscles & Vessels', desc: 'Arterial tree, venous drainage & deep fascia', color: '#C05245' },
+                  { index: 4, label: 'Skeletal Framework', desc: 'Axial and appendicular bony skeleton', color: '#E2D9BA' },
+                  { index: 5, label: 'Visceral Organs', desc: 'Cardiovascular, respiratory, digestive & urinary organs', color: '#B96760' }
+                ].map((layer) => {
+                  const isActive = activeLayerIndex === layer.index;
+                  return (
+                    <button
+                      key={layer.index}
+                      type="button"
+                      onClick={() => handleSelectLayer(layer.index)}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 12,
+                        background: isActive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                        border: isActive ? '1px solid #10B981' : '1px solid rgba(255, 255, 255, 0.06)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 4,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: layer.color }} />
+                          <strong style={{ fontSize: '0.76rem', color: '#F8FAFC' }}>{layer.label}</strong>
+                        </div>
+                        <span style={{ fontSize: '0.64rem', color: isActive ? '#34D399' : '#64748B', fontWeight: 800 }}>
+                          Layer {layer.index}
+                        </span>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.64rem', color: '#94A3B8' }}>
+                        {layer.desc}
+                      </p>
+                    </button>
+                  );
+                })}
+
+                <div style={{ width: '100%', height: 1, background: 'rgba(255, 255, 255, 0.08)', margin: '4px 0' }} />
+
+                {/* Exploded View Sub-Control */}
+                <div style={{ padding: '4px 0' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#F8FAFC', marginBottom: 2 }}>
+                    Continuous Exploded Anatomy
                   </div>
-                  <p style={{ fontSize: '0.68rem', color: '#94A3B8', margin: 0, lineHeight: 1.4 }}>
-                    Continuous physical spatial distribution separating all visible structures along calibrated vectors.
+                  <p style={{ fontSize: '0.64rem', color: '#94A3B8', margin: '0 0 8px 0', lineHeight: 1.4 }}>
+                    Spatially distributes all visible structures along anatomical expansion vectors.
                   </p>
-                </div>
-
-                <div
-                  style={{
-                    padding: '10px 12px',
-                    borderRadius: 10,
-                    background: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 700 }}>Explosion Amount</span>
-                    <strong style={{ fontSize: '0.72rem', color: '#34D399' }}>
-                      {Math.round(explode * 100)}%
-                    </strong>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={Math.round(explode * 100)}
-                    onChange={(e) => setExplode(parseFloat(e.target.value) / 100)}
-                    style={{ width: '100%', accentColor: '#10B981', height: 4, cursor: 'pointer' }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.62rem', color: '#64748B', marginTop: 4 }}>
-                    <span>0% Assembled</span>
-                    <span>100% Spaced Grid</span>
+                  <div
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 10,
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <span style={{ fontSize: '0.70rem', fontWeight: 700 }}>Explosion Amount</span>
+                      <strong style={{ fontSize: '0.70rem', color: '#34D399' }}>
+                        {Math.round(explode * 100)}%
+                      </strong>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={Math.round(explode * 100)}
+                      onChange={(e) => setExplode(parseFloat(e.target.value) / 100)}
+                      style={{ width: '100%', accentColor: '#10B981', height: 4, cursor: 'pointer' }}
+                    />
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#CBD5E1',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6
-                  }}
-                >
-                  <RotateCcw size={14} />
-                  <span>Assemble / Reset Position</span>
-                </button>
               </div>
             )}
           </div>
@@ -1982,15 +2450,311 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       )}
 
       {mode === 'learn' && (
-        <AnatomyQuizEngine
-          isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false}
-          onSelectStructure={(id) => {
-            if (id) handleSelectPart(id);
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 45,
+            pointerEvents: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: 16
           }}
-          onExitQuiz={() => setMode('explore')}
-          activeAnswerId={selectedPartIds[0] || null}
-          onResetAnswer={() => setSelectedPartIds([])}
-        />
+        >
+          {/* Top Sub-Tab Switcher: [ Guided Explorations | Interactive Quiz ] */}
+          <div
+            style={{
+              pointerEvents: 'auto',
+              alignSelf: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(15, 23, 42, 0.92)',
+              backdropFilter: 'blur(20px)',
+              borderRadius: 14,
+              padding: 4,
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+              gap: 4
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setLearnSubTab('guided')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 16px',
+                borderRadius: 10,
+                background: learnSubTab === 'guided' ? '#10B981' : 'transparent',
+                color: learnSubTab === 'guided' ? '#000000' : '#CBD5E1',
+                border: 'none',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <Navigation size={14} />
+              <span>Guided Explorations</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLearnSubTab('quiz')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '7px 16px',
+                borderRadius: 10,
+                background: learnSubTab === 'quiz' ? '#10B981' : 'transparent',
+                color: learnSubTab === 'quiz' ? '#000000' : '#CBD5E1',
+                border: 'none',
+                fontSize: '0.74rem',
+                fontWeight: 800,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <BookOpen size={14} />
+              <span>Interactive Quiz</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('explore')}
+              title="Close Learn Mode"
+              style={{
+                padding: '6px 10px',
+                borderRadius: 8,
+                background: 'rgba(255, 255, 255, 0.05)',
+                color: '#94A3B8',
+                border: 'none',
+                cursor: 'pointer',
+                marginLeft: 4
+              }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {/* Guided Explorations View */}
+          {learnSubTab === 'guided' && (
+            <div style={{ pointerEvents: 'auto', alignSelf: 'flex-start', maxWidth: 420, marginTop: 12 }}>
+              {!currentTour ? (
+                /* Tour Selection Menu */
+                <div
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.94)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: 20,
+                    padding: '18px 20px',
+                    boxShadow: '0 12px 36px rgba(0, 0, 0, 0.6)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12,
+                    maxHeight: '75vh',
+                    overflowY: 'auto'
+                  }}
+                  className="anatomy-scroll"
+                >
+                  <div>
+                    <span style={{ fontSize: '0.64rem', fontWeight: 800, color: '#10B981', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      CURATED 3D TOURS
+                    </span>
+                    <h3 style={{ margin: '4px 0 6px 0', fontSize: '1.1rem', color: '#F8FAFC' }}>
+                      Guided Explorations
+                    </h3>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: '#94A3B8', lineHeight: 1.4 }}>
+                      Step through multi-station anatomical journeys with automated camera flight and clinical pearls.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {GUIDED_TOURS.map((tour) => (
+                      <div
+                        key={tour.id}
+                        style={{
+                          padding: '12px 14px',
+                          borderRadius: 14,
+                          background: 'rgba(255, 255, 255, 0.03)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: 6
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '0.62rem', fontWeight: 800, padding: '2px 8px', borderRadius: 20, background: `${tour.color}20`, color: tour.color, border: `1px solid ${tour.color}40` }}>
+                            {tour.badge}
+                          </span>
+                          <span style={{ fontSize: '0.64rem', color: '#94A3B8', fontWeight: 700 }}>
+                            {tour.steps.length} Stations
+                          </span>
+                        </div>
+                        <strong style={{ fontSize: '0.86rem', color: '#F8FAFC' }}>{tour.title}</strong>
+                        <p style={{ margin: 0, fontSize: '0.68rem', color: '#94A3B8', lineHeight: 1.4 }}>
+                          {tour.subtitle}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleStartTour(tour.id)}
+                          style={{
+                            marginTop: 4,
+                            padding: '6px 12px',
+                            borderRadius: 8,
+                            background: '#10B981',
+                            color: '#000000',
+                            border: 'none',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6
+                          }}
+                        >
+                          <Play size={12} fill="#000000" />
+                          <span>Start Guided Tour</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* Active Tour Player Card */
+                <div
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.94)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(16, 185, 129, 0.4)',
+                    borderRadius: 20,
+                    padding: '18px 20px',
+                    boxShadow: '0 12px 36px rgba(0, 0, 0, 0.6)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 12
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: '0.62rem', fontWeight: 800, padding: '2px 8px', borderRadius: 20, background: `${currentTour.color}25`, color: currentTour.color, border: `1px solid ${currentTour.color}50` }}>
+                        {currentTour.badge}
+                      </span>
+                      <span style={{ fontSize: '0.68rem', color: '#94A3B8', fontWeight: 700 }}>
+                        Step {activeTourStepIndex + 1} of {currentTour.steps.length}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleExitTour}
+                      style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', padding: 2 }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <div>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: '1.05rem', color: '#F8FAFC', fontWeight: 800 }}>
+                      {currentTourStep?.title}
+                    </h3>
+                    <div style={{ fontSize: '0.72rem', color: '#34D399', fontWeight: 600 }}>
+                      {currentTourStep?.subtitle}
+                    </div>
+                  </div>
+
+                  {/* Step Focus Explanation */}
+                  <div
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 12,
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      fontSize: '0.72rem',
+                      color: '#CBD5E1',
+                      lineHeight: 1.45
+                    }}
+                  >
+                    {currentTourStep?.focusExplanation}
+                  </div>
+
+                  {/* Clinical Fact Pearl */}
+                  <div
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: 12,
+                      background: 'rgba(16, 185, 129, 0.08)',
+                      border: '1px solid rgba(16, 185, 129, 0.25)',
+                      fontSize: '0.70rem',
+                      color: '#A7F3D0',
+                      lineHeight: 1.45
+                    }}
+                  >
+                    <strong style={{ color: '#34D399', display: 'block', marginBottom: 2 }}>
+                      Clinical Significance:
+                    </strong>
+                    {currentTourStep?.clinicalFact}
+                  </div>
+
+                  {/* Tour Navigation Buttons */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 4 }}>
+                    <button
+                      type="button"
+                      onClick={handlePrevTourStep}
+                      style={{
+                        flex: 1,
+                        padding: '7px 12px',
+                        borderRadius: 8,
+                        background: 'rgba(255, 255, 255, 0.06)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: '#CBD5E1',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ← Previous
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleNextTourStep}
+                      style={{
+                        flex: 1,
+                        padding: '7px 12px',
+                        borderRadius: 8,
+                        background: '#10B981',
+                        border: 'none',
+                        color: '#000000',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {activeTourStepIndex === currentTour.steps.length - 1 ? 'Finish Tour' : 'Next Step →'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Interactive Quiz Engine Sub-Tab */}
+          {learnSubTab === 'quiz' && (
+            <div style={{ pointerEvents: 'auto', width: '100%' }}>
+              <AnatomyQuizEngine
+                isMobile={typeof window !== 'undefined' ? window.innerWidth < 768 : false}
+                onSelectStructure={(id) => {
+                  if (id) handleSelectPart(id);
+                }}
+                onExitQuiz={() => setMode('explore')}
+                activeAnswerId={selectedPartIds[0] || null}
+                onResetAnswer={() => setSelectedPartIds([])}
+              />
+            </div>
+          )}
+        </div>
       )}
 
       {/* Astra AI Style High-Detail 3D Female Anatomy Studio (Sketchfab Medical API) */}
