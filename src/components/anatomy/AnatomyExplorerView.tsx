@@ -252,6 +252,12 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
       setSelectedPartIds([partId]);
     }
 
+    if (clickedPart.system === 'reproductive') {
+      if (skinOpacity > 0.3) {
+        setSkinOpacity(0.15);
+      }
+    }
+
     if (!visibleSystems.includes(clickedPart.system)) {
       setVisibleSystems((prev) => [...prev, clickedPart.system]);
     }
@@ -279,14 +285,29 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     setActivePreset(preset);
     setCameraResetCounter((c) => c + 1);
     if (preset === 'all') {
+      setSkinOpacity(0.85);
+      setActiveView('front');
       setVisibleSystems(defaultVisible(sex));
     } else if (preset === 'skeleton') {
+      setActiveView('front');
       setVisibleSystems(['skeletal', 'borrowed' as SystemId]);
     } else if (preset === 'muscles') {
+      setActiveView('front');
       setVisibleSystems(['muscular', 'donor-muscle' as SystemId]);
     } else if (preset === 'reproductive') {
-      setVisibleSystems(['reproductive', 'pregnancy' as SystemId, 'urinary']);
+      setSkinOpacity(0.15);
+      setActiveView('anterior-pelvis');
+      setVisibleSystems([
+        'reproductive',
+        'pregnancy' as SystemId,
+        'urinary',
+        'skeletal',
+        'borrowed' as SystemId,
+        'integumentary'
+      ]);
     } else if (preset === 'surface') {
+      setSkinOpacity(1.0);
+      setActiveView('front');
       setVisibleSystems(['integumentary']);
     } else if (preset === 'organs') {
       setVisibleSystems([
@@ -305,6 +326,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
   // Assemble / Reset Action
   const handleReset = () => {
     setActivePreset(null);
+    setSkinOpacity(0.85);
     setExplode(0);
     setIsIsolated(false);
     setSelectedPartIds([]);
@@ -424,7 +446,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
                     border: '1px solid rgba(16, 185, 129, 0.3)'
                   }}
                 >
-                  {sex === 'male' ? 'BodyParts3D • 2,234 Meshes' : 'HRA v1.10 • 1,225 Meshes'}
+                  {sex === 'male' ? 'BodyParts3D • 2,234 Meshes' : 'HRA v1.10 • 1,260 Meshes'}
                 </span>
               </div>
               <p style={{ margin: 0, fontSize: '0.68rem', color: '#94A3B8' }}>
@@ -1280,6 +1302,61 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
               );
             })}
           </div>
+
+          {/* Female Reproductive System View Presets */}
+          {(activePreset === 'reproductive' || (sex === 'female' && visibleSystems.includes('reproductive'))) && (
+            <>
+              <div style={{ width: 1, height: 20, background: 'rgba(255, 255, 255, 0.12)' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {[
+                  { id: 'anterior-pelvis', label: 'Anterior Pelvis' },
+                  { id: 'sagittal', label: 'Sagittal' },
+                  { id: 'lithotomy', label: 'Perineal (Lithotomy)' },
+                  { id: 'internal-isolation', label: 'Internal Organs' }
+                ].map((vp) => {
+                  const isActive = activeView === vp.id;
+                  return (
+                    <button
+                      key={vp.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveView(vp.id as View);
+                        if (vp.id === 'internal-isolation') {
+                          setVisibleSystems(['reproductive', 'pregnancy' as SystemId]);
+                          setSkinOpacity(0.0);
+                        } else {
+                          if (skinOpacity > 0.3) setSkinOpacity(0.15);
+                          setVisibleSystems([
+                            'reproductive',
+                            'pregnancy' as SystemId,
+                            'urinary',
+                            'skeletal',
+                            'borrowed' as SystemId,
+                            'integumentary'
+                          ]);
+                        }
+                        setCameraResetCounter((c) => c + 1);
+                      }}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: 6,
+                        background: isActive ? '#EC4899' : 'rgba(236, 72, 153, 0.15)',
+                        color: isActive ? '#FFFFFF' : '#F472B6',
+                        border: '1px solid rgba(236, 72, 153, 0.35)',
+                        fontSize: '0.70rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease'
+                      }}
+                      title={vp.label}
+                    >
+                      {vp.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           <div style={{ width: 1, height: 20, background: 'rgba(255, 255, 255, 0.12)' }} />
 

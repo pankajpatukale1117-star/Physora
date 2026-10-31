@@ -19,7 +19,7 @@ export const SYSTEMS: {id:SystemId;name:string;color:string;description:string}[
  {id:'urinary',name:'Urinary',color:'#b47961',description:'The kidneys filter blood and regulate fluid, electrolyte, and acid–base balance. Urine travels through the ureters to the bladder and exits through the urethra.'},
  {id:'lymphatic',name:'Lymphatic',color:'#879f7c',description:'Lymphatic vessels return excess tissue fluid to the circulation. Lymph nodes and other lymphoid organs support immune surveillance and responses.'},
  {id:'endocrine',name:'Endocrine',color:'#c5a09a',description:'Endocrine organs release hormones into the blood to coordinate processes such as metabolism, growth, stress responses, and reproduction.'},
- {id:'reproductive',name:'Reproductive',color:'#bda098',description:'The reproductive structures represented here produce gametes and sex hormones, and provide the passages that carry them.'},
+ {id:'reproductive',name:'Reproductive',color:'#c04e64',description:'The reproductive structures represented here produce gametes and sex hormones, and provide the passages that carry them.'},
  {id:'pregnancy',name:'Pregnancy reference',color:'#c8a6ae',description:'The placenta, membranes, and umbilical cord shown here belong to a pregnancy reference and are not part of the non-pregnant body. They are hidden until you switch them on.'},
  {id:'integumentary',name:'Body surface',color:'#ba9b7d',description:'The body surface provides an outer anatomical reference. The integumentary system forms a protective barrier and contributes to sensation and temperature regulation.'},
  {id:'borrowed',name:'Male-derived bones',color:'#e2d9ba',description:'Calibrated reference bones (skull, ribs, arms, feet) scaled and positioned to complete the female skeleton with continuous articulation.'},
@@ -55,7 +55,7 @@ export const edition = (sex:Sex) => EDITIONS.find(e=>e.sex===sex) ?? EDITIONS[0]
 /** Systems a reference body starts with switched off, on top of those left out of
  * DEFAULT_VISIBLE for every body. They stay listed, so a reader can switch them on. */
 export const defaultVisible = (sex:Sex):SystemId[] => {const off=edition(sex).hidden;return DEFAULT_VISIBLE.filter(id=>!off.includes(id));};
-export type View = 'three-quarter'|'front'|'back'|'side';
+export type View = 'three-quarter'|'front'|'back'|'side'|'lithotomy'|'anterior-pelvis'|'sagittal'|'internal-isolation';
 export interface SceneState {inspectorOpen?:boolean;explode:number;visible:SystemId[];selected:string[];isolate:boolean;view:View;rotate:boolean;reset:number;skinOpacity?:number;activePreset?:'all'|'skeleton'|'muscles'|'organs'|'reproductive'|'surface'|null}
 export const DEFAULT_VISIBLE:SystemId[] = ['cardiac','sensory','skeletal','muscular','arterial','venous','nervous','brain','respiratory','digestive','urinary','lymphatic','endocrine','reproductive','connective','borrowed','donor-muscle'];
 export const EXPLANATIONS:Record<string,string> = {
@@ -88,6 +88,33 @@ export const EXPLANATIONS:Record<string,string> = {
  'isthmus of fallopian tube':'The narrow, muscular medial third of the fallopian tube connecting directly to the uterine cornu.',
  'uterine tube infundibulum':'The distal funnel-shaped extremity of the fallopian tube opening near the ovary via the abdominal ostium.',
  'uterovesical pouch':'The peritoneal fold separating the anterior uterine surface from the posterior bladder wall.',
+ 'glans clitoridis':'The sensitive distal head of the clitoris, densely packed with sensory nerve endings and mechanoreceptors.',
+ 'prepuce of clitoris':'The mucocutaneous fold (clitoral hood) formed by the anterior junction of the labia minora that surrounds and protects the glans clitoridis.',
+ 'body of clitoris':'The paired corpora cavernosa united along the midline beneath the symphysis, providing erectile rigidity.',
+ 'left crus of clitoris':'The elongated left cavernous body anchored to the left ischiopubic ramus, extending forward to form the clitoral body.',
+ 'right crus of clitoris':'The elongated right cavernous body anchored to the right ischiopubic ramus, extending forward to form the clitoral body.',
+ 'left vestibular bulb':'An elongated mass of erectile tissue situated alongside the left wall of the vaginal vestibule, engorging during sexual arousal.',
+ 'right vestibular bulb':'An elongated mass of erectile tissue situated alongside the right wall of the vaginal vestibule, engorging during sexual arousal.',
+ 'left labium majus':'The prominent left cutaneous fold containing subcutaneous adipose tissue that defines the outer boundary of the pudendal cleft.',
+ 'right labium majus':'The prominent right cutaneous fold containing subcutaneous adipose tissue that defines the outer boundary of the pudendal cleft.',
+ 'left labium minus':'The inner left mucocutaneous fold flanking the vestibule of the vagina, rich in vascular channels and sensory nerve endings.',
+ 'right labium minus':'The inner right mucocutaneous fold flanking the vestibule of the vagina, rich in vascular channels and sensory nerve endings.',
+ 'vaginal orifice / introitus':'The external opening of the vaginal canal into the vestibule, partially bounded by hymenal caruncles.',
+ 'left greater vestibular (bartholin) gland':'A pea-sized secretory gland situated posterolateral to the vaginal introitus, producing mucinous lubricating fluid during arousal.',
+ 'right greater vestibular (bartholin) gland':'A pea-sized secretory gland situated posterolateral to the vaginal introitus, producing mucinous lubricating fluid during arousal.',
+ 'left bulbospongiosus muscle':'A superficial perineal muscle encircling the left vestibular bulb and vaginal introitus, compressing erectile tissue.',
+ 'right bulbospongiosus muscle':'A superficial perineal muscle encircling the right vestibular bulb and vaginal introitus, compressing erectile tissue.',
+ 'left ischiocavernosus muscle':'A perineal muscle covering the left crus of the clitoris, compressing venous outflow to maintain clitoral erection.',
+ 'right ischiocavernosus muscle':'A perineal muscle covering the right crus of the clitoris, compressing venous outflow to maintain clitoral erection.',
+ 'pubococcygeus muscle':'The main anterior component of levator ani arising from the pubis, supporting pelvic organs and maintaining urinary and fecal continence.',
+ 'puborectalis muscle':'A muscular sling of levator ani passing behind the anorectal junction, creating the anorectal angle essential for continence.',
+ 'iliococcygeus muscle':'The posterolateral part of levator ani arising from the tendinous arch, forming a hammock-like pelvic diaphragm.',
+ 'coccygeus muscle':'A triangular muscle lying posterior to levator ani, supporting the pelvic viscera and stabilizing the coccyx.',
+ 'female pelvic floor':'The muscular and fascial pelvic diaphragm formed by levator ani, coccygeus, and perineal muscles, supporting the bladder, uterus, and rectum.',
+ 'pectoralis major':'The broad fan-shaped chest muscle lying deep to the mammary glands, adducting, flexing, and internally rotating the arm.',
+ 'pectoralis minor':'The thin triangular chest muscle beneath pectoralis major, stabilizing and depressing the scapula.',
+ 'fat (left)':'Mammary and subcutaneous lobular adipose tissue providing natural feminine contouring over the pectoral fascia.',
+ 'fat (right)':'Mammary and subcutaneous lobular adipose tissue providing natural feminine contouring over the pectoral fascia.',
  'glans clitoridis and prepuce':'The visible external component of the clitoris, situated beneath the anterior junction of the labia minora and enclosed by the clitoral prepuce (hood). Richly innervated with specialized sensory receptors.',
  'clitoris (crura, body, and vestibular bulbs)':'The deep erectile complex of the clitoris, comprising the paired corpora cavernosa, body, bilateral crura attaching to the inferior pubic rami, and bilateral vestibular bulbs flanking the vaginal orifice.',
  'labia majora and mons pubis':'The prominent paired cutaneous folds rich in adipose tissue extending from the mons pubis over the pubic symphysis to the posterior commissure, shielding the urogenital cleft.',

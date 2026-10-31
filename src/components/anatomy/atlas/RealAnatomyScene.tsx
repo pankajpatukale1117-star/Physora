@@ -257,13 +257,14 @@ export function RealAnatomyScene({
     // PBR Shader Injection per Anatomical System
     const materialFor = (system: string) => {
       const isSkin = system === 'integumentary';
+      const isRepro = system === 'reproductive';
       const effectiveSys = system === 'borrowed' ? 'skeletal' : system === 'donor-muscle' ? 'muscular' : system;
       const initialSkinOpacity = latest.current.skinOpacity ?? 0.85;
       const isFemale = atlas.sex === 'female';
       const m = new T.MeshStandardMaterial({
         color: isSkin ? (isFemale ? '#dfb4a0' : '#c49680') : (SYSTEMS.find((s) => s.id === effectiveSys)?.color ?? '#aebbb8'),
-        metalness: isSkin ? 0.02 : 0.0,
-        roughness: isSkin ? (isFemale ? 0.44 : 0.48) : 0.5,
+        metalness: isSkin ? 0.02 : (isRepro ? 0.04 : 0.0),
+        roughness: isSkin ? (isFemale ? 0.44 : 0.48) : (isRepro ? 0.35 : 0.5),
         side: T.DoubleSide,
         transparent: isSkin,
         opacity: isSkin ? initialSkinOpacity : 1,
@@ -331,27 +332,63 @@ export function RealAnatomyScene({
           '#include <color_fragment>\n' +
             (system === 'reproductive'
               ? 'if (vPartIndex >= 1219.5 && vPartIndex < 1220.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.88, 0.36, 0.44);\n' +
+                '  diffuseColor.rgb = vec3(0.85, 0.27, 0.41);\n' + // Glans clitoridis - mucosal rose
                 '} else if (vPartIndex >= 1220.5 && vPartIndex < 1221.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.72, 0.22, 0.38);\n' +
-                '} else if (vPartIndex >= 1221.5 && vPartIndex < 1222.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.78, 0.48, 0.42);\n' +
-                '} else if (vPartIndex >= 1222.5 && vPartIndex < 1223.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.92, 0.42, 0.52);\n' +
-                '} else if (vPartIndex >= 1223.5 && vPartIndex < 1224.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.80, 0.28, 0.36);\n' +
+                '  diffuseColor.rgb = vec3(0.86, 0.42, 0.49);\n' + // Prepuce of clitoris - clitoral hood
+                '} else if (vPartIndex >= 1221.5 && vPartIndex < 1226.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.73, 0.20, 0.34);\n' + // Body, Crura L/R, Bulbs L/R - deep erectile crimson
+                '} else if (vPartIndex >= 1226.5 && vPartIndex < 1227.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.87, 0.53, 0.47);\n' + // Mons pubis - warm dermic cushion
+                '} else if (vPartIndex >= 1227.5 && vPartIndex < 1229.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.85, 0.49, 0.43);\n' + // Labia majora L/R - natural labial skin
+                '} else if (vPartIndex >= 1229.5 && vPartIndex < 1231.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.90, 0.42, 0.49);\n' + // Labia minora L/R - inner mucocutaneous pink
+                '} else if (vPartIndex >= 1231.5 && vPartIndex < 1232.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.91, 0.44, 0.51);\n' + // Vaginal vestibule & external urethral orifice
+                '} else if (vPartIndex >= 1232.5 && vPartIndex < 1233.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.83, 0.29, 0.39);\n' + // Vaginal introitus
+                '} else if (vPartIndex >= 1233.5 && vPartIndex < 1235.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.95, 0.62, 0.53);\n' + // Bartholin glands L/R - glandular peach
+                '} else if (vPartIndex >= 1235.5 && vPartIndex < 1239.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.62, 0.29, 0.26);\n' + // Bulbospongiosus & Ischiocavernosus muscles
+                '} else if (vPartIndex >= 1239.5 && vPartIndex < 1248.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.61, 0.27, 0.24);\n' + // Levator ani & Coccygeus muscles
+                '} else if (vPartIndex >= 1248.5 && vPartIndex < 1249.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.60, 0.26, 0.25);\n' + // External anal sphincter
+                '} else if (vPartIndex >= 1249.5 && vPartIndex < 1251.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.79, 0.83, 0.82);\n' + // Tendinous arch of levator ani
+                '} else if (vPartIndex >= 1251.5 && vPartIndex < 1252.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.63, 0.28, 0.26);\n' + // Superficial transverse perineal muscle
                 '} else if (vPartIndex >= 405.5 && vPartIndex < 406.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.75, 0.25, 0.38);\n' +
-                '} else if (vPartIndex >= 434.5 && vPartIndex < 440.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.76, 0.26, 0.35);\n' +
-                '} else if (vPartIndex >= 440.5 && vPartIndex < 443.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.82, 0.35, 0.45);\n' +
-                '} else if (vPartIndex >= 431.5 && vPartIndex < 433.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.92, 0.65, 0.55);\n' +
+                '  diffuseColor.rgb = vec3(0.82, 0.40, 0.48);\n' + // Vagina
+                '} else if (vPartIndex >= 406.5 && vPartIndex < 407.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.88, 0.44, 0.52);\n' + // Cervicovaginal junction
                 '} else if (vPartIndex >= 407.5 && vPartIndex < 415.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.84, 0.42, 0.45);\n' +
-                '} else if (vPartIndex >= 3.5 && vPartIndex < 19.5) {\n' +
-                '  diffuseColor.rgb = vec3(0.85, 0.55, 0.50);\n' +
+                '  diffuseColor.rgb = vec3(0.84, 0.42, 0.49);\n' + // Fallopian tubes & fimbriae
+                '} else if (vPartIndex >= 415.5 && vPartIndex < 431.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.80, 0.72, 0.68);\n' + // Ligaments
+                '} else if (vPartIndex >= 431.5 && vPartIndex < 433.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.92, 0.71, 0.64);\n' + // Ovaries
+                '} else if (vPartIndex >= 434.5 && vPartIndex < 440.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.78, 0.27, 0.36);\n' + // Uterus
+                '} else if (vPartIndex >= 440.5 && vPartIndex < 442.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.90, 0.47, 0.54);\n' + // Cervix & canal
+                '} else if ((vPartIndex >= 7.5 && vPartIndex < 8.5) || (vPartIndex >= 17.5 && vPartIndex < 18.5)) {\n' +
+                '  diffuseColor.rgb = vec3(0.91, 0.65, 0.60);\n' + // Mammary glandular lobes (#E8A598)
+                '} else if ((vPartIndex >= 8.5 && vPartIndex < 10.5) || (vPartIndex >= 15.5 && vPartIndex < 17.5)) {\n' +
+                '  diffuseColor.rgb = vec3(0.89, 0.60, 0.56);\n' + // Lactiferous ducts & sinuses
+                '} else if ((vPartIndex >= 10.5 && vPartIndex < 11.5) || (vPartIndex >= 18.5 && vPartIndex < 19.5)) {\n' +
+                '  diffuseColor.rgb = vec3(0.85, 0.82, 0.77);\n' + // Cooper ligaments
+                '}\n'
+              : '') +
+            (system === 'connective'
+              ? 'if ((vPartIndex >= 3.5 && vPartIndex < 4.5) || (vPartIndex >= 11.5 && vPartIndex < 12.5)) {\n' +
+                '  diffuseColor.rgb = vec3(0.95, 0.82, 0.66);\n' + // Mammary adipose tissue (#F2D2A9 soft lobular fat)
+                '}\n'
+              : '') +
+            (system === 'muscular'
+              ? 'if (vPartIndex >= 1251.5 && vPartIndex < 1259.5) {\n' +
+                '  diffuseColor.rgb = vec3(0.65, 0.33, 0.29);\n' + // Female Pectoralis major & minor muscles (#A85B50)
                 '}\n'
               : '') +
             (isSkin
@@ -474,6 +511,35 @@ export function RealAnatomyScene({
 
     // Camera Fitting Logic
     const fit = (view: View | string, extent = 0) => {
+      if (view === 'anterior-pelvis') {
+        controls.target.set(0, 0.80, -0.01);
+        camera.position.set(0, 0.81, 0.52);
+        controls.update();
+        dirty = true;
+        return;
+      }
+      if (view === 'lithotomy' || view === 'inferior') {
+        controls.target.set(0, 0.785, -0.015);
+        camera.position.set(0, 0.60, 0.32);
+        controls.update();
+        dirty = true;
+        return;
+      }
+      if (view === 'sagittal') {
+        controls.target.set(0, 0.80, -0.01);
+        camera.position.set(0.50, 0.80, -0.01);
+        controls.update();
+        dirty = true;
+        return;
+      }
+      if (view === 'internal-isolation') {
+        controls.target.set(0, 0.82, -0.01);
+        camera.position.set(0, 0.84, 0.36);
+        controls.update();
+        dirty = true;
+        return;
+      }
+
       const mobile = el.clientWidth < 768;
       const normalDistance = mobile
         ? Math.max(4.5, (1.8 * el.clientHeight) / Math.max(160, el.clientHeight - 350) / (2 * Math.tan(T.MathUtils.degToRad(camera.fov / 2))))
@@ -631,6 +697,26 @@ export function RealAnatomyScene({
           skinMat.needsUpdate = true;
           dirty = true;
         }
+      }
+
+      // Dynamically dim skeleton when reproductive mode is active for pelvic spatial context without occlusion
+      const isReproMode = s.activePreset === 'reproductive' || s.view === 'lithotomy' || s.view === 'anterior-pelvis' || s.view === 'sagittal' || s.view === 'internal-isolation';
+      const skelMat = mats.get('skeletal');
+      const borrowedMat = mats.get('borrowed');
+      const targetSkelOpacity = isReproMode ? 0.25 : 1.0;
+      if (skelMat && Math.abs(skelMat.opacity - targetSkelOpacity) > 0.005) {
+        skelMat.opacity = targetSkelOpacity;
+        skelMat.transparent = targetSkelOpacity < 0.99;
+        skelMat.depthWrite = targetSkelOpacity > 0.5;
+        skelMat.needsUpdate = true;
+        dirty = true;
+      }
+      if (borrowedMat && Math.abs(borrowedMat.opacity - targetSkelOpacity) > 0.005) {
+        borrowedMat.opacity = targetSkelOpacity;
+        borrowedMat.transparent = targetSkelOpacity < 0.99;
+        borrowedMat.depthWrite = targetSkelOpacity > 0.5;
+        borrowedMat.needsUpdate = true;
+        dirty = true;
       }
 
       if (changed || moving || lastExtent < 0) {
