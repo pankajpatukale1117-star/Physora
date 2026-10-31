@@ -3,10 +3,29 @@ import * as T from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createExplosionLayout } from './explosion-layout';
 import { decodeModelResponse } from './model-download';
 import { PointerTap } from './pointer-tap';
 import { SYSTEMS, type Atlas, type SceneState, type View } from './anatomy';
+
+const FEMALE_MESH_MAPPING: Record<string, string> = {
+  'Mons_Pubis': 'HRAF1220',
+  'Labia_Majora_Left': 'HRAF1221',
+  'Labia_Majora_Right': 'HRAF1222',
+  'Labia_Minora_Left': 'HRAF1223',
+  'Labia_Minora_Right': 'HRAF1224',
+  'Glans_Clitoridis': 'HRAF1225',
+  'Clitoral_Hood_Prepuce': 'HRAF1226',
+  'Vaginal_Vestibule': 'HRAF1227',
+  'Female_Lips': 'HRAF1229',
+  'Female_Hair': 'HRAF1230',
+  'Female_Eye_Left': 'HRAF1231',
+  'Female_Eye_Right': 'HRAF1232',
+  'Female_Areola_Nipple_Left': 'HRAF0006',
+  'Female_Areola_Nipple_Right': 'HRAF0014',
+  'Female_Body_Surface': 'HRAF0003'
+};
 
 export interface RealAnatomySceneProps {
   atlas: Atlas;
@@ -195,6 +214,9 @@ export function RealAnatomyScene({
     const pickers: (T.Mesh | undefined)[] = [];
     const geometries: T.BufferGeometry[] = [];
     const materials: T.Material[] = [];
+    let femaleModel: T.Group | null = null;
+    const femaleMeshes = new Map<string, T.Mesh>();
+    const femalePickables: { mesh: T.Mesh; partId: string; partIndex: number }[] = [];
 
     // Exploded View Label Markers
     const markerPositions = new Float32Array(width * 3).fill(10000);
@@ -446,6 +468,8 @@ export function RealAnatomyScene({
       const groups = new Map<string, T.BufferGeometry[]>();
       atlas.parts.forEach((p, i) => {
         if (p.chunk !== ci) return;
+        // For female, skip the old bald cadaver skin (HRAF0003) so female_body_beautified.glb renders with hair, eyes & vulva
+        if (atlas.sex === 'female' && p.id === 'HRAF0003') return;
         const g = new T.BufferGeometry();
 
         const positions = new Float32Array(buffer, p.positions, p.vertexCount * 3);
@@ -498,6 +522,45 @@ export function RealAnatomyScene({
             }
           })
         );
+        if (atlas.sex === 'female') {
+          try {
+            const gltfLoader = new GLTFLoader();
+            const gltf = await new Promise<any>((resolve, reject) => {
+              gltfLoader.load('/models/female_body_beautified.glb', resolve, undefined, reject);
+            });
+            if (!disposed && gltf && gltf.scene) {
+              const loadedScene = gltf.scene as T.Group;
+              femaleModel = loadedScene;
+              loadedScene.frustumCulled = false;
+              loadedScene.traverse((child: any) => {
+                if (child.isMesh) {
+                  child.frustumCulled = false;
+                  femaleMeshes.set(child.name, child);
+                  const mappedPartId = FEMALE_MESH_MAPPING[child.name];
+                  if (mappedPartId) {
+                    const idx = atlas.parts.findIndex((p) => p.id === mappedPartId);
+                    if (idx >= 0) {
+                      femalePickables.push({ mesh: child, partId: mappedPartId, partIndex: idx });
+                      pickers[idx] = child;
+                      if (child.geometry) {
+                        child.geometry.computeBoundingBox();
+                        if (child.geometry.boundingBox) {
+                          bounds[idx].copy(child.geometry.boundingBox);
+                          centers[idx].copy(bounds[idx].getCenter(new T.Vector3()));
+                        }
+                      }
+                    }
+                  }
+                }
+              });
+              scene.add(loadedScene);
+              dirty = true;
+            }
+          } catch (err) {
+            console.warn('Could not load female_body_beautified.glb:', err);
+          }
+        }
+
         if (!disposed) {
           ready = true;
           dirty = true;
@@ -630,6 +693,19 @@ export function RealAnatomyScene({
       let found = -1;
       const hasSolid = atlas.parts.some((p, i) => p.system !== 'integumentary' && data[i * 4 + 3] > 0.5);
 
+      // Anatomical raycast for beautified female model sub-meshes
+      if (atlas.sex === 'female' && femalePickables.length > 0) {
+        for (const item of femalePickables) {
+          if (!item.mesh.visible) continue;
+          if (hasSolid && item.partId === 'HRAF0003') continue;
+          const hits = raycaster.intersectObject(item.mesh, false);
+          if (hits[0] && hits[0].distance < nearest) {
+            nearest = hits[0].distance;
+            found = item.partIndex;
+          }
+        }
+      }
+
       pickers.forEach((mesh, i) => {
         if (!mesh || data[i * 4 + 3] < 0.5 || (hasSolid && atlas.parts[i].system === 'integumentary')) return;
         worldBox.copy(bounds[i]).translate(mesh.position);
@@ -697,6 +773,59 @@ export function RealAnatomyScene({
           skinMat.needsUpdate = true;
           dirty = true;
         }
+      }
+
+      // Update beautified female 3D model meshes, materials & skin opacity
+      if (femaleModel) {
+        const isSkinVis = visible.has('integumentary');
+        const isReproVis = visible.has('reproductive');
+        const baseOpacity = s.skinOpacity ?? 0.85;
+        const targetOpacity =
+          amount > 0.05 && hasSolid ? baseOpacity * Math.max(0, 1 - (amount - 0.05) * 4) : baseOpacity;
+
+        femaleMeshes.forEach((mesh, meshName) => {
+          const isVulva = [
+            'Mons_Pubis',
+            'Labia_Majora_Left',
+            'Labia_Majora_Right',
+            'Labia_Minora_Left',
+            'Labia_Minora_Right',
+            'Clitoral_Hood_Prepuce',
+            'Glans_Clitoridis',
+            'Vaginal_Vestibule'
+          ].includes(meshName);
+
+          if (isVulva) {
+            // External female genitalia is visible when either reproductive or integumentary is active
+            const shouldBeVis = isReproVis || isSkinVis;
+            if (mesh.visible !== shouldBeVis) {
+              mesh.visible = shouldBeVis;
+              dirty = true;
+            }
+          } else if (meshName === 'Female_Body_Surface') {
+            const shouldBeVis = isSkinVis && targetOpacity > 0.01;
+            if (mesh.visible !== shouldBeVis) {
+              mesh.visible = shouldBeVis;
+              dirty = true;
+            }
+            const curMats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            curMats.forEach((m: any) => {
+              if (m && Math.abs(m.opacity - targetOpacity) > 0.005) {
+                m.opacity = targetOpacity;
+                m.transparent = targetOpacity < 0.99;
+                m.depthWrite = targetOpacity > 0.65;
+                m.needsUpdate = true;
+                dirty = true;
+              }
+            });
+          } else {
+            // Hair, Eyes, Eyebrows, Lips, Areolae/Nipples
+            if (mesh.visible !== isSkinVis) {
+              mesh.visible = isSkinVis;
+              dirty = true;
+            }
+          }
+        });
       }
 
       // Dynamically dim skeleton when reproductive mode is active for pelvic spatial context without occlusion
