@@ -307,7 +307,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     setActivePreset(preset);
     setCameraResetCounter((c) => c + 1);
     if (preset === 'all') {
-      setSkinOpacity(0.85);
+      setSkinOpacity(0.35);
       setActiveView('front');
       setVisibleSystems(defaultVisible(sex));
     } else if (preset === 'skeleton') {
@@ -330,7 +330,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     } else if (preset === 'surface') {
       setSkinOpacity(1.0);
       setActiveView('front');
-      setVisibleSystems(['integumentary']);
+      setVisibleSystems(['integumentary', ...defaultVisible(sex)]);
     } else if (preset === 'organs') {
       setVisibleSystems([
         'cardiac',
@@ -438,7 +438,7 @@ export const AnatomyExplorerView: React.FC<AnatomyExplorerViewProps> = ({
     switch (layerIdx) {
       case 1: // Skin & Surface
         setSkinOpacity(1.0);
-        setVisibleSystems(['integumentary']);
+        setVisibleSystems(['integumentary', ...defaultVisible(sex)]);
         setActivePreset('surface');
         break;
       case 2: // Superficial Musculature

@@ -9,12 +9,17 @@ import { decodeModelResponse } from './model-download';
 import { PointerTap } from './pointer-tap';
 import { SYSTEMS, type Atlas, type SceneState, type View } from './anatomy';
 
+const FEMALE_SUPERFICIAL_PARTS = new Set([
+  'HRAF0000', 'HRAF0001', 'HRAF0002', 'HRAF0003',
+  'HRAF0005', 'HRAF0006', 'HRAF0007',
+  'HRAF0013', 'HRAF0014', 'HRAF0015',
+  'HRAF1229'
+]);
+
 const FEMALE_MESH_MAPPING: Record<string, string> = {
   'Female_Lips': 'HRAF1229',
   'Female_Eye_Left': 'HRAF1231',
   'Female_Eye_Right': 'HRAF1232',
-  'Female_Areola_Nipple_Left': 'HRAF0006',
-  'Female_Areola_Nipple_Right': 'HRAF0014',
   'Female_Body_Surface': 'HRAF0003'
 };
 
@@ -387,15 +392,6 @@ export function RealAnatomyScene({
                 '  if (vModelPos.y > 1.498 && vModelPos.y < 1.522 && abs(vModelPos.x) < 0.026 && vModelPos.z > 0.045) {\n' +
                 '    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.82, 0.42, 0.44), 0.28);\n' +
                 '  }\n' +
-                '}\n' +
-                'if (vModelPos.y > 1.15 && vModelPos.y < 1.22 && vModelPos.z > 0.09) {\n' +
-                '  float areolaDistL = length(vec2(vModelPos.x - 0.098, vModelPos.y - 1.185));\n' +
-                '  float areolaDistR = length(vec2(vModelPos.x + 0.098, vModelPos.y - 1.185));\n' +
-                '  float areolaDist = min(areolaDistL, areolaDistR);\n' +
-                '  if (areolaDist < 0.024) {\n' +
-                '    float areolaFactor = clamp(1.0 - areolaDist / 0.024, 0.0, 1.0);\n' +
-                '    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.78, 0.44, 0.42), areolaFactor * 0.35);\n' +
-                '  }\n' +
                 '}\n'
               : '') +
             'diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.2, 0.95, 0.75), partSelected * 0.8);\n'
@@ -431,8 +427,9 @@ export function RealAnatomyScene({
       const groups = new Map<string, T.BufferGeometry[]>();
       atlas.parts.forEach((p, i) => {
         if (p.chunk !== ci) return;
-        // For female, skip the old bald cadaver skin (HRAF0003) so female_body_beautified.glb renders with hair, eyes & vulva
-        if (atlas.sex === 'female' && p.id === 'HRAF0003') return;
+        // For female, skip superficial cadaver skin, subcutaneous adipose pads, and raw areola/nipple markers
+        // so female_body_beautified.glb renders a clean, slim feminine body with integrated areolas and lips
+        if (atlas.sex === 'female' && FEMALE_SUPERFICIAL_PARTS.has(p.id)) return;
         const g = new T.BufferGeometry();
 
         const positions = new Float32Array(buffer, p.positions, p.vertexCount * 3);
@@ -489,7 +486,7 @@ export function RealAnatomyScene({
           try {
             const gltfLoader = new GLTFLoader();
             const gltf = await new Promise<any>((resolve, reject) => {
-              gltfLoader.load('/models/female_body_beautified.glb?v=1.10.3', resolve, undefined, reject);
+              gltfLoader.load('/models/female_body_beautified.glb?v=1.10.5', resolve, undefined, reject);
             });
             if (!disposed && gltf && gltf.scene) {
               const loadedScene = gltf.scene as T.Group;
@@ -772,10 +769,11 @@ export function RealAnatomyScene({
         const baseOpacity = s.skinOpacity ?? 0.85;
         const targetOpacity =
           amount > 0.05 && hasSolid ? baseOpacity * Math.max(0, 1 - (amount - 0.05) * 4) : baseOpacity;
-        if (Math.abs(skinMat.opacity - targetOpacity) > 0.005) {
+        if (Math.abs(skinMat.opacity - targetOpacity) > 0.005 || skinMat.depthWrite !== (targetOpacity >= 0.99)) {
           skinMat.opacity = targetOpacity;
           skinMat.transparent = targetOpacity < 0.99;
-          skinMat.depthWrite = targetOpacity > 0.65;
+          skinMat.depthWrite = targetOpacity >= 0.99;
+          skinMat.depthTest = true;
           skinMat.visible = targetOpacity > 0.01;
           skinMat.needsUpdate = true;
           dirty = true;
@@ -796,18 +794,20 @@ export function RealAnatomyScene({
               mesh.visible = shouldBeVis;
               dirty = true;
             }
+            mesh.renderOrder = targetOpacity < 0.99 ? 999 : 0;
             const curMats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
             curMats.forEach((m: any) => {
-              if (m && Math.abs(m.opacity - targetOpacity) > 0.005) {
+              if (m && (Math.abs(m.opacity - targetOpacity) > 0.005 || m.depthWrite !== (targetOpacity >= 0.99))) {
                 m.opacity = targetOpacity;
                 m.transparent = targetOpacity < 0.99;
-                m.depthWrite = targetOpacity > 0.65;
+                m.depthWrite = targetOpacity >= 0.99;
+                m.depthTest = true;
                 m.needsUpdate = true;
                 dirty = true;
               }
             });
           } else {
-            // Hair, Eyes, Eyebrows, Lips, Areolae/Nipples
+            // Child anatomical structures if any
             if (mesh.visible !== isSkinVis) {
               mesh.visible = isSkinVis;
               dirty = true;
