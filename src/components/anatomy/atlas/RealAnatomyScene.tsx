@@ -19,7 +19,6 @@ const FEMALE_MESH_MAPPING: Record<string, string> = {
   'Clitoral_Hood_Prepuce': 'HRAF1226',
   'Vaginal_Vestibule': 'HRAF1227',
   'Female_Lips': 'HRAF1229',
-  'Female_Hair': 'HRAF1230',
   'Female_Eye_Left': 'HRAF1231',
   'Female_Eye_Right': 'HRAF1232',
   'Female_Areola_Nipple_Left': 'HRAF0006',
@@ -796,8 +795,8 @@ export function RealAnatomyScene({
           ].includes(meshName);
 
           if (isVulva) {
-            // External female genitalia is visible when either reproductive or integumentary is active
-            const shouldBeVis = isReproVis || isSkinVis;
+            // Reproductive anatomy is visible when reproductive system is active, or when skin is translucent/ghosted
+            const shouldBeVis = isReproVis || (isSkinVis && targetOpacity < 0.90);
             if (mesh.visible !== shouldBeVis) {
               mesh.visible = shouldBeVis;
               dirty = true;

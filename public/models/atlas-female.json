@@ -29465,24 +29465,6 @@
       ]
     },
     {
-      "id": "HRAF1230",
-      "name": "Scalp hair",
-      "conceptId": "HRA:capilli",
-      "system": "integumentary",
-      "bounds": [
-        [
-          -0.105,
-          1.35,
-          -0.115
-        ],
-        [
-          0.105,
-          1.665,
-          0.075
-        ]
-      ]
-    },
-    {
       "id": "HRAF1231",
       "name": "Eye (left)",
       "conceptId": "HRA:oculus_sinister",
